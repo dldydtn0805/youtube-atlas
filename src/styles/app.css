@@ -63,6 +63,7 @@
 
 .app-shell__panel--player {
   padding: 28px 28px 22px;
+  scroll-margin-top: 16px;
 }
 
 .app-shell__section-heading {

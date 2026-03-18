@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import SearchBar from '../components/SearchBar/SearchBar';
 import VideoList from '../components/VideoList/VideoList';
 import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
@@ -43,9 +43,17 @@ function getInitialRegionCode(): RegionCode {
 function App() {
   const [selectedRegionCode, setSelectedRegionCode] = useState(getInitialRegionCode);
   const [selectedVideoId, setSelectedVideoId] = useState<string>();
+  const playerSectionRef = useRef<HTMLElement | null>(null);
+  const shouldScrollToPlayerRef = useRef(false);
   const { data, isLoading, isError, error } = usePopularVideos(selectedRegionCode);
   const selectedCountryName =
     countryCodes.find((country) => country.code === selectedRegionCode)?.name ?? selectedRegionCode;
+
+  function handleSelectVideo(videoId: string, triggerElement?: HTMLButtonElement) {
+    shouldScrollToPlayerRef.current = true;
+    setSelectedVideoId(videoId);
+    triggerElement?.blur();
+  }
 
   useEffect(() => {
     const firstVideoId = data?.items[0]?.id;
@@ -65,6 +73,27 @@ function App() {
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, selectedRegionCode);
   }, [selectedRegionCode]);
+
+  useEffect(() => {
+    if (!selectedVideoId || !shouldScrollToPlayerRef.current) {
+      return;
+    }
+
+    shouldScrollToPlayerRef.current = false;
+
+    window.setTimeout(() => {
+      const playerSection = playerSectionRef.current;
+
+      if (!playerSection) {
+        return;
+      }
+
+      playerSection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 0);
+  }, [selectedVideoId]);
 
   return (
     <div className="app-shell">
@@ -88,7 +117,10 @@ function App() {
           />
         </section>
 
-        <section className="app-shell__panel app-shell__panel--player">
+        <section
+          ref={playerSectionRef}
+          className="app-shell__panel app-shell__panel--player"
+        >
           <div className="app-shell__section-heading">
             <p className="app-shell__section-eyebrow">Now Playing</p>
             <h2 className="app-shell__section-title">{selectedCountryName} 인기 영상</h2>
@@ -106,7 +138,7 @@ function App() {
             isError={isError}
             isLoading={isLoading}
             items={data?.items ?? []}
-            onSelectVideo={setSelectedVideoId}
+            onSelectVideo={handleSelectVideo}
             selectedVideoId={selectedVideoId}
           />
         </section>

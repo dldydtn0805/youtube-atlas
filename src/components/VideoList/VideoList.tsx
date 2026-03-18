@@ -7,7 +7,7 @@ interface VideoListProps {
   errorMessage?: string;
   items: YouTubeVideoItem[];
   selectedVideoId?: string;
-  onSelectVideo: (videoId: string) => void;
+  onSelectVideo: (videoId: string, triggerElement?: HTMLButtonElement) => void;
 }
 
 function VideoList({
@@ -37,7 +37,7 @@ function VideoList({
           key={item.id}
           className="video-card"
           data-active={selectedVideoId === item.id}
-          onClick={() => onSelectVideo(item.id)}
+          onClick={(event) => onSelectVideo(item.id, event.currentTarget)}
           type="button"
         >
           <span className="video-card__rank">{index + 1}</span>
