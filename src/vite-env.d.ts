@@ -9,3 +9,41 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+declare namespace YT {
+  interface OnStateChangeEvent {
+    data: number;
+  }
+
+  interface PlayerEvents {
+    onStateChange?: (event: OnStateChangeEvent) => void;
+  }
+
+  interface PlayerOptions {
+    height?: string;
+    width?: string;
+    videoId?: string;
+    playerVars?: Record<string, number | string>;
+    events?: PlayerEvents;
+  }
+
+  interface Player {
+    destroy: () => void;
+  }
+
+  interface PlayerStateStatic {
+    ENDED: number;
+  }
+
+  interface PlayerConstructor {
+    new (element: HTMLElement, options?: PlayerOptions): Player;
+  }
+}
+
+interface Window {
+  onYouTubeIframeAPIReady?: () => void;
+  YT?: {
+    Player: YT.PlayerConstructor;
+    PlayerState: YT.PlayerStateStatic;
+  };
+}

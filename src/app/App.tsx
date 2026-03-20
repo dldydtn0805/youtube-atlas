@@ -56,6 +56,9 @@ function App() {
     )
     .find((entry) => entry.item.id === selectedVideoId);
   const selectedVideo = selectedVideoEntry?.item;
+  const selectedSection = data.find((section) =>
+    section.items.some((item) => item.id === selectedVideoId),
+  );
   const selectedCountryName =
     countryCodes.find((country) => country.code === selectedRegionCode)?.name ?? selectedRegionCode;
 
@@ -63,6 +66,20 @@ function App() {
     shouldScrollToPlayerRef.current = true;
     setSelectedVideoId(videoId);
     triggerElement?.blur();
+  }
+
+  function handleVideoEnd() {
+    if (!selectedSection || selectedSection.items.length === 0) {
+      return;
+    }
+
+    const currentIndex = selectedSection.items.findIndex((item) => item.id === selectedVideoId);
+    const nextIndex =
+      currentIndex >= 0
+        ? (currentIndex + 1) % selectedSection.items.length
+        : 0;
+
+    setSelectedVideoId(selectedSection.items[nextIndex]?.id);
   }
 
   useEffect(() => {
@@ -139,7 +156,10 @@ function App() {
               {selectedVideoEntry ? ` · ${selectedVideoEntry.categoryLabel}` : ''}
             </h2>
           </div>
-          <VideoPlayer selectedVideoId={selectedVideoId} />
+          <VideoPlayer
+            selectedVideoId={selectedVideoId}
+            onVideoEnd={handleVideoEnd}
+          />
         </section>
 
         <section className="app-shell__panel">

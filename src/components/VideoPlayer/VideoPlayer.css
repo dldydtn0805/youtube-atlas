@@ -16,7 +16,8 @@
   padding: 14px;
 }
 
-.video-player__frame iframe {
+.video-player__embed,
+.video-player__embed iframe {
   aspect-ratio: 16 / 9;
   background: #000;
   border: 0;
@@ -27,7 +28,8 @@
   width: 100%;
 }
 
-.video-player__frame iframe:hover {
+.video-player__embed:hover,
+.video-player__embed iframe:hover {
   box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
   transform: scale(1.003);
 }
