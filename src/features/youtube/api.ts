@@ -1,6 +1,12 @@
-import { YouTubeVideoListResponse } from './types';
+import { videoCategories } from '../../constants/videoCategories';
+import { YouTubeCategorySection, YouTubeVideoListResponse } from './types';
 
-export async function fetchPopularVideos(regionCode: string): Promise<YouTubeVideoListResponse> {
+const MAX_RESULTS_PER_CATEGORY = '12';
+
+async function fetchMostPopularVideos(
+  regionCode: string,
+  categoryId: string,
+): Promise<YouTubeVideoListResponse> {
   const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
 
   if (!apiKey) {
@@ -11,7 +17,8 @@ export async function fetchPopularVideos(regionCode: string): Promise<YouTubeVid
     part: 'snippet,contentDetails,statistics',
     chart: 'mostPopular',
     regionCode,
-    maxResults: '50',
+    videoCategoryId: categoryId,
+    maxResults: MAX_RESULTS_PER_CATEGORY,
     key: apiKey,
   });
 
@@ -30,4 +37,23 @@ export async function fetchPopularVideos(regionCode: string): Promise<YouTubeVid
   }
 
   return result;
+}
+
+export async function fetchPopularVideosByCategory(
+  regionCode: string,
+): Promise<YouTubeCategorySection[]> {
+  const responses = await Promise.all(
+    videoCategories.map(async (category) => {
+      const result = await fetchMostPopularVideos(regionCode, category.id);
+
+      return {
+        categoryId: category.id,
+        label: category.label,
+        description: category.description,
+        items: result.items,
+      };
+    }),
+  );
+
+  return responses.filter((section) => section.items.length > 0);
 }

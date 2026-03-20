@@ -1,3 +1,10 @@
+export interface YouTubeCategorySection {
+  categoryId: string;
+  label: string;
+  description: string;
+  items: YouTubeVideoItem[];
+}
+
 export interface YouTubeVideoListResponse {
   items: YouTubeVideoItem[];
 }
@@ -7,6 +14,7 @@ export interface YouTubeVideoItem {
   snippet: {
     title: string;
     channelTitle: string;
+    categoryId: string;
     thumbnails: YouTubeThumbnails;
   };
 }

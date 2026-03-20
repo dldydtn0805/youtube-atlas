@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchPopularVideos } from './api';
+import { fetchPopularVideosByCategory } from './api';
 
-export function usePopularVideos(regionCode: string) {
+export function usePopularVideosByCategory(regionCode: string) {
   return useQuery({
-    queryKey: ['popularVideos', regionCode],
-    queryFn: () => fetchPopularVideos(regionCode),
+    queryKey: ['popularVideosByCategory', regionCode],
+    queryFn: () => fetchPopularVideosByCategory(regionCode),
     staleTime: 1000 * 30,
   });
 }

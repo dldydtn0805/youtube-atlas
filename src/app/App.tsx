@@ -4,7 +4,7 @@ import SearchBar from '../components/SearchBar/SearchBar';
 import VideoList from '../components/VideoList/VideoList';
 import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
 import countryCodes from '../constants/countryCodes';
-import { usePopularVideos } from '../features/youtube/queries';
+import { usePopularVideosByCategory } from '../features/youtube/queries';
 import '../styles/app.css';
 
 const DEFAULT_REGION_CODE = 'US';
@@ -46,8 +46,16 @@ function App() {
   const [selectedVideoId, setSelectedVideoId] = useState<string>();
   const playerSectionRef = useRef<HTMLElement | null>(null);
   const shouldScrollToPlayerRef = useRef(false);
-  const { data, isLoading, isError, error } = usePopularVideos(selectedRegionCode);
-  const selectedVideo = data?.items.find((item) => item.id === selectedVideoId);
+  const { data = [], isLoading, isError, error } = usePopularVideosByCategory(selectedRegionCode);
+  const selectedVideoEntry = data
+    .flatMap((section) =>
+      section.items.map((item) => ({
+        categoryLabel: section.label,
+        item,
+      })),
+    )
+    .find((entry) => entry.item.id === selectedVideoId);
+  const selectedVideo = selectedVideoEntry?.item;
   const selectedCountryName =
     countryCodes.find((country) => country.code === selectedRegionCode)?.name ?? selectedRegionCode;
 
@@ -58,14 +66,15 @@ function App() {
   }
 
   useEffect(() => {
-    const firstVideoId = data?.items[0]?.id;
+    const videos = data.flatMap((section) => section.items);
+    const firstVideoId = videos[0]?.id;
 
     if (!firstVideoId) {
       setSelectedVideoId(undefined);
       return;
     }
 
-    const hasSelectedVideo = data.items.some((item) => item.id === selectedVideoId);
+    const hasSelectedVideo = videos.some((item) => item.id === selectedVideoId);
 
     if (!hasSelectedVideo) {
       setSelectedVideoId(firstVideoId);
@@ -125,7 +134,10 @@ function App() {
         >
           <div className="app-shell__section-heading">
             <p className="app-shell__section-eyebrow">Now Playing</p>
-            <h2 className="app-shell__section-title">{selectedCountryName} 인기 영상</h2>
+            <h2 className="app-shell__section-title">
+              {selectedCountryName} 인기 영상
+              {selectedVideoEntry ? ` · ${selectedVideoEntry.categoryLabel}` : ''}
+            </h2>
           </div>
           <VideoPlayer selectedVideoId={selectedVideoId} />
         </section>
@@ -144,13 +156,13 @@ function App() {
         <section className="app-shell__panel">
           <div className="app-shell__section-heading">
             <p className="app-shell__section-eyebrow">Chart</p>
-            <h2 className="app-shell__section-title">인기 영상 목록</h2>
+            <h2 className="app-shell__section-title">카테고리별 인기 영상</h2>
           </div>
           <VideoList
             errorMessage={error instanceof Error ? error.message : undefined}
             isError={isError}
             isLoading={isLoading}
-            items={data?.items ?? []}
+            sections={data}
             onSelectVideo={handleSelectVideo}
             selectedVideoId={selectedVideoId}
           />
