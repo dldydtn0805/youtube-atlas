@@ -313,26 +313,6 @@ function App() {
       ? '시네마'
       : '시네마틱 모드';
 
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-
-    if (!shouldUsePortraitFit) {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-      return;
-    }
-
-    document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
-
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-    };
-  }, [shouldUsePortraitFit]);
-
   const filtersContent = (
     <div className="app-shell__mobile-stack">
       <section className="app-shell__panel app-shell__panel--filters">
@@ -418,22 +398,20 @@ function App() {
           selectedVideoId={selectedVideoId}
           onVideoEnd={handleVideoEnd}
         />
-        {selectedVideo ? (
+        {selectedVideo && !isMobileCinematicMode ? (
           <div className="app-shell__stage-meta">
             <div className="app-shell__stage-copy">
               <h3 className="app-shell__stage-title">{selectedVideo.snippet.title}</h3>
               <p className="app-shell__stage-channel">{selectedVideo.snippet.channelTitle}</p>
             </div>
-            {!isMobileCinematicMode ? (
-              <div className="app-shell__stage-side">
-                <div className="app-shell__stage-tags" aria-label="현재 재생 정보">
-                  <span className="app-shell__stage-tag">{selectedCountryName}</span>
-                  {selectedCategory ? (
-                    <span className="app-shell__stage-tag">{selectedCategory.label}</span>
-                  ) : null}
-                </div>
+            <div className="app-shell__stage-side">
+              <div className="app-shell__stage-tags" aria-label="현재 재생 정보">
+                <span className="app-shell__stage-tag">{selectedCountryName}</span>
+                {selectedCategory ? (
+                  <span className="app-shell__stage-tag">{selectedCategory.label}</span>
+                ) : null}
               </div>
-            ) : null}
+            </div>
           </div>
         ) : null}
       </section>
