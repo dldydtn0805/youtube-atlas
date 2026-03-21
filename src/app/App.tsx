@@ -12,6 +12,7 @@ import '../styles/app.css';
 const DEFAULT_REGION_CODE = 'US';
 const DEFAULT_CATEGORY_ID = videoCategories[0]?.id ?? '10';
 const STORAGE_KEY = 'youtube-atlas-region-code';
+const CINEMATIC_MODE_STORAGE_KEY = 'youtube-atlas-cinematic-mode';
 type RegionCode = (typeof countryCodes)[number]['code'];
 
 const SUPPORTED_REGION_CODES = new Set<string>(countryCodes.map((country) => country.code));
@@ -44,6 +45,14 @@ function getInitialRegionCode(): RegionCode {
   return DEFAULT_REGION_CODE;
 }
 
+function getInitialCinematicMode() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return window.localStorage.getItem(CINEMATIC_MODE_STORAGE_KEY) === 'true';
+}
+
 function mergeSections(pages: YouTubeCategorySection[] | undefined) {
   if (!pages?.length) {
     return undefined;
@@ -62,8 +71,10 @@ function App() {
   const [selectedRegionCode, setSelectedRegionCode] = useState(getInitialRegionCode);
   const [selectedCategoryId, setSelectedCategoryId] = useState(DEFAULT_CATEGORY_ID);
   const [selectedVideoId, setSelectedVideoId] = useState<string>();
+  const [isCinematicMode, setIsCinematicMode] = useState(getInitialCinematicMode);
   const playerSectionRef = useRef<HTMLElement | null>(null);
   const shouldScrollToPlayerRef = useRef(false);
+  const shouldScrollOnModeChangeRef = useRef(false);
   const {
     data,
     fetchNextPage,
@@ -110,7 +121,7 @@ function App() {
     setSelectedVideoId(undefined);
   }
 
-  function handleVideoEnd() {
+  function handlePlayNextVideo() {
     if (!selectedSection || selectedSection.items.length === 0) {
       return;
     }
@@ -122,6 +133,10 @@ function App() {
         : 0;
 
     setSelectedVideoId(selectedSection.items[nextIndex]?.id);
+  }
+
+  function handleVideoEnd() {
+    handlePlayNextVideo();
   }
 
   useEffect(() => {
@@ -144,6 +159,31 @@ function App() {
   }, [selectedRegionCode]);
 
   useEffect(() => {
+    window.localStorage.setItem(CINEMATIC_MODE_STORAGE_KEY, String(isCinematicMode));
+  }, [isCinematicMode]);
+
+  useEffect(() => {
+    if (!isCinematicMode || !shouldScrollOnModeChangeRef.current) {
+      return;
+    }
+
+    shouldScrollOnModeChangeRef.current = false;
+
+    window.setTimeout(() => {
+      const playerSection = playerSectionRef.current;
+
+      if (!playerSection) {
+        return;
+      }
+
+      playerSection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 0);
+  }, [isCinematicMode]);
+
+  useEffect(() => {
     if (!selectedVideoId || !shouldScrollToPlayerRef.current) {
       return;
     }
@@ -163,6 +203,13 @@ function App() {
       });
     }, 0);
   }, [selectedVideoId]);
+
+  function handleToggleCinematicMode() {
+    shouldScrollOnModeChangeRef.current = !isCinematicMode;
+    setIsCinematicMode((current) => !current);
+  }
+
+  const canPlayNextVideo = (selectedSection?.items.length ?? 0) > 1;
 
   return (
     <div className="app-shell">
@@ -207,23 +254,63 @@ function App() {
           </div>
         </section>
 
-        <section
-          ref={playerSectionRef}
-          className="app-shell__panel app-shell__panel--player"
-        >
-          <div className="app-shell__section-heading">
-            <p className="app-shell__section-eyebrow">Now Playing</p>
-            <h2 className="app-shell__section-title">
-              {selectedCountryName} 인기 영상
-              {selectedCategory ? ` · ${selectedCategory.label}` : ''}
-            </h2>
-          </div>
-          <VideoPlayer
-            isLoading={isLoading}
-            selectedVideoId={selectedVideoId}
-            onVideoEnd={handleVideoEnd}
-          />
-        </section>
+        <div className="app-shell__stage" data-cinematic={isCinematicMode}>
+          <section
+            ref={playerSectionRef}
+            className="app-shell__panel app-shell__panel--player"
+            data-cinematic={isCinematicMode}
+          >
+            <div className="app-shell__section-heading app-shell__section-heading--player">
+              <div className="app-shell__section-heading-copy">
+                <p className="app-shell__section-eyebrow">Now Playing</p>
+                <h2 className="app-shell__section-title">
+                  {selectedCountryName} 인기 영상
+                  {selectedCategory ? ` · ${selectedCategory.label}` : ''}
+                </h2>
+              </div>
+              <div className="app-shell__player-actions">
+                {isCinematicMode ? (
+                  <button
+                    className="app-shell__next-button"
+                    disabled={!canPlayNextVideo}
+                    onClick={handlePlayNextVideo}
+                    type="button"
+                  >
+                    다음 영상
+                  </button>
+                ) : null}
+                <button
+                  className="app-shell__mode-toggle"
+                  data-active={isCinematicMode}
+                  onClick={handleToggleCinematicMode}
+                  type="button"
+                >
+                  {isCinematicMode ? '기본 보기' : '시네마틱 모드'}
+                </button>
+              </div>
+            </div>
+            <VideoPlayer
+              isLoading={isLoading}
+              isCinematic={isCinematicMode}
+              selectedVideoId={selectedVideoId}
+              onVideoEnd={handleVideoEnd}
+            />
+            {selectedVideo ? (
+              <div className="app-shell__stage-meta">
+                <div className="app-shell__stage-copy">
+                  <h3 className="app-shell__stage-title">{selectedVideo.snippet.title}</h3>
+                  <p className="app-shell__stage-channel">{selectedVideo.snippet.channelTitle}</p>
+                </div>
+                <div className="app-shell__stage-tags" aria-label="현재 재생 정보">
+                  <span className="app-shell__stage-tag">{selectedCountryName}</span>
+                  {selectedCategory ? (
+                    <span className="app-shell__stage-tag">{selectedCategory.label}</span>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+          </section>
+        </div>
 
         <section className="app-shell__panel">
           <div className="app-shell__section-heading">

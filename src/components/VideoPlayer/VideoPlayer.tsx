@@ -41,10 +41,16 @@ function loadYouTubeIframeApi() {
 interface VideoPlayerProps {
   selectedVideoId?: string;
   isLoading?: boolean;
+  isCinematic?: boolean;
   onVideoEnd?: () => void;
 }
 
-function VideoPlayer({ selectedVideoId, isLoading = false, onVideoEnd }: VideoPlayerProps) {
+function VideoPlayer({
+  selectedVideoId,
+  isLoading = false,
+  isCinematic = false,
+  onVideoEnd,
+}: VideoPlayerProps) {
   const videoId = selectedVideoId;
   const playerHostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YT.Player | null>(null);
@@ -101,7 +107,10 @@ function VideoPlayer({ selectedVideoId, isLoading = false, onVideoEnd }: VideoPl
   }, [videoId]);
 
   return (
-    <section className="video-player">
+    <section
+      className="video-player"
+      data-cinematic={isCinematic}
+    >
       <div className="video-player__frame">
         {videoId ? (
           <div
