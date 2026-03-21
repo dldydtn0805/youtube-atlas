@@ -2,6 +2,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  max-width: 100%;
+  min-width: 0;
   padding: 0;
 }
 
@@ -38,9 +40,24 @@
 }
 
 @media (max-width: 768px) {
+  .search-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 2px 0 4px;
+    scroll-snap-type: x proximity;
+    width: 100%;
+  }
+
+  .search-bar::-webkit-scrollbar {
+    display: none;
+  }
+
   .search-bar__button {
+    flex: 0 0 auto;
     font-size: 0.92rem;
     padding: 0.78rem 1.05rem;
+    scroll-snap-align: start;
+    white-space: nowrap;
   }
 }
 
