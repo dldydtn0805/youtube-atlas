@@ -712,6 +712,47 @@
     }
   }
 
+  @media (orientation: landscape) {
+    .app-shell[data-mobile-cinematic='true'] {
+      --mobile-cinematic-top-space: calc(6px + env(safe-area-inset-top, 0px));
+      --mobile-cinematic-bottom-space: calc(6px + env(safe-area-inset-bottom, 0px));
+      --mobile-cinematic-header-space: 34px;
+      --mobile-cinematic-meta-space: 0px;
+    }
+
+    .app-shell[data-mobile-cinematic='true'] .app-shell__stage[data-cinematic='true'] {
+      --cinematic-player-max-height: min(calc(100svh - 76px), calc(100vw * 9 / 16));
+      min-height: 100svh;
+      padding:
+        var(--mobile-cinematic-top-space)
+        0
+        var(--mobile-cinematic-bottom-space);
+    }
+
+    .app-shell[data-mobile-cinematic='true'] .app-shell__section-heading--player {
+      margin-bottom: 6px;
+      padding: 0 10px;
+    }
+
+    .app-shell[data-mobile-cinematic='true'] .app-shell__section-eyebrow {
+      display: none;
+    }
+
+    .app-shell[data-mobile-cinematic='true'] .app-shell__section-title {
+      font-size: clamp(1rem, 3vw, 1.2rem);
+    }
+
+    .app-shell[data-mobile-cinematic='true'] .app-shell__player-actions {
+      gap: 6px;
+    }
+
+    .app-shell[data-mobile-cinematic='true'] .app-shell__mode-toggle,
+    .app-shell[data-mobile-cinematic='true'] .app-shell__next-button,
+    .app-shell[data-mobile-cinematic='true'] .app-shell__fit-toggle {
+      min-height: 36px;
+    }
+  }
+
   .app-shell[data-mobile-cinematic='true'] .app-shell__panel--player[data-cinematic='true'] {
     width: 100%;
   }
