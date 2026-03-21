@@ -91,28 +91,6 @@ function mergeSections(pages: YouTubeCategorySection[] | undefined) {
   };
 }
 
-function NextIcon() {
-  return (
-    <svg aria-hidden="true" className="app-shell__button-icon" viewBox="0 0 24 24">
-      <path
-        d="M8 6.5 15 12l-7 5.5"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M17 6.5v11"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
 function App() {
   const [selectedRegionCode, setSelectedRegionCode] = useState(getInitialRegionCode);
   const [selectedCategoryId, setSelectedCategoryId] = useState(DEFAULT_CATEGORY_ID);
@@ -141,7 +119,6 @@ function App() {
     countryCodes.find((country) => country.code === selectedRegionCode)?.name ?? selectedRegionCode;
   const isDesktopCinematicMode = !isMobileLayout && isCinematicMode;
   const canPlayNextVideo = (selectedSection?.items.length ?? 0) > 1;
-  const showNextButton = !isMobileLayout && isDesktopCinematicMode;
   const cinematicToggleLabel = isDesktopCinematicMode ? '기본 보기' : '시네마틱 모드';
 
   function handleSelectVideo(videoId: string, triggerElement?: HTMLButtonElement) {
@@ -387,28 +364,13 @@ function App() {
                 {cinematicToggleLabel}
               </button>
             ) : null}
-            {showNextButton ? (
-              <button
-                aria-label="다음 영상"
-                className="app-shell__next-button"
-                data-icon-only={isMobileLayout}
-                disabled={!canPlayNextVideo}
-                onClick={handlePlayNextVideo}
-                title="다음 영상"
-                type="button"
-              >
-                {isMobileLayout ? <NextIcon /> : '다음 영상'}
-              </button>
-            ) : null}
           </div>
         </div>
         <div ref={playerViewportRef} className="app-shell__player-viewport">
           <VideoPlayer
             isLoading={isLoading}
             isCinematic={isDesktopCinematicMode}
-            isMobileCinematic={false}
-            showOverlayNavigation={isMobileLayout}
-            isPortrait={false}
+            showOverlayNavigation
             onPreviousVideo={handlePlayPreviousVideo}
             onNextVideo={handlePlayNextVideo}
             selectedVideoId={selectedVideoId}
@@ -472,7 +434,7 @@ function App() {
   );
 
   return (
-    <div className="app-shell" data-mobile-cinematic="false">
+    <div className="app-shell">
       <header className="app-shell__header">
         <p className="app-shell__eyebrow">Global Trending Video Curation</p>
         <h1 className="app-shell__title">YouTube Atlas</h1>
@@ -564,16 +526,6 @@ function App() {
                     </h2>
                   </div>
                   <div className="app-shell__player-actions">
-                    {isDesktopCinematicMode ? (
-                      <button
-                        className="app-shell__next-button"
-                        disabled={!canPlayNextVideo}
-                        onClick={handlePlayNextVideo}
-                        type="button"
-                      >
-                        다음 영상
-                      </button>
-                    ) : null}
                     <button
                       className="app-shell__mode-toggle"
                       data-active={isDesktopCinematicMode}
@@ -587,9 +539,7 @@ function App() {
                 <VideoPlayer
                   isLoading={isLoading}
                   isCinematic={isDesktopCinematicMode}
-                  isMobileCinematic={false}
-                  showOverlayNavigation={false}
-                  isPortrait={false}
+                  showOverlayNavigation
                   onPreviousVideo={handlePlayPreviousVideo}
                   onNextVideo={handlePlayNextVideo}
                   selectedVideoId={selectedVideoId}
