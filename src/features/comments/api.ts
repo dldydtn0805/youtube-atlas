@@ -1,5 +1,10 @@
 import { supabase } from '../../lib/supabase';
 import type { ChatMessage, SendMessageInput } from './types';
+import {
+  CommentSubmissionError,
+  normalizeMessageContent,
+  toCommentSubmissionError,
+} from './spam';
 
 const COMMENTS_TABLE = 'comments';
 
@@ -29,10 +34,10 @@ export async function fetchComments(videoId: string): Promise<ChatMessage[]> {
 export async function createComment(input: SendMessageInput): Promise<ChatMessage> {
   const client = getSupabaseClient();
   const author = input.author.trim() || '익명';
-  const content = input.content.trim();
+  const content = normalizeMessageContent(input.content);
 
   if (!content) {
-    throw new Error('메시지 내용을 입력해 주세요.');
+    throw new CommentSubmissionError('validation');
   }
 
   const { data, error } = await client
@@ -47,7 +52,7 @@ export async function createComment(input: SendMessageInput): Promise<ChatMessag
     .single();
 
   if (error) {
-    throw new Error(error.message);
+    throw toCommentSubmissionError(error);
   }
 
   return data as ChatMessage;

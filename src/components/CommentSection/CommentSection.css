@@ -206,6 +206,15 @@
   opacity: 0.92;
 }
 
+.comment-composer__feedback--cooldown {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.comment-composer__feedback--error {
+  color: #c0392b;
+}
+
 .comment-composer__submit {
   background: linear-gradient(135deg, #0071e3, #2490ff);
   border: 0;

@@ -1,6 +1,16 @@
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { useComments, useCreateComment } from '../../features/comments/queries';
+import {
+  COMMENT_COOLDOWN_SECONDS,
+  CommentSubmissionError,
+  getLocalSpamViolation,
+  getRemainingDurationMs,
+  normalizeMessageContent,
+  pruneRecentComments,
+  type RecentCommentSnapshot,
+  toCommentSubmissionError,
+} from '../../features/comments/spam';
 import type { ChatMessage } from '../../features/comments/types';
 import './CommentSection.css';
 
@@ -43,17 +53,48 @@ function isOwnMessage(message: ChatMessage, participantId: string) {
   return message.client_id === participantId;
 }
 
+function formatCooldownFeedback(seconds: number) {
+  return `채팅 흐름을 위해 ${seconds}초 후에 다시 보낼 수 있어요.`;
+}
+
 function CommentSection({ videoId, videoTitle }: CommentSectionProps) {
   const [author, setAuthor] = useState('');
   const [content, setContent] = useState('');
+  const [cooldownEndsAt, setCooldownEndsAt] = useState<number | null>(null);
+  const [submissionError, setSubmissionError] = useState<CommentSubmissionError | null>(null);
   const [participantId] = useState(getChatParticipantId);
   const commentListRef = useRef<HTMLDivElement | null>(null);
+  const cooldownDeadlineByVideoRef = useRef<Record<string, number>>({});
+  const recentMessagesByVideoRef = useRef<Record<string, RecentCommentSnapshot[]>>({});
   const commentsQuery = useComments(videoId, isSupabaseConfigured);
   const createCommentMutation = useCreateComment();
+  const remainingCooldownMs = getRemainingDurationMs(cooldownEndsAt);
+  const remainingCooldownSeconds = Math.ceil(remainingCooldownMs / 1000);
+  const isCooldownActive = remainingCooldownMs > 0;
+  const isSubmitDisabled = createCommentMutation.isPending || isCooldownActive;
+  const feedbackMessage = isCooldownActive
+    ? formatCooldownFeedback(remainingCooldownSeconds)
+    : submissionError?.message;
 
   useEffect(() => {
     setContent('');
+    setSubmissionError(null);
+    setCooldownEndsAt(getCurrentCooldownDeadline(videoId, cooldownDeadlineByVideoRef.current));
   }, [videoId]);
+
+  useEffect(() => {
+    if (!cooldownEndsAt) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setCooldownEndsAt(getCurrentCooldownDeadline(videoId, cooldownDeadlineByVideoRef.current));
+    }, 250);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [cooldownEndsAt, videoId]);
 
   useEffect(() => {
     const commentList = commentListRef.current;
@@ -68,29 +109,88 @@ function CommentSection({ videoId, videoTitle }: CommentSectionProps) {
     });
   }, [commentsQuery.data]);
 
-  function submitMessage() {
+  function beginCooldown(seconds = COMMENT_COOLDOWN_SECONDS) {
     if (!videoId) {
       return;
     }
 
-    createCommentMutation.mutate(
-      {
+    const nextCooldownEndsAt = Date.now() + seconds * 1000;
+
+    cooldownDeadlineByVideoRef.current[videoId] = nextCooldownEndsAt;
+    setCooldownEndsAt(nextCooldownEndsAt);
+  }
+
+  function getRecentMessages(currentVideoId: string, now = Date.now()) {
+    const nextRecentMessages = pruneRecentComments(
+      recentMessagesByVideoRef.current[currentVideoId] ?? [],
+      now,
+    );
+
+    recentMessagesByVideoRef.current[currentVideoId] = nextRecentMessages;
+
+    return nextRecentMessages;
+  }
+
+  async function submitMessage() {
+    if (!videoId) {
+      return;
+    }
+
+    if (isCooldownActive) {
+      return;
+    }
+
+    const now = Date.now();
+    const normalizedContent = normalizeMessageContent(content);
+    const recentMessages = getRecentMessages(videoId, now);
+    const localViolation = getLocalSpamViolation(recentMessages, normalizedContent, now);
+
+    if (localViolation) {
+      const nextError =
+        localViolation.code === 'cooldown'
+          ? new CommentSubmissionError('cooldown', {
+              retryAfterSeconds: localViolation.retryAfterSeconds,
+            })
+          : new CommentSubmissionError('duplicate');
+
+      setSubmissionError(nextError);
+
+      if (localViolation.code === 'cooldown') {
+        beginCooldown(localViolation.retryAfterSeconds);
+      }
+
+      return;
+    }
+
+    try {
+      await createCommentMutation.mutateAsync({
         author,
         content,
         clientId: participantId,
         videoId,
-      },
-      {
-        onSuccess: () => {
-          setContent('');
-        },
-      },
-    );
+      });
+
+      recentMessagesByVideoRef.current[videoId] = [
+        ...recentMessages,
+        { normalizedContent, sentAt: now },
+      ];
+      setSubmissionError(null);
+      setContent('');
+      beginCooldown();
+    } catch (error) {
+      const nextError = toCommentSubmissionError(error);
+
+      setSubmissionError(nextError);
+
+      if (nextError.code === 'cooldown') {
+        beginCooldown(nextError.retryAfterSeconds ?? COMMENT_COOLDOWN_SECONDS);
+      }
+    }
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    submitMessage();
+    void submitMessage();
   }
 
   function handleTextareaKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -100,11 +200,27 @@ function CommentSection({ videoId, videoTitle }: CommentSectionProps) {
 
     event.preventDefault();
 
-    if (createCommentMutation.isPending) {
+    if (isSubmitDisabled) {
       return;
     }
 
-    submitMessage();
+    void submitMessage();
+  }
+
+  function handleAuthorChange(value: string) {
+    setAuthor(value);
+
+    if (submissionError && !isCooldownActive) {
+      setSubmissionError(null);
+    }
+  }
+
+  function handleContentChange(value: string) {
+    setContent(value);
+
+    if (submissionError && !isCooldownActive) {
+      setSubmissionError(null);
+    }
   }
 
   if (!videoId) {
@@ -182,7 +298,7 @@ function CommentSection({ videoId, videoTitle }: CommentSectionProps) {
           <input
             className="comment-composer__name"
             maxLength={30}
-            onChange={(event) => setAuthor(event.target.value)}
+            onChange={(event) => handleAuthorChange(event.target.value)}
             placeholder="닉네임 (비워두면 익명)"
             type="text"
             value={author}
@@ -193,7 +309,7 @@ function CommentSection({ videoId, videoTitle }: CommentSectionProps) {
           <textarea
             className="comment-composer__textarea"
             maxLength={500}
-            onChange={(event) => setContent(event.target.value)}
+            onChange={(event) => handleContentChange(event.target.value)}
             onKeyDown={handleTextareaKeyDown}
             placeholder="메시지를 입력하세요."
             required
@@ -202,18 +318,27 @@ function CommentSection({ videoId, videoTitle }: CommentSectionProps) {
           />
           <button
             className="comment-composer__submit"
-            disabled={createCommentMutation.isPending}
+            disabled={isSubmitDisabled}
             type="submit"
           >
-            {createCommentMutation.isPending ? '전송 중...' : '보내기'}
+            {createCommentMutation.isPending
+              ? '전송 중...'
+              : isCooldownActive
+                ? `${remainingCooldownSeconds}초 대기`
+                : '보내기'}
           </button>
         </div>
         <div className="comment-composer__footer">
-          {createCommentMutation.isError ? (
-            <p className="comment-composer__feedback">
-              {createCommentMutation.error instanceof Error
-                ? createCommentMutation.error.message
-                : '메시지 전송에 실패했습니다.'}
+          {feedbackMessage ? (
+            <p
+              aria-live="polite"
+              className={`comment-composer__feedback ${
+                isCooldownActive
+                  ? 'comment-composer__feedback--cooldown'
+                  : 'comment-composer__feedback--error'
+              }`}
+            >
+              {feedbackMessage}
             </p>
           ) : (
             <span className="comment-composer__feedback comment-composer__feedback--muted">
@@ -225,6 +350,29 @@ function CommentSection({ videoId, videoTitle }: CommentSectionProps) {
       </form>
     </section>
   );
+}
+
+function getCurrentCooldownDeadline(
+  videoId: string | undefined,
+  cooldownDeadlineByVideo: Record<string, number>,
+) {
+  if (!videoId) {
+    return null;
+  }
+
+  const currentCooldownDeadline = cooldownDeadlineByVideo[videoId];
+
+  if (!currentCooldownDeadline) {
+    return null;
+  }
+
+  if (getRemainingDurationMs(currentCooldownDeadline) === 0) {
+    delete cooldownDeadlineByVideo[videoId];
+
+    return null;
+  }
+
+  return currentCooldownDeadline;
 }
 
 export default CommentSection;

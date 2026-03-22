@@ -13,6 +13,76 @@ alter table public.comments
 create index if not exists comments_video_id_created_at_idx
   on public.comments (video_id, created_at desc);
 
+create index if not exists comments_video_id_client_id_created_at_idx
+  on public.comments (video_id, client_id, created_at desc);
+
+create or replace function public.normalize_comment_content(raw_content text)
+returns text
+language sql
+immutable
+as $$
+  select regexp_replace(trim(coalesce(raw_content, '')), '\s+', ' ', 'g');
+$$;
+
+create or replace function public.enforce_comment_spam_protection()
+returns trigger
+language plpgsql
+as $$
+declare
+  latest_comment public.comments%rowtype;
+  normalized_content text;
+  seconds_since_latest numeric;
+  retry_after_seconds integer;
+begin
+  normalized_content := public.normalize_comment_content(new.content);
+  new.content := normalized_content;
+
+  if normalized_content = '' then
+    raise exception using errcode = 'P0001', message = 'comment_content_required';
+  end if;
+
+  select *
+  into latest_comment
+  from public.comments
+  where video_id = new.video_id
+    and client_id = new.client_id
+  order by created_at desc
+  limit 1;
+
+  if found then
+    seconds_since_latest := extract(epoch from (now() - latest_comment.created_at));
+
+    if seconds_since_latest < 5 then
+      retry_after_seconds := greatest(1, ceil(5 - seconds_since_latest)::integer);
+
+      raise exception using
+        errcode = 'P0001',
+        message = 'comment_spam_cooldown',
+        detail = format('retry_after_seconds=%s', retry_after_seconds);
+    end if;
+  end if;
+
+  if exists (
+    select 1
+    from public.comments
+    where video_id = new.video_id
+      and client_id = new.client_id
+      and created_at > now() - interval '30 seconds'
+      and public.normalize_comment_content(content) = normalized_content
+  ) then
+    raise exception using errcode = 'P0001', message = 'comment_spam_duplicate';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists comments_spam_protection on public.comments;
+create trigger comments_spam_protection
+before insert on public.comments
+for each row
+execute function public.enforce_comment_spam_protection();
+
 grant usage on schema public to anon;
 grant usage on schema public to authenticated;
 grant select, insert on public.comments to anon;
