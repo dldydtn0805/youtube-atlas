@@ -1,4 +1,4 @@
-import { YouTubeCategorySection } from '../../features/youtube/types';
+import { YouTubeCategorySection, YouTubeVideoItem } from '../../features/youtube/types';
 import { getVideoTrendBadges } from '../../features/trending/presentation';
 import type { VideoTrendSignal } from '../../features/trending/types';
 import './VideoList.css';
@@ -8,6 +8,10 @@ interface VideoListProps {
   isError: boolean;
   errorMessage?: string;
   section?: YouTubeCategorySection;
+  featuredSection?: YouTubeCategorySection;
+  featuredSectionEyebrow?: string;
+  featuredSectionEmptyMessage?: string;
+  getFeaturedRankLabel?: (item: YouTubeVideoItem, index: number) => string;
   selectedVideoId?: string;
   trendSignalsByVideoId?: Record<string, VideoTrendSignal>;
   hasNextPage: boolean;
@@ -21,6 +25,10 @@ function VideoList({
   isError,
   errorMessage,
   section,
+  featuredSection,
+  featuredSectionEyebrow = 'Realtime Movers',
+  featuredSectionEmptyMessage,
+  getFeaturedRankLabel,
   selectedVideoId,
   trendSignalsByVideoId,
   hasNextPage,
@@ -44,58 +52,78 @@ function VideoList({
     return <p className="video-list__status">이 카테고리에는 현재 표시할 영상이 없습니다.</p>;
   }
 
-  return (
-    <div className="video-list" aria-label="선택한 카테고리 인기 영상 목록">
-      <section className="video-list__section" aria-label={`${section.label} 인기 영상`}>
+  function renderSection(
+    currentSection: YouTubeCategorySection,
+    {
+      eyebrow,
+      emptyMessage,
+      getRankLabel,
+      showLoadMore,
+    }: {
+      eyebrow: string;
+      emptyMessage?: string;
+      getRankLabel?: (item: YouTubeVideoItem, index: number) => string;
+      showLoadMore: boolean;
+    },
+  ) {
+    if (currentSection.items.length === 0 && !emptyMessage) {
+      return null;
+    }
+
+    return (
+      <section className="video-list__section" aria-label={`${currentSection.label} 영상`}>
         <header className="video-list__section-header">
           <div>
-            <p className="video-list__section-eyebrow">Category Ranking</p>
-            <h3 className="video-list__section-title">{section.label}</h3>
+            <p className="video-list__section-eyebrow">{eyebrow}</p>
+            <h3 className="video-list__section-title">{currentSection.label}</h3>
           </div>
-          <p className="video-list__section-description">{section.description}</p>
+          <p className="video-list__section-description">{currentSection.description}</p>
         </header>
-        <div className="video-list__grid">
-          {section.items.map((item, index) => {
-            const trendBadges = getVideoTrendBadges(trendSignalsByVideoId?.[item.id]);
+        {currentSection.items.length > 0 ? (
+          <div className="video-list__grid">
+            {currentSection.items.map((item, index) => {
+              const trendBadges = getVideoTrendBadges(trendSignalsByVideoId?.[item.id]);
+              const rankLabel = getRankLabel?.(item, index) ?? `${currentSection.label} #${index + 1}`;
 
-            return (
-              <button
-                key={`${section.categoryId}-${item.id}`}
-                className="video-card"
-                data-active={selectedVideoId === item.id}
-                onClick={(event) => onSelectVideo(item.id, event.currentTarget)}
-                type="button"
-              >
-                <div className="video-card__meta-row">
-                  <span className="video-card__rank">
-                    {section.label} #{index + 1}
-                  </span>
-                  {trendBadges.length > 0 ? (
-                    <span className="video-card__trend-group" aria-label="급상승 신호">
-                      {trendBadges.map((badge) => (
-                        <span
-                          key={`${item.id}-${badge.label}`}
-                          className="video-card__trend-badge"
-                          data-tone={badge.tone}
-                        >
-                          {badge.label}
-                        </span>
-                      ))}
-                    </span>
-                  ) : null}
-                </div>
-                <img
-                  className="video-card__thumbnail"
-                  src={item.snippet.thumbnails.high.url}
-                  alt={item.snippet.title}
-                />
-                <strong className="video-card__title">{item.snippet.title}</strong>
-                <span className="video-card__channel">{item.snippet.channelTitle}</span>
-              </button>
-            );
-          })}
-        </div>
-        {hasNextPage ? (
+              return (
+                <button
+                  key={`${currentSection.categoryId}-${item.id}`}
+                  className="video-card"
+                  data-active={selectedVideoId === item.id}
+                  onClick={(event) => onSelectVideo(item.id, event.currentTarget)}
+                  type="button"
+                >
+                  <div className="video-card__meta-row">
+                    <span className="video-card__rank">{rankLabel}</span>
+                    {trendBadges.length > 0 ? (
+                      <span className="video-card__trend-group" aria-label="급상승 신호">
+                        {trendBadges.map((badge) => (
+                          <span
+                            key={`${item.id}-${badge.label}`}
+                            className="video-card__trend-badge"
+                            data-tone={badge.tone}
+                          >
+                            {badge.label}
+                          </span>
+                        ))}
+                      </span>
+                    ) : null}
+                  </div>
+                  <img
+                    className="video-card__thumbnail"
+                    src={item.snippet.thumbnails.high.url}
+                    alt={item.snippet.title}
+                  />
+                  <strong className="video-card__title">{item.snippet.title}</strong>
+                  <span className="video-card__channel">{item.snippet.channelTitle}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="video-list__section-status">{emptyMessage}</p>
+        )}
+        {showLoadMore && hasNextPage ? (
           <div className="video-list__actions">
             <button
               className="video-list__load-more"
@@ -108,6 +136,23 @@ function VideoList({
           </div>
         ) : null}
       </section>
+    );
+  }
+
+  return (
+    <div className="video-list" aria-label="선택한 카테고리 인기 영상 목록">
+      {featuredSection
+        ? renderSection(featuredSection, {
+            eyebrow: featuredSectionEyebrow,
+            emptyMessage: featuredSectionEmptyMessage,
+            getRankLabel: getFeaturedRankLabel,
+            showLoadMore: false,
+          })
+        : null}
+      {renderSection(section, {
+        eyebrow: 'Category Ranking',
+        showLoadMore: true,
+      })}
     </div>
   );
 }

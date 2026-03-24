@@ -10,6 +10,7 @@ import {
   sortVideoCategories,
 } from '../constants/videoCategories';
 import countryCodes from '../constants/countryCodes';
+import { isRealtimeSurgingSignal } from '../features/trending/presentation';
 import { useVideoTrendSignals } from '../features/trending/queries';
 import { YouTubeCategorySection } from '../features/youtube/types';
 import { usePopularVideosByCategory, useVideoCategories } from '../features/youtube/queries';
@@ -161,12 +162,50 @@ function App() {
       : detailVideoCategories.length > 0
         ? '메인 외 카테고리는 여기서 선택할 수 있습니다.'
         : '현재 이 국가에는 추가 세부 카테고리가 없습니다.';
-  const { data: trendSignalsByVideoId = {} } = useVideoTrendSignals(
+  const isAllCategorySelected = selectedCategory?.id === ALL_VIDEO_CATEGORY_ID;
+  const {
+    data: trendSignalsByVideoId = {},
+    isLoading: isTrendSignalsLoading,
+    isError: isTrendSignalsError,
+  } = useVideoTrendSignals(
     selectedRegionCode,
     selectedCategory?.id,
     selectedSectionVideoIds,
     isApiConfigured,
   );
+  const realtimeSurgingSection =
+    isAllCategorySelected && selectedSection
+      ? {
+          categoryId: 'realtime-surging',
+          label: '실시간 급상승',
+          description: '전체 차트에서 직전 집계 대비 순위가 5계단 이상 오른 영상만 따로 모았습니다.',
+          items: [...selectedSection.items]
+            .filter((item) => isRealtimeSurgingSignal(trendSignalsByVideoId[item.id]))
+            .sort((left, right) => {
+              const leftSignal = trendSignalsByVideoId[left.id];
+              const rightSignal = trendSignalsByVideoId[right.id];
+              const rankChangeDiff = (rightSignal?.rankChange ?? 0) - (leftSignal?.rankChange ?? 0);
+
+              if (rankChangeDiff !== 0) {
+                return rankChangeDiff;
+              }
+
+              const currentRankDiff =
+                (leftSignal?.currentRank ?? Number.MAX_SAFE_INTEGER) -
+                (rightSignal?.currentRank ?? Number.MAX_SAFE_INTEGER);
+
+              if (currentRankDiff !== 0) {
+                return currentRankDiff;
+              }
+
+              return left.snippet.title.localeCompare(right.snippet.title, 'ko');
+            }),
+        }
+      : undefined;
+  const realtimeSurgingEmptyMessage =
+    isAllCategorySelected && selectedSection && !isChartLoading && !isTrendSignalsLoading && !isTrendSignalsError
+      ? '아직 +5 이상 급상승한 영상이 없습니다.'
+      : undefined;
 
   function handleSelectVideo(videoId: string, triggerElement?: HTMLButtonElement) {
     shouldScrollToPlayerRef.current = true;
@@ -639,6 +678,15 @@ function App() {
       </div>
       <VideoList
         errorMessage={chartErrorMessage}
+        featuredSection={realtimeSurgingSection}
+        featuredSectionEmptyMessage={realtimeSurgingEmptyMessage}
+        featuredSectionEyebrow="Realtime Movers"
+        getFeaturedRankLabel={(item) => {
+          const signal = trendSignalsByVideoId[item.id];
+          return signal?.rankChange
+            ? `전체 ${signal.currentRank}위 · +${signal.rankChange}`
+            : '실시간 급상승';
+        }}
         hasNextPage={hasNextPage}
         isError={isChartError}
         isFetchingNextPage={isFetchingNextPage}

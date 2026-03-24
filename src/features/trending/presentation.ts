@@ -1,6 +1,7 @@
 import type { VideoTrendSignal } from './types';
 
 const VIEW_COUNT_DELTA_BADGE_THRESHOLD = 50_000;
+export const REALTIME_SURGING_RANK_CHANGE_THRESHOLD = 5;
 
 export interface VideoTrendBadge {
   label: string;
@@ -52,4 +53,8 @@ export function getVideoTrendBadges(signal?: VideoTrendSignal | null): VideoTren
   }
 
   return badges.slice(0, 2);
+}
+
+export function isRealtimeSurgingSignal(signal?: VideoTrendSignal | null) {
+  return (signal?.rankChange ?? 0) >= REALTIME_SURGING_RANK_CHANGE_THRESHOLD;
 }

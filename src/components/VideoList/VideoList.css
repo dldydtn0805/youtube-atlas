@@ -93,6 +93,14 @@
   text-align: center;
 }
 
+.video-list__section-status {
+  color: var(--text-muted);
+  font-size: 0.98rem;
+  line-height: 1.7;
+  margin: 0;
+  padding: 0.35rem 0 0.25rem;
+}
+
 .video-card {
   background: var(--surface-strong);
   border: 1px solid var(--border);

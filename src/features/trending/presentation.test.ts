@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { formatCompactCount, getVideoTrendBadges } from './presentation';
+import {
+  formatCompactCount,
+  getVideoTrendBadges,
+  isRealtimeSurgingSignal,
+  REALTIME_SURGING_RANK_CHANGE_THRESHOLD,
+} from './presentation';
 
 describe('trend presentation helpers', () => {
   it('returns a new badge before any other signal', () => {
@@ -82,5 +87,41 @@ describe('trend presentation helpers', () => {
     expect(formatCompactCount(950)).toBe('950');
     expect(formatCompactCount(8_500)).toBe('8.5천');
     expect(formatCompactCount(125_000)).toBe('13만');
+  });
+
+  it('treats rank gains of five or more as realtime surging', () => {
+    expect(
+      isRealtimeSurgingSignal({
+        categoryId: '0',
+        categoryLabel: '전체',
+        capturedAt: '2026-03-24T00:00:00.000Z',
+        currentRank: 12,
+        currentViewCount: 500_000,
+        isNew: false,
+        previousRank: 17,
+        previousViewCount: 450_000,
+        rankChange: REALTIME_SURGING_RANK_CHANGE_THRESHOLD,
+        regionCode: 'KR',
+        videoId: 'video-4',
+        viewCountDelta: 50_000,
+      }),
+    ).toBe(true);
+
+    expect(
+      isRealtimeSurgingSignal({
+        categoryId: '0',
+        categoryLabel: '전체',
+        capturedAt: '2026-03-24T00:00:00.000Z',
+        currentRank: 12,
+        currentViewCount: 500_000,
+        isNew: false,
+        previousRank: 16,
+        previousViewCount: 450_000,
+        rankChange: REALTIME_SURGING_RANK_CHANGE_THRESHOLD - 1,
+        regionCode: 'KR',
+        videoId: 'video-5',
+        viewCountDelta: 50_000,
+      }),
+    ).toBe(false);
   });
 });
