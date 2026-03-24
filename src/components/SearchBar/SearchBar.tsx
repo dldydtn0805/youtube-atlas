@@ -11,6 +11,7 @@ interface SearchBarProps {
   helperText?: string;
   onChange: (value: string) => void;
   options: SearchBarOption[];
+  placeholderLabel?: string;
   value: string;
   disabled?: boolean;
 }
@@ -21,10 +22,13 @@ function SearchBar({
   helperText,
   onChange,
   options,
+  placeholderLabel,
   value,
   disabled = false,
 }: SearchBarProps) {
   const hasOptions = options.length > 0;
+  const selectedValue = hasOptions ? value : '';
+  const shouldShowPlaceholder = hasOptions && Boolean(placeholderLabel) && !options.some((option) => option.value === value);
 
   return (
     <label className="search-bar" aria-label={ariaLabel}>
@@ -33,14 +37,21 @@ function SearchBar({
           className="search-bar__select"
           disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
-          value={hasOptions ? value : ''}
+          value={shouldShowPlaceholder ? '' : selectedValue}
         >
           {hasOptions ? (
-            options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))
+            <>
+              {shouldShowPlaceholder ? (
+                <option value="">
+                  {placeholderLabel}
+                </option>
+              ) : null}
+              {options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </>
           ) : (
             <option value="">
               {emptyLabel}

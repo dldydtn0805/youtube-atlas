@@ -68,7 +68,7 @@ describe('fetchPopularVideosByCategory', () => {
     const { fetchPopularVideosByCategory } = await import('./api');
     const fetchMock = vi.fn().mockResolvedValue(
       createMockResponse({
-        categoryId: 'gaming',
+        categoryId: '20',
         label: '게임',
         description: '게임',
         items: [
@@ -98,7 +98,7 @@ describe('fetchPopularVideosByCategory', () => {
     const section = await fetchPopularVideosByCategory(
       'US',
       {
-        id: 'gaming',
+        id: '20',
         label: '게임',
         description: '게임',
         sourceIds: ['20'],
@@ -107,7 +107,7 @@ describe('fetchPopularVideosByCategory', () => {
     );
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.example.com/api/catalog/regions/US/categories/gaming/videos?pageToken=cursor-1',
+      'https://api.example.com/api/catalog/regions/US/categories/20/videos?pageToken=cursor-1',
       undefined,
     );
     expect(section.nextPageToken).toBe('next-page');

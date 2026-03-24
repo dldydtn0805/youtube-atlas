@@ -1,78 +1,79 @@
 import { describe, expect, it } from 'vitest';
-import { mergeVideoCategories, toVideoCategory } from './videoCategories';
+import {
+  getDetailVideoCategories,
+  getMainVideoCategories,
+  isMainVideoCategoryId,
+  sortVideoCategories,
+} from './videoCategories';
 
-describe('toVideoCategory', () => {
-  it('maps known category ids to localized labels and descriptions', () => {
-    expect(
-      toVideoCategory({
-        id: '20',
-        snippet: {
-          assignable: true,
-          title: 'Gaming',
-        },
-      }),
-    ).toEqual({
-      id: 'gaming',
-      label: '게임',
-      description: '게임 방송, 리뷰, 신작 반응 등 게임 인기 영상을 확인할 수 있습니다.',
+describe('video category helpers', () => {
+  const categories = [
+    {
+      id: '28',
+      label: '테크',
+      description: '테크',
+      sourceIds: ['28'],
+    },
+    {
+      id: '24',
+      label: 'Entertainment',
+      description: '엔터테인먼트',
+      sourceIds: ['24'],
+    },
+    {
+      id: '0',
+      label: '전체',
+      description: '전체',
+      sourceIds: [],
+    },
+    {
+      id: '10',
+      label: 'Music',
+      description: '음악',
+      sourceIds: ['10'],
+    },
+    {
+      id: '25',
+      label: 'News & Politics',
+      description: '뉴스/시사',
+      sourceIds: ['25'],
+    },
+    {
+      id: '20',
+      label: 'Gaming',
+      description: '게임',
       sourceIds: ['20'],
-    });
+    },
+  ];
+
+  it('identifies only curated ids as main categories', () => {
+    expect(isMainVideoCategoryId('0')).toBe(true);
+    expect(isMainVideoCategoryId('10')).toBe(true);
+    expect(isMainVideoCategoryId('24')).toBe(false);
   });
 
-  it('filters out categories that cannot be assigned to videos', () => {
-    expect(
-      toVideoCategory({
-        id: '44',
-        snippet: {
-          assignable: false,
-          title: 'Trailers',
-        },
-      }),
-    ).toBeNull();
-  });
-
-  it('falls back to the api title for unknown categories', () => {
-    expect(
-      toVideoCategory({
-        id: '999',
-        snippet: {
-          assignable: true,
-          title: 'Experimental',
-        },
-      }),
-    ).toEqual({
-      id: '999',
-      label: 'Experimental',
-      description: 'Experimental 카테고리 인기 영상을 확인할 수 있습니다.',
-      sourceIds: ['999'],
-    });
-  });
-});
-
-describe('mergeVideoCategories', () => {
-  it('merges detailed youtube categories into one top-level category and keeps the preferred source first', () => {
-    expect(
-      mergeVideoCategories([
-        {
-          id: 'entertainment',
-          label: '엔터테인먼트',
-          description: '예능, 코미디, 라이프스타일, 여행, 영화 등 대중적인 인기 영상을 모아봅니다.',
-          sourceIds: ['23'],
-        },
-        {
-          id: 'entertainment',
-          label: '엔터테인먼트',
-          description: '예능, 코미디, 라이프스타일, 여행, 영화 등 대중적인 인기 영상을 모아봅니다.',
-          sourceIds: ['24'],
-        },
-      ]),
-    ).toEqual([
-      {
-        id: 'entertainment',
-        label: '엔터테인먼트',
-        description: '예능, 코미디, 라이프스타일, 여행, 영화 등 대중적인 인기 영상을 모아봅니다.',
-        sourceIds: ['24', '23'],
-      },
+  it('sorts categories with the all category first', () => {
+    expect(sortVideoCategories(categories).map((category) => category.id)).toEqual([
+      '0',
+      '28',
+      '24',
+      '20',
+      '10',
+      '25',
     ]);
+  });
+
+  it('returns curated main categories in fixed display order', () => {
+    expect(getMainVideoCategories(categories).map((category) => category.id)).toEqual([
+      '0',
+      '10',
+      '20',
+      '25',
+      '28',
+    ]);
+  });
+
+  it('returns the remaining categories as detail categories', () => {
+    expect(getDetailVideoCategories(categories).map((category) => category.id)).toEqual(['24']);
   });
 });

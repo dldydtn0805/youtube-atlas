@@ -3,6 +3,12 @@ import CommentSection from '../components/CommentSection/CommentSection';
 import SearchBar from '../components/SearchBar/SearchBar';
 import VideoList from '../components/VideoList/VideoList';
 import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
+import {
+  ALL_VIDEO_CATEGORY_ID,
+  getDetailVideoCategories,
+  getMainVideoCategories,
+  sortVideoCategories,
+} from '../constants/videoCategories';
 import countryCodes from '../constants/countryCodes';
 import { useVideoTrendSignals } from '../features/trending/queries';
 import { YouTubeCategorySection } from '../features/youtube/types';
@@ -11,7 +17,7 @@ import { isApiConfigured } from '../lib/api';
 import '../styles/app.css';
 
 const DEFAULT_REGION_CODE = 'US';
-const DEFAULT_CATEGORY_ID = '0';
+const DEFAULT_CATEGORY_ID = ALL_VIDEO_CATEGORY_ID;
 const MOBILE_BREAKPOINT = 768;
 const STORAGE_KEY = 'youtube-atlas-region-code';
 const CINEMATIC_MODE_STORAGE_KEY = 'youtube-atlas-cinematic-mode';
@@ -108,20 +114,16 @@ function App() {
     isError: isVideoCategoriesError,
     error: videoCategoriesError,
   } = useVideoCategories(selectedRegionCode);
+  const sortedVideoCategories = sortVideoCategories(videoCategories);
+  const mainVideoCategories = getMainVideoCategories(sortedVideoCategories);
+  const detailVideoCategories = getDetailVideoCategories(sortedVideoCategories);
   const selectedCategory =
-    videoCategories.find((category) => category.id === selectedCategoryId) ?? videoCategories[0];
-  const sortedVideoCategories = [...videoCategories].sort((left, right) =>
-    left.id === DEFAULT_CATEGORY_ID
-      ? -1
-      : right.id === DEFAULT_CATEGORY_ID
-        ? 1
-        : left.label.localeCompare(right.label, 'ko'),
-  );
+    sortedVideoCategories.find((category) => category.id === selectedCategoryId) ?? sortedVideoCategories[0];
   const regionOptions = sortedCountryCodes.map((country) => ({
     value: country.code,
     label: `${country.code} · ${country.name}`,
   }));
-  const categoryOptions = sortedVideoCategories.map((category) => ({
+  const detailCategoryOptions = detailVideoCategories.map((category) => ({
     value: category.id,
     label: category.label,
   }));
@@ -152,11 +154,13 @@ function App() {
     : error instanceof Error
       ? error.message
       : undefined;
-  const categoryFilterHelperText = isVideoCategoriesLoading
-    ? '카테고리를 불러오는 중입니다.'
+  const detailCategoryHelperText = isVideoCategoriesLoading
+    ? '세부 카테고리를 불러오는 중입니다.'
     : isVideoCategoriesError
       ? `불러오기에 실패했습니다. ${chartErrorMessage}`
-      : selectedCategory?.description ?? '표시할 카테고리가 없습니다.';
+      : detailVideoCategories.length > 0
+        ? '메인 외 카테고리는 여기서 선택할 수 있습니다.'
+        : '현재 이 국가에는 추가 세부 카테고리가 없습니다.';
   const { data: trendSignalsByVideoId = {} } = useVideoTrendSignals(
     selectedRegionCode,
     selectedCategory?.id,
@@ -253,17 +257,17 @@ function App() {
   }, [selectedSection, selectedVideoId]);
 
   useEffect(() => {
-    if (!videoCategories.length) {
+    if (!sortedVideoCategories.length) {
       return;
     }
 
-    const hasSelectedCategory = videoCategories.some((category) => category.id === selectedCategoryId);
+    const hasSelectedCategory = sortedVideoCategories.some((category) => category.id === selectedCategoryId);
 
     if (!hasSelectedCategory) {
-      setSelectedCategoryId(videoCategories[0].id);
+      setSelectedCategoryId(sortedVideoCategories[0].id);
       setSelectedVideoId(undefined);
     }
-  }, [selectedCategoryId, videoCategories]);
+  }, [selectedCategoryId, sortedVideoCategories]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -422,8 +426,21 @@ function App() {
           </span>
         </div>
         <p className="app-shell__filter-summary-text">
-          한 번의 모달에서 국가와 카테고리를 같이 바꾸고 바로 차트에 반영할 수 있습니다.
+          메인 카테고리는 바로 전환하고, 나머지 세부 카테고리는 필터 모달에서 고를 수 있습니다.
         </p>
+        <div className="app-shell__quick-category-group" aria-label="메인 카테고리 빠른 선택">
+          {mainVideoCategories.map((category) => (
+            <button
+              key={category.id}
+              className="app-shell__quick-category"
+              data-active={category.id === selectedCategoryId}
+              onClick={(event) => handleSelectCategory(category.id, event.currentTarget)}
+              type="button"
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -482,22 +499,46 @@ function App() {
 
             <div className="app-shell__modal-field">
               <div className="app-shell__section-heading">
-                <p className="app-shell__section-eyebrow">Category</p>
-                <h3 className="app-shell__modal-field-title">카테고리</h3>
+                <p className="app-shell__section-eyebrow">Main Categories</p>
+                <h3 className="app-shell__modal-field-title">메인 카테고리</h3>
+              </div>
+              <p className="app-shell__modal-field-copy">
+                자주 보는 카테고리는 여기서 바로 바꾸고, 나머지는 아래 세부 목록에서 고를 수 있습니다.
+              </p>
+              <div className="app-shell__quick-category-group" aria-label="메인 카테고리 목록">
+                {mainVideoCategories.map((category) => (
+                  <button
+                    key={category.id}
+                    className="app-shell__quick-category"
+                    data-active={category.id === selectedCategoryId}
+                    onClick={(event) => handleSelectCategory(category.id, event.currentTarget)}
+                    type="button"
+                  >
+                    {category.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="app-shell__modal-field">
+              <div className="app-shell__section-heading">
+                <p className="app-shell__section-eyebrow">Detail Categories</p>
+                <h3 className="app-shell__modal-field-title">세부 카테고리</h3>
               </div>
               <SearchBar
-                ariaLabel="카테고리 선택"
-                disabled={isVideoCategoriesLoading || isVideoCategoriesError || categoryOptions.length === 0}
+                ariaLabel="세부 카테고리 선택"
+                disabled={isVideoCategoriesLoading || isVideoCategoriesError || detailCategoryOptions.length === 0}
                 emptyLabel={
                   isVideoCategoriesLoading
-                    ? '카테고리를 불러오는 중입니다.'
+                    ? '세부 카테고리를 불러오는 중입니다.'
                     : isVideoCategoriesError
-                      ? '카테고리를 불러오지 못했습니다.'
-                      : '표시할 카테고리가 없습니다.'
+                      ? '세부 카테고리를 불러오지 못했습니다.'
+                      : '선택 가능한 세부 카테고리가 없습니다.'
                 }
-                helperText={categoryFilterHelperText}
+                helperText={detailCategoryHelperText}
                 onChange={handleSelectCategory}
-                options={categoryOptions}
+                options={detailCategoryOptions}
+                placeholderLabel="메인 카테고리에서 선택 중"
                 value={selectedCategory?.id ?? ''}
               />
             </div>
