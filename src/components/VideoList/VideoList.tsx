@@ -1,4 +1,6 @@
 import { YouTubeCategorySection } from '../../features/youtube/types';
+import { getVideoTrendBadges } from '../../features/trending/presentation';
+import type { VideoTrendSignal } from '../../features/trending/types';
 import './VideoList.css';
 
 interface VideoListProps {
@@ -7,6 +9,7 @@ interface VideoListProps {
   errorMessage?: string;
   section?: YouTubeCategorySection;
   selectedVideoId?: string;
+  trendSignalsByVideoId?: Record<string, VideoTrendSignal>;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
@@ -19,6 +22,7 @@ function VideoList({
   errorMessage,
   section,
   selectedVideoId,
+  trendSignalsByVideoId,
   hasNextPage,
   isFetchingNextPage,
   onLoadMore,
@@ -51,26 +55,45 @@ function VideoList({
           <p className="video-list__section-description">{section.description}</p>
         </header>
         <div className="video-list__grid">
-          {section.items.map((item, index) => (
-            <button
-              key={`${section.categoryId}-${item.id}`}
-              className="video-card"
-              data-active={selectedVideoId === item.id}
-              onClick={(event) => onSelectVideo(item.id, event.currentTarget)}
-              type="button"
-            >
-              <span className="video-card__rank">
-                {section.label} #{index + 1}
-              </span>
-              <img
-                className="video-card__thumbnail"
-                src={item.snippet.thumbnails.high.url}
-                alt={item.snippet.title}
-              />
-              <strong className="video-card__title">{item.snippet.title}</strong>
-              <span className="video-card__channel">{item.snippet.channelTitle}</span>
-            </button>
-          ))}
+          {section.items.map((item, index) => {
+            const trendBadges = getVideoTrendBadges(trendSignalsByVideoId?.[item.id]);
+
+            return (
+              <button
+                key={`${section.categoryId}-${item.id}`}
+                className="video-card"
+                data-active={selectedVideoId === item.id}
+                onClick={(event) => onSelectVideo(item.id, event.currentTarget)}
+                type="button"
+              >
+                <div className="video-card__meta-row">
+                  <span className="video-card__rank">
+                    {section.label} #{index + 1}
+                  </span>
+                  {trendBadges.length > 0 ? (
+                    <span className="video-card__trend-group" aria-label="급상승 신호">
+                      {trendBadges.map((badge) => (
+                        <span
+                          key={`${item.id}-${badge.label}`}
+                          className="video-card__trend-badge"
+                          data-tone={badge.tone}
+                        >
+                          {badge.label}
+                        </span>
+                      ))}
+                    </span>
+                  ) : null}
+                </div>
+                <img
+                  className="video-card__thumbnail"
+                  src={item.snippet.thumbnails.high.url}
+                  alt={item.snippet.title}
+                />
+                <strong className="video-card__title">{item.snippet.title}</strong>
+                <span className="video-card__channel">{item.snippet.channelTitle}</span>
+              </button>
+            );
+          })}
         </div>
         {hasNextPage ? (
           <div className="video-list__actions">

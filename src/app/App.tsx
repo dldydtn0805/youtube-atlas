@@ -4,8 +4,10 @@ import SearchBar from '../components/SearchBar/SearchBar';
 import VideoList from '../components/VideoList/VideoList';
 import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
 import countryCodes from '../constants/countryCodes';
+import { useVideoTrendSignals } from '../features/trending/queries';
 import { YouTubeCategorySection } from '../features/youtube/types';
 import { usePopularVideosByCategory, useVideoCategories } from '../features/youtube/queries';
+import { isSupabaseConfigured } from '../lib/supabase';
 import '../styles/app.css';
 
 const DEFAULT_REGION_CODE = 'US';
@@ -134,6 +136,7 @@ function App() {
   } = usePopularVideosByCategory(selectedRegionCode, selectedCategory);
   const selectedSection = mergeSections(data?.pages);
   const selectedVideo = selectedSection?.items.find((item) => item.id === selectedVideoId);
+  const selectedSectionVideoIds = selectedSection?.items.map((item) => item.id) ?? [];
   const selectedCountryName =
     countryCodes.find((country) => country.code === selectedRegionCode)?.name ?? selectedRegionCode;
   const isDesktopCinematicMode = !isMobileLayout && isCinematicMode;
@@ -154,6 +157,12 @@ function App() {
     : isVideoCategoriesError
       ? `불러오기에 실패했습니다. ${chartErrorMessage}`
       : selectedCategory?.description ?? '표시할 카테고리가 없습니다.';
+  const { data: trendSignalsByVideoId = {} } = useVideoTrendSignals(
+    selectedRegionCode,
+    selectedCategory?.id,
+    selectedSectionVideoIds,
+    isSupabaseConfigured,
+  );
 
   function handleSelectVideo(videoId: string, triggerElement?: HTMLButtonElement) {
     shouldScrollToPlayerRef.current = true;
@@ -597,6 +606,7 @@ function App() {
         section={selectedSection}
         onSelectVideo={handleSelectVideo}
         selectedVideoId={selectedVideoId}
+        trendSignalsByVideoId={trendSignalsByVideoId}
       />
     </section>
   );

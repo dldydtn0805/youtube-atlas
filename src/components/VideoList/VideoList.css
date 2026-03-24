@@ -119,11 +119,49 @@
   transform: translateY(-4px);
 }
 
+.video-card__meta-row {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
 .video-card__rank {
   color: var(--accent);
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+}
+
+.video-card__trend-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.video-card__trend-badge {
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 0.28rem 0.55rem;
+  white-space: nowrap;
+}
+
+.video-card__trend-badge[data-tone='new'] {
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
+}
+
+.video-card__trend-badge[data-tone='up'] {
+  background: rgba(249, 115, 22, 0.14);
+  color: #c2410c;
+}
+
+.video-card__trend-badge[data-tone='views'] {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
 }
 
 .video-card__thumbnail {

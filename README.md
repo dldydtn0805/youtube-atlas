@@ -105,6 +105,35 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 Supabase SQL Editor에서 `supabase/comments.sql`을 실행해야 채팅 테이블, 권한, Realtime publication 설정이 함께 적용됩니다.
 
+급상승 배지를 쓰려면 `supabase/trending.sql`도 함께 실행해 `video_trend_runs`, `video_trend_snapshots`, `video_trend_signals` 테이블을 만들어야 합니다.
+
+## 급상승 스냅샷
+
+- 프론트는 `video_trend_signals`를 읽어 `NEW`, `+순위상승`, `조회수 증가` 배지를 표시합니다.
+- 데이터 수집은 Supabase Edge Function `supabase/functions/sync-trending`이 담당합니다.
+- 이 함수는 YouTube 인기 영상 스냅샷을 저장하고 직전 스냅샷과 비교해 급상승 신호를 계산합니다.
+
+필요한 함수 시크릿:
+
+```bash
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+YOUTUBE_API_KEY=your_youtube_api_key
+```
+
+예시 요청 본문:
+
+```json
+{
+  "regionCode": "KR",
+  "categoryId": "gaming",
+  "categoryLabel": "게임",
+  "sourceCategoryIds": ["20"]
+}
+```
+
+병합 카테고리는 `sourceCategoryIds`에 여러 개를 넣으면 됩니다. 예를 들어 엔터테인먼트는 `["24", "23", "26"]`처럼 넘겨 현재 앱의 병합 기준과 맞출 수 있습니다.
+
 ## 실행 방법
 
 ```bash
