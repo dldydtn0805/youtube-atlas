@@ -35,6 +35,7 @@ declare namespace YT {
 
   interface Player {
     destroy: () => void;
+    getIframe: () => HTMLIFrameElement;
     loadVideoById: (videoId: string) => void;
     stopVideo: () => void;
   }

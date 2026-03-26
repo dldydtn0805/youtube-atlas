@@ -43,6 +43,7 @@ interface VideoPlayerProps {
   isLoading?: boolean;
   showOverlayNavigation?: boolean;
   onVideoEnd?: () => void;
+  onFullscreenTargetChange?: (element: HTMLElement | null) => void;
   canNavigateVideos?: boolean;
   onPreviousVideo?: () => void;
   onNextVideo?: () => void;
@@ -53,6 +54,7 @@ function VideoPlayer({
   isLoading = false,
   showOverlayNavigation = false,
   onVideoEnd,
+  onFullscreenTargetChange,
   canNavigateVideos = false,
   onPreviousVideo,
   onNextVideo,
@@ -61,10 +63,25 @@ function VideoPlayer({
   const playerHostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YT.Player | null>(null);
   const onVideoEndRef = useRef(onVideoEnd);
+  const onFullscreenTargetChangeRef = useRef(onFullscreenTargetChange);
+
+  function getPlayerFullscreenTarget(player: YT.Player) {
+    const iframe = player.getIframe();
+
+    iframe.allowFullscreen = true;
+    iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
+    iframe.setAttribute('allowfullscreen', '');
+
+    return iframe;
+  }
 
   useEffect(() => {
     onVideoEndRef.current = onVideoEnd;
   }, [onVideoEnd]);
+
+  useEffect(() => {
+    onFullscreenTargetChangeRef.current = onFullscreenTargetChange;
+  }, [onFullscreenTargetChange]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -88,9 +105,13 @@ function VideoPlayer({
         videoId,
         playerVars: {
           autoplay: 1,
+          fs: 1,
           rel: 0,
         },
         events: {
+          onReady: (event) => {
+            onFullscreenTargetChangeRef.current?.(getPlayerFullscreenTarget(event.target));
+          },
           onStateChange: (event) => {
             if (event.data === window.YT?.PlayerState.ENDED) {
               onVideoEndRef.current?.();
@@ -123,7 +144,18 @@ function VideoPlayer({
   }, [videoId]);
 
   useEffect(() => {
+    const player = playerRef.current;
+
+    if (!player) {
+      return;
+    }
+
+    onFullscreenTargetChangeRef.current?.(getPlayerFullscreenTarget(player));
+  }, [videoId]);
+
+  useEffect(() => {
     return () => {
+      onFullscreenTargetChangeRef.current?.(null);
       playerRef.current?.destroy();
       playerRef.current = null;
     };
