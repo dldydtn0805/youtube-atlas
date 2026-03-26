@@ -41,7 +41,6 @@ function loadYouTubeIframeApi() {
 interface VideoPlayerProps {
   selectedVideoId?: string;
   isLoading?: boolean;
-  isCinematic?: boolean;
   showOverlayNavigation?: boolean;
   onVideoEnd?: () => void;
   canNavigateVideos?: boolean;
@@ -52,7 +51,6 @@ interface VideoPlayerProps {
 function VideoPlayer({
   selectedVideoId,
   isLoading = false,
-  isCinematic = false,
   showOverlayNavigation = false,
   onVideoEnd,
   canNavigateVideos = false,
@@ -132,10 +130,7 @@ function VideoPlayer({
   }, []);
 
   return (
-    <section
-      className="video-player"
-      data-cinematic={isCinematic}
-    >
+    <section className="video-player">
       <div className="video-player__frame">
         <div
           ref={playerHostRef}
