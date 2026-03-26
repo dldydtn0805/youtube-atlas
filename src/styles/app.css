@@ -120,6 +120,12 @@
   padding: 20px clamp(14px, 3.6vw, 36px) 28px;
 }
 
+.app-shell__stage:fullscreen,
+.app-shell__stage:-webkit-full-screen {
+  height: 100%;
+  width: 100%;
+}
+
 .app-shell__panel--player {
   padding: 28px 28px 22px;
   scroll-margin-top: 16px;

@@ -72,6 +72,53 @@ function getInitialIsMobileLayout() {
   return window.innerWidth <= MOBILE_BREAKPOINT;
 }
 
+type FullscreenCapableElement = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void;
+};
+
+type FullscreenCapableDocument = Document & {
+  webkitExitFullscreen?: () => Promise<void> | void;
+  webkitFullscreenElement?: Element | null;
+};
+
+function getFullscreenElement() {
+  const fullscreenDocument = document as FullscreenCapableDocument;
+
+  return document.fullscreenElement ?? fullscreenDocument.webkitFullscreenElement ?? null;
+}
+
+async function requestElementFullscreen(element: HTMLElement) {
+  const fullscreenElement = element as FullscreenCapableElement;
+
+  if (typeof fullscreenElement.requestFullscreen === 'function') {
+    await fullscreenElement.requestFullscreen();
+    return true;
+  }
+
+  if (typeof fullscreenElement.webkitRequestFullscreen === 'function') {
+    await fullscreenElement.webkitRequestFullscreen();
+    return true;
+  }
+
+  return false;
+}
+
+async function exitElementFullscreen() {
+  const fullscreenDocument = document as FullscreenCapableDocument;
+
+  if (typeof document.exitFullscreen === 'function') {
+    await document.exitFullscreen();
+    return true;
+  }
+
+  if (typeof fullscreenDocument.webkitExitFullscreen === 'function') {
+    await fullscreenDocument.webkitExitFullscreen();
+    return true;
+  }
+
+  return false;
+}
+
 function scrollElementToViewportCenter(element: HTMLElement) {
   const rect = element.getBoundingClientRect();
   const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
@@ -105,6 +152,7 @@ function App() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isMobileLayout, setIsMobileLayout] = useState(getInitialIsMobileLayout);
   const [mobileTab, setMobileTab] = useState<MobileTab>('chart');
+  const playerStageRef = useRef<HTMLDivElement | null>(null);
   const playerSectionRef = useRef<HTMLElement | null>(null);
   const playerViewportRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollToPlayerRef = useRef(false);
@@ -349,6 +397,26 @@ function App() {
   }, [isCinematicMode]);
 
   useEffect(() => {
+    if (isMobileLayout) {
+      return;
+    }
+
+    const handleFullscreenChange = () => {
+      if (getFullscreenElement() !== playerStageRef.current) {
+        setIsCinematicMode(false);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange as EventListener);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange as EventListener);
+    };
+  }, [isMobileLayout]);
+
+  useEffect(() => {
     if (!isFilterModalOpen) {
       return;
     }
@@ -417,13 +485,36 @@ function App() {
     }, 0);
   }, [isMobileLayout, selectedVideoId]);
 
-  function handleToggleCinematicMode() {
+  async function handleToggleCinematicMode() {
     if (isMobileLayout) {
       return;
     }
 
-    shouldScrollOnModeChangeRef.current = !isDesktopCinematicMode;
-    setIsCinematicMode((current) => !current);
+    if (isDesktopCinematicMode) {
+      try {
+        await exitElementFullscreen();
+      } catch {
+        setIsCinematicMode(false);
+      }
+
+      return;
+    }
+
+    shouldScrollOnModeChangeRef.current = true;
+    setIsCinematicMode(true);
+
+    window.setTimeout(() => {
+      const playerStage = playerStageRef.current;
+
+      if (!playerStage) {
+        setIsCinematicMode(false);
+        return;
+      }
+
+      void requestElementFullscreen(playerStage).catch(() => {
+        setIsCinematicMode(false);
+      });
+    }, 0);
   }
 
   function openFilterModal() {
@@ -594,7 +685,7 @@ function App() {
   ) : null;
 
   const playerContent = (
-    <div className="app-shell__stage" data-cinematic={isDesktopCinematicMode}>
+    <div ref={playerStageRef} className="app-shell__stage" data-cinematic={isDesktopCinematicMode}>
       <section
         ref={playerSectionRef}
         className="app-shell__panel app-shell__panel--player"
@@ -614,7 +705,7 @@ function App() {
                 aria-label={cinematicToggleLabel}
                 className="app-shell__mode-toggle"
                 data-active={isDesktopCinematicMode}
-                onClick={handleToggleCinematicMode}
+                onClick={() => void handleToggleCinematicMode()}
                 title={cinematicToggleLabel}
                 type="button"
               >
