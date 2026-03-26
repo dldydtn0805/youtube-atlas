@@ -143,7 +143,6 @@ function App() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isMobileLayout, setIsMobileLayout] = useState(getInitialIsMobileLayout);
   const [mobileTab, setMobileTab] = useState<MobileTab>('chart');
-  const playerFullscreenTargetRef = useRef<HTMLElement | null>(null);
   const playerSectionRef = useRef<HTMLElement | null>(null);
   const playerViewportRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollToPlayerRef = useRef(false);
@@ -456,16 +455,15 @@ function App() {
       return;
     }
 
-    const fullscreenTarget =
-      playerFullscreenTargetRef.current ?? playerViewportRef.current ?? playerSectionRef.current;
+    const fullscreenTarget = playerViewportRef.current ?? playerSectionRef.current;
 
     if (!fullscreenTarget) {
       return;
     }
 
     try {
-      const hasEnteredFullscreen = await requestElementFullscreen(fullscreenTarget);
-      setIsFullscreen(hasEnteredFullscreen);
+      await requestElementFullscreen(fullscreenTarget);
+      setIsFullscreen(true);
     } catch {
       setIsFullscreen(false);
     }
@@ -672,9 +670,6 @@ function App() {
         <div ref={playerViewportRef} className="app-shell__player-viewport">
           <VideoPlayer
             isLoading={isChartLoading}
-            onFullscreenTargetChange={(element) => {
-              playerFullscreenTargetRef.current = element;
-            }}
             showOverlayNavigation
             onPreviousVideo={handlePlayPreviousVideo}
             onNextVideo={handlePlayNextVideo}
