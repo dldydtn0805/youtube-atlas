@@ -796,7 +796,7 @@ function App() {
             <VideoPlayer
               isLoading={isChartLoading}
               isCinematic={isDesktopCinematicMode}
-              showOverlayNavigation
+              showOverlayNavigation={!isMobileLayout}
               onPreviousVideo={handlePlayPreviousVideo}
               onNextVideo={handlePlayNextVideo}
               selectedVideoId={selectedVideoId}
