@@ -65,6 +65,7 @@ describe('GoogleLoginButton', () => {
     });
 
     expect(container.querySelector('.app-shell__google-login-button-shell')).toBeInTheDocument();
+    expect(container.querySelector('.app-shell__google-login-button-shell--hidden')).not.toBeInTheDocument();
     expect(screen.queryByText('구글 로그인 버튼을 불러오는 중입니다.')).not.toBeInTheDocument();
   });
 
@@ -79,7 +80,8 @@ describe('GoogleLoginButton', () => {
       await flushPromises();
     });
 
-    expect(container.querySelector('.app-shell__google-login-button-shell')).not.toBeInTheDocument();
+    expect(container.querySelector('.app-shell__google-login-button-shell')).toBeInTheDocument();
+    expect(container.querySelector('.app-shell__google-login-button-shell--hidden')).toBeInTheDocument();
     expect(
       screen.getByText(
         '구글 로그인 버튼을 표시하지 못했습니다. 현재 접속 주소가 Google OAuth 허용 출처에 등록되어 있는지 확인해 주세요.',

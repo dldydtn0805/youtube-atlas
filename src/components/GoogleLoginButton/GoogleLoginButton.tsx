@@ -89,6 +89,12 @@ export default function GoogleLoginButton() {
   const isLoginReady = isApiConfigured && isGoogleAuthAvailable && Boolean(googleClientId);
   const shouldRenderButton = status !== 'authenticated' && !isGoogleAuthLoading && isLoginReady;
   const isButtonReady = buttonStatus === 'ready';
+  const buttonShellClassName = [
+    'app-shell__google-login-button-shell',
+    isButtonReady ? null : 'app-shell__google-login-button-shell--hidden',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   useEffect(() => {
     loginWithGoogleIdTokenRef.current = loginWithGoogleIdToken;
@@ -228,20 +234,18 @@ export default function GoogleLoginButton() {
 
   return (
     <div className="app-shell__google-login">
-      {isButtonReady ? (
-        <div className="app-shell__google-login-button-shell">
-          <div
-            ref={buttonContainerRef}
-            aria-busy={isLoggingIn}
-            className="app-shell__google-login-button"
-          />
+      <div className={buttonShellClassName}>
+        <div
+          ref={buttonContainerRef}
+          aria-busy={isLoggingIn}
+          className="app-shell__google-login-button"
+        />
+        {isButtonReady ? (
           <span aria-hidden="true" className="app-shell__google-login-brandmark">
             <GoogleBrandmark />
           </span>
-        </div>
-      ) : (
-        <div ref={buttonContainerRef} className="app-shell__google-login-button" />
-      )}
+        ) : null}
+      </div>
       {buttonStatus === 'rendering' ? (
         <p className="app-shell__auth-status">구글 로그인 버튼을 불러오는 중입니다.</p>
       ) : null}
