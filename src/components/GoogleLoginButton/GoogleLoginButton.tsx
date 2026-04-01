@@ -216,6 +216,9 @@ export default function GoogleLoginButton({ isDarkMode = false }: GoogleLoginBut
   return (
     <div className="app-shell__google-login">
       <div className={buttonShellClassName}>
+        <span aria-hidden="true" className="app-shell__google-login-visual">
+          <span className="app-shell__google-login-visual-glyph">G</span>
+        </span>
         <div
           ref={buttonContainerRef}
           aria-busy={isLoggingIn}

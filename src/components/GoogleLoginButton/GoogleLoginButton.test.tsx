@@ -65,6 +65,7 @@ describe('GoogleLoginButton', () => {
     });
 
     expect(container.querySelector('.app-shell__google-login-button-shell')).toBeInTheDocument();
+    expect(container.querySelector('.app-shell__google-login-visual')).toBeInTheDocument();
     expect(container.querySelector('.app-shell__google-login-button-shell--hidden')).not.toBeInTheDocument();
     expect(screen.queryByText('구글 로그인 버튼을 불러오는 중입니다.')).not.toBeInTheDocument();
     expect(renderButtonMock).toHaveBeenCalledWith(
