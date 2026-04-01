@@ -11,6 +11,7 @@ type GoogleButtonStatus = 'idle' | 'rendering' | 'ready' | 'failed';
 
 type GoogleLoginButtonProps = {
   isDarkMode?: boolean;
+  isMobileLayout?: boolean;
 };
 
 function loadGoogleIdentityScript() {
@@ -52,7 +53,10 @@ function loadGoogleIdentityScript() {
   return googleIdentityScriptPromise;
 }
 
-export default function GoogleLoginButton({ isDarkMode = false }: GoogleLoginButtonProps) {
+export default function GoogleLoginButton({
+  isDarkMode = false,
+  isMobileLayout = false,
+}: GoogleLoginButtonProps) {
   const {
     authError,
     clearAuthError,
@@ -70,8 +74,10 @@ export default function GoogleLoginButton({ isDarkMode = false }: GoogleLoginBut
   const isLoginReady = isApiConfigured && isGoogleAuthAvailable && Boolean(googleClientId);
   const shouldRenderButton = status !== 'authenticated' && !isGoogleAuthLoading && isLoginReady;
   const isButtonReady = buttonStatus === 'ready';
+  const shouldUseCustomOverlay = !isMobileLayout;
   const buttonShellClassName = [
     'app-shell__google-login-button-shell',
+    shouldUseCustomOverlay ? null : 'app-shell__google-login-button-shell--native',
     isButtonReady ? null : 'app-shell__google-login-button-shell--hidden',
   ]
     .filter(Boolean)
@@ -216,9 +222,11 @@ export default function GoogleLoginButton({ isDarkMode = false }: GoogleLoginBut
   return (
     <div className="app-shell__google-login">
       <div className={buttonShellClassName}>
-        <span aria-hidden="true" className="app-shell__google-login-visual">
-          <span className="app-shell__google-login-visual-glyph">G</span>
-        </span>
+        {shouldUseCustomOverlay ? (
+          <span aria-hidden="true" className="app-shell__google-login-visual">
+            <span className="app-shell__google-login-visual-glyph">G</span>
+          </span>
+        ) : null}
         <div
           ref={buttonContainerRef}
           aria-busy={isLoggingIn}

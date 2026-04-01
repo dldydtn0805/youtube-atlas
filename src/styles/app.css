@@ -824,6 +824,10 @@
   visibility: hidden;
 }
 
+.app-shell__google-login-button-shell--native {
+  overflow: visible;
+}
+
 .app-shell__google-login-button {
   align-items: center;
   bottom: 0;
@@ -840,6 +844,11 @@
   touch-action: manipulation;
   top: 0;
   z-index: 999;
+}
+
+.app-shell__google-login-button-shell--native .app-shell__google-login-button {
+  position: relative;
+  z-index: auto;
 }
 
 .app-shell__google-login-visual {
@@ -902,6 +911,13 @@
   position: absolute;
   width: 100%;
   z-index: 1000;
+}
+
+.app-shell__google-login-button-shell--native .app-shell__google-login-button > div,
+.app-shell__google-login-button-shell--native .app-shell__google-login-button iframe {
+  opacity: 1;
+  position: static;
+  z-index: auto;
 }
 
 .app-shell__auth-status {

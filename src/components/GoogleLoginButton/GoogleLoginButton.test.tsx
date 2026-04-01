@@ -102,6 +102,24 @@ describe('GoogleLoginButton', () => {
     );
   });
 
+  it('falls back to the native Google button on mobile layouts', async () => {
+    renderButtonMock.mockImplementation((element: HTMLElement) => {
+      const child = document.createElement('div');
+
+      child.dataset.googleButton = 'true';
+      element.appendChild(child);
+    });
+
+    const { container } = render(<GoogleLoginButton isMobileLayout />);
+
+    await act(async () => {
+      await flushPromises();
+    });
+
+    expect(container.querySelector('.app-shell__google-login-visual')).not.toBeInTheDocument();
+    expect(container.querySelector('.app-shell__google-login-button-shell--native')).toBeInTheDocument();
+  });
+
   it('shows a clear error when the SDK does not mount a clickable button', async () => {
     renderButtonMock.mockImplementation(() => {});
 
