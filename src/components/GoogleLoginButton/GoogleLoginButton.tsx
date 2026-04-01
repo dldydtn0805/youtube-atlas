@@ -4,14 +4,12 @@ import { useAuth } from '../../features/auth/useAuth';
 
 const GOOGLE_IDENTITY_SCRIPT_SELECTOR = 'script[data-google-identity-script="true"]';
 const GOOGLE_IDENTITY_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
-const GOOGLE_BUTTON_RENDER_TIMEOUT_MS = 1_500;
+const GOOGLE_AUTH_SCOPES = 'openid email profile';
 
 let googleIdentityScriptPromise: Promise<void> | null = null;
-type GoogleButtonStatus = 'idle' | 'rendering' | 'ready' | 'failed';
-
-type GoogleLoginButtonProps = {
-  isDarkMode?: boolean;
-  isMobileLayout?: boolean;
+type GoogleButtonStatus = 'idle' | 'loading' | 'ready' | 'failed';
+type GoogleCodeClient = {
+  requestCode: () => void;
 };
 
 function loadGoogleIdentityScript() {
@@ -19,7 +17,7 @@ function loadGoogleIdentityScript() {
     return Promise.resolve();
   }
 
-  if (window.google?.accounts?.id) {
+  if (window.google?.accounts?.oauth2) {
     return Promise.resolve();
   }
 
@@ -53,10 +51,7 @@ function loadGoogleIdentityScript() {
   return googleIdentityScriptPromise;
 }
 
-export default function GoogleLoginButton({
-  isDarkMode = false,
-  isMobileLayout = false,
-}: GoogleLoginButtonProps) {
+export default function GoogleLoginButton() {
   const {
     authError,
     clearAuthError,
@@ -64,70 +59,39 @@ export default function GoogleLoginButton({
     isGoogleAuthAvailable,
     isGoogleAuthLoading,
     isLoggingIn,
-    loginWithGoogleIdToken,
+    loginWithGoogleAuthorizationCode,
     status,
   } = useAuth();
-  const buttonContainerRef = useRef<HTMLDivElement | null>(null);
-  const loginWithGoogleIdTokenRef = useRef(loginWithGoogleIdToken);
+  const codeClientRef = useRef<GoogleCodeClient | null>(null);
+  const loginWithGoogleAuthorizationCodeRef = useRef(loginWithGoogleAuthorizationCode);
   const [buttonError, setButtonError] = useState<string | null>(null);
   const [buttonStatus, setButtonStatus] = useState<GoogleButtonStatus>('idle');
   const isLoginReady = isApiConfigured && isGoogleAuthAvailable && Boolean(googleClientId);
   const shouldRenderButton = status !== 'authenticated' && !isGoogleAuthLoading && isLoginReady;
-  const isButtonReady = buttonStatus === 'ready';
-  const shouldUseCustomOverlay = !isMobileLayout;
-  const buttonShellClassName = [
-    'app-shell__google-login-button-shell',
-    shouldUseCustomOverlay ? null : 'app-shell__google-login-button-shell--native',
-    isButtonReady ? null : 'app-shell__google-login-button-shell--hidden',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const isButtonReady = buttonStatus === 'ready' && !isLoggingIn;
 
   useEffect(() => {
-    loginWithGoogleIdTokenRef.current = loginWithGoogleIdToken;
-  }, [loginWithGoogleIdToken]);
+    loginWithGoogleAuthorizationCodeRef.current = loginWithGoogleAuthorizationCode;
+  }, [loginWithGoogleAuthorizationCode]);
 
   useEffect(() => {
-    if (!shouldRenderButton || !buttonContainerRef.current) {
+    if (!shouldRenderButton) {
       setButtonStatus('idle');
+      codeClientRef.current = null;
       return;
     }
 
     let isCancelled = false;
-    const buttonContainer = buttonContainerRef.current;
-    let renderTimeoutId: number | null = null;
-    let renderObserver: MutationObserver | null = null;
 
-    setButtonStatus('rendering');
+    setButtonStatus('loading');
     setButtonError(null);
-
-    const clearRenderState = () => {
-      if (renderTimeoutId !== null) {
-        window.clearTimeout(renderTimeoutId);
-        renderTimeoutId = null;
-      }
-
-      renderObserver?.disconnect();
-      renderObserver = null;
-    };
-
-    const markButtonReady = () => {
-      if (isCancelled || buttonContainer.childElementCount === 0) {
-        return;
-      }
-
-      clearRenderState();
-      setButtonStatus('ready');
-      setButtonError(null);
-    };
 
     const markButtonFailure = (message: string) => {
       if (isCancelled) {
         return;
       }
 
-      clearRenderState();
-      buttonContainer.innerHTML = '';
+      codeClientRef.current = null;
       setButtonStatus('failed');
       setButtonError(message);
     };
@@ -138,58 +102,41 @@ export default function GoogleLoginButton({
           return;
         }
 
-        const googleIdentity = window.google?.accounts?.id;
+        const googleOAuth = window.google?.accounts?.oauth2;
 
-        if (!googleIdentity) {
+        if (!googleOAuth) {
           markButtonFailure('구글 로그인 스크립트를 초기화하지 못했습니다.');
           return;
         }
 
-        googleIdentity.initialize({
-          auto_select: false,
+        codeClientRef.current = googleOAuth.initCodeClient({
           callback: (response) => {
-            if (!response.credential) {
-              setButtonError('구글 로그인 토큰을 받지 못했습니다.');
+            if (response.error || !response.code) {
+              setButtonError(
+                response.error_description || '구글 로그인 승인 코드를 받지 못했습니다. 잠시 후 다시 시도해 주세요.',
+              );
               return;
             }
 
             setButtonError(null);
             clearAuthError();
-            void loginWithGoogleIdTokenRef.current(response.credential).catch(() => {
+            void loginWithGoogleAuthorizationCodeRef.current(response.code, window.location.origin).catch(() => {
               // The provider stores the user-facing error message for the header.
             });
           },
-          cancel_on_tap_outside: true,
           client_id: googleClientId,
+          error_callback: (error) => {
+            if (error.type === 'popup_closed') {
+              return;
+            }
+
+            markButtonFailure('구글 로그인 창을 열지 못했습니다. 팝업 차단 설정을 확인해 주세요.');
+          },
+          scope: GOOGLE_AUTH_SCOPES,
+          select_account: true,
           ux_mode: 'popup',
         });
-
-        buttonContainer.innerHTML = '';
-        renderObserver = new MutationObserver(() => {
-          markButtonReady();
-        });
-        renderObserver.observe(buttonContainer, {
-          childList: true,
-          subtree: true,
-        });
-        googleIdentity.renderButton(buttonContainer, {
-          logo_alignment: 'left',
-          type: 'icon',
-          shape: 'pill',
-          size: 'medium',
-          text: 'signin_with',
-          theme: isDarkMode ? 'filled_black' : 'filled_blue',
-          width: 40,
-        });
-        markButtonReady();
-
-        renderTimeoutId = window.setTimeout(() => {
-          if (buttonContainer.childElementCount === 0) {
-            markButtonFailure(
-              '구글 로그인 버튼을 표시하지 못했습니다. 현재 접속 주소가 Google OAuth 허용 출처에 등록되어 있는지 확인해 주세요.',
-            );
-          }
-        }, GOOGLE_BUTTON_RENDER_TIMEOUT_MS);
+        setButtonStatus('ready');
       })
       .catch(() => {
         markButtonFailure('구글 로그인 스크립트를 불러오지 못했습니다.');
@@ -197,11 +144,19 @@ export default function GoogleLoginButton({
 
     return () => {
       isCancelled = true;
-      clearRenderState();
-
-      buttonContainer.innerHTML = '';
+      codeClientRef.current = null;
     };
-  }, [clearAuthError, googleClientId, isDarkMode, shouldRenderButton]);
+  }, [clearAuthError, googleClientId, shouldRenderButton]);
+
+  const handleStartLogin = () => {
+    if (!codeClientRef.current || !isButtonReady) {
+      return;
+    }
+
+    setButtonError(null);
+    clearAuthError();
+    codeClientRef.current.requestCode();
+  };
 
   if (!isApiConfigured) {
     return <p className="app-shell__auth-status">백엔드 연결 후 로그인 기능을 사용할 수 있습니다.</p>;
@@ -221,20 +176,20 @@ export default function GoogleLoginButton({
 
   return (
     <div className="app-shell__google-login">
-      <div className={buttonShellClassName}>
-        {shouldUseCustomOverlay ? (
-          <span aria-hidden="true" className="app-shell__google-login-visual">
-            <span className="app-shell__google-login-visual-glyph">G</span>
-          </span>
-        ) : null}
-        <div
-          ref={buttonContainerRef}
-          aria-busy={isLoggingIn}
-          className="app-shell__google-login-button"
-        />
-      </div>
-      {buttonStatus === 'rendering' ? (
-        <p className="app-shell__auth-status">구글 로그인 버튼을 불러오는 중입니다.</p>
+      <button
+        aria-busy={isLoggingIn}
+        aria-label="Google로 로그인"
+        className="app-shell__google-login-trigger"
+        disabled={!isButtonReady}
+        onClick={handleStartLogin}
+        type="button"
+      >
+        <span aria-hidden="true" className="app-shell__google-login-trigger-glyph">
+          G
+        </span>
+      </button>
+      {buttonStatus === 'loading' ? (
+        <p className="app-shell__auth-status">구글 로그인 준비 중입니다.</p>
       ) : null}
       {isLoggingIn ? <p className="app-shell__auth-status">구글 계정을 확인하고 있습니다.</p> : null}
       {buttonError || authError ? (

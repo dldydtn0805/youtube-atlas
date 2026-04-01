@@ -805,71 +805,48 @@
   align-items: center;
   display: inline-flex;
   gap: 6px;
-  position: relative;
 }
 
-.app-shell__google-login-button-shell {
-  align-items: center;
-  border-radius: 999px;
-  display: inline-flex;
-  height: 40px;
-  justify-content: center;
-  overflow: hidden;
-  position: relative;
-  width: 40px;
-}
-
-.app-shell__google-login-button-shell--hidden {
-  pointer-events: none;
-  visibility: hidden;
-}
-
-.app-shell__google-login-button-shell--native {
-  overflow: visible;
-}
-
-.app-shell__google-login-button {
-  align-items: center;
-  bottom: 0;
-  border-radius: inherit;
-  display: inline-flex;
-  justify-content: center;
-  left: 0;
-  min-height: 40px;
-  min-width: 40px;
-  overflow: hidden;
-  pointer-events: auto;
-  position: absolute;
-  right: 0;
-  touch-action: manipulation;
-  top: 0;
-  z-index: 999;
-}
-
-.app-shell__google-login-button-shell--native .app-shell__google-login-button {
-  position: relative;
-  z-index: auto;
-}
-
-.app-shell__google-login-visual {
+.app-shell__google-login-trigger {
   align-items: center;
   background:
     radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.96), rgba(247, 249, 252, 0.98)),
     linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.94));
   border: 1px solid rgba(148, 163, 184, 0.26);
-  border-radius: inherit;
+  border-radius: 999px;
   box-shadow:
     0 10px 24px rgba(15, 23, 42, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  color: inherit;
+  cursor: pointer;
   display: inline-flex;
-  inset: 0;
+  height: 40px;
   justify-content: center;
-  pointer-events: none;
-  position: absolute;
-  z-index: 1;
+  padding: 0;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    background 0.22s ease;
+  width: 40px;
 }
 
-:root[data-theme='dark'] .app-shell__google-login-visual {
+.app-shell__google-login-trigger:hover,
+.app-shell__google-login-trigger:focus-visible {
+  box-shadow:
+    0 14px 28px rgba(15, 23, 42, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.app-shell__google-login-trigger:disabled {
+  cursor: wait;
+  opacity: 0.7;
+  transform: none;
+}
+
+:root[data-theme='dark'] .app-shell__google-login-trigger {
   background:
     radial-gradient(circle at 30% 30%, rgba(36, 49, 66, 0.96), rgba(15, 23, 42, 0.98)),
     linear-gradient(135deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.92));
@@ -879,7 +856,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.app-shell__google-login-visual-glyph {
+.app-shell__google-login-trigger-glyph {
   align-items: center;
   background: linear-gradient(135deg, #4285f4 0 28%, #34a853 28% 52%, #fbbc05 52% 76%, #ea4335 76% 100%);
   -webkit-background-clip: text;
@@ -894,30 +871,9 @@
   justify-content: center;
   letter-spacing: -0.06em;
   line-height: 1;
-  pointer-events: none;
   text-align: center;
   transform: translateX(0.35px);
   width: 18px;
-}
-
-.app-shell__google-login-button > div,
-.app-shell__google-login-button iframe {
-  border-radius: inherit;
-  cursor: pointer;
-  height: 100%;
-  inset: 0;
-  opacity: 0.001;
-  pointer-events: auto;
-  position: absolute;
-  width: 100%;
-  z-index: 1000;
-}
-
-.app-shell__google-login-button-shell--native .app-shell__google-login-button > div,
-.app-shell__google-login-button-shell--native .app-shell__google-login-button iframe {
-  opacity: 1;
-  position: static;
-  z-index: auto;
 }
 
 .app-shell__auth-status {

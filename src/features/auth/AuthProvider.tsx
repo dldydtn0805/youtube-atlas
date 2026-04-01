@@ -10,7 +10,7 @@ import { ApiRequestError, isApiConfigured } from '../../lib/api';
 import {
   fetchCurrentUser,
   fetchGoogleAuthConfig,
-  loginWithGoogle,
+  loginWithGoogleAuthorizationCode,
   logoutSession,
 } from './api';
 import {
@@ -117,12 +117,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setAuthError(null);
   }, []);
 
-  const loginWithGoogleIdToken = useCallback(async (idToken: string) => {
+  const loginWithGoogleCode = useCallback(async (code: string, redirectUri: string) => {
     setIsLoggingIn(true);
     setAuthError(null);
 
     try {
-      const nextSession = await loginWithGoogle(idToken);
+      const nextSession = await loginWithGoogleAuthorizationCode(code, redirectUri);
 
       writeStoredAuthSession(nextSession);
       startTransition(() => {
@@ -156,7 +156,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
       // Local sign-out should still succeed even if the backend session cleanup fails.
     } finally {
       clearStoredAuthSession();
-      window.google?.accounts?.id.disableAutoSelect?.();
       startTransition(() => {
         setSession(null);
         setStatus('anonymous');
@@ -175,7 +174,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isGoogleAuthLoading,
       isLoggingIn,
       isLoggingOut,
-      loginWithGoogleIdToken,
+      loginWithGoogleAuthorizationCode: loginWithGoogleCode,
       logout,
       status,
       user: session?.user ?? null,
@@ -188,7 +187,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isGoogleAuthLoading,
       isLoggingIn,
       isLoggingOut,
-      loginWithGoogleIdToken,
+      loginWithGoogleCode,
       logout,
       session,
       status,

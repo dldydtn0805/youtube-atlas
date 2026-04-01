@@ -9,13 +9,14 @@ export async function fetchGoogleAuthConfig() {
   return fetchApi<GoogleAuthConfig>('/api/auth/google/config');
 }
 
-export async function loginWithGoogle(idToken: string) {
+export async function loginWithGoogleAuthorizationCode(code: string, redirectUri: string) {
   return fetchApi<AuthSession>('/api/auth/google', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-Requested-With': 'XmlHttpRequest',
     },
-    body: JSON.stringify({ idToken }),
+    body: JSON.stringify({ code, redirectUri }),
   });
 }
 

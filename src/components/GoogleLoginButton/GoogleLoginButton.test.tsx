@@ -1,11 +1,11 @@
 import { act } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import GoogleLoginButton from './GoogleLoginButton';
 
 const useAuthMock = vi.fn();
-const initializeMock = vi.fn();
-const renderButtonMock = vi.fn();
+const initCodeClientMock = vi.fn();
+const requestCodeMock = vi.fn();
 
 vi.mock('../../lib/api', () => ({
   isApiConfigured: true,
@@ -22,14 +22,15 @@ async function flushPromises() {
 
 describe('GoogleLoginButton', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    initializeMock.mockReset();
-    renderButtonMock.mockReset();
+    initCodeClientMock.mockReset();
+    requestCodeMock.mockReset();
+    initCodeClientMock.mockReturnValue({
+      requestCode: requestCodeMock,
+    });
     window.google = {
       accounts: {
-        id: {
-          initialize: initializeMock,
-          renderButton: renderButtonMock,
+        oauth2: {
+          initCodeClient: initCodeClientMock,
         },
       },
     };
@@ -40,103 +41,90 @@ describe('GoogleLoginButton', () => {
       isGoogleAuthAvailable: true,
       isGoogleAuthLoading: false,
       isLoggingIn: false,
-      loginWithGoogleIdToken: vi.fn(),
+      loginWithGoogleAuthorizationCode: vi.fn(),
       status: 'anonymous',
     });
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
-  it('shows the rendered Google button when the SDK mounts it successfully', async () => {
-    renderButtonMock.mockImplementation((element: HTMLElement) => {
-      const child = document.createElement('div');
-
-      child.dataset.googleButton = 'true';
-      element.appendChild(child);
-    });
-
-    const { container } = render(<GoogleLoginButton />);
+  it('initializes the Google OAuth code client and renders the custom trigger', async () => {
+    render(<GoogleLoginButton />);
 
     await act(async () => {
       await flushPromises();
     });
 
-    expect(container.querySelector('.app-shell__google-login-button-shell')).toBeInTheDocument();
-    expect(container.querySelector('.app-shell__google-login-visual')).toBeInTheDocument();
-    expect(container.querySelector('.app-shell__google-login-button-shell--hidden')).not.toBeInTheDocument();
-    expect(screen.queryByText('구글 로그인 버튼을 불러오는 중입니다.')).not.toBeInTheDocument();
-    expect(renderButtonMock).toHaveBeenCalledWith(
-      expect.any(HTMLElement),
+    expect(screen.getByRole('button', { name: 'Google로 로그인' })).toBeEnabled();
+    expect(screen.queryByText('구글 로그인 준비 중입니다.')).not.toBeInTheDocument();
+    expect(initCodeClientMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        shape: 'pill',
-        theme: 'filled_blue',
-        type: 'icon',
-        width: 40,
+        client_id: 'client-id',
+        scope: 'openid email profile',
+        ux_mode: 'popup',
       }),
     );
   });
 
-  it('uses a filled theme in dark mode to avoid the visible outer outline', async () => {
-    renderButtonMock.mockImplementation((element: HTMLElement) => {
-      const child = document.createElement('div');
-
-      child.dataset.googleButton = 'true';
-      element.appendChild(child);
-    });
-
-    render(<GoogleLoginButton isDarkMode />);
+  it('requests an authorization code when the custom button is clicked', async () => {
+    render(<GoogleLoginButton />);
 
     await act(async () => {
       await flushPromises();
     });
 
-    expect(renderButtonMock).toHaveBeenCalledWith(
-      expect.any(HTMLElement),
-      expect.objectContaining({
-        theme: 'filled_black',
-        type: 'icon',
-      }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Google로 로그인' }));
+
+    expect(requestCodeMock).toHaveBeenCalledTimes(1);
   });
 
-  it('falls back to the native Google button on mobile layouts', async () => {
-    renderButtonMock.mockImplementation((element: HTMLElement) => {
-      const child = document.createElement('div');
-
-      child.dataset.googleButton = 'true';
-      element.appendChild(child);
+  it('forwards the authorization code to the auth provider with the current origin', async () => {
+    const loginWithGoogleAuthorizationCode = vi.fn().mockResolvedValue(undefined);
+    useAuthMock.mockReturnValue({
+      authError: null,
+      clearAuthError: vi.fn(),
+      googleClientId: 'client-id',
+      isGoogleAuthAvailable: true,
+      isGoogleAuthLoading: false,
+      isLoggingIn: false,
+      loginWithGoogleAuthorizationCode,
+      status: 'anonymous',
     });
 
-    const { container } = render(<GoogleLoginButton isMobileLayout />);
+    render(<GoogleLoginButton />);
 
     await act(async () => {
       await flushPromises();
     });
 
-    expect(container.querySelector('.app-shell__google-login-visual')).not.toBeInTheDocument();
-    expect(container.querySelector('.app-shell__google-login-button-shell--native')).toBeInTheDocument();
+    const config = initCodeClientMock.mock.calls[0]?.[0];
+
+    await act(async () => {
+      config.callback({ code: 'auth-code' });
+      await flushPromises();
+    });
+
+    expect(loginWithGoogleAuthorizationCode).toHaveBeenCalledWith('auth-code', window.location.origin);
   });
 
-  it('shows a clear error when the SDK does not mount a clickable button', async () => {
-    renderButtonMock.mockImplementation(() => {});
+  it('shows a clear error when the OAuth client cannot be initialized', async () => {
+    window.google = {};
+    const appendChildSpy = vi.spyOn(document.head, 'appendChild').mockImplementation((node) => {
+      const script = node as HTMLScriptElement;
 
-    const { container } = render(<GoogleLoginButton />);
+      script.onload?.(new Event('load'));
+      return node;
+    });
+
+    render(<GoogleLoginButton />);
 
     await act(async () => {
       await flushPromises();
-      vi.advanceTimersByTime(1_500);
-      await flushPromises();
     });
 
-    expect(container.querySelector('.app-shell__google-login-button-shell')).toBeInTheDocument();
-    expect(container.querySelector('.app-shell__google-login-button-shell--hidden')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        '구글 로그인 버튼을 표시하지 못했습니다. 현재 접속 주소가 Google OAuth 허용 출처에 등록되어 있는지 확인해 주세요.',
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText('구글 로그인 스크립트를 초기화하지 못했습니다.')).toBeInTheDocument();
+    appendChildSpy.mockRestore();
   });
 });

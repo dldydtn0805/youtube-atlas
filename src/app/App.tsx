@@ -1154,7 +1154,7 @@ function App() {
               </div>
             ) : (
               <div className="app-shell__auth-panel">
-                <GoogleLoginButton isDarkMode={isDarkMode} isMobileLayout={isMobileLayout} />
+                <GoogleLoginButton />
               </div>
             )}
           </div>

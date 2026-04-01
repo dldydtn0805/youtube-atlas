@@ -51,27 +51,23 @@ declare namespace YT {
 interface Window {
   google?: {
     accounts?: {
-      id: {
-        disableAutoSelect?: () => void;
-        initialize: (configuration: {
-          auto_select?: boolean;
-          callback: (response: { credential?: string }) => void;
-          cancel_on_tap_outside?: boolean;
+      oauth2?: {
+        initCodeClient: (configuration: {
+          callback: (response: {
+            code?: string;
+            error?: string;
+            error_description?: string;
+          }) => void;
           client_id: string;
+          error_callback?: (error: {
+            type: 'popup_closed' | 'popup_failed_to_open' | 'unknown';
+          }) => void;
+          scope: string;
+          select_account?: boolean;
           ux_mode?: 'popup' | 'redirect';
-        }) => void;
-        renderButton: (
-          element: HTMLElement,
-          options: {
-            logo_alignment?: 'left' | 'center';
-            shape?: 'pill' | 'rectangular';
-            size?: 'large' | 'medium' | 'small';
-            type?: 'standard' | 'icon';
-            text?: 'continue_with' | 'signin_with';
-            theme?: 'filled_black' | 'filled_blue' | 'outline';
-            width?: number;
-          },
-        ) => void;
+        }) => {
+          requestCode: () => void;
+        };
       };
     };
   };

@@ -10,7 +10,7 @@ export interface AuthContextValue {
   isGoogleAuthLoading: boolean;
   isLoggingIn: boolean;
   isLoggingOut: boolean;
-  loginWithGoogleIdToken: (idToken: string) => Promise<void>;
+  loginWithGoogleAuthorizationCode: (code: string, redirectUri: string) => Promise<void>;
   logout: () => Promise<void>;
   status: AuthStatus;
   user: AuthUser | null;
