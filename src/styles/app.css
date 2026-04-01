@@ -708,19 +708,20 @@
 
 .app-shell__theme-toggle {
   align-items: center;
-  background: var(--surface-control);
-  border: 1px solid var(--border-strong);
-  border-radius: 16px;
-  box-shadow: var(--shadow-card);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
   color: var(--text);
   cursor: pointer;
   display: inline-flex;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
   justify-content: center;
   min-height: 40px;
   min-width: 40px;
-  padding: 0 12px;
+  padding: 0;
+  width: 40px;
   transition:
     transform 0.22s ease,
     box-shadow 0.22s ease,
@@ -731,8 +732,7 @@
 
 .app-shell__theme-toggle:hover,
 .app-shell__theme-toggle:focus-visible {
-  background: var(--surface-control-hover);
-  border-color: var(--border-strong);
+  background: rgba(148, 163, 184, 0.12);
   box-shadow: var(--shadow-soft);
   outline: none;
   transform: translateY(-1px);
@@ -740,15 +740,13 @@
 
 .app-shell__theme-toggle[data-active='true'] {
   background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(15, 23, 42, 0.92);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
   color: #fff;
 }
 
 :root[data-theme='dark'] .app-shell__theme-toggle[data-active='true'] {
-  background: rgba(226, 232, 240, 0.1);
-  border-color: rgba(148, 163, 184, 0.28);
-  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.32);
+  background: transparent;
+  box-shadow: none;
   color: var(--text);
 }
 
