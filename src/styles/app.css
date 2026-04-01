@@ -806,7 +806,6 @@
   display: inline-flex;
   gap: 6px;
   position: relative;
-  z-index: 999;
 }
 
 .app-shell__google-login-button-shell {
@@ -818,7 +817,6 @@
   overflow: hidden;
   position: relative;
   width: 40px;
-  z-index: 999;
 }
 
 .app-shell__google-login-button-shell--hidden {
@@ -836,8 +834,10 @@
   min-height: 40px;
   min-width: 40px;
   overflow: hidden;
+  pointer-events: auto;
   position: absolute;
   right: 0;
+  touch-action: manipulation;
   top: 0;
   z-index: 999;
 }
@@ -855,6 +855,7 @@
   display: inline-flex;
   inset: 0;
   justify-content: center;
+  pointer-events: none;
   position: absolute;
   z-index: 1;
 }
@@ -884,6 +885,7 @@
   justify-content: center;
   letter-spacing: -0.06em;
   line-height: 1;
+  pointer-events: none;
   text-align: center;
   transform: translateX(0.35px);
   width: 18px;
@@ -895,7 +897,8 @@
   cursor: pointer;
   height: 100%;
   inset: 0;
-  opacity: 0;
+  opacity: 0.001;
+  pointer-events: auto;
   position: absolute;
   width: 100%;
   z-index: 1000;
