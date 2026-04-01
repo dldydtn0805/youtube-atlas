@@ -15,7 +15,9 @@
   margin: 0 auto;
   max-width: 1240px;
   padding: 18px 16px 20px;
+  position: relative;
   width: 100%;
+  z-index: 10;
 }
 
 .app-shell__header-top {
@@ -761,7 +763,9 @@
   gap: 10px;
   max-width: none;
   padding: 6px;
+  position: relative;
   width: auto;
+  z-index: 11;
 }
 
 .app-shell__auth-panel {
