@@ -19,7 +19,11 @@ interface VideoListProps {
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
-  onSelectVideo: (videoId: string, triggerElement?: HTMLButtonElement) => void;
+  onSelectVideo: (
+    videoId: string,
+    sectionCategoryId: string,
+    triggerElement?: HTMLButtonElement,
+  ) => void;
 }
 
 function formatViewCount(viewCount?: string) {
@@ -115,7 +119,7 @@ function VideoList({
                   key={`${currentSection.categoryId}-${item.id}`}
                   className="video-card"
                   data-active={selectedVideoId === item.id}
-                  onClick={(event) => onSelectVideo(item.id, event.currentTarget)}
+                  onClick={(event) => onSelectVideo(item.id, currentSection.categoryId, event.currentTarget)}
                   type="button"
                 >
                   <div className="video-card__meta-row">

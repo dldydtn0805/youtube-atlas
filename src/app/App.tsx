@@ -235,6 +235,7 @@ function App() {
   const [selectedRegionCode, setSelectedRegionCode] = useState(getInitialRegionCode);
   const [selectedCategoryId, setSelectedCategoryId] = useState(DEFAULT_CATEGORY_ID);
   const [selectedVideoId, setSelectedVideoId] = useState<string>();
+  const [activePlaybackQueueId, setActivePlaybackQueueId] = useState<string>(DEFAULT_CATEGORY_ID);
   const [isCinematicMode, setIsCinematicMode] = useState(getInitialCinematicMode);
   const [themeMode, setThemeMode] = useState<ThemeMode>(getInitialThemeMode);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -376,10 +377,27 @@ function App() {
     selectedSection?.items,
     favoriteStreamerVideoSection?.items,
   );
+  function getPlaybackQueueItems(queueId?: string) {
+    if (queueId && realtimeSurgingSection?.categoryId === queueId) {
+      return realtimeSurgingSection.items;
+    }
+
+    if (queueId && favoriteStreamerVideoSection?.categoryId === queueId) {
+      return favoriteStreamerVideoSection.items;
+    }
+
+    if (queueId && selectedSection?.categoryId === queueId) {
+      return selectedSection.items;
+    }
+
+    return [];
+  }
+
+  const activePlaybackItems = getPlaybackQueueItems(activePlaybackQueueId);
   const selectedVideo = combinedPlayableItems.find((item) => item.id === selectedVideoId);
   const selectedVideoViewCount = formatVideoViewCount(selectedVideo?.statistics?.viewCount);
   const selectedVideoStatLabel = selectedVideoViewCount;
-  const canPlayNextVideo = combinedPlayableItems.length > 1;
+  const canPlayNextVideo = activePlaybackItems.length > 1;
   const selectedChannelId = selectedVideo?.snippet.channelId?.trim();
   const isSelectedChannelFavorited = selectedChannelId
     ? favoriteStreamers.some((favoriteStreamer) => favoriteStreamer.channelId === selectedChannelId)
@@ -427,8 +445,13 @@ function App() {
     void logout();
   }, [favoriteStreamerVideosError, logout]);
 
-  function handleSelectVideo(videoId: string, triggerElement?: HTMLButtonElement) {
+  function handleSelectVideo(
+    videoId: string,
+    playbackQueueId: string,
+    triggerElement?: HTMLButtonElement,
+  ) {
     shouldScrollToPlayerRef.current = true;
+    setActivePlaybackQueueId(playbackQueueId);
     setSelectedVideoId(videoId);
     triggerElement?.blur();
   }
@@ -444,6 +467,7 @@ function App() {
 
       if (firstVideoId) {
         shouldScrollToPlayerRef.current = true;
+        setActivePlaybackQueueId(categoryId);
         setSelectedVideoId(firstVideoId);
       }
 
@@ -452,18 +476,22 @@ function App() {
     }
 
     shouldScrollToPlayerRef.current = true;
+    setActivePlaybackQueueId(categoryId);
     setSelectedCategoryId(categoryId);
     setSelectedVideoId(undefined);
     triggerElement?.blur();
   }
 
   function handleSelectRegion(regionCode: RegionCode) {
+    setActivePlaybackQueueId(selectedCategoryId);
     setSelectedRegionCode(regionCode);
     setSelectedVideoId(undefined);
   }
 
   function handleSelectAdjacentVideo(step: number) {
-    if (combinedPlayableItems.length === 0) {
+    const queueItems = getPlaybackQueueItems(activePlaybackQueueId);
+
+    if (queueItems.length === 0) {
       return;
     }
 
@@ -471,17 +499,11 @@ function App() {
       shouldScrollToPlayerRef.current = true;
     }
 
-    const chartItems = selectedSection?.items ?? [];
-    const activeItems =
-      chartItems.length > 0 && chartItems.some((item) => item.id === selectedVideoId)
-        ? chartItems
-        : combinedPlayableItems;
-    const currentIndex = activeItems.findIndex((item) => item.id === selectedVideoId);
-    const fallbackItems = chartItems.length > 0 ? chartItems : combinedPlayableItems;
-    const nextItems = currentIndex >= 0 ? activeItems : fallbackItems;
+    const currentIndex = queueItems.findIndex((item) => item.id === selectedVideoId);
+    const nextItems = queueItems;
     const nextIndex =
       currentIndex >= 0
-        ? (currentIndex + step + activeItems.length) % activeItems.length
+        ? (currentIndex + step + queueItems.length) % queueItems.length
         : step >= 0
           ? 0
           : nextItems.length - 1;
@@ -502,19 +524,34 @@ function App() {
   }
 
   useEffect(() => {
-    const firstVideoId = selectedSection?.items[0]?.id ?? favoriteStreamerVideoSection?.items[0]?.id;
+    const queueItems = getPlaybackQueueItems(activePlaybackQueueId);
+    const fallbackQueueId =
+      selectedSection?.categoryId ??
+      favoriteStreamerVideoSection?.categoryId ??
+      realtimeSurgingSection?.categoryId;
+    const fallbackItems =
+      queueItems.length > 0 ? queueItems : getPlaybackQueueItems(fallbackQueueId);
+    const hasSelectedVideoInQueue = queueItems.some((item) => item.id === selectedVideoId);
 
-    if (!firstVideoId) {
+    if (fallbackItems.length === 0) {
       setSelectedVideoId(undefined);
       return;
     }
 
-    const hasSelectedVideo = combinedPlayableItems.some((item) => item.id === selectedVideoId);
+    if (!hasSelectedVideoInQueue) {
+      if (queueItems.length === 0 && fallbackQueueId && activePlaybackQueueId !== fallbackQueueId) {
+        setActivePlaybackQueueId(fallbackQueueId);
+      }
 
-    if (!hasSelectedVideo) {
-      setSelectedVideoId(firstVideoId);
+      setSelectedVideoId(fallbackItems[0]?.id);
     }
-  }, [combinedPlayableItems, favoriteStreamerVideoSection, selectedSection, selectedVideoId]);
+  }, [
+    activePlaybackQueueId,
+    favoriteStreamerVideoSection,
+    realtimeSurgingSection,
+    selectedSection,
+    selectedVideoId,
+  ]);
 
   useEffect(() => {
     if (!sortedVideoCategories.length) {
@@ -524,6 +561,7 @@ function App() {
     const hasSelectedCategory = sortedVideoCategories.some((category) => category.id === selectedCategoryId);
 
     if (!hasSelectedCategory) {
+      setActivePlaybackQueueId(sortedVideoCategories[0].id);
       setSelectedCategoryId(sortedVideoCategories[0].id);
       setSelectedVideoId(undefined);
     }
@@ -952,8 +990,12 @@ function App() {
       ? favoriteStreamerVideosError.message
       : '즐겨찾기 영상을 불러오지 못했습니다.';
 
+  const favoriteVideosPanelClassName = isDesktopCinematicMode
+    ? 'app-shell__panel app-shell__panel--favorites app-shell__panel--chart-cinematic'
+    : 'app-shell__panel app-shell__panel--favorites app-shell__panel--chart';
+
   const favoriteVideosContent = (
-    <section className="app-shell__panel app-shell__panel--chart">
+    <section className={favoriteVideosPanelClassName}>
       <div className="app-shell__section-heading">
         <p className="app-shell__section-eyebrow">Favorite Videos</p>
         <h2 className="app-shell__section-title">{selectedCountryName} 기준 즐겨찾기 영상</h2>
@@ -1100,6 +1142,7 @@ function App() {
           ) : null}
         </section>
         {cinematicQuickFiltersContent}
+        {isDesktopCinematicMode ? favoriteVideosContent : null}
         {isDesktopCinematicMode ? renderChartPanel('app-shell__panel--chart-cinematic') : null}
       </div>
     </div>

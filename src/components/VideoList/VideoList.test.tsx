@@ -51,6 +51,10 @@ describe('VideoList', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /테스트 영상/i }));
 
-    expect(onSelectVideo).toHaveBeenCalledWith('video-1', expect.any(HTMLButtonElement));
+    expect(onSelectVideo).toHaveBeenCalledWith(
+      'video-1',
+      'favorite-streamers',
+      expect.any(HTMLButtonElement),
+    );
   });
 });
