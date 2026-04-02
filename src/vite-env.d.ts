@@ -35,11 +35,21 @@ declare namespace YT {
 
   interface Player {
     destroy: () => void;
-    loadVideoById: (videoId: string) => void;
+    getCurrentTime: () => number;
+    getPlayerState: () => number;
+    loadVideoById: (videoId: string | VideoByIdSettings) => void;
+    seekTo: (seconds: number, allowSeekAhead?: boolean) => void;
     stopVideo: () => void;
   }
 
+  interface VideoByIdSettings {
+    videoId: string;
+    startSeconds?: number;
+  }
+
   interface PlayerStateStatic {
+    PAUSED: number;
+    PLAYING: number;
     ENDED: number;
   }
 
