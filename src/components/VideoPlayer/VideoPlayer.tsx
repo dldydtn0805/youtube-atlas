@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import './VideoPlayer.css';
 
 let youtubeIframeApiPromise: Promise<void> | undefined;
@@ -99,7 +99,7 @@ function VideoPlayer({
     onPlaybackRestoreAppliedRef.current = onPlaybackRestoreApplied;
   }, [onPlaybackRestoreApplied]);
 
-  function readCurrentPlaybackPositionSeconds() {
+  const readCurrentPlaybackPositionSeconds = useCallback(() => {
     const player = playerRef.current;
 
     if (!player) {
@@ -113,21 +113,24 @@ function VideoPlayer({
     }
 
     return Math.floor(currentTimeSeconds);
-  }
+  }, []);
 
-  function reportPlaybackProgress(progressVideoId?: string) {
-    if (!progressVideoId) {
-      return;
-    }
+  const reportPlaybackProgress = useCallback(
+    (progressVideoId?: string) => {
+      if (!progressVideoId) {
+        return;
+      }
 
-    const currentTimeSeconds = readCurrentPlaybackPositionSeconds();
+      const currentTimeSeconds = readCurrentPlaybackPositionSeconds();
 
-    if (currentTimeSeconds === null) {
-      return;
-    }
+      if (currentTimeSeconds === null) {
+        return;
+      }
 
-    onPlaybackProgressRef.current?.(progressVideoId, currentTimeSeconds);
-  }
+      onPlaybackProgressRef.current?.(progressVideoId, currentTimeSeconds);
+    },
+    [readCurrentPlaybackPositionSeconds],
+  );
 
   function markPlaybackRestoreApplied(restoreId?: number) {
     if (!restoreId || lastAppliedRestoreIdRef.current === restoreId) {
@@ -200,7 +203,7 @@ function VideoPlayer({
     return () => {
       isCancelled = true;
     };
-  }, [videoId]);
+  }, [reportPlaybackProgress, videoId]);
 
   useEffect(() => {
     const player = playerRef.current;
@@ -270,7 +273,7 @@ function VideoPlayer({
       window.clearInterval(intervalId);
       reportPlaybackProgress(videoId);
     };
-  }, [videoId]);
+  }, [reportPlaybackProgress, videoId]);
 
   useEffect(() => {
     return () => {
@@ -278,13 +281,10 @@ function VideoPlayer({
       playerRef.current?.destroy();
       playerRef.current = null;
     };
-  }, []);
+  }, [reportPlaybackProgress]);
 
   return (
-    <section
-      className="video-player"
-      data-cinematic={isCinematic}
-    >
+    <section className="video-player" data-cinematic={isCinematic}>
       <div className="video-player__frame">
         <div
           ref={playerHostRef}
