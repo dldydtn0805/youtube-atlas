@@ -149,7 +149,14 @@ function PlayerStage({
                       ) : (
                         <svg viewBox="0 0 24 24" fill="none">
                           <path
-                            d="M7.25 5.25A1.5 1.5 0 0 1 8.75 3.75h6.5a1.5 1.5 0 0 1 1.5 1.5v15l-4.75-3-4.75 3v-15Z"
+                            d="M7.25 4.75h9.5a1.5 1.5 0 0 1 1.5 1.5v11.5a1.5 1.5 0 0 1-1.5 1.5h-9.5a1.5 1.5 0 0 1-1.5-1.5V6.25a1.5 1.5 0 0 1 1.5-1.5Z"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="1.7"
+                          />
+                          <path
+                            d="M9 9.25h6M9 12.25h6M9 15.25h4"
                             stroke="currentColor"
                             strokeLinecap="round"
                             strokeLinejoin="round"
