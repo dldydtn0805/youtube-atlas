@@ -78,6 +78,7 @@ function VideoPlayer({
   const onPlaybackRestoreAppliedRef = useRef(onPlaybackRestoreApplied);
   const playbackRestoreRef = useRef(playbackRestore);
   const lastAppliedRestoreIdRef = useRef<number | null>(null);
+  const isPlayerReadyRef = useRef(false);
 
   useEffect(() => {
     onVideoEndRef.current = onVideoEnd;
@@ -102,7 +103,7 @@ function VideoPlayer({
   const readCurrentPlaybackPositionSeconds = useCallback(() => {
     const player = playerRef.current;
 
-    if (!player) {
+    if (!player || !isPlayerReadyRef.current || typeof player.getCurrentTime !== 'function') {
       return null;
     }
 
@@ -168,6 +169,7 @@ function VideoPlayer({
       }
 
       const restoreStartSeconds = getRestoreStartSeconds(videoId);
+      isPlayerReadyRef.current = false;
 
       playerRef.current = new window.YT.Player(playerHostRef.current, {
         height: '100%',
@@ -180,6 +182,8 @@ function VideoPlayer({
         },
         events: {
           onReady: () => {
+            isPlayerReadyRef.current = true;
+
             if (restoreStartSeconds !== undefined) {
               markPlaybackRestoreApplied(playbackRestoreRef.current?.restoreId);
             }
@@ -208,25 +212,29 @@ function VideoPlayer({
   useEffect(() => {
     const player = playerRef.current;
 
-    if (!player) {
+    if (!player || !isPlayerReadyRef.current) {
       return;
     }
 
     if (!videoId) {
-      player.stopVideo();
+      if (typeof player.stopVideo === 'function') {
+        player.stopVideo();
+      }
       return;
     }
 
     const restoreStartSeconds = getRestoreStartSeconds(videoId);
 
-    player.loadVideoById(
-      restoreStartSeconds === undefined
-        ? videoId
-        : {
-            startSeconds: restoreStartSeconds,
-            videoId,
-          },
-    );
+    if (typeof player.loadVideoById === 'function') {
+      player.loadVideoById(
+        restoreStartSeconds === undefined
+          ? videoId
+          : {
+              startSeconds: restoreStartSeconds,
+              videoId,
+            },
+      );
+    }
 
     if (restoreStartSeconds !== undefined) {
       markPlaybackRestoreApplied(playbackRestoreRef.current?.restoreId);
@@ -237,7 +245,13 @@ function VideoPlayer({
     const restore = playbackRestore;
     const player = playerRef.current;
 
-    if (!player || !restore || restore.videoId !== currentVideoIdRef.current) {
+    if (
+      !player ||
+      !isPlayerReadyRef.current ||
+      !restore ||
+      restore.videoId !== currentVideoIdRef.current ||
+      typeof player.seekTo !== 'function'
+    ) {
       return;
     }
 
@@ -253,7 +267,11 @@ function VideoPlayer({
     const intervalId = window.setInterval(() => {
       const player = playerRef.current;
 
-      if (!player) {
+      if (
+        !player ||
+        !isPlayerReadyRef.current ||
+        typeof player.getPlayerState !== 'function'
+      ) {
         return;
       }
 
@@ -278,6 +296,7 @@ function VideoPlayer({
   useEffect(() => {
     return () => {
       reportPlaybackProgress(currentVideoIdRef.current);
+      isPlayerReadyRef.current = false;
       playerRef.current?.destroy();
       playerRef.current = null;
     };
