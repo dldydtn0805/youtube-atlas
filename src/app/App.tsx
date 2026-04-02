@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import CommentSection from '../components/CommentSection/CommentSection';
 import GoogleLoginButton from '../components/GoogleLoginButton/GoogleLoginButton';
 import SearchBar from '../components/SearchBar/SearchBar';
 import VideoList from '../components/VideoList/VideoList';
 import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
 import { useAuth } from '../features/auth/useAuth';
+import { upsertPlaybackProgress } from '../features/playback/api';
+import type { PlaybackProgress } from '../features/playback/types';
 import {
   useFavoriteStreamerVideos,
   useFavoriteStreamers,
@@ -31,6 +33,7 @@ const MOBILE_BREAKPOINT = 768;
 const STORAGE_KEY = 'youtube-atlas-region-code';
 const CINEMATIC_MODE_STORAGE_KEY = 'youtube-atlas-cinematic-mode';
 const THEME_MODE_STORAGE_KEY = 'youtube-atlas-theme-mode';
+const RESTORED_PLAYBACK_QUEUE_ID = 'last-playback-progress';
 const FAVORITE_STREAMER_VIDEO_SECTION: YouTubeCategorySection = {
   categoryId: 'favorite-streamers',
   description: '전체 인기 영상 중 즐겨찾기한 채널의 영상만 모았습니다.',
@@ -39,6 +42,11 @@ const FAVORITE_STREAMER_VIDEO_SECTION: YouTubeCategorySection = {
 };
 type RegionCode = (typeof countryCodes)[number]['code'];
 type ThemeMode = 'light' | 'dark';
+type PendingPlaybackRestore = {
+  restoreId: number;
+  videoId: string;
+  positionSeconds: number;
+};
 
 const SUPPORTED_REGION_CODES = new Set<string>(countryCodes.map((country) => country.code));
 const sortedCountryCodes = [...countryCodes].sort((left, right) => left.name.localeCompare(right.name, 'ko'));
@@ -181,6 +189,33 @@ function createFallbackThumbnails(url: string) {
   };
 }
 
+function mapPlaybackProgressToVideoItem(playbackProgress: PlaybackProgress): YouTubeVideoItem {
+  return {
+    id: playbackProgress.videoId,
+    contentDetails: {
+      duration: '',
+    },
+    snippet: {
+      title: playbackProgress.videoTitle ?? '',
+      channelTitle: playbackProgress.channelTitle ?? '',
+      channelId: '',
+      categoryId: RESTORED_PLAYBACK_QUEUE_ID,
+      thumbnails: createFallbackThumbnails(playbackProgress.thumbnailUrl ?? ''),
+    },
+  };
+}
+
+function getVideoThumbnailUrl(video: YouTubeVideoItem) {
+  return (
+    video.snippet.thumbnails.maxres?.url ??
+    video.snippet.thumbnails.standard?.url ??
+    video.snippet.thumbnails.high.url ??
+    video.snippet.thumbnails.medium.url ??
+    video.snippet.thumbnails.default.url ??
+    null
+  );
+}
+
 function mapTrendSignalToVideoItem(signal: VideoTrendSignal): YouTubeVideoItem {
   return {
     id: signal.videoId,
@@ -240,11 +275,15 @@ function App() {
   const [themeMode, setThemeMode] = useState<ThemeMode>(getInitialThemeMode);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isMobileLayout, setIsMobileLayout] = useState(getInitialIsMobileLayout);
+  const [pendingPlaybackRestore, setPendingPlaybackRestore] = useState<PendingPlaybackRestore | null>(null);
   const playerStageRef = useRef<HTMLDivElement | null>(null);
   const playerSectionRef = useRef<HTMLElement | null>(null);
   const playerViewportRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollToPlayerRef = useRef(false);
   const shouldScrollOnModeChangeRef = useRef(false);
+  const nextPlaybackRestoreIdRef = useRef(0);
+  const handledPlaybackRestoreSignatureRef = useRef<string | null>(null);
+  const lastPersistedPlaybackSecondsRef = useRef<Record<string, number>>({});
   const {
     data: videoCategories = [],
     isLoading: isVideoCategoriesLoading,
@@ -372,12 +411,20 @@ function App() {
       ? `아직 +${realtimeSurgingData?.rankChangeThreshold ?? 5} 이상 급상승한 영상이 없습니다.`
       : undefined;
   const featuredItems = realtimeSurgingSection?.items ?? [];
+  const restoredPlaybackVideo = user?.lastPlaybackProgress
+    ? mapPlaybackProgressToVideoItem(user.lastPlaybackProgress)
+    : undefined;
   const combinedPlayableItems = mergeUniqueVideoItems(
     featuredItems,
     selectedSection?.items,
     favoriteStreamerVideoSection?.items,
+    restoredPlaybackVideo ? [restoredPlaybackVideo] : undefined,
   );
   function getPlaybackQueueItems(queueId?: string) {
+    if (queueId === RESTORED_PLAYBACK_QUEUE_ID) {
+      return restoredPlaybackVideo ? [restoredPlaybackVideo] : [];
+    }
+
     if (queueId && realtimeSurgingSection?.categoryId === queueId) {
       return realtimeSurgingSection.items;
     }
@@ -391,6 +438,26 @@ function App() {
     }
 
     return [];
+  }
+
+  function findPlaybackQueueIdForVideo(videoId?: string) {
+    if (!videoId) {
+      return undefined;
+    }
+
+    if (realtimeSurgingSection?.items.some((item) => item.id === videoId)) {
+      return realtimeSurgingSection.categoryId;
+    }
+
+    if (favoriteStreamerVideoSection?.items.some((item) => item.id === videoId)) {
+      return favoriteStreamerVideoSection.categoryId;
+    }
+
+    if (selectedSection?.items.some((item) => item.id === videoId)) {
+      return selectedSection.categoryId;
+    }
+
+    return undefined;
   }
 
   const activePlaybackItems = getPlaybackQueueItems(activePlaybackQueueId);
@@ -414,6 +481,122 @@ function App() {
       : isSelectedChannelFavorited
         ? '즐겨찾기 저장됨'
         : '채널 즐겨찾기';
+
+  useEffect(() => {
+    if (authStatus === 'authenticated') {
+      return;
+    }
+
+    handledPlaybackRestoreSignatureRef.current = null;
+    lastPersistedPlaybackSecondsRef.current = {};
+    setPendingPlaybackRestore(null);
+  }, [authStatus]);
+
+  useEffect(() => {
+    if (authStatus !== 'authenticated' || !user?.lastPlaybackProgress) {
+      return;
+    }
+
+    const playbackProgress = user.lastPlaybackProgress;
+    const playbackRestoreSignature = [
+      user.id,
+      playbackProgress.videoId,
+      playbackProgress.positionSeconds,
+      playbackProgress.updatedAt,
+    ].join(':');
+
+    if (handledPlaybackRestoreSignatureRef.current === playbackRestoreSignature) {
+      return;
+    }
+
+    handledPlaybackRestoreSignatureRef.current = playbackRestoreSignature;
+    nextPlaybackRestoreIdRef.current += 1;
+    shouldScrollToPlayerRef.current = true;
+    setPendingPlaybackRestore({
+      positionSeconds: playbackProgress.positionSeconds,
+      restoreId: nextPlaybackRestoreIdRef.current,
+      videoId: playbackProgress.videoId,
+    });
+    setActivePlaybackQueueId(findPlaybackQueueIdForVideo(playbackProgress.videoId) ?? RESTORED_PLAYBACK_QUEUE_ID);
+    setSelectedVideoId(playbackProgress.videoId);
+  }, [
+    authStatus,
+    realtimeSurgingSection,
+    favoriteStreamerVideoSection,
+    selectedSection,
+    user,
+  ]);
+
+  useEffect(() => {
+    if (activePlaybackQueueId !== RESTORED_PLAYBACK_QUEUE_ID || !selectedVideoId) {
+      return;
+    }
+
+    const matchedQueueId = findPlaybackQueueIdForVideo(selectedVideoId);
+
+    if (matchedQueueId) {
+      setActivePlaybackQueueId(matchedQueueId);
+    }
+  }, [
+    activePlaybackQueueId,
+    favoriteStreamerVideoSection,
+    realtimeSurgingSection,
+    selectedSection,
+    selectedVideoId,
+  ]);
+
+  const handlePlaybackRestoreApplied = useCallback((restoreId: number) => {
+    setPendingPlaybackRestore((currentRestore) =>
+      currentRestore?.restoreId === restoreId ? null : currentRestore,
+    );
+  }, []);
+
+  const handlePlaybackProgress = useCallback(
+    async (videoId: string, positionSeconds: number) => {
+      if (authStatus !== 'authenticated' || !accessToken) {
+        return;
+      }
+
+      const playbackVideo = combinedPlayableItems.find((item) => item.id === videoId);
+
+      if (!playbackVideo) {
+        return;
+      }
+
+      const normalizedPositionSeconds = Math.max(0, Math.floor(positionSeconds));
+      const previousPositionSeconds = lastPersistedPlaybackSecondsRef.current[videoId];
+
+      if (previousPositionSeconds === normalizedPositionSeconds) {
+        return;
+      }
+
+      lastPersistedPlaybackSecondsRef.current[videoId] = normalizedPositionSeconds;
+
+      try {
+        await upsertPlaybackProgress(accessToken, {
+          channelTitle: playbackVideo.snippet.channelTitle || null,
+          positionSeconds: normalizedPositionSeconds,
+          thumbnailUrl: getVideoThumbnailUrl(playbackVideo),
+          videoId,
+          videoTitle: playbackVideo.snippet.title || null,
+        });
+      } catch (error) {
+        if (previousPositionSeconds === undefined) {
+          delete lastPersistedPlaybackSecondsRef.current[videoId];
+        } else {
+          lastPersistedPlaybackSecondsRef.current[videoId] = previousPositionSeconds;
+        }
+
+        if (
+          error instanceof ApiRequestError &&
+          (error.code === 'unauthorized' || error.code === 'session_expired')
+        ) {
+          void logout();
+        }
+      }
+    },
+    [accessToken, authStatus, combinedPlayableItems, logout],
+  );
 
   useEffect(() => {
     if (!(favoriteStreamersError instanceof ApiRequestError)) {
@@ -1095,12 +1278,15 @@ function App() {
             <VideoPlayer
               isLoading={isChartLoading}
               isCinematic={isDesktopCinematicMode}
-              showOverlayNavigation={!isMobileLayout}
-              onPreviousVideo={handlePlayPreviousVideo}
               onNextVideo={handlePlayNextVideo}
-              selectedVideoId={selectedVideoId}
+              onPlaybackProgress={handlePlaybackProgress}
+              onPlaybackRestoreApplied={handlePlaybackRestoreApplied}
+              onPreviousVideo={handlePlayPreviousVideo}
               onVideoEnd={handleVideoEnd}
+              playbackRestore={pendingPlaybackRestore}
               canNavigateVideos={canPlayNextVideo}
+              selectedVideoId={selectedVideoId}
+              showOverlayNavigation={!isMobileLayout}
             />
           </div>
           {selectedVideo ? (

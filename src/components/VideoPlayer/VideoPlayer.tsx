@@ -47,6 +47,13 @@ interface VideoPlayerProps {
   canNavigateVideos?: boolean;
   onPreviousVideo?: () => void;
   onNextVideo?: () => void;
+  onPlaybackProgress?: (videoId: string, positionSeconds: number) => void;
+  playbackRestore?: {
+    restoreId: number;
+    videoId: string;
+    positionSeconds: number;
+  } | null;
+  onPlaybackRestoreApplied?: (restoreId: number) => void;
 }
 
 function VideoPlayer({
@@ -58,15 +65,88 @@ function VideoPlayer({
   canNavigateVideos = false,
   onPreviousVideo,
   onNextVideo,
+  onPlaybackProgress,
+  playbackRestore,
+  onPlaybackRestoreApplied,
 }: VideoPlayerProps) {
   const videoId = selectedVideoId;
   const playerHostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YT.Player | null>(null);
+  const currentVideoIdRef = useRef(videoId);
   const onVideoEndRef = useRef(onVideoEnd);
+  const onPlaybackProgressRef = useRef(onPlaybackProgress);
+  const onPlaybackRestoreAppliedRef = useRef(onPlaybackRestoreApplied);
+  const playbackRestoreRef = useRef(playbackRestore);
+  const lastAppliedRestoreIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     onVideoEndRef.current = onVideoEnd;
   }, [onVideoEnd]);
+
+  useEffect(() => {
+    currentVideoIdRef.current = videoId;
+  }, [videoId]);
+
+  useEffect(() => {
+    onPlaybackProgressRef.current = onPlaybackProgress;
+  }, [onPlaybackProgress]);
+
+  useEffect(() => {
+    playbackRestoreRef.current = playbackRestore;
+  }, [playbackRestore]);
+
+  useEffect(() => {
+    onPlaybackRestoreAppliedRef.current = onPlaybackRestoreApplied;
+  }, [onPlaybackRestoreApplied]);
+
+  function readCurrentPlaybackPositionSeconds() {
+    const player = playerRef.current;
+
+    if (!player) {
+      return null;
+    }
+
+    const currentTimeSeconds = player.getCurrentTime();
+
+    if (!Number.isFinite(currentTimeSeconds) || currentTimeSeconds < 0) {
+      return null;
+    }
+
+    return Math.floor(currentTimeSeconds);
+  }
+
+  function reportPlaybackProgress(progressVideoId?: string) {
+    if (!progressVideoId) {
+      return;
+    }
+
+    const currentTimeSeconds = readCurrentPlaybackPositionSeconds();
+
+    if (currentTimeSeconds === null) {
+      return;
+    }
+
+    onPlaybackProgressRef.current?.(progressVideoId, currentTimeSeconds);
+  }
+
+  function markPlaybackRestoreApplied(restoreId?: number) {
+    if (!restoreId || lastAppliedRestoreIdRef.current === restoreId) {
+      return;
+    }
+
+    lastAppliedRestoreIdRef.current = restoreId;
+    onPlaybackRestoreAppliedRef.current?.(restoreId);
+  }
+
+  function getRestoreStartSeconds(nextVideoId?: string) {
+    const restore = playbackRestoreRef.current;
+
+    if (!nextVideoId || !restore || restore.videoId !== nextVideoId) {
+      return undefined;
+    }
+
+    return Math.max(0, Math.floor(restore.positionSeconds));
+  }
 
   useEffect(() => {
     let isCancelled = false;
@@ -84,6 +164,8 @@ function VideoPlayer({
         return;
       }
 
+      const restoreStartSeconds = getRestoreStartSeconds(videoId);
+
       playerRef.current = new window.YT.Player(playerHostRef.current, {
         height: '100%',
         width: '100%',
@@ -91,10 +173,21 @@ function VideoPlayer({
         playerVars: {
           autoplay: 1,
           rel: 0,
+          ...(restoreStartSeconds !== undefined ? { start: restoreStartSeconds } : {}),
         },
         events: {
+          onReady: () => {
+            if (restoreStartSeconds !== undefined) {
+              markPlaybackRestoreApplied(playbackRestoreRef.current?.restoreId);
+            }
+          },
           onStateChange: (event) => {
+            if (event.data === window.YT?.PlayerState.PAUSED) {
+              reportPlaybackProgress(currentVideoIdRef.current);
+            }
+
             if (event.data === window.YT?.PlayerState.ENDED) {
+              reportPlaybackProgress(currentVideoIdRef.current);
               onVideoEndRef.current?.();
             }
           },
@@ -121,11 +214,67 @@ function VideoPlayer({
       return;
     }
 
-    player.loadVideoById(videoId);
+    const restoreStartSeconds = getRestoreStartSeconds(videoId);
+
+    player.loadVideoById(
+      restoreStartSeconds === undefined
+        ? videoId
+        : {
+            startSeconds: restoreStartSeconds,
+            videoId,
+          },
+    );
+
+    if (restoreStartSeconds !== undefined) {
+      markPlaybackRestoreApplied(playbackRestoreRef.current?.restoreId);
+    }
+  }, [videoId]);
+
+  useEffect(() => {
+    const restore = playbackRestore;
+    const player = playerRef.current;
+
+    if (!player || !restore || restore.videoId !== currentVideoIdRef.current) {
+      return;
+    }
+
+    player.seekTo(Math.max(0, Math.floor(restore.positionSeconds)), true);
+    markPlaybackRestoreApplied(restore.restoreId);
+  }, [playbackRestore]);
+
+  useEffect(() => {
+    if (!videoId) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      const player = playerRef.current;
+
+      if (!player) {
+        return;
+      }
+
+      const playerState = player.getPlayerState();
+
+      if (
+        playerState !== window.YT?.PlayerState.PLAYING &&
+        playerState !== window.YT?.PlayerState.PAUSED
+      ) {
+        return;
+      }
+
+      reportPlaybackProgress(videoId);
+    }, 15000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      reportPlaybackProgress(videoId);
+    };
   }, [videoId]);
 
   useEffect(() => {
     return () => {
+      reportPlaybackProgress(currentVideoIdRef.current);
       playerRef.current?.destroy();
       playerRef.current = null;
     };

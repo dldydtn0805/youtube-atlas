@@ -1,9 +1,12 @@
+import type { PlaybackProgress } from '../playback/types';
+
 export interface AuthUser {
   id: number;
   email: string;
   displayName: string;
   pictureUrl: string | null;
   lastLoginAt: string;
+  lastPlaybackProgress: PlaybackProgress | null;
 }
 
 export interface AuthSession {
