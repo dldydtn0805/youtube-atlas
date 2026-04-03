@@ -50,7 +50,7 @@ import {
   useMyGamePositions,
   useSellGamePosition,
 } from '../../features/game/queries';
-import type { GamePosition } from '../../features/game/types';
+import type { GameCurrentSeason, GameMarketVideo, GamePosition } from '../../features/game/types';
 import { upsertPlaybackProgress } from '../../features/playback/api';
 import {
   useFavoriteStreamerVideos,
@@ -87,6 +87,10 @@ function formatPlaybackSaveTimestamp(positionSeconds: number) {
 
 function formatPoints(points: number) {
   return `${pointsFormatter.format(points)}P`;
+}
+
+function formatPointBalance(points: number) {
+  return `${pointsFormatter.format(points)} 포인트`;
 }
 
 function formatMaybePoints(points?: number | null) {
@@ -145,6 +149,39 @@ function formatGameTimestamp(timestamp?: string | null) {
   }
 
   return seasonDateTimeFormatter.format(new Date(timestamp));
+}
+
+function getBuyBalanceDeltaPoints(
+  currentGameSeason?: GameCurrentSeason,
+  selectedVideoMarketEntry?: GameMarketVideo,
+) {
+  if (!currentGameSeason || !selectedVideoMarketEntry) {
+    return null;
+  }
+
+  return currentGameSeason.wallet.balancePoints - selectedVideoMarketEntry.currentPricePoints;
+}
+
+function getBuyRemainingPointsText(
+  currentGameSeason?: GameCurrentSeason,
+  selectedVideoMarketEntry?: GameMarketVideo,
+) {
+  const buyBalanceDeltaPoints = getBuyBalanceDeltaPoints(currentGameSeason, selectedVideoMarketEntry);
+
+  return typeof buyBalanceDeltaPoints === 'number' && buyBalanceDeltaPoints >= 0
+    ? `구매 후 ${formatPointBalance(buyBalanceDeltaPoints)}가 남습니다.`
+    : null;
+}
+
+function getBuyShortfallPointsText(
+  currentGameSeason?: GameCurrentSeason,
+  selectedVideoMarketEntry?: GameMarketVideo,
+) {
+  const buyBalanceDeltaPoints = getBuyBalanceDeltaPoints(currentGameSeason, selectedVideoMarketEntry);
+
+  return typeof buyBalanceDeltaPoints === 'number' && buyBalanceDeltaPoints < 0
+    ? `${formatPointBalance(Math.abs(buyBalanceDeltaPoints))}가 부족합니다.`
+    : null;
 }
 
 function HomePage() {
@@ -841,8 +878,12 @@ function HomePage() {
       return;
     }
 
+    const buyShortfallMessage = getBuyShortfallPointsText(currentGameSeason, selectedVideoMarketEntry);
+
     if (!selectedVideoMarketEntry.canBuy) {
-      setGameActionStatus(selectedVideoMarketEntry.buyBlockedReason ?? '지금은 매수할 수 없습니다.');
+      setGameActionStatus(
+        buyShortfallMessage ?? selectedVideoMarketEntry.buyBlockedReason ?? '지금은 매수할 수 없습니다.',
+      );
       return;
     }
 
@@ -941,6 +982,8 @@ function HomePage() {
     : 0;
   const myLeaderboardEntry = gameLeaderboard.find((entry) => entry.me);
   const topLeaderboardEntries = gameLeaderboard.slice(0, 10);
+  const buyRemainingPointsText = getBuyRemainingPointsText(currentGameSeason, selectedVideoMarketEntry);
+  const buyShortfallPointsText = getBuyShortfallPointsText(currentGameSeason, selectedVideoMarketEntry);
   const currentVideoGameHelperText =
     !canShowGameActions
       ? !isGameRegionSelected
@@ -952,10 +995,10 @@ function HomePage() {
         ? '현재 보유 중인 포지션입니다.'
         : selectedVideoMarketEntry
           ? selectedVideoMarketEntry.canBuy
-            ? `현재 ${formatRank(selectedVideoMarketEntry.currentRank)} · ${formatPoints(
-                selectedVideoMarketEntry.currentPricePoints,
-              )}로 바로 매수할 수 있습니다.`
-            : selectedVideoMarketEntry.buyBlockedReason ?? '지금은 매수할 수 없습니다.'
+            ? buyRemainingPointsText ?? '지금 바로 매수할 수 있습니다.'
+            : buyShortfallPointsText ??
+              selectedVideoMarketEntry.buyBlockedReason ??
+              '지금은 매수할 수 없습니다.'
           : currentGameSeason
             ? gameSeasonRegionMismatch
               ? `게임 시즌은 ${currentGameSeason.regionCode} 기준으로 진행 중입니다.`
@@ -963,9 +1006,9 @@ function HomePage() {
             : isCurrentGameSeasonLoading
               ? '게임 시즌을 불러오는 중입니다.'
               : '다음 게임 시즌을 준비 중입니다.';
-  const isCurrentVideoGameHelperWarning =
-    selectedVideoMarketEntry?.canBuy === false &&
-    (selectedVideoMarketEntry.buyBlockedReason?.includes('포인트가 부족') ?? false);
+  const isCurrentVideoGameHelperWarning = Boolean(
+    selectedVideoMarketEntry?.canBuy === false && buyShortfallPointsText,
+  );
   const currentVideoGamePriceSummary = selectedVideoOpenPosition ? (
     <div className="app-shell__game-price-strip" aria-label="선택한 영상 가격 정보">
       <span className="app-shell__game-price-chip">
@@ -1009,8 +1052,11 @@ function HomePage() {
     authStatus !== 'authenticated'
       ? '로그인 후 매수할 수 있습니다.'
       : selectedVideoMarketEntry?.canBuy
-        ? `${formatPoints(selectedVideoMarketEntry.currentPricePoints)}로 현재 영상을 매수합니다.`
-        : selectedVideoMarketEntry?.buyBlockedReason ??
+        ? buyRemainingPointsText
+          ? buyRemainingPointsText
+          : `${formatPoints(selectedVideoMarketEntry.currentPricePoints)}로 현재 영상을 매수합니다.`
+        : buyShortfallPointsText ??
+          selectedVideoMarketEntry?.buyBlockedReason ??
           (currentGameSeason ? '현재 영상은 게임 거래 대상이 아닙니다.' : '활성 시즌이 없습니다.');
   const gameActionContent = null;
   const selectedGameActionTitle =

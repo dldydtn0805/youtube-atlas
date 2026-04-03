@@ -160,6 +160,7 @@ function usePlaybackQueue({
     const queueItems = getPlaybackQueueItems(activePlaybackQueueId, {
       favoriteStreamerVideoSection: autoPlayableFavoriteStreamerSection,
       gamePortfolioSection,
+      historyPlaybackSection,
       realtimeSurgingSection,
       restoredPlaybackVideo,
       selectedSection: matchedSelectedSection,

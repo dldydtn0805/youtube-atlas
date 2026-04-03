@@ -186,7 +186,11 @@ export default function GameRankHistoryModal({
     : formatRank(videoFallback?.currentRank ?? position?.currentRank, videoFallback?.chartOut ?? position?.chartOut);
 
   return (
-    <div className="app-shell__modal-backdrop" onClick={onClose} role="presentation">
+    <div
+      className="app-shell__modal-backdrop app-shell__modal-backdrop--history"
+      onClick={onClose}
+      role="presentation"
+    >
       <section
         aria-labelledby="game-rank-history-title"
         aria-modal="true"

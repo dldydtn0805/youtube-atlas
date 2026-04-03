@@ -3,7 +3,7 @@ import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { VideoCategory } from '../../../constants/videoCategories';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features/youtube/types';
-import { GAME_PORTFOLIO_QUEUE_ID, getCategoryPlaybackQueueId } from '../utils';
+import { GAME_PORTFOLIO_QUEUE_ID, HISTORY_PLAYBACK_QUEUE_ID, getCategoryPlaybackQueueId } from '../utils';
 import usePlaybackQueue from './usePlaybackQueue';
 
 function createVideo(id: string, categoryId: string): YouTubeVideoItem {
@@ -184,5 +184,34 @@ describe('usePlaybackQueue', () => {
     });
 
     vi.useRealTimers();
+  });
+
+  it('keeps a history playback selection instead of falling back to the first chart video', async () => {
+    const setSelectedCategoryId = vi.fn();
+
+    const { result } = renderHook(() =>
+      usePlaybackQueue({
+        favoriteStreamerVideoSection: undefined,
+        historyPlaybackSection: createSection(HISTORY_PLAYBACK_QUEUE_ID, ['video-history']),
+        isMobileLayout: false,
+        playerSectionRef: createRef<HTMLElement>(),
+        playerViewportRef: createRef<HTMLDivElement>(),
+        realtimeSurgingSection: undefined,
+        restoredPlaybackVideo: undefined,
+        selectedCategoryId: '0',
+        selectedSection: createSection(getCategoryPlaybackQueueId('0'), ['video-top']),
+        setSelectedCategoryId,
+        sortedVideoCategories,
+      }),
+    );
+
+    act(() => {
+      result.current.handleSelectVideo('video-history', HISTORY_PLAYBACK_QUEUE_ID);
+    });
+
+    await waitFor(() => {
+      expect(result.current.activePlaybackQueueId).toBe(HISTORY_PLAYBACK_QUEUE_ID);
+      expect(result.current.selectedVideoId).toBe('video-history');
+    });
   });
 });
