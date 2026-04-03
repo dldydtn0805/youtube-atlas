@@ -8,18 +8,21 @@ import useAppPreferences from './hooks/useAppPreferences';
 import useLogoutOnUnauthorized from './hooks/useLogoutOnUnauthorized';
 import usePlaybackQueue from './hooks/usePlaybackQueue';
 import {
+  BUYABLE_ONLY_PREFETCH_LIMIT,
   buildRealtimeSurgingSection,
   DEFAULT_CATEGORY_ID,
   FAVORITE_STREAMER_VIDEO_SECTION,
   GAME_PORTFOLIO_QUEUE_ID,
   RESTORED_PLAYBACK_QUEUE_ID,
   findPlaybackQueueIdForVideo,
+  filterVideoSection,
   formatVideoViewCount,
   getVideoThumbnailUrl,
   mapGamePositionToVideoItem,
   mergeSections,
   mergeUniqueVideoItems,
   mapPlaybackProgressToVideoItem,
+  shouldPrefetchBuyableVideos,
   shouldRenderRealtimeSurgingSection,
   sortedCountryCodes,
   type PendingPlaybackRestore,
@@ -137,6 +140,7 @@ function HomePage() {
   const [isManualPlaybackSavePending, setIsManualPlaybackSavePending] = useState(false);
   const [manualPlaybackSaveStatus, setManualPlaybackSaveStatus] = useState<string | null>(null);
   const [activeGameTab, setActiveGameTab] = useState<'positions' | 'leaderboard'>('positions');
+  const [isBuyableOnlyFilterActive, setIsBuyableOnlyFilterActive] = useState(false);
   const [gameActionStatus, setGameActionStatus] = useState<string | null>(null);
   const [gameClock, setGameClock] = useState(() => Date.now());
   const playerStageRef = useRef<HTMLDivElement | null>(null);
@@ -196,6 +200,7 @@ function HomePage() {
   const {
     data: gameMarket = [],
     error: gameMarketError,
+    isLoading: isGameMarketLoading,
   } = useGameMarket(accessToken, shouldLoadGame);
   const {
     data: gameLeaderboard = [],
@@ -220,6 +225,7 @@ function HomePage() {
     error,
   } = usePopularVideosByCategory(selectedRegionCode, selectedCategory);
   const selectedSection = mergeSections(data?.pages);
+  const loadedSelectedVideoCount = selectedSection?.items.length ?? 0;
   const selectedPlaybackSection = useMemo(
     () =>
       selectedSection
@@ -419,6 +425,54 @@ function HomePage() {
     favoriteStreamerVideosError instanceof Error
       ? favoriteStreamerVideosError.message
       : '즐겨찾기 영상을 불러오지 못했습니다.';
+  const buyableVideoIdSet = useMemo(
+    () => new Set(gameMarket.filter((marketVideo) => marketVideo.canBuy).map((marketVideo) => marketVideo.videoId)),
+    [gameMarket],
+  );
+  const isBuyableOnlyFilterAvailable =
+    isApiConfigured &&
+    authStatus === 'authenticated' &&
+    canShowGameActions &&
+    Boolean(currentGameSeason) &&
+    !isGameMarketLoading;
+  const filteredSelectedPlaybackSection = useMemo(
+    () =>
+      isBuyableOnlyFilterActive
+        ? filterVideoSection(selectedPlaybackSection, (item) => buyableVideoIdSet.has(item.id))
+        : selectedPlaybackSection,
+    [buyableVideoIdSet, isBuyableOnlyFilterActive, selectedPlaybackSection],
+  );
+  const filteredRealtimeSurgingSection = useMemo(
+    () =>
+      isBuyableOnlyFilterActive
+        ? filterVideoSection(realtimeSurgingSection, (item) => buyableVideoIdSet.has(item.id))
+        : realtimeSurgingSection,
+    [buyableVideoIdSet, isBuyableOnlyFilterActive, realtimeSurgingSection],
+  );
+  const buyableVideoCount = useMemo(
+    () => filteredSelectedPlaybackSection?.items.length ?? 0,
+    [filteredSelectedPlaybackSection],
+  );
+  const shouldAutoPrefetchBuyableVideos = shouldPrefetchBuyableVideos({
+    hasNextPage,
+    isBuyableOnlyFilterActive,
+    isBuyableOnlyFilterAvailable,
+    isFetchingNextPage,
+    loadedItemCount: loadedSelectedVideoCount,
+  });
+  const buyableVideoSearchStatus = isBuyableOnlyFilterActive
+    ? hasNextPage
+      ? isFetchingNextPage
+        ? `매수 가능 영상을 찾는 중 · ${Math.min(
+            loadedSelectedVideoCount,
+            BUYABLE_ONLY_PREFETCH_LIMIT,
+          )}/${BUYABLE_ONLY_PREFETCH_LIMIT}개 확인`
+        : `상위 ${Math.min(
+            loadedSelectedVideoCount,
+            BUYABLE_ONLY_PREFETCH_LIMIT,
+          )}개 기준 · 최대 ${BUYABLE_ONLY_PREFETCH_LIMIT}개까지 자동 탐색`
+      : `상위 ${loadedSelectedVideoCount}개 기준 결과`
+    : undefined;
 
   useLogoutOnUnauthorized(favoriteStreamersError, logout);
   useLogoutOnUnauthorized(favoriteStreamerVideosError, logout);
@@ -440,6 +494,22 @@ function HomePage() {
     setGameActionStatus(null);
     setPendingPlaybackRestore(null);
   }, [authStatus]);
+
+  useEffect(() => {
+    if (isBuyableOnlyFilterAvailable) {
+      return;
+    }
+
+    setIsBuyableOnlyFilterActive(false);
+  }, [isBuyableOnlyFilterAvailable]);
+
+  useEffect(() => {
+    if (!shouldAutoPrefetchBuyableVideos) {
+      return;
+    }
+
+    void fetchNextPage();
+  }, [fetchNextPage, shouldAutoPrefetchBuyableVideos]);
 
   useEffect(() => {
     setManualPlaybackSaveStatus(null);
@@ -1164,18 +1234,23 @@ function HomePage() {
 
   const chartContent = (
     <ChartPanel
+      buyableVideoCount={buyableVideoCount}
+      buyableVideoSearchStatus={buyableVideoSearchStatus}
       chartErrorMessage={chartErrorMessage}
-      featuredSection={realtimeSurgingSection}
+      featuredSection={filteredRealtimeSurgingSection}
       featuredSectionEmptyMessage={realtimeSurgingEmptyMessage}
       hasNextPage={hasNextPage}
       hasResolvedTrendSignals={hasResolvedChartTrendSignals}
+      isBuyableOnlyFilterActive={isBuyableOnlyFilterActive}
+      isBuyableOnlyFilterAvailable={isBuyableOnlyFilterAvailable}
       isChartError={isChartError}
       isChartLoading={isChartLoading}
       isFetchingNextPage={isFetchingNextPage}
       onLoadMore={() => void fetchNextPage()}
+      onToggleBuyableOnlyFilter={() => setIsBuyableOnlyFilterActive((current) => !current)}
       onSelectVideo={handleSelectVideo}
       realtimeSurgingSignalsByVideoId={realtimeSurgingSignalsByVideoId}
-      section={selectedPlaybackSection}
+      section={filteredSelectedPlaybackSection}
       selectedCategoryLabel={selectedCategory?.label}
       selectedVideoId={selectedVideoId}
       trendSignalsByVideoId={chartTrendSignalsByVideoId}
@@ -1184,19 +1259,24 @@ function HomePage() {
 
   const cinematicChartContent = (
     <ChartPanel
+      buyableVideoCount={buyableVideoCount}
+      buyableVideoSearchStatus={buyableVideoSearchStatus}
       chartErrorMessage={chartErrorMessage}
       className="app-shell__panel--chart-cinematic"
-      featuredSection={realtimeSurgingSection}
+      featuredSection={filteredRealtimeSurgingSection}
       featuredSectionEmptyMessage={realtimeSurgingEmptyMessage}
       hasNextPage={hasNextPage}
       hasResolvedTrendSignals={hasResolvedChartTrendSignals}
+      isBuyableOnlyFilterActive={isBuyableOnlyFilterActive}
+      isBuyableOnlyFilterAvailable={isBuyableOnlyFilterAvailable}
       isChartError={isChartError}
       isChartLoading={isChartLoading}
       isFetchingNextPage={isFetchingNextPage}
       onLoadMore={() => void fetchNextPage()}
+      onToggleBuyableOnlyFilter={() => setIsBuyableOnlyFilterActive((current) => !current)}
       onSelectVideo={handleSelectVideo}
       realtimeSurgingSignalsByVideoId={realtimeSurgingSignalsByVideoId}
-      section={selectedPlaybackSection}
+      section={filteredSelectedPlaybackSection}
       selectedCategoryLabel={selectedCategory?.label}
       selectedVideoId={selectedVideoId}
       trendSignalsByVideoId={chartTrendSignalsByVideoId}

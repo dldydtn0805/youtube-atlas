@@ -22,6 +22,7 @@ export const FAVORITE_STREAMER_VIDEO_SECTION: YouTubeCategorySection = {
   items: [],
   label: '즐겨찾기 채널',
 };
+export const BUYABLE_ONLY_PREFETCH_LIMIT = 200;
 
 export type RegionCode = (typeof countryCodes)[number]['code'];
 export type ThemeMode = 'light' | 'dark';
@@ -165,6 +166,46 @@ export function mergeSections(pages: YouTubeCategorySection[] | undefined) {
     items: [firstPage, ...restPages].flatMap((page) => page.items),
     nextPageToken: pages[pages.length - 1]?.nextPageToken,
   };
+}
+
+export function filterVideoSection(
+  section: YouTubeCategorySection | undefined,
+  predicate: (item: YouTubeVideoItem) => boolean,
+) {
+  if (!section) {
+    return undefined;
+  }
+
+  return {
+    ...section,
+    items: section.items.filter(predicate),
+  };
+}
+
+export function shouldPrefetchBuyableVideos(options: {
+  hasNextPage: boolean;
+  isBuyableOnlyFilterActive: boolean;
+  isBuyableOnlyFilterAvailable: boolean;
+  isFetchingNextPage: boolean;
+  loadedItemCount: number;
+  prefetchLimit?: number;
+}) {
+  const {
+    hasNextPage,
+    isBuyableOnlyFilterActive,
+    isBuyableOnlyFilterAvailable,
+    isFetchingNextPage,
+    loadedItemCount,
+    prefetchLimit = BUYABLE_ONLY_PREFETCH_LIMIT,
+  } = options;
+
+  return (
+    isBuyableOnlyFilterActive &&
+    isBuyableOnlyFilterAvailable &&
+    hasNextPage &&
+    !isFetchingNextPage &&
+    loadedItemCount < prefetchLimit
+  );
 }
 
 function createFallbackThumbnails(url: string) {

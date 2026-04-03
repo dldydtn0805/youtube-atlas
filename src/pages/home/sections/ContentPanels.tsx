@@ -6,16 +6,21 @@ import type { VideoTrendSignal } from '../../../features/trending/types';
 import type { YouTubeCategorySection } from '../../../features/youtube/types';
 
 interface ChartPanelProps {
+  buyableVideoCount?: number;
+  buyableVideoSearchStatus?: string;
   chartErrorMessage?: string;
   className?: string;
   featuredSection?: YouTubeCategorySection;
   featuredSectionEmptyMessage?: string;
   hasNextPage: boolean;
   hasResolvedTrendSignals: boolean;
+  isBuyableOnlyFilterActive?: boolean;
+  isBuyableOnlyFilterAvailable?: boolean;
   isChartError: boolean;
   isChartLoading: boolean;
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
+  onToggleBuyableOnlyFilter?: () => void;
   onSelectVideo: (
     videoId: string,
     playbackQueueId: string,
@@ -60,16 +65,21 @@ interface CommunityPanelProps {
 }
 
 export function ChartPanel({
+  buyableVideoCount = 0,
+  buyableVideoSearchStatus,
   chartErrorMessage,
   className,
   featuredSection,
   featuredSectionEmptyMessage,
   hasNextPage,
   hasResolvedTrendSignals,
+  isBuyableOnlyFilterActive = false,
+  isBuyableOnlyFilterAvailable = false,
   isChartError,
   isChartLoading,
   isFetchingNextPage,
   onLoadMore,
+  onToggleBuyableOnlyFilter,
   onSelectVideo,
   realtimeSurgingSignalsByVideoId,
   section,
@@ -83,9 +93,26 @@ export function ChartPanel({
 
   return (
     <section className={panelClassName}>
-      <div className="app-shell__section-heading">
-        <p className="app-shell__section-eyebrow">Program Queue</p>
-        <h2 className="app-shell__section-title">{selectedCategoryLabel ?? '선택한 카테고리'} 인기 영상</h2>
+      <div className="app-shell__section-heading app-shell__section-heading--chart">
+        <div className="app-shell__section-heading-copy">
+          <p className="app-shell__section-eyebrow">Program Queue</p>
+          <h2 className="app-shell__section-title">{selectedCategoryLabel ?? '선택한 카테고리'} 인기 영상</h2>
+        </div>
+        {isBuyableOnlyFilterAvailable ? (
+          <div className="app-shell__chart-filter-group">
+            <button
+              className="app-shell__subtle-toggle"
+              data-active={isBuyableOnlyFilterActive}
+              onClick={onToggleBuyableOnlyFilter}
+              type="button"
+            >
+              매수 가능 목록 탐색
+            </button>
+            {buyableVideoSearchStatus ? (
+              <p className="app-shell__chart-filter-status">{buyableVideoSearchStatus}</p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
       <VideoList
         errorMessage={chartErrorMessage}
@@ -109,6 +136,11 @@ export function ChartPanel({
         onLoadMore={onLoadMore}
         onSelectVideo={onSelectVideo}
         section={section}
+        sectionEmptyMessage={
+          isBuyableOnlyFilterActive
+            ? '지금 매수 가능한 영상이 없습니다. 더 불러오거나 필터를 해제해 보세요.'
+            : undefined
+        }
         selectedVideoId={selectedVideoId}
         trendSignalsByVideoId={trendSignalsByVideoId}
       />

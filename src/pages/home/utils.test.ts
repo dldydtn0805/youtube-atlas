@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BUYABLE_ONLY_PREFETCH_LIMIT,
   buildRealtimeSurgingSection,
+  filterVideoSection,
   REALTIME_SURGING_QUEUE_ID,
   shouldRenderRealtimeSurgingSection,
+  shouldPrefetchBuyableVideos,
 } from './utils';
 
 describe('home utils', () => {
@@ -71,5 +74,106 @@ describe('home utils', () => {
         items: [],
       }),
     ).toBeUndefined();
+  });
+
+  it('filters a video section while preserving section metadata', () => {
+    expect(
+      filterVideoSection(
+        {
+          categoryId: '0',
+          description: '테스트 섹션',
+          items: [
+            {
+              id: 'video-1',
+              contentDetails: { duration: '' },
+              snippet: {
+                title: '첫 영상',
+                channelTitle: '채널 A',
+                channelId: 'channel-a',
+                categoryId: '0',
+                thumbnails: {
+                  default: { url: 'https://example.com/1.jpg', width: 120, height: 90 },
+                  medium: { url: 'https://example.com/1.jpg', width: 320, height: 180 },
+                  high: { url: 'https://example.com/1.jpg', width: 480, height: 360 },
+                },
+              },
+            },
+            {
+              id: 'video-2',
+              contentDetails: { duration: '' },
+              snippet: {
+                title: '둘 영상',
+                channelTitle: '채널 B',
+                channelId: 'channel-b',
+                categoryId: '0',
+                thumbnails: {
+                  default: { url: 'https://example.com/2.jpg', width: 120, height: 90 },
+                  medium: { url: 'https://example.com/2.jpg', width: 320, height: 180 },
+                  high: { url: 'https://example.com/2.jpg', width: 480, height: 360 },
+                },
+              },
+            },
+          ],
+          label: '전체',
+          nextPageToken: 'next-token',
+        },
+        (item) => item.id === 'video-2',
+      ),
+    ).toEqual({
+      categoryId: '0',
+      description: '테스트 섹션',
+      items: [
+        expect.objectContaining({
+          id: 'video-2',
+          snippet: expect.objectContaining({
+            title: '둘 영상',
+          }),
+        }),
+      ],
+      label: '전체',
+      nextPageToken: 'next-token',
+    });
+  });
+
+  it('prefetches more pages only while buyable-only filtering needs more videos', () => {
+    expect(
+      shouldPrefetchBuyableVideos({
+        hasNextPage: true,
+        isBuyableOnlyFilterActive: true,
+        isBuyableOnlyFilterAvailable: true,
+        isFetchingNextPage: false,
+        loadedItemCount: BUYABLE_ONLY_PREFETCH_LIMIT - 1,
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldPrefetchBuyableVideos({
+        hasNextPage: true,
+        isBuyableOnlyFilterActive: false,
+        isBuyableOnlyFilterAvailable: true,
+        isFetchingNextPage: false,
+        loadedItemCount: 50,
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldPrefetchBuyableVideos({
+        hasNextPage: true,
+        isBuyableOnlyFilterActive: true,
+        isBuyableOnlyFilterAvailable: true,
+        isFetchingNextPage: true,
+        loadedItemCount: 50,
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldPrefetchBuyableVideos({
+        hasNextPage: true,
+        isBuyableOnlyFilterActive: true,
+        isBuyableOnlyFilterAvailable: true,
+        isFetchingNextPage: false,
+        loadedItemCount: BUYABLE_ONLY_PREFETCH_LIMIT,
+      }),
+    ).toBe(false);
   });
 });

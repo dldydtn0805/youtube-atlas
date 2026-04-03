@@ -8,6 +8,7 @@ interface VideoListProps {
   isError: boolean;
   errorMessage?: string;
   section?: YouTubeCategorySection;
+  sectionEmptyMessage?: string;
   getRankLabel?: (item: YouTubeVideoItem, index: number) => string;
   featuredSection?: YouTubeCategorySection;
   featuredSectionEyebrow?: string;
@@ -45,6 +46,7 @@ function VideoList({
   isError,
   errorMessage,
   section,
+  sectionEmptyMessage,
   getRankLabel,
   featuredSection,
   featuredSectionEyebrow = 'Realtime Movers',
@@ -70,8 +72,12 @@ function VideoList({
     return <p className="video-list__status">카테고리를 먼저 선택해 주세요.</p>;
   }
 
-  if (section.items.length === 0) {
-    return <p className="video-list__status">이 카테고리에는 현재 표시할 영상이 없습니다.</p>;
+  if (section.items.length === 0 && !featuredSection?.items.length) {
+    return (
+      <p className="video-list__status">
+        {sectionEmptyMessage ?? '이 카테고리에는 현재 표시할 영상이 없습니다.'}
+      </p>
+    );
   }
 
   function renderSection(
@@ -183,6 +189,7 @@ function VideoList({
         : null}
       {renderSection(section, {
         eyebrow: 'Category Ranking',
+        emptyMessage: sectionEmptyMessage,
         getRankLabel,
         showLoadMore: true,
       })}
