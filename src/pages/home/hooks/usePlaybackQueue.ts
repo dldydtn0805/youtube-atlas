@@ -5,6 +5,7 @@ import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features
 
 interface UsePlaybackQueueOptions {
   favoriteStreamerVideoSection?: YouTubeCategorySection;
+  gamePortfolioSection?: YouTubeCategorySection;
   isMobileLayout: boolean;
   playerSectionRef: RefObject<HTMLElement | null>;
   playerViewportRef: RefObject<HTMLDivElement | null>;
@@ -18,6 +19,7 @@ interface UsePlaybackQueueOptions {
 
 function usePlaybackQueue({
   favoriteStreamerVideoSection,
+  gamePortfolioSection,
   isMobileLayout,
   playerSectionRef,
   playerViewportRef,
@@ -35,6 +37,7 @@ function usePlaybackQueue({
 
   const activePlaybackItems = getPlaybackQueueItems(activePlaybackQueueId, {
     favoriteStreamerVideoSection,
+    gamePortfolioSection,
     realtimeSurgingSection,
     restoredPlaybackVideo,
     selectedSection,
@@ -100,6 +103,7 @@ function usePlaybackQueue({
   function handleSelectAdjacentVideo(step: number) {
     const queueItems = getPlaybackQueueItems(activePlaybackQueueId, {
       favoriteStreamerVideoSection,
+      gamePortfolioSection,
       realtimeSurgingSection,
       restoredPlaybackVideo,
       selectedSection,
@@ -135,12 +139,14 @@ function usePlaybackQueue({
   useEffect(() => {
     const queueItems = getPlaybackQueueItems(activePlaybackQueueId, {
       favoriteStreamerVideoSection,
+      gamePortfolioSection,
       realtimeSurgingSection,
       restoredPlaybackVideo,
       selectedSection,
     });
     const fallbackQueueId =
       selectedSection?.categoryId ??
+      gamePortfolioSection?.categoryId ??
       favoriteStreamerVideoSection?.categoryId ??
       realtimeSurgingSection?.categoryId;
     const fallbackItems =
@@ -148,6 +154,7 @@ function usePlaybackQueue({
         ? queueItems
         : getPlaybackQueueItems(fallbackQueueId, {
             favoriteStreamerVideoSection,
+            gamePortfolioSection,
             realtimeSurgingSection,
             restoredPlaybackVideo,
             selectedSection,
@@ -176,6 +183,7 @@ function usePlaybackQueue({
   }, [
     activePlaybackQueueId,
     favoriteStreamerVideoSection,
+    gamePortfolioSection,
     realtimeSurgingSection,
     restoredPlaybackVideo,
     selectedSection,

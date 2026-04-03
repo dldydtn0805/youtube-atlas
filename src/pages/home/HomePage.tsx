@@ -11,10 +11,12 @@ import {
   buildRealtimeSurgingSection,
   DEFAULT_CATEGORY_ID,
   FAVORITE_STREAMER_VIDEO_SECTION,
+  GAME_PORTFOLIO_QUEUE_ID,
   RESTORED_PLAYBACK_QUEUE_ID,
   findPlaybackQueueIdForVideo,
   formatVideoViewCount,
   getVideoThumbnailUrl,
+  mapGamePositionToVideoItem,
   mergeSections,
   mergeUniqueVideoItems,
   mapPlaybackProgressToVideoItem,
@@ -31,6 +33,14 @@ import {
   supportsVideoTrendSignals,
 } from '../../constants/videoCategories';
 import { useAuth } from '../../features/auth/useAuth';
+import {
+  useBuyGamePosition,
+  useCurrentGameSeason,
+  useGameMarket,
+  useMyGamePositions,
+  useSellGamePosition,
+} from '../../features/game/queries';
+import type { GamePosition } from '../../features/game/types';
 import { upsertPlaybackProgress } from '../../features/playback/api';
 import {
   useFavoriteStreamerVideos,
@@ -41,6 +51,15 @@ import { useRealtimeSurging, useVideoTrendSignals } from '../../features/trendin
 import { usePopularVideosByCategory, useVideoCategories } from '../../features/youtube/queries';
 import { ApiRequestError, isApiConfigured } from '../../lib/api';
 import '../../styles/app.css';
+
+const GAME_STAKE_POINTS = 1_000;
+const pointsFormatter = new Intl.NumberFormat('ko-KR');
+const seasonDateTimeFormatter = new Intl.DateTimeFormat('ko-KR', {
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  month: 'short',
+});
 
 function formatPlaybackSaveTimestamp(positionSeconds: number) {
   const normalizedSeconds = Math.max(0, Math.floor(positionSeconds));
@@ -55,11 +74,47 @@ function formatPlaybackSaveTimestamp(positionSeconds: number) {
   return [minutes, seconds].map((value) => String(value).padStart(2, '0')).join(':');
 }
 
+function formatPoints(points: number) {
+  return `${pointsFormatter.format(points)}P`;
+}
+
+function formatSignedPoints(points?: number | null) {
+  const normalizedPoints = points ?? 0;
+
+  if (normalizedPoints > 0) {
+    return `+${formatPoints(normalizedPoints)}`;
+  }
+
+  if (normalizedPoints < 0) {
+    return `-${formatPoints(Math.abs(normalizedPoints))}`;
+  }
+
+  return formatPoints(0);
+}
+
+function formatRank(rank?: number | null) {
+  return typeof rank === 'number' ? `${rank}위` : '집계 중';
+}
+
+function formatRemainingHoldSeconds(remainingSeconds: number) {
+  const normalizedSeconds = Math.max(0, Math.ceil(remainingSeconds));
+  const minutes = Math.floor(normalizedSeconds / 60);
+  const seconds = normalizedSeconds % 60;
+
+  if (minutes === 0) {
+    return `${seconds}초`;
+  }
+
+  return `${minutes}분 ${seconds}초`;
+}
+
 function HomePage() {
   const { accessToken, isLoggingOut, logout, status: authStatus, user } = useAuth();
   const [pendingPlaybackRestore, setPendingPlaybackRestore] = useState<PendingPlaybackRestore | null>(null);
   const [isManualPlaybackSavePending, setIsManualPlaybackSavePending] = useState(false);
   const [manualPlaybackSaveStatus, setManualPlaybackSaveStatus] = useState<string | null>(null);
+  const [gameActionStatus, setGameActionStatus] = useState<string | null>(null);
+  const [gameClock, setGameClock] = useState(() => Date.now());
   const playerStageRef = useRef<HTMLDivElement | null>(null);
   const videoPlayerRef = useRef<VideoPlayerHandle | null>(null);
   const playerSectionRef = useRef<HTMLElement | null>(null);
@@ -108,6 +163,22 @@ function HomePage() {
     value: category.id,
     label: category.label,
   }));
+  const shouldLoadGame = isApiConfigured && authStatus === 'authenticated';
+  const {
+    data: currentGameSeason,
+    error: currentGameSeasonError,
+    isLoading: isCurrentGameSeasonLoading,
+  } = useCurrentGameSeason(accessToken, shouldLoadGame);
+  const {
+    data: gameMarket = [],
+    error: gameMarketError,
+  } = useGameMarket(accessToken, shouldLoadGame);
+  const {
+    data: openGamePositions = [],
+    error: openGamePositionsError,
+  } = useMyGamePositions(accessToken, 'OPEN', shouldLoadGame);
+  const buyGamePositionMutation = useBuyGamePosition(accessToken);
+  const sellGamePositionMutation = useSellGamePosition(accessToken);
 
   const {
     data,
@@ -176,6 +247,15 @@ function HomePage() {
     favoriteStreamers.length > 0 && isAllCategorySelected
       ? mergeSections(favoriteStreamerVideosData?.pages) ?? FAVORITE_STREAMER_VIDEO_SECTION
       : undefined;
+  const gamePortfolioSection = useMemo(
+    () => ({
+      categoryId: GAME_PORTFOLIO_QUEUE_ID,
+      description: '매수한 영상은 여기서 바로 다시 열고 정리할 수 있습니다.',
+      items: openGamePositions.map(mapGamePositionToVideoItem),
+      label: '내 보유 포지션',
+    }),
+    [openGamePositions],
+  );
   const favoriteStreamerVideoIds = favoriteStreamerVideoSection?.items.map((item) => item.id) ?? [];
   const shouldShowSelectedCategoryTrendSignals = supportsVideoTrendSignals(selectedCategory?.id);
 
@@ -230,6 +310,7 @@ function HomePage() {
     realtimeSurgingSection?.items,
     selectedPlaybackSection?.items,
     favoriteStreamerVideoSection?.items,
+    gamePortfolioSection.items,
     restoredPlaybackVideo ? [restoredPlaybackVideo] : undefined,
   );
   const {
@@ -245,6 +326,7 @@ function HomePage() {
     updateActivePlaybackQueueId,
   } = usePlaybackQueue({
     favoriteStreamerVideoSection,
+    gamePortfolioSection,
     isMobileLayout,
     playerSectionRef,
     playerViewportRef,
@@ -258,6 +340,15 @@ function HomePage() {
   const selectedVideo = combinedPlayableItems.find((item) => item.id === selectedVideoId);
   const selectedVideoStatLabel = formatVideoViewCount(selectedVideo?.statistics?.viewCount);
   const selectedChannelId = selectedVideo?.snippet.channelId?.trim();
+  const selectedVideoOpenPosition = selectedVideoId
+    ? openGamePositions.find((position) => position.videoId === selectedVideoId)
+    : undefined;
+  const selectedVideoMarketEntry = selectedVideoId
+    ? gameMarket.find((marketVideo) => marketVideo.videoId === selectedVideoId)
+    : undefined;
+  const gameSeasonRegionMismatch =
+    Boolean(currentGameSeason?.regionCode) &&
+    selectedRegionCode.toUpperCase() !== currentGameSeason?.regionCode.toUpperCase();
   const isSelectedChannelFavorited = selectedChannelId
     ? favoriteStreamers.some((favoriteStreamer) => favoriteStreamer.channelId === selectedChannelId)
     : false;
@@ -280,6 +371,9 @@ function HomePage() {
 
   useLogoutOnUnauthorized(favoriteStreamersError, logout);
   useLogoutOnUnauthorized(favoriteStreamerVideosError, logout);
+  useLogoutOnUnauthorized(currentGameSeasonError, logout);
+  useLogoutOnUnauthorized(gameMarketError, logout);
+  useLogoutOnUnauthorized(openGamePositionsError, logout);
 
   useEffect(() => {
     if (authStatus === 'authenticated') {
@@ -290,12 +384,28 @@ function HomePage() {
     lastPersistedPlaybackSecondsRef.current = {};
     setIsManualPlaybackSavePending(false);
     setManualPlaybackSaveStatus(null);
+    setGameActionStatus(null);
     setPendingPlaybackRestore(null);
   }, [authStatus]);
 
   useEffect(() => {
     setManualPlaybackSaveStatus(null);
+    setGameActionStatus(null);
   }, [selectedVideoId]);
+
+  useEffect(() => {
+    if (openGamePositions.length === 0) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setGameClock(Date.now());
+    }, 30_000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [openGamePositions.length]);
 
   useEffect(() => {
     if (!manualPlaybackSaveStatus || isManualPlaybackSavePending) {
@@ -339,6 +449,7 @@ function HomePage() {
       playbackProgress.videoId,
       findPlaybackQueueIdForVideo(playbackProgress.videoId, {
         favoriteStreamerVideoSection,
+        gamePortfolioSection,
         realtimeSurgingSection,
         selectedSection: selectedPlaybackSection,
       }) ?? RESTORED_PLAYBACK_QUEUE_ID,
@@ -359,6 +470,7 @@ function HomePage() {
 
     const matchedQueueId = findPlaybackQueueIdForVideo(selectedVideoId, {
       favoriteStreamerVideoSection,
+      gamePortfolioSection,
       realtimeSurgingSection,
       selectedSection: selectedPlaybackSection,
     });
@@ -369,6 +481,7 @@ function HomePage() {
   }, [
     activePlaybackQueueId,
     favoriteStreamerVideoSection,
+    gamePortfolioSection,
     realtimeSurgingSection,
     selectedPlaybackSection,
     selectedVideoId,
@@ -481,6 +594,104 @@ function HomePage() {
     }
   }, [authStatus, persistPlaybackProgress, selectedVideoId]);
 
+  const getRemainingHoldSeconds = useCallback(
+    (position: GamePosition) => {
+      if (!currentGameSeason) {
+        return 0;
+      }
+
+      const elapsedSeconds = Math.floor((gameClock - new Date(position.createdAt).getTime()) / 1000);
+
+      return Math.max(0, currentGameSeason.minHoldSeconds - elapsedSeconds);
+    },
+    [currentGameSeason, gameClock],
+  );
+
+  const handleSellPosition = useCallback(
+    async (position: GamePosition) => {
+      try {
+        await sellGamePositionMutation.mutateAsync(position.id);
+        setGameActionStatus(`${position.title} 포지션을 ${formatSignedPoints(position.profitPoints)} 기준으로 정리했어요.`);
+      } catch (error) {
+        if (
+          error instanceof ApiRequestError &&
+          (error.code === 'unauthorized' || error.code === 'session_expired')
+        ) {
+          void logout();
+          return;
+        }
+
+        setGameActionStatus(
+          error instanceof Error ? error.message : '매도에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        );
+      }
+    },
+    [logout, sellGamePositionMutation],
+  );
+
+  const handleBuyCurrentVideo = useCallback(async () => {
+    if (authStatus !== 'authenticated' || !selectedVideoId) {
+      setGameActionStatus('로그인 후 지금 보는 영상을 매수할 수 있습니다.');
+      return;
+    }
+
+    if (!currentGameSeason) {
+      setGameActionStatus(
+        currentGameSeasonError instanceof Error
+          ? currentGameSeasonError.message
+          : '지금은 게임 시즌을 불러올 수 없습니다.',
+      );
+      return;
+    }
+
+    if (!selectedVideoMarketEntry) {
+      setGameActionStatus(
+        gameSeasonRegionMismatch
+          ? `현재 게임은 ${currentGameSeason.regionCode} 시즌 기준으로 진행 중입니다.`
+          : '현재 영상은 아직 게임 거래 대상이 아닙니다.',
+      );
+      return;
+    }
+
+    if (!selectedVideoMarketEntry.canBuy) {
+      setGameActionStatus(selectedVideoMarketEntry.buyBlockedReason ?? '지금은 매수할 수 없습니다.');
+      return;
+    }
+
+    try {
+      await buyGamePositionMutation.mutateAsync({
+        categoryId: '0',
+        regionCode: currentGameSeason.regionCode,
+        stakePoints: GAME_STAKE_POINTS,
+        videoId: selectedVideoId,
+      });
+      setGameActionStatus(
+        `${formatPoints(GAME_STAKE_POINTS)}로 ${selectedVideoMarketEntry.currentRank}위 영상을 매수했어요.`,
+      );
+    } catch (error) {
+      if (
+        error instanceof ApiRequestError &&
+        (error.code === 'unauthorized' || error.code === 'session_expired')
+      ) {
+        void logout();
+        return;
+      }
+
+      setGameActionStatus(
+        error instanceof Error ? error.message : '매수에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+      );
+    }
+  }, [
+    authStatus,
+    buyGamePositionMutation,
+    currentGameSeason,
+    currentGameSeasonError,
+    gameSeasonRegionMismatch,
+    logout,
+    selectedVideoId,
+    selectedVideoMarketEntry,
+  ]);
+
   async function handleToggleFavoriteStreamer() {
     if (authStatus !== 'authenticated' || !selectedVideo || !selectedChannelId) {
       return;
@@ -502,6 +713,189 @@ function HomePage() {
       }
     }
   }
+
+  const handleSelectGamePositionVideo = useCallback(
+    (position: GamePosition) => {
+      handleSelectVideo(position.videoId, gamePortfolioSection.categoryId);
+    },
+    [gamePortfolioSection.categoryId, handleSelectVideo],
+  );
+
+  const selectedVideoHoldRemainingSeconds = selectedVideoOpenPosition
+    ? getRemainingHoldSeconds(selectedVideoOpenPosition)
+    : 0;
+  const currentVideoGameHelperText =
+    authStatus !== 'authenticated'
+      ? '로그인하면 지금 보는 영상도 바로 게임 포지션으로 담을 수 있습니다.'
+      : selectedVideoOpenPosition
+        ? `매수 ${formatRank(selectedVideoOpenPosition.buyRank)} · 현재 ${formatRank(
+            selectedVideoOpenPosition.currentRank,
+          )} · 손익 ${formatSignedPoints(selectedVideoOpenPosition.profitPoints)}`
+        : selectedVideoMarketEntry
+          ? selectedVideoMarketEntry.canBuy
+            ? `현재 ${formatRank(selectedVideoMarketEntry.currentRank)} · ${formatPoints(
+                GAME_STAKE_POINTS,
+              )}로 바로 매수할 수 있습니다.`
+            : selectedVideoMarketEntry.buyBlockedReason ?? '지금은 매수할 수 없습니다.'
+          : currentGameSeason
+            ? gameSeasonRegionMismatch
+              ? `게임 시즌은 ${currentGameSeason.regionCode} 기준으로 진행 중입니다.`
+              : '현재 영상은 아직 게임 거래 대상이 아닙니다.'
+            : isCurrentGameSeasonLoading
+              ? '게임 시즌을 불러오는 중입니다.'
+              : '다음 게임 시즌을 준비 중입니다.';
+  const stageGameActionLabel =
+    authStatus !== 'authenticated'
+      ? '영상 매수'
+      : selectedVideoOpenPosition
+        ? sellGamePositionMutation.isPending && sellGamePositionMutation.variables === selectedVideoOpenPosition.id
+          ? '영상 매도 중'
+          : '영상 매도'
+        : buyGamePositionMutation.isPending
+          ? '영상 매수 중'
+          : `영상 매수 ${formatPoints(GAME_STAKE_POINTS)}`;
+  const isSelectedVideoSellDisabled =
+    !selectedVideoOpenPosition ||
+    selectedVideoHoldRemainingSeconds > 0 ||
+    (sellGamePositionMutation.isPending && sellGamePositionMutation.variables === selectedVideoOpenPosition.id);
+  const isStageGameActionDisabled =
+    !selectedVideoId ||
+    authStatus !== 'authenticated' ||
+    (selectedVideoOpenPosition
+      ? isSelectedVideoSellDisabled
+      : buyGamePositionMutation.isPending ||
+        !selectedVideoMarketEntry ||
+        !selectedVideoMarketEntry.canBuy ||
+        !currentGameSeason);
+  const gameActionTitle =
+    authStatus !== 'authenticated'
+      ? '로그인 후 매수할 수 있습니다.'
+      : selectedVideoOpenPosition
+        ? selectedVideoHoldRemainingSeconds > 0
+          ? `최소 보유 시간까지 ${formatRemainingHoldSeconds(selectedVideoHoldRemainingSeconds)} 남았습니다.`
+          : '현재 보유 중인 포지션을 정리합니다.'
+        : selectedVideoMarketEntry?.canBuy
+          ? `${formatPoints(GAME_STAKE_POINTS)}로 현재 영상을 매수합니다.`
+          : selectedVideoMarketEntry?.buyBlockedReason ??
+            (currentGameSeason ? '현재 영상은 게임 거래 대상이 아닙니다.' : '활성 시즌이 없습니다.');
+  const gameActionContent = selectedVideoId && isApiConfigured ? (
+    <button
+      aria-label={stageGameActionLabel}
+      className="app-shell__stage-action-button app-shell__stage-action-button--game"
+      data-variant={selectedVideoOpenPosition ? 'sell' : 'buy'}
+      disabled={isStageGameActionDisabled}
+      onClick={() =>
+        selectedVideoOpenPosition
+          ? void handleSellPosition(selectedVideoOpenPosition)
+          : void handleBuyCurrentVideo()
+      }
+      title={gameActionTitle}
+      type="button"
+    >
+      {(selectedVideoOpenPosition
+        ? sellGamePositionMutation.isPending && sellGamePositionMutation.variables === selectedVideoOpenPosition.id
+        : buyGamePositionMutation.isPending)
+        ? '⋯'
+        : selectedVideoOpenPosition
+          ? '매도'
+          : '매수'}
+    </button>
+  ) : null;
+  const portfolioContent =
+    isApiConfigured && authStatus === 'authenticated' ? (
+      <div className="app-shell__game-panel">
+        <div className="app-shell__game-panel-header">
+          <div className="app-shell__game-panel-copy">
+            <p className="app-shell__game-panel-eyebrow">Ranking Game</p>
+            <h3 className="app-shell__game-panel-title">
+              {currentGameSeason ? `${currentGameSeason.regionCode} 시즌` : '시즌 준비 중'}
+            </h3>
+          </div>
+          <div className="app-shell__game-panel-metrics">
+            <span className="app-shell__game-panel-metric">
+              잔액 {currentGameSeason ? formatPoints(currentGameSeason.wallet.balancePoints) : '-'}
+            </span>
+            <span className="app-shell__game-panel-metric">
+              보유 {openGamePositions.length}/{currentGameSeason?.maxOpenPositions ?? '-'}
+            </span>
+          </div>
+        </div>
+        <p className="app-shell__game-panel-helper">
+          {currentGameSeason
+            ? `${currentVideoGameHelperText} · 종료 ${seasonDateTimeFormatter.format(
+                new Date(currentGameSeason.endAt),
+              )}`
+            : isCurrentGameSeasonLoading
+              ? '게임 시즌을 불러오는 중입니다.'
+              : currentGameSeasonError instanceof Error
+                ? currentGameSeasonError.message
+                : '다음 게임 시즌을 준비 중입니다.'}
+        </p>
+        {gameActionStatus ? <p className="app-shell__game-panel-status">{gameActionStatus}</p> : null}
+        {openGamePositions.length > 0 ? (
+          <ul className="app-shell__game-positions">
+            {openGamePositions.map((position) => {
+              const remainingHoldSeconds = getRemainingHoldSeconds(position);
+              const isSelectedPosition = position.videoId === selectedVideoId;
+              const isPendingSell =
+                sellGamePositionMutation.isPending && sellGamePositionMutation.variables === position.id;
+
+              return (
+                <li
+                  key={position.id}
+                  className="app-shell__game-position"
+                  data-selected={isSelectedPosition}
+                >
+                  <button
+                    className="app-shell__game-position-select"
+                    onClick={() => handleSelectGamePositionVideo(position)}
+                    type="button"
+                  >
+                    <img
+                      alt=""
+                      className="app-shell__game-position-thumb"
+                      loading="lazy"
+                      src={position.thumbnailUrl}
+                    />
+                    <div className="app-shell__game-position-copy">
+                      <p className="app-shell__game-position-title">{position.title}</p>
+                      <p className="app-shell__game-position-meta">
+                        매수 {formatRank(position.buyRank)} · 현재 {formatRank(position.currentRank)} ·{' '}
+                        {formatSignedPoints(position.profitPoints)}
+                      </p>
+                    </div>
+                  </button>
+                  <div className="app-shell__game-position-side">
+                    <button
+                      className="app-shell__game-position-sell"
+                      disabled={remainingHoldSeconds > 0 || isPendingSell}
+                      onClick={() => void handleSellPosition(position)}
+                      title={
+                        remainingHoldSeconds > 0
+                          ? `최소 보유 시간까지 ${formatRemainingHoldSeconds(remainingHoldSeconds)} 남았습니다.`
+                          : '포지션을 매도합니다.'
+                      }
+                      type="button"
+                    >
+                      {isPendingSell ? '매도 중...' : '매도'}
+                    </button>
+                    <span className="app-shell__game-position-hold">
+                      {remainingHoldSeconds > 0
+                        ? `${formatRemainingHoldSeconds(remainingHoldSeconds)} 남음`
+                        : '지금 매도 가능'}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : currentGameSeason ? (
+          <p className="app-shell__game-empty">
+            아직 보유 중인 영상이 없어요. 지금 보는 영상에서 바로 시작할 수 있습니다.
+          </p>
+        ) : null}
+      </div>
+    ) : null;
 
   const chartContent = (
     <ChartPanel
@@ -636,12 +1030,14 @@ function HomePage() {
           selectedVideoId={selectedVideoId}
           selectedVideoStatLabel={selectedVideoStatLabel}
           selectedVideoTitle={selectedVideo?.snippet.title}
+          stageActionContent={gameActionContent}
+          supplementalContent={portfolioContent}
           toggleFavoriteStreamerPending={toggleFavoriteStreamerMutation.isPending}
         />
         {isMobileLayout ? (
           <>
-            {!isCinematicModeActive ? filterSummaryContent : null}
             {!isCinematicModeActive ? favoriteVideosContent : null}
+            {!isCinematicModeActive ? filterSummaryContent : null}
             {!isCinematicModeActive ? chartContent : null}
             <CommunityPanel
               selectedVideoId={selectedVideoId}
@@ -650,8 +1046,8 @@ function HomePage() {
           </>
         ) : (
           <>
-            {!isCinematicModeActive ? filterSummaryContent : null}
             {!isCinematicModeActive ? favoriteVideosContent : null}
+            {!isCinematicModeActive ? filterSummaryContent : null}
             {!isCinematicModeActive ? chartContent : null}
             <CommunityPanel
               selectedVideoId={selectedVideoId}

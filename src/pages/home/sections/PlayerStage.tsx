@@ -37,6 +37,8 @@ interface PlayerStageProps {
   selectedVideoId?: string;
   selectedVideoStatLabel?: string;
   selectedVideoTitle?: string;
+  stageActionContent?: ReactNode;
+  supplementalContent?: ReactNode;
   toggleFavoriteStreamerPending: boolean;
 }
 
@@ -74,6 +76,8 @@ function PlayerStage({
   selectedVideoId,
   selectedVideoStatLabel,
   selectedVideoTitle,
+  stageActionContent,
+  supplementalContent,
   toggleFavoriteStreamerPending,
 }: PlayerStageProps) {
   const hasSelectedVideo = Boolean(selectedVideoId);
@@ -133,6 +137,7 @@ function PlayerStage({
               </div>
               <div className="app-shell__stage-side">
                 <div className="app-shell__stage-actions">
+                  {stageActionContent}
                   <button
                     aria-label={manualPlaybackSaveButtonLabel}
                     className="app-shell__stage-action-button"
@@ -166,14 +171,14 @@ function PlayerStage({
                   </button>
                   <button
                     aria-label={favoriteToggleLabel}
-                    className="app-shell__favorite-toggle"
+                    className="app-shell__stage-action-button app-shell__stage-action-button--favorite"
                     data-active={isSelectedChannelFavorited}
                     disabled={authStatus !== 'authenticated' || isFavoriteToggleDisabled}
                     onClick={onToggleFavoriteStreamer}
                     title={favoriteToggleLabel}
                     type="button"
                   >
-                    <span className="app-shell__favorite-toggle-icon" aria-hidden="true">
+                    <span className="app-shell__stage-action-icon" aria-hidden="true">
                       {toggleFavoriteStreamerPending ? (
                         '⋯'
                       ) : (
@@ -208,6 +213,7 @@ function PlayerStage({
               </div>
             </div>
           ) : null}
+          {supplementalContent}
         </section>
         {cinematicQuickFiltersContent}
         {isCinematicModeActive ? favoriteVideosContent : null}

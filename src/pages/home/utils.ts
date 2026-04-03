@@ -1,5 +1,6 @@
 import countryCodes from '../../constants/countryCodes';
 import { ALL_VIDEO_CATEGORY_ID } from '../../constants/videoCategories';
+import type { GamePosition } from '../../features/game/types';
 import type { PlaybackProgress } from '../../features/playback/types';
 import { formatCompactCount } from '../../features/trending/presentation';
 import type { RealtimeSurgingResponse, VideoTrendSignal } from '../../features/trending/types';
@@ -7,6 +8,7 @@ import type { YouTubeCategorySection, YouTubeVideoItem } from '../../features/yo
 
 export const DEFAULT_REGION_CODE = 'US';
 export const DEFAULT_CATEGORY_ID = ALL_VIDEO_CATEGORY_ID;
+export const GAME_PORTFOLIO_QUEUE_ID = 'game-portfolio';
 export const MOBILE_BREAKPOINT = 768;
 export const REALTIME_SURGING_QUEUE_ID = 'realtime-surging';
 export const RESTORED_PLAYBACK_QUEUE_ID = 'last-playback-progress';
@@ -189,6 +191,22 @@ export function mapPlaybackProgressToVideoItem(playbackProgress: PlaybackProgres
   };
 }
 
+export function mapGamePositionToVideoItem(position: GamePosition): YouTubeVideoItem {
+  return {
+    id: position.videoId,
+    contentDetails: {
+      duration: '',
+    },
+    snippet: {
+      title: position.title,
+      channelTitle: position.channelTitle,
+      channelId: '',
+      categoryId: GAME_PORTFOLIO_QUEUE_ID,
+      thumbnails: createFallbackThumbnails(position.thumbnailUrl ?? ''),
+    },
+  };
+}
+
 export function getVideoThumbnailUrl(video: YouTubeVideoItem) {
   return (
     video.snippet.thumbnails.maxres?.url ??
@@ -255,11 +273,13 @@ export function getPlaybackQueueItems(
   queueId: string | undefined,
   {
     favoriteStreamerVideoSection,
+    gamePortfolioSection,
     realtimeSurgingSection,
     restoredPlaybackVideo,
     selectedSection,
   }: {
     favoriteStreamerVideoSection?: YouTubeCategorySection;
+    gamePortfolioSection?: YouTubeCategorySection;
     realtimeSurgingSection?: YouTubeCategorySection;
     restoredPlaybackVideo?: YouTubeVideoItem;
     selectedSection?: YouTubeCategorySection;
@@ -277,6 +297,10 @@ export function getPlaybackQueueItems(
     return favoriteStreamerVideoSection.items;
   }
 
+  if (queueId && gamePortfolioSection?.categoryId === queueId) {
+    return gamePortfolioSection.items;
+  }
+
   if (queueId && selectedSection?.categoryId === queueId) {
     return selectedSection.items;
   }
@@ -288,10 +312,12 @@ export function findPlaybackQueueIdForVideo(
   videoId: string | undefined,
   {
     favoriteStreamerVideoSection,
+    gamePortfolioSection,
     realtimeSurgingSection,
     selectedSection,
   }: {
     favoriteStreamerVideoSection?: YouTubeCategorySection;
+    gamePortfolioSection?: YouTubeCategorySection;
     realtimeSurgingSection?: YouTubeCategorySection;
     selectedSection?: YouTubeCategorySection;
   },
@@ -306,6 +332,10 @@ export function findPlaybackQueueIdForVideo(
 
   if (favoriteStreamerVideoSection?.items.some((item) => item.id === videoId)) {
     return favoriteStreamerVideoSection.categoryId;
+  }
+
+  if (gamePortfolioSection?.items.some((item) => item.id === videoId)) {
+    return gamePortfolioSection.categoryId;
   }
 
   if (selectedSection?.items.some((item) => item.id === videoId)) {
