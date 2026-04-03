@@ -28,6 +28,7 @@ import {
   getDetailVideoCategories,
   getMainVideoCategories,
   sortVideoCategories,
+  supportsVideoTrendSignals,
 } from '../../constants/videoCategories';
 import { useAuth } from '../../features/auth/useAuth';
 import { upsertPlaybackProgress } from '../../features/playback/api';
@@ -131,6 +132,7 @@ function HomePage() {
   const selectedSectionVideoIds = selectedSection?.items.map((item) => item.id) ?? [];
   const selectedCountryName =
     countryCodes.find((country) => country.code === selectedRegionCode)?.name ?? selectedRegionCode;
+  const isAllCategorySelected = selectedCategory?.id === ALL_VIDEO_CATEGORY_ID;
   const shouldLoadFavorites = isApiConfigured && authStatus === 'authenticated';
   const isChartLoading =
     isVideoCategoriesLoading || (!selectedCategory && !isVideoCategoriesError) || isLoading;
@@ -167,15 +169,15 @@ function HomePage() {
   } = useFavoriteStreamerVideos(
     accessToken,
     selectedRegionCode,
-    shouldLoadFavorites && favoriteStreamers.length > 0,
+    shouldLoadFavorites && favoriteStreamers.length > 0 && isAllCategorySelected,
   );
   const toggleFavoriteStreamerMutation = useToggleFavoriteStreamer(accessToken);
   const favoriteStreamerVideoSection =
-    favoriteStreamers.length > 0
+    favoriteStreamers.length > 0 && isAllCategorySelected
       ? mergeSections(favoriteStreamerVideosData?.pages) ?? FAVORITE_STREAMER_VIDEO_SECTION
       : undefined;
   const favoriteStreamerVideoIds = favoriteStreamerVideoSection?.items.map((item) => item.id) ?? [];
-  const isAllCategorySelected = selectedCategory?.id === ALL_VIDEO_CATEGORY_ID;
+  const shouldShowSelectedCategoryTrendSignals = supportsVideoTrendSignals(selectedCategory?.id);
 
   const {
     data: trendSignalsByVideoId = {},
@@ -185,7 +187,7 @@ function HomePage() {
     selectedRegionCode,
     selectedCategory?.id,
     selectedSectionVideoIds,
-    isApiConfigured,
+    isApiConfigured && shouldShowSelectedCategoryTrendSignals,
   );
   const {
     data: favoriteTrendSignalsByVideoId = {},
@@ -195,7 +197,7 @@ function HomePage() {
     selectedRegionCode,
     ALL_VIDEO_CATEGORY_ID,
     favoriteStreamerVideoIds,
-    shouldLoadFavorites && favoriteStreamerVideoIds.length > 0,
+    shouldLoadFavorites && isAllCategorySelected && favoriteStreamerVideoIds.length > 0,
   );
   const {
     data: realtimeSurgingData,
@@ -205,16 +207,22 @@ function HomePage() {
   const realtimeSurgingSignalsByVideoId = Object.fromEntries(
     (realtimeSurgingData?.items ?? []).map((signal) => [signal.videoId, signal]),
   );
-  const combinedTrendSignalsByVideoId = {
-    ...trendSignalsByVideoId,
-    ...favoriteTrendSignalsByVideoId,
-    ...realtimeSurgingSignalsByVideoId,
-  };
+  const chartTrendSignalsByVideoId = shouldShowSelectedCategoryTrendSignals
+    ? {
+        ...trendSignalsByVideoId,
+        ...(isAllCategorySelected ? realtimeSurgingSignalsByVideoId : {}),
+      }
+    : {};
   const realtimeSurgingSection = buildRealtimeSurgingSection(isAllCategorySelected, realtimeSurgingData);
   const realtimeSurgingEmptyMessage =
     isAllCategorySelected && !isChartLoading && !isRealtimeSurgingLoading && !isRealtimeSurgingError
       ? `아직 +${realtimeSurgingData?.rankChangeThreshold ?? 5} 이상 급상승한 영상이 없습니다.`
       : undefined;
+  const hasResolvedChartTrendSignals =
+    isApiConfigured &&
+    shouldShowSelectedCategoryTrendSignals &&
+    !isTrendSignalsLoading &&
+    !isTrendSignalsError;
   const restoredPlaybackVideo = user?.lastPlaybackProgress
     ? mapPlaybackProgressToVideoItem(user.lastPlaybackProgress)
     : undefined;
@@ -501,7 +509,7 @@ function HomePage() {
       featuredSection={realtimeSurgingSection}
       featuredSectionEmptyMessage={realtimeSurgingEmptyMessage}
       hasNextPage={hasNextPage}
-      hasResolvedTrendSignals={isApiConfigured && !isTrendSignalsLoading && !isTrendSignalsError}
+      hasResolvedTrendSignals={hasResolvedChartTrendSignals}
       isChartError={isChartError}
       isChartLoading={isChartLoading}
       isFetchingNextPage={isFetchingNextPage}
@@ -511,7 +519,7 @@ function HomePage() {
       section={selectedPlaybackSection}
       selectedCategoryLabel={selectedCategory?.label}
       selectedVideoId={selectedVideoId}
-      trendSignalsByVideoId={combinedTrendSignalsByVideoId}
+      trendSignalsByVideoId={chartTrendSignalsByVideoId}
     />
   );
 
@@ -522,7 +530,7 @@ function HomePage() {
       featuredSection={realtimeSurgingSection}
       featuredSectionEmptyMessage={realtimeSurgingEmptyMessage}
       hasNextPage={hasNextPage}
-      hasResolvedTrendSignals={isApiConfigured && !isTrendSignalsLoading && !isTrendSignalsError}
+      hasResolvedTrendSignals={hasResolvedChartTrendSignals}
       isChartError={isChartError}
       isChartLoading={isChartLoading}
       isFetchingNextPage={isFetchingNextPage}
@@ -532,11 +540,11 @@ function HomePage() {
       section={selectedPlaybackSection}
       selectedCategoryLabel={selectedCategory?.label}
       selectedVideoId={selectedVideoId}
-      trendSignalsByVideoId={combinedTrendSignalsByVideoId}
+      trendSignalsByVideoId={chartTrendSignalsByVideoId}
     />
   );
 
-  const favoriteVideosContent = (
+  const favoriteVideosContent = isAllCategorySelected ? (
     <FavoriteVideosPanel
       authStatus={authStatus}
       favoriteStreamerCount={favoriteStreamers.length}
@@ -556,9 +564,9 @@ function HomePage() {
       onSelectVideo={handleSelectVideo}
       selectedCountryName={selectedCountryName}
       selectedVideoId={selectedVideoId}
-      trendSignalsByVideoId={combinedTrendSignalsByVideoId}
+      trendSignalsByVideoId={favoriteTrendSignalsByVideoId}
     />
-  );
+  ) : null;
 
   const filterSummaryContent = (
     <FilterSummaryPanel

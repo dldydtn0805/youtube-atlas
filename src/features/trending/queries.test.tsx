@@ -32,21 +32,19 @@ describe('useVideoTrendSignals', () => {
     fetchVideoTrendSignals.mockReset();
   });
 
-  it('requests trend signals for non-all categories too', async () => {
-    fetchVideoTrendSignals.mockResolvedValue({
-      'video-1': {
-        categoryId: '10',
-      },
-    });
-
+  it('does not request trend signals for non-all categories', async () => {
     const { useVideoTrendSignals } = await import('./queries');
 
     renderHook(() => useVideoTrendSignals('KR', '10', ['video-1']), {
       wrapper: createWrapper(),
     });
 
+    renderHook(() => useVideoTrendSignals('KR', '24', ['video-1']), {
+      wrapper: createWrapper(),
+    });
+
     await waitFor(() => {
-      expect(fetchVideoTrendSignals).toHaveBeenCalledWith('KR', '10', ['video-1']);
+      expect(fetchVideoTrendSignals).not.toHaveBeenCalled();
     });
   });
 

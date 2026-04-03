@@ -4,6 +4,7 @@ import {
   getMainVideoCategories,
   isMainVideoCategoryId,
   sortVideoCategories,
+  supportsVideoTrendSignals,
 } from './videoCategories';
 
 describe('video category helpers', () => {
@@ -50,6 +51,14 @@ describe('video category helpers', () => {
     expect(isMainVideoCategoryId('0')).toBe(true);
     expect(isMainVideoCategoryId('10')).toBe(true);
     expect(isMainVideoCategoryId('24')).toBe(false);
+  });
+
+  it('allows trend signals only for the all category', () => {
+    expect(supportsVideoTrendSignals('0')).toBe(true);
+    expect(supportsVideoTrendSignals('28')).toBe(false);
+    expect(supportsVideoTrendSignals('10')).toBe(false);
+    expect(supportsVideoTrendSignals('24')).toBe(false);
+    expect(supportsVideoTrendSignals(undefined)).toBe(false);
   });
 
   it('sorts categories with the all category first', () => {

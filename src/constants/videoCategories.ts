@@ -38,6 +38,10 @@ export function isMainVideoCategoryId(categoryId: string) {
   return MAIN_VIDEO_CATEGORY_ORDER.has(categoryId);
 }
 
+export function supportsVideoTrendSignals(categoryId?: string) {
+  return categoryId === ALL_VIDEO_CATEGORY_ID;
+}
+
 export function getMainVideoCategories(categories: VideoCategory[]) {
   return categories
     .filter((category) => isMainVideoCategoryId(category.id))
