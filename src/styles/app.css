@@ -485,34 +485,43 @@
 }
 
 .app-shell__stage-action-button--game[data-variant='buy'] {
-  background: rgba(14, 116, 144, 0.12);
-  border-color: rgba(8, 145, 178, 0.24);
-  color: #0f766e;
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.16), rgba(22, 163, 74, 0.1));
+  border-color: rgba(22, 163, 74, 0.24);
+  color: #15803d;
 }
 
 .app-shell__stage-action-button--game[data-variant='buy']:hover,
 .app-shell__stage-action-button--game[data-variant='buy']:focus-visible {
-  background: rgba(14, 116, 144, 0.18);
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.22), rgba(22, 163, 74, 0.14));
+  border-color: rgba(22, 163, 74, 0.32);
 }
 
 .app-shell__stage-action-button--game[data-variant='buy']:disabled {
-  background: var(--surface-control);
-  border-color: var(--border);
-  box-shadow: none;
-  color: var(--text-muted);
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.14), rgba(22, 163, 74, 0.08));
+  border-color: rgba(22, 163, 74, 0.18);
+  color: #15803d;
   cursor: not-allowed;
-  opacity: 1;
+  opacity: 0.62;
 }
 
 .app-shell__stage-action-button--game[data-variant='sell'] {
-  background: rgba(185, 28, 28, 0.1);
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.14), rgba(220, 38, 38, 0.08));
   border-color: rgba(220, 38, 38, 0.24);
   color: #b91c1c;
 }
 
 .app-shell__stage-action-button--game[data-variant='sell']:hover,
 .app-shell__stage-action-button--game[data-variant='sell']:focus-visible {
-  background: rgba(185, 28, 28, 0.16);
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.2), rgba(220, 38, 38, 0.12));
+  border-color: rgba(220, 38, 38, 0.32);
+}
+
+.app-shell__stage-action-button--game[data-variant='sell']:disabled {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.12), rgba(220, 38, 38, 0.06));
+  border-color: rgba(220, 38, 38, 0.18);
+  color: #b91c1c;
+  cursor: not-allowed;
+  opacity: 0.62;
 }
 
 .app-shell__stage-action-button--history {
@@ -754,15 +763,40 @@
   transform: none;
 }
 
-.app-shell__game-panel-action--danger {
-  background: rgba(185, 28, 28, 0.1);
+.app-shell__game-panel-action[data-variant='buy'] {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.18), rgba(22, 163, 74, 0.12));
+  border-color: rgba(22, 163, 74, 0.24);
+  color: #15803d;
+}
+
+.app-shell__game-panel-action[data-variant='buy']:hover,
+.app-shell__game-panel-action[data-variant='buy']:focus-visible {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.24), rgba(22, 163, 74, 0.16));
+  border-color: rgba(22, 163, 74, 0.32);
+}
+
+.app-shell__game-panel-action[data-variant='buy']:disabled {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.16), rgba(22, 163, 74, 0.1));
+  border-color: rgba(22, 163, 74, 0.18);
+  color: #15803d;
+}
+
+.app-shell__game-panel-action[data-variant='sell'] {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.14), rgba(220, 38, 38, 0.08));
   border-color: rgba(220, 38, 38, 0.24);
   color: #b91c1c;
 }
 
-.app-shell__game-panel-action--danger:hover,
-.app-shell__game-panel-action--danger:focus-visible {
-  background: rgba(185, 28, 28, 0.16);
+.app-shell__game-panel-action[data-variant='sell']:hover,
+.app-shell__game-panel-action[data-variant='sell']:focus-visible {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.2), rgba(220, 38, 38, 0.12));
+  border-color: rgba(220, 38, 38, 0.32);
+}
+
+.app-shell__game-panel-action[data-variant='sell']:disabled {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.12), rgba(220, 38, 38, 0.06));
+  border-color: rgba(220, 38, 38, 0.18);
+  color: #b91c1c;
 }
 
 .app-shell__game-price-strip {
@@ -944,10 +978,10 @@
 
 .app-shell__game-position-sell {
   align-items: center;
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid rgba(15, 23, 42, 0.92);
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.14), rgba(220, 38, 38, 0.08));
+  border: 1px solid rgba(220, 38, 38, 0.24);
   border-radius: 999px;
-  color: #fff;
+  color: #b91c1c;
   cursor: pointer;
   display: inline-flex;
   font-size: 0.76rem;
@@ -965,6 +999,8 @@
 
 .app-shell__game-position-sell:hover,
 .app-shell__game-position-sell:focus-visible {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.2), rgba(220, 38, 38, 0.12));
+  border-color: rgba(220, 38, 38, 0.32);
   box-shadow: var(--shadow-soft);
   outline: none;
   transform: translateY(-1px);
@@ -972,7 +1008,7 @@
 
 .app-shell__game-position-sell:disabled {
   cursor: default;
-  opacity: 0.55;
+  opacity: 0.62;
   transform: none;
 }
 
@@ -1233,20 +1269,26 @@
 }
 
 :root[data-theme='dark'] .app-shell__stage-action-button--game[data-variant='buy'] {
-  background: rgba(20, 184, 166, 0.16);
-  border-color: rgba(45, 212, 191, 0.26);
-  color: #99f6e4;
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.18));
+  border-color: rgba(74, 222, 128, 0.34);
+  color: #dcfce7;
 }
 
 :root[data-theme='dark'] .app-shell__stage-action-button--game[data-variant='buy']:disabled {
-  background: rgba(15, 23, 42, 0.58);
-  border-color: rgba(148, 163, 184, 0.18);
-  color: rgba(226, 232, 240, 0.6);
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.22), rgba(22, 163, 74, 0.12));
+  border-color: rgba(74, 222, 128, 0.24);
+  color: #bbf7d0;
 }
 
 :root[data-theme='dark'] .app-shell__stage-action-button--game[data-variant='sell'] {
-  background: rgba(248, 113, 113, 0.14);
-  border-color: rgba(248, 113, 113, 0.24);
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.22), rgba(220, 38, 38, 0.12));
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #fee2e2;
+}
+
+:root[data-theme='dark'] .app-shell__stage-action-button--game[data-variant='sell']:disabled {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.18), rgba(220, 38, 38, 0.1));
+  border-color: rgba(248, 113, 113, 0.22);
   color: #fecaca;
 }
 
@@ -1292,16 +1334,43 @@
   border-color: rgba(124, 196, 255, 0.24);
 }
 
-:root[data-theme='dark'] .app-shell__game-panel-action--danger {
-  background: rgba(248, 113, 113, 0.12);
-  border-color: rgba(248, 113, 113, 0.24);
-  color: #fecaca;
+:root[data-theme='dark'] .app-shell__game-panel-action[data-variant='buy'] {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.34), rgba(22, 163, 74, 0.2));
+  border-color: rgba(74, 222, 128, 0.34);
+  box-shadow: 0 14px 32px rgba(22, 163, 74, 0.22);
+  color: #dcfce7;
 }
 
-:root[data-theme='dark'] .app-shell__game-panel-action--danger:hover,
-:root[data-theme='dark'] .app-shell__game-panel-action--danger:focus-visible {
-  background: rgba(248, 113, 113, 0.18);
+:root[data-theme='dark'] .app-shell__game-panel-action[data-variant='buy']:hover,
+:root[data-theme='dark'] .app-shell__game-panel-action[data-variant='buy']:focus-visible {
+  background: linear-gradient(180deg, rgba(74, 222, 128, 0.42), rgba(22, 163, 74, 0.24));
+  border-color: rgba(134, 239, 172, 0.42);
+  box-shadow: 0 18px 36px rgba(22, 163, 74, 0.28);
+}
+
+:root[data-theme='dark'] .app-shell__game-panel-action[data-variant='buy']:disabled {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.24), rgba(22, 163, 74, 0.14));
+  border-color: rgba(74, 222, 128, 0.24);
+  box-shadow: none;
+  color: #bbf7d0;
+}
+
+:root[data-theme='dark'] .app-shell__game-panel-action[data-variant='sell'] {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.22), rgba(220, 38, 38, 0.12));
   border-color: rgba(248, 113, 113, 0.3);
+  color: #fee2e2;
+}
+
+:root[data-theme='dark'] .app-shell__game-panel-action[data-variant='sell']:hover,
+:root[data-theme='dark'] .app-shell__game-panel-action[data-variant='sell']:focus-visible {
+  background: linear-gradient(180deg, rgba(252, 165, 165, 0.28), rgba(220, 38, 38, 0.16));
+  border-color: rgba(252, 165, 165, 0.34);
+}
+
+:root[data-theme='dark'] .app-shell__game-panel-action[data-variant='sell']:disabled {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.18), rgba(220, 38, 38, 0.1));
+  border-color: rgba(248, 113, 113, 0.22);
+  color: #fecaca;
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-helper[data-tone='warning'] {
@@ -1324,9 +1393,9 @@
 }
 
 :root[data-theme='dark'] .app-shell__game-position-sell {
-  background: rgba(226, 232, 240, 0.12);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: var(--text);
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.22), rgba(220, 38, 38, 0.12));
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #fee2e2;
 }
 
 :root[data-theme='dark'] .app-shell__game-history-status[data-status='open'] {
@@ -1377,6 +1446,13 @@
 :root[data-theme='dark'] .app-shell__game-rank-history-line,
 :root[data-theme='dark'] .app-shell__game-rank-history-point {
   stroke: #67e8f9;
+}
+
+:root[data-theme='dark'] .app-shell__game-rank-history-line {
+  fill: none;
+}
+
+:root[data-theme='dark'] .app-shell__game-rank-history-point {
   fill: #67e8f9;
 }
 

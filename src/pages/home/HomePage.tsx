@@ -1437,7 +1437,8 @@ function HomePage() {
                     차트
                   </button>
                   <button
-                    className="app-shell__game-panel-action app-shell__game-panel-action--danger"
+                    className="app-shell__game-panel-action"
+                    data-variant="sell"
                     disabled={!canShowGameActions || isSelectedVideoSellDisabled}
                     onClick={() => void handleSellPosition(selectedVideoOpenPosition)}
                     title={
@@ -1476,6 +1477,7 @@ function HomePage() {
                   <button
                     className="app-shell__game-panel-action"
                     disabled={!canShowGameActions || isSelectedVideoBuyDisabled}
+                    data-variant="buy"
                     onClick={() => void handleBuyCurrentVideo()}
                     title={
                       !canShowGameActions
