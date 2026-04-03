@@ -317,6 +317,10 @@ export function mergeUniqueVideoItems(...groups: Array<YouTubeVideoItem[] | unde
   return mergedItems;
 }
 
+export function getCategoryPlaybackQueueId(categoryId: string) {
+  return `category:${categoryId}`;
+}
+
 export function getPlaybackQueueItems(
   queueId: string | undefined,
   {

@@ -576,6 +576,7 @@ function HomePage() {
   }, [
     authStatus,
     favoriteStreamerVideoSection,
+    gamePortfolioSection,
     realtimeSurgingSection,
     restorePlaybackSelection,
     selectedPlaybackSection,
