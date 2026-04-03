@@ -786,30 +786,12 @@ function HomePage() {
   const currentVideoGameHelperText =
     !canShowGameActions
       ? !isGameRegionSelected
-        ? selectedVideoOpenPosition
-          ? `매수 ${formatRank(selectedVideoOpenPosition.buyRank)} · 현재 ${formatRank(
-              selectedVideoOpenPosition.currentRank,
-              { chartOut: selectedVideoOpenPosition.chartOut },
-            )} · 손익 ${formatSignedPoints(
-              selectedVideoOpenPosition.profitPoints,
-            )} · 랭킹 게임은 대한민국 전체 카테고리에서만 가능합니다.`
-          : '랭킹 게임은 대한민국 전체 카테고리에서만 가능합니다.'
-        : selectedVideoOpenPosition
-          ? `매수 ${formatRank(selectedVideoOpenPosition.buyRank)} · 현재 ${formatRank(
-              selectedVideoOpenPosition.currentRank,
-              { chartOut: selectedVideoOpenPosition.chartOut },
-            )} · 손익 ${formatSignedPoints(
-              selectedVideoOpenPosition.profitPoints,
-            )} · 매수/매도는 전체 카테고리에서만 가능합니다.`
-          : '매수/매도는 전체 카테고리에서만 가능합니다.'
+        ? '랭킹 게임은 대한민국 전체 카테고리에서만 가능합니다.'
+        : '매수/매도는 전체 카테고리에서만 가능합니다.'
       : authStatus !== 'authenticated'
       ? '로그인하면 지금 보는 영상도 바로 게임 포지션으로 담을 수 있습니다.'
       : selectedVideoOpenPosition
-        ? `매수가 ${formatPoints(selectedVideoOpenPosition.stakePoints)} · 현재가 ${formatMaybePoints(
-            selectedVideoOpenPosition.currentPricePoints,
-          )} · 현재 ${formatRank(selectedVideoOpenPosition.currentRank, {
-            chartOut: selectedVideoOpenPosition.chartOut,
-          })} · 손익 ${formatSignedPoints(selectedVideoOpenPosition.profitPoints)}`
+        ? '현재 보유 중인 포지션입니다.'
         : selectedVideoMarketEntry
           ? selectedVideoMarketEntry.canBuy
             ? `현재 ${formatRank(selectedVideoMarketEntry.currentRank)} · ${formatPoints(
@@ -825,6 +807,11 @@ function HomePage() {
               : '다음 게임 시즌을 준비 중입니다.';
   const currentVideoGamePriceSummary = selectedVideoOpenPosition ? (
     <div className="app-shell__game-price-strip" aria-label="선택한 영상 가격 정보">
+      <span className="app-shell__game-price-chip">
+        현재 {formatRank(selectedVideoOpenPosition.currentRank, {
+          chartOut: selectedVideoOpenPosition.chartOut,
+        })}
+      </span>
       <span className="app-shell__game-price-chip">매수가 {formatPoints(selectedVideoOpenPosition.stakePoints)}</span>
       <span className="app-shell__game-price-chip">
         현재가 {formatMaybePoints(selectedVideoOpenPosition.currentPricePoints)}
@@ -1100,26 +1087,42 @@ function HomePage() {
             <h3 className="app-shell__game-panel-title">
               {currentGameSeason ? `${currentGameSeason.regionCode} 시즌` : '시즌 준비 중'}
             </h3>
+            {currentGameSeason ? (
+              <p className="app-shell__game-panel-subtle">
+                종료 {seasonDateTimeFormatter.format(new Date(currentGameSeason.endAt))}
+              </p>
+            ) : null}
           </div>
           <div className="app-shell__game-panel-metrics">
             <span className="app-shell__game-panel-metric">
-              잔액 {currentGameSeason ? formatPoints(currentGameSeason.wallet.balancePoints) : '-'}
+              <span className="app-shell__game-panel-metric-label">잔액</span>
+              <span className="app-shell__game-panel-metric-value">
+                {currentGameSeason ? formatPoints(currentGameSeason.wallet.balancePoints) : '-'}
+              </span>
             </span>
             <span className="app-shell__game-panel-metric">
-              총자산 {currentGameSeason ? formatPoints(currentGameSeason.wallet.totalAssetPoints) : '-'}
+              <span className="app-shell__game-panel-metric-label">총자산</span>
+              <span className="app-shell__game-panel-metric-value">
+                {currentGameSeason ? formatPoints(currentGameSeason.wallet.totalAssetPoints) : '-'}
+              </span>
             </span>
             <span className="app-shell__game-panel-metric">
-              {activeGameTab === 'leaderboard'
-                ? `내 순위 ${myLeaderboardEntry ? `${myLeaderboardEntry.rank}위` : '-'}`
-                : `보유 ${openGamePositions.length}/${currentGameSeason?.maxOpenPositions ?? '-'}`}
+              <span className="app-shell__game-panel-metric-label">
+                {activeGameTab === 'leaderboard' ? '내 순위' : '보유'}
+              </span>
+              <span className="app-shell__game-panel-metric-value">
+                {activeGameTab === 'leaderboard'
+                  ? myLeaderboardEntry
+                    ? `${myLeaderboardEntry.rank}위`
+                    : '-'
+                  : `${openGamePositions.length}/${currentGameSeason?.maxOpenPositions ?? '-'}`}
+              </span>
             </span>
           </div>
         </div>
         <p className="app-shell__game-panel-helper">
           {currentGameSeason
-            ? `${currentVideoGameHelperText} · 종료 ${seasonDateTimeFormatter.format(
-                new Date(currentGameSeason.endAt),
-              )}`
+            ? currentVideoGameHelperText
             : isCurrentGameSeasonLoading
               ? '게임 시즌을 불러오는 중입니다.'
               : currentGameSeasonError instanceof Error
