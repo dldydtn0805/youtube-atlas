@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   buyGamePosition,
   fetchCurrentGameSeason,
+  fetchGameLeaderboard,
   fetchGameMarket,
   fetchMyGamePositions,
   sellGamePosition,
@@ -10,6 +11,7 @@ import type { CreateGamePositionInput } from './types';
 
 export const gameQueryKeys = {
   currentSeason: (accessToken: string | null) => ['game', 'currentSeason', accessToken] as const,
+  leaderboard: (accessToken: string | null) => ['game', 'leaderboard', accessToken] as const,
   market: (accessToken: string | null) => ['game', 'market', accessToken] as const,
   positions: (accessToken: string | null, status = 'OPEN') =>
     ['game', 'positions', accessToken, status] as const,
@@ -30,6 +32,15 @@ export function useGameMarket(accessToken: string | null, enabled = true) {
     queryKey: gameQueryKeys.market(accessToken),
     queryFn: () => fetchGameMarket(accessToken as string),
     staleTime: 1000 * 30,
+  });
+}
+
+export function useGameLeaderboard(accessToken: string | null, enabled = true) {
+  return useQuery({
+    enabled: enabled && Boolean(accessToken),
+    queryKey: gameQueryKeys.leaderboard(accessToken),
+    queryFn: () => fetchGameLeaderboard(accessToken as string),
+    staleTime: 1000 * 15,
   });
 }
 
@@ -60,6 +71,7 @@ export function useBuyGamePosition(accessToken: string | null) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.currentSeason(accessToken) }),
+        queryClient.invalidateQueries({ queryKey: gameQueryKeys.leaderboard(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.market(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, 'OPEN') }),
       ]);
@@ -81,6 +93,7 @@ export function useSellGamePosition(accessToken: string | null) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.currentSeason(accessToken) }),
+        queryClient.invalidateQueries({ queryKey: gameQueryKeys.leaderboard(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.market(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, 'OPEN') }),
       ]);

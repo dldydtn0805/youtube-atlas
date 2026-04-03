@@ -77,6 +77,8 @@
     rgba(15, 23, 42, 0.42);
   --focus-ring: 0 0 0 4px rgba(0, 113, 227, 0.1);
   --accent-border: rgba(0, 113, 227, 0.22);
+  --font-display: 'Neo둥근모', monospace;
+  --font-body: 'Arial', 'Helvetica Neue', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   color-scheme: light;
 }
 
@@ -155,7 +157,7 @@
 body {
   background: var(--page-bg);
   color: var(--text);
-  font-family: 'Neo둥근모', monospace;
+  font-family: var(--font-body);
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;

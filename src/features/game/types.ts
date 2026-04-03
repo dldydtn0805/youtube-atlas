@@ -36,6 +36,20 @@ export interface GameMarketVideo {
   capturedAt: string;
 }
 
+export interface GameLeaderboardEntry {
+  rank: number;
+  userId: number;
+  displayName: string;
+  pictureUrl: string | null;
+  totalAssetPoints: number;
+  balancePoints: number;
+  reservedPoints: number;
+  realizedPnlPoints: number;
+  unrealizedPnlPoints: number;
+  openPositionCount: number;
+  me: boolean;
+}
+
 export interface GamePosition {
   id: number;
   videoId: string;

@@ -36,6 +36,7 @@ import { useAuth } from '../../features/auth/useAuth';
 import {
   useBuyGamePosition,
   useCurrentGameSeason,
+  useGameLeaderboard,
   useGameMarket,
   useMyGamePositions,
   useSellGamePosition,
@@ -113,6 +114,7 @@ function HomePage() {
   const [pendingPlaybackRestore, setPendingPlaybackRestore] = useState<PendingPlaybackRestore | null>(null);
   const [isManualPlaybackSavePending, setIsManualPlaybackSavePending] = useState(false);
   const [manualPlaybackSaveStatus, setManualPlaybackSaveStatus] = useState<string | null>(null);
+  const [activeGameTab, setActiveGameTab] = useState<'positions' | 'leaderboard'>('positions');
   const [gameActionStatus, setGameActionStatus] = useState<string | null>(null);
   const [gameClock, setGameClock] = useState(() => Date.now());
   const playerStageRef = useRef<HTMLDivElement | null>(null);
@@ -173,6 +175,12 @@ function HomePage() {
     data: gameMarket = [],
     error: gameMarketError,
   } = useGameMarket(accessToken, shouldLoadGame);
+  const {
+    data: gameLeaderboard = [],
+    error: gameLeaderboardError,
+    isError: isGameLeaderboardError,
+    isLoading: isGameLeaderboardLoading,
+  } = useGameLeaderboard(accessToken, shouldLoadGame);
   const {
     data: openGamePositions = [],
     error: openGamePositionsError,
@@ -372,6 +380,7 @@ function HomePage() {
   useLogoutOnUnauthorized(favoriteStreamersError, logout);
   useLogoutOnUnauthorized(favoriteStreamerVideosError, logout);
   useLogoutOnUnauthorized(currentGameSeasonError, logout);
+  useLogoutOnUnauthorized(gameLeaderboardError, logout);
   useLogoutOnUnauthorized(gameMarketError, logout);
   useLogoutOnUnauthorized(openGamePositionsError, logout);
 
@@ -384,6 +393,7 @@ function HomePage() {
     lastPersistedPlaybackSecondsRef.current = {};
     setIsManualPlaybackSavePending(false);
     setManualPlaybackSaveStatus(null);
+    setActiveGameTab('positions');
     setGameActionStatus(null);
     setPendingPlaybackRestore(null);
   }, [authStatus]);
@@ -724,6 +734,8 @@ function HomePage() {
   const selectedVideoHoldRemainingSeconds = selectedVideoOpenPosition
     ? getRemainingHoldSeconds(selectedVideoOpenPosition)
     : 0;
+  const myLeaderboardEntry = gameLeaderboard.find((entry) => entry.me);
+  const topLeaderboardEntries = gameLeaderboard.slice(0, 10);
   const currentVideoGameHelperText =
     authStatus !== 'authenticated'
       ? '로그인하면 지금 보는 영상도 바로 게임 포지션으로 담을 수 있습니다.'
@@ -797,10 +809,165 @@ function HomePage() {
         : buyGamePositionMutation.isPending)
         ? '⋯'
         : selectedVideoOpenPosition
-          ? '매도'
-          : '매수'}
+        ? '매도'
+        : '매수'}
     </button>
   ) : null;
+  const leaderboardContent =
+    isGameLeaderboardLoading && !isGameLeaderboardError ? (
+      <p className="app-shell__game-empty">리더보드를 불러오는 중입니다.</p>
+    ) : isGameLeaderboardError ? (
+      <p className="app-shell__game-empty">
+        {gameLeaderboardError instanceof Error
+          ? gameLeaderboardError.message
+          : '리더보드를 불러오지 못했습니다.'}
+      </p>
+    ) : topLeaderboardEntries.length > 0 ? (
+      <>
+        <ol className="app-shell__game-leaderboard">
+          {topLeaderboardEntries.map((entry) => (
+            <li
+              key={entry.userId}
+              className="app-shell__game-leaderboard-item"
+              data-me={entry.me}
+            >
+              <div className="app-shell__game-leaderboard-rank">{entry.rank}</div>
+              {entry.pictureUrl ? (
+                <img
+                  alt={`${entry.displayName} 프로필`}
+                  className="app-shell__game-leaderboard-avatar"
+                  loading="lazy"
+                  src={entry.pictureUrl}
+                />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="app-shell__game-leaderboard-avatar app-shell__game-leaderboard-avatar--fallback"
+                >
+                  {(entry.displayName || 'A').slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <div className="app-shell__game-leaderboard-copy">
+                <div className="app-shell__game-leaderboard-head">
+                  <p className="app-shell__game-leaderboard-name">
+                    {entry.displayName}
+                    {entry.me ? ' · 나' : ''}
+                  </p>
+                  <p className="app-shell__game-leaderboard-total">
+                    총자산 {formatPoints(entry.totalAssetPoints)}
+                  </p>
+                </div>
+                <p className="app-shell__game-leaderboard-meta">
+                  실현 {formatSignedPoints(entry.realizedPnlPoints)} · 평가{' '}
+                  {formatSignedPoints(entry.unrealizedPnlPoints)} · 보유 {entry.openPositionCount}개
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        {myLeaderboardEntry ? (
+          <section className="app-shell__game-leaderboard-pinned" aria-label="내 순위">
+            <p className="app-shell__game-leaderboard-pinned-label">내 순위</p>
+            <div className="app-shell__game-leaderboard-item" data-me="true">
+              <div className="app-shell__game-leaderboard-rank">{myLeaderboardEntry.rank}</div>
+              {myLeaderboardEntry.pictureUrl ? (
+                <img
+                  alt={`${myLeaderboardEntry.displayName} 프로필`}
+                  className="app-shell__game-leaderboard-avatar"
+                  loading="lazy"
+                  src={myLeaderboardEntry.pictureUrl}
+                />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="app-shell__game-leaderboard-avatar app-shell__game-leaderboard-avatar--fallback"
+                >
+                  {(myLeaderboardEntry.displayName || 'A').slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <div className="app-shell__game-leaderboard-copy">
+                <div className="app-shell__game-leaderboard-head">
+                  <p className="app-shell__game-leaderboard-name">{myLeaderboardEntry.displayName} · 나</p>
+                  <p className="app-shell__game-leaderboard-total">
+                    총자산 {formatPoints(myLeaderboardEntry.totalAssetPoints)}
+                  </p>
+                </div>
+                <p className="app-shell__game-leaderboard-meta">
+                  실현 {formatSignedPoints(myLeaderboardEntry.realizedPnlPoints)} · 평가{' '}
+                  {formatSignedPoints(myLeaderboardEntry.unrealizedPnlPoints)} · 보유{' '}
+                  {myLeaderboardEntry.openPositionCount}개
+                </p>
+              </div>
+            </div>
+          </section>
+        ) : null}
+      </>
+    ) : currentGameSeason ? (
+      <p className="app-shell__game-empty">아직 리더보드에 표시할 참가자가 없습니다.</p>
+    ) : null;
+  const positionsContent =
+    openGamePositions.length > 0 ? (
+      <ul className="app-shell__game-positions">
+        {openGamePositions.map((position) => {
+          const remainingHoldSeconds = getRemainingHoldSeconds(position);
+          const isSelectedPosition = position.videoId === selectedVideoId;
+          const isPendingSell =
+            sellGamePositionMutation.isPending && sellGamePositionMutation.variables === position.id;
+
+          return (
+            <li
+              key={position.id}
+              className="app-shell__game-position"
+              data-selected={isSelectedPosition}
+            >
+              <button
+                className="app-shell__game-position-select"
+                onClick={() => handleSelectGamePositionVideo(position)}
+                type="button"
+              >
+                <img
+                  alt=""
+                  className="app-shell__game-position-thumb"
+                  loading="lazy"
+                  src={position.thumbnailUrl}
+                />
+                <div className="app-shell__game-position-copy">
+                  <p className="app-shell__game-position-title">{position.title}</p>
+                  <p className="app-shell__game-position-meta">
+                    매수 {formatRank(position.buyRank)} · 현재 {formatRank(position.currentRank)} ·{' '}
+                    {formatSignedPoints(position.profitPoints)}
+                  </p>
+                </div>
+              </button>
+              <div className="app-shell__game-position-side">
+                <button
+                  className="app-shell__game-position-sell"
+                  disabled={remainingHoldSeconds > 0 || isPendingSell}
+                  onClick={() => void handleSellPosition(position)}
+                  title={
+                    remainingHoldSeconds > 0
+                      ? `최소 보유 시간까지 ${formatRemainingHoldSeconds(remainingHoldSeconds)} 남았습니다.`
+                      : '포지션을 매도합니다.'
+                  }
+                  type="button"
+                >
+                  {isPendingSell ? '매도 중...' : '매도'}
+                </button>
+                <span className="app-shell__game-position-hold">
+                  {remainingHoldSeconds > 0
+                    ? `${formatRemainingHoldSeconds(remainingHoldSeconds)} 남음`
+                    : '지금 매도 가능'}
+                </span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    ) : currentGameSeason ? (
+      <p className="app-shell__game-empty">
+        아직 보유 중인 영상이 없어요. 지금 보는 영상에서 바로 시작할 수 있습니다.
+      </p>
+    ) : null;
   const portfolioContent =
     isApiConfigured && authStatus === 'authenticated' ? (
       <div className="app-shell__game-panel">
@@ -816,7 +983,12 @@ function HomePage() {
               잔액 {currentGameSeason ? formatPoints(currentGameSeason.wallet.balancePoints) : '-'}
             </span>
             <span className="app-shell__game-panel-metric">
-              보유 {openGamePositions.length}/{currentGameSeason?.maxOpenPositions ?? '-'}
+              총자산 {currentGameSeason ? formatPoints(currentGameSeason.wallet.totalAssetPoints) : '-'}
+            </span>
+            <span className="app-shell__game-panel-metric">
+              {activeGameTab === 'leaderboard'
+                ? `내 순위 ${myLeaderboardEntry ? `${myLeaderboardEntry.rank}위` : '-'}`
+                : `보유 ${openGamePositions.length}/${currentGameSeason?.maxOpenPositions ?? '-'}`}
             </span>
           </div>
         </div>
@@ -829,71 +1001,38 @@ function HomePage() {
               ? '게임 시즌을 불러오는 중입니다.'
               : currentGameSeasonError instanceof Error
                 ? currentGameSeasonError.message
-                : '다음 게임 시즌을 준비 중입니다.'}
+              : '다음 게임 시즌을 준비 중입니다.'}
         </p>
         {gameActionStatus ? <p className="app-shell__game-panel-status">{gameActionStatus}</p> : null}
-        {openGamePositions.length > 0 ? (
-          <ul className="app-shell__game-positions">
-            {openGamePositions.map((position) => {
-              const remainingHoldSeconds = getRemainingHoldSeconds(position);
-              const isSelectedPosition = position.videoId === selectedVideoId;
-              const isPendingSell =
-                sellGamePositionMutation.isPending && sellGamePositionMutation.variables === position.id;
-
-              return (
-                <li
-                  key={position.id}
-                  className="app-shell__game-position"
-                  data-selected={isSelectedPosition}
-                >
-                  <button
-                    className="app-shell__game-position-select"
-                    onClick={() => handleSelectGamePositionVideo(position)}
-                    type="button"
-                  >
-                    <img
-                      alt=""
-                      className="app-shell__game-position-thumb"
-                      loading="lazy"
-                      src={position.thumbnailUrl}
-                    />
-                    <div className="app-shell__game-position-copy">
-                      <p className="app-shell__game-position-title">{position.title}</p>
-                      <p className="app-shell__game-position-meta">
-                        매수 {formatRank(position.buyRank)} · 현재 {formatRank(position.currentRank)} ·{' '}
-                        {formatSignedPoints(position.profitPoints)}
-                      </p>
-                    </div>
-                  </button>
-                  <div className="app-shell__game-position-side">
-                    <button
-                      className="app-shell__game-position-sell"
-                      disabled={remainingHoldSeconds > 0 || isPendingSell}
-                      onClick={() => void handleSellPosition(position)}
-                      title={
-                        remainingHoldSeconds > 0
-                          ? `최소 보유 시간까지 ${formatRemainingHoldSeconds(remainingHoldSeconds)} 남았습니다.`
-                          : '포지션을 매도합니다.'
-                      }
-                      type="button"
-                    >
-                      {isPendingSell ? '매도 중...' : '매도'}
-                    </button>
-                    <span className="app-shell__game-position-hold">
-                      {remainingHoldSeconds > 0
-                        ? `${formatRemainingHoldSeconds(remainingHoldSeconds)} 남음`
-                        : '지금 매도 가능'}
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        ) : currentGameSeason ? (
-          <p className="app-shell__game-empty">
-            아직 보유 중인 영상이 없어요. 지금 보는 영상에서 바로 시작할 수 있습니다.
-          </p>
-        ) : null}
+        <div
+          aria-label="게임 패널 탭"
+          className="app-shell__game-tabs"
+          role="tablist"
+        >
+          <button
+            aria-selected={activeGameTab === 'positions'}
+            className="app-shell__game-tab"
+            data-active={activeGameTab === 'positions'}
+            onClick={() => setActiveGameTab('positions')}
+            role="tab"
+            type="button"
+          >
+            내 포지션
+          </button>
+          <button
+            aria-selected={activeGameTab === 'leaderboard'}
+            className="app-shell__game-tab"
+            data-active={activeGameTab === 'leaderboard'}
+            onClick={() => setActiveGameTab('leaderboard')}
+            role="tab"
+            type="button"
+          >
+            리더보드
+          </button>
+        </div>
+        <div className="app-shell__game-tab-panel" role="tabpanel">
+          {activeGameTab === 'positions' ? positionsContent : leaderboardContent}
+        </div>
       </div>
     ) : null;
 
