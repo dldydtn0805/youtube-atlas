@@ -930,7 +930,6 @@ function HomePage() {
                 <div className="app-shell__game-leaderboard-head">
                   <p className="app-shell__game-leaderboard-name">
                     {entry.displayName}
-                    {entry.me ? ' · 나' : ''}
                   </p>
                   <p className="app-shell__game-leaderboard-total">
                     총자산 {formatPoints(entry.totalAssetPoints)}
@@ -973,7 +972,7 @@ function HomePage() {
               )}
               <div className="app-shell__game-leaderboard-copy">
                 <div className="app-shell__game-leaderboard-head">
-                  <p className="app-shell__game-leaderboard-name">{myLeaderboardEntry.displayName} · 나</p>
+                  <p className="app-shell__game-leaderboard-name">{myLeaderboardEntry.displayName}</p>
                   <p className="app-shell__game-leaderboard-total">
                     총자산 {formatPoints(myLeaderboardEntry.totalAssetPoints)}
                   </p>

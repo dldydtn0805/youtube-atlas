@@ -828,8 +828,21 @@
 }
 
 .app-shell__game-leaderboard-item[data-me='true'] {
-  border-color: rgba(14, 116, 144, 0.3);
-  box-shadow: 0 10px 24px rgba(14, 116, 144, 0.08);
+  background:
+    linear-gradient(90deg, rgba(14, 116, 144, 0.12), rgba(14, 116, 144, 0.02)),
+    rgba(255, 255, 255, 0.72);
+  border-color: rgba(14, 116, 144, 0.34);
+  box-shadow: 0 10px 24px rgba(14, 116, 144, 0.1);
+}
+
+.app-shell__game-leaderboard-item[data-me='true'] .app-shell__game-leaderboard-rank {
+  background: rgba(14, 116, 144, 0.12);
+  border-color: rgba(14, 116, 144, 0.26);
+  color: #0f766e;
+}
+
+.app-shell__game-leaderboard-item[data-me='true'] .app-shell__game-leaderboard-name {
+  color: #0f172a;
 }
 
 .app-shell__game-leaderboard-rank {
@@ -953,6 +966,24 @@
 :root[data-theme='dark'] .app-shell__game-leaderboard-item {
   background: rgba(15, 23, 42, 0.64);
   border-color: rgba(148, 163, 184, 0.16);
+}
+
+:root[data-theme='dark'] .app-shell__game-leaderboard-item[data-me='true'] {
+  background:
+    linear-gradient(90deg, rgba(45, 212, 191, 0.12), rgba(45, 212, 191, 0.03)),
+    rgba(15, 23, 42, 0.64);
+  border-color: rgba(45, 212, 191, 0.28);
+  box-shadow: 0 10px 24px rgba(8, 145, 178, 0.14);
+}
+
+:root[data-theme='dark'] .app-shell__game-leaderboard-item[data-me='true'] .app-shell__game-leaderboard-rank {
+  background: rgba(45, 212, 191, 0.12);
+  border-color: rgba(45, 212, 191, 0.24);
+  color: #99f6e4;
+}
+
+:root[data-theme='dark'] .app-shell__game-leaderboard-item[data-me='true'] .app-shell__game-leaderboard-name {
+  color: #f8fafc;
 }
 
 .app-shell__panel--player[data-cinematic='true'] .app-shell__stage-meta {
