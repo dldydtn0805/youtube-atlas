@@ -1,148 +1,119 @@
 # YouTube Atlas
 
-국가별 YouTube 인기 영상을 카테고리별로 탐색하고, 선택한 영상에 대해 실시간 익명 채팅을 할 수 있는 웹 애플리케이션입니다.
-탐색, 재생, 실시간 참여를 한 화면에서 끊김 없이 이어지도록 설계했습니다.
+국가별 YouTube 인기 영상을 탐색하고, 영상을 바로 재생하면서 실시간 채팅과 개인화 기능까지 함께 쓰는 프론트엔드 애플리케이션입니다.
 
 배포 링크: [https://youtube-atlas.vercel.app/](https://youtube-atlas.vercel.app/)
 
 ## 프로젝트 소개
 
-Spring Boot 백엔드가 YouTube Data API와 PostgreSQL 기반 채팅 데이터를 관리하고, 프론트는 Railway에 배포된 API와 WebSocket에 연결합니다.
-단순 조회형 페이지가 아니라, 국가 선택부터 카테고리 탐색, 영상 재생, 실시간 대화까지 하나의 사용자 흐름으로 연결하는 데 집중했습니다.
+이 프로젝트는 단순한 인기 영상 목록 페이지가 아니라, 다음 흐름이 한 화면에서 이어지도록 구성되어 있습니다.
 
-## 핵심 요약
+- 국가와 카테고리를 바꿔가며 인기 영상을 탐색
+- 선택한 영상을 즉시 재생하고 이전/다음 영상으로 이동
+- 같은 영상 시청자와 실시간 채팅
+- Google 로그인 후 즐겨찾기, 재생 위치 스크랩, 랭킹 게임 이용
 
-- 국가별 인기 영상을 카테고리 단위로 빠르게 탐색
-- 선택한 영상을 즉시 재생하고 다음 영상으로 자연스럽게 전환
-- 영상별 공개 채팅방에서 실시간 익명 대화 지원
-- 반응형 레이아웃과 마지막 선택값 저장으로 사용성 강화
+프론트는 `VITE_API_BASE_URL`로 지정한 백엔드 API와 WebSocket 서버에 연결해 카탈로그, 인증, 채팅, 즐겨찾기, 재생 기록, 급상승 신호, 게임 데이터를 받아옵니다.
 
-## 주요 기능
+## 핵심 기능
 
-- 국가별 YouTube 카테고리별 인기 영상 조회
-- 선택한 영상 즉시 재생
-- 영상별 공개 실시간 익명 채팅
-- Shorts 성격의 영상 필터링
-- 채팅 5초 쿨다운 및 중복 메시지 방지
-- 마지막 선택 국가 `localStorage` 저장
-- 반응형 UI
+- 국가별 인기 영상 탐색
+- 메인/세부 카테고리 필터와 빠른 전환
+- 선택 영상 즉시 재생, 이전/다음 이동, 자동 다음 재생
+- 전체 카테고리 기준 `NEW`, 순위 상승, 조회수 증가 배지 표시
+- 실시간 급상승 섹션 노출
+- Google OAuth 로그인 및 세션 복원
+- 채널 즐겨찾기 토글과 즐겨찾기 채널 영상 모아보기
+- 재생 위치 스크랩과 마지막 재생 위치 자동 복원
+- 영상 랭킹 게임 매수/매도와 보유 포지션 확인
+- 영상별 실시간 공개 채팅
+- 익명 채팅 및 로그인 프로필 기반 채팅 지원
+- 채팅 5초 쿨다운, 중복 메시지 방지
+- 라이트/다크 모드, 시네마틱 모드, 반응형 레이아웃
+- 국가, 테마, 시네마틱 모드 상태 로컬 저장
 
 ## 기술 스택
 
 - React 19
 - TypeScript
-- Vite
+- Vite 6
 - TanStack Query
-- Spring Boot API
-- WebSocket
-- PostgreSQL
-- YouTube Data API v3
+- STOMP WebSocket
+- Google Identity Services
+- ESLint
 - Vitest
 - Testing Library
-- ESLint
 - Vercel
-- Railway
 
-## 구현 포인트
-
-- React Query의 `useQuery`, `useInfiniteQuery`로 로딩, 에러 처리, 캐싱, 추가 페이지 로딩을 관리했습니다.
-- Railway 백엔드 API를 통해 국가별 카테고리, 인기 영상, 급상승 신호를 일관된 응답 형식으로 받아오도록 구성했습니다.
-- 국가별 카테고리를 단순 나열하지 않고 상위 그룹으로 재구성해 탐색 난이도를 낮췄습니다.
-- 백엔드 WebSocket 구독으로 영상별 공개 채팅방을 구성하고, 새 메시지를 즉시 반영했습니다.
-- 로컬 스팸 방지와 백엔드 정책 검증을 함께 적용해 빠른 연속 전송과 중복 메시지를 제한했습니다.
-- 모바일 탭 전환, 시네마틱 모드, 자동 스크롤 등 시청 흐름 중심의 UI를 구성했습니다.
-
-## 프로젝트 구조
+## 현재 구조
 
 ```text
 src
 ├── app
-│   ├── App.tsx              # 전체 화면 레이아웃 및 상태 관리
-│   └── providers.tsx        # 앱 전역 provider 설정
+│   ├── App.tsx
+│   └── providers.tsx
+├── pages
+│   └── home
+│       ├── HomePage.tsx
+│       ├── hooks
+│       ├── sections
+│       └── utils.ts
 ├── components
-│   ├── CommentSection       # 영상별 실시간 채팅 UI
-│   ├── SearchBar            # 국가 선택 UI
-│   ├── VideoList            # 인기 영상 목록 UI
-│   └── VideoPlayer          # 선택한 영상 재생 iframe
+│   ├── CommentSection
+│   ├── GoogleLoginButton
+│   ├── SearchBar
+│   ├── VideoList
+│   └── VideoPlayer
 ├── constants
-│   └── countryCodes.ts      # 지원 국가 코드 목록
+│   ├── countryCodes.ts
+│   └── videoCategories.ts
 ├── features
+│   ├── auth
 │   ├── comments
-│   │   ├── api.ts           # 채팅 메시지 HTTP 요청
-│   │   ├── queries.ts       # 메시지 조회 및 WebSocket 구독
-│   │   └── types.ts         # 메시지 타입 정의
+│   ├── favorites
+│   ├── game
+│   ├── playback
 │   ├── trending
-│   │   ├── api.ts           # 급상승 신호 조회
-│   │   ├── queries.ts       # 급상승 Query 훅
-│   │   └── presentation.ts  # 배지 표시 규칙
 │   └── youtube
-│       ├── api.ts           # 백엔드 카탈로그 API 호출
-│       ├── queries.ts       # React Query 훅
-│       └── types.ts         # API 응답 타입 정의
 ├── lib
-│   ├── api.ts               # Railway API / WebSocket URL 유틸
-│   └── supabase.ts          # 과거 Supabase 연결 코드
+│   ├── api.ts
+│   └── supabase.ts
 ├── styles
-│   ├── app.css              # 앱 레이아웃 스타일
-│   └── global.css           # 전역 스타일
-├── main.tsx                 # 앱 엔트리 포인트
-└── vite-env.d.ts
+│   ├── app.css
+│   └── global.css
+└── test
+    └── setup.ts
 ```
 
-## 동작 방식
+## 화면 흐름
 
-1. 사용자가 국가를 선택합니다.
-2. `useVideoCategories(regionCode)`가 Railway 백엔드에서 국가별 카테고리를 불러오고 화면에 맞는 선택지를 구성합니다.
-3. `usePopularVideosByCategory(regionCode, category)`가 해당 국가와 카테고리의 인기 영상을 요청합니다.
-4. 카테고리별 목록에서 영상을 선택하면 재생 영역이 갱신됩니다.
-5. 선택한 영상마다 독립된 공개 채팅방이 열립니다.
-6. 새 메시지는 백엔드 WebSocket `/ws`를 통해 실시간으로 반영됩니다.
-7. `useVideoTrendSignals(...)`가 현재 목록의 급상승 신호를 조회해 `NEW`, `+순위상승`, `조회수 증가` 배지를 계산합니다.
-8. 마지막으로 선택한 국가는 브라우저 저장소에 유지됩니다.
+1. 앱이 저장된 국가/테마/시네마틱 설정과 로그인 세션을 복원합니다.
+2. 선택 국가에 맞는 카테고리를 `/api/catalog/regions/:regionCode/categories`에서 받아옵니다.
+3. 선택 카테고리의 인기 영상을 `/api/catalog/regions/:regionCode/categories/:categoryId/videos`에서 페이지 단위로 불러옵니다.
+4. 전체 카테고리에서는 급상승 배지와 실시간 급상승 섹션을 함께 보여줍니다.
+5. 영상을 선택하면 플레이어가 갱신되고, 재생 큐 기준으로 이전/다음 이동이 가능합니다.
+6. 로그인 상태라면 마지막 재생 위치를 자동 복원하고, 현재 시점 재생 위치를 수동 스크랩할 수 있습니다.
+7. 로그인 상태라면 현재 채널을 즐겨찾기에 추가하고, 전체 카테고리에서 즐겨찾기 채널 영상 묶음을 함께 볼 수 있습니다.
+8. 활성 시즌이 있으면 현재 영상을 랭킹 게임 포지션으로 매수하거나 보유 포지션을 매도할 수 있습니다.
+9. 채팅은 영상 ID 기준으로 분리되며 WebSocket `/ws` 구독으로 새 메시지를 실시간 반영합니다.
 
 ## 환경 변수
 
-프로젝트 실행 전 `.env.local` 또는 Vercel 환경 변수에 아래 값을 설정해야 합니다.
+`.env.local` 파일을 만들고 아래 값을 설정해 주세요.
 
 ```bash
-VITE_API_BASE_URL=https://your-backend.up.railway.app
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
-프론트는 직접 YouTube API 키나 DB 연결 정보를 가지지 않고, Railway에 배포된 백엔드만 바라봅니다.
+`.env.example`도 같은 값을 기준으로 제공됩니다.
 
-## 급상승 스냅샷
-
-- 프론트는 Railway 백엔드의 `/api/trending/signals`를 읽어 `NEW`, `+순위상승`, `조회수 증가` 배지를 표시합니다.
-- 데이터 수집은 백엔드의 `/api/trending/sync`와 스케줄러가 담당합니다.
-- 첫 수집에서는 `NEW` 배지만 표시되고, 두 번째 수집부터 순위 변화와 조회수 증가가 계산됩니다.
-
-예시 요청 본문:
-
-```json
-{
-  "regionCode": "KR",
-  "categoryId": "gaming",
-  "categoryLabel": "게임",
-  "sourceCategoryIds": ["20"]
-}
-```
-
-병합 카테고리는 `sourceCategoryIds`에 여러 개를 넣으면 됩니다. 예를 들어 엔터테인먼트는 `["24", "23", "26"]`처럼 넘겨 현재 앱의 병합 기준과 맞출 수 있습니다.
-
-자동 수집은 Railway 환경 변수로 설정합니다.
-
-```bash
-TRENDING_SCHEDULER_ENABLED=true
-TRENDING_SYNC_CRON=0 0/30 * * * *
-ATLAS_TRENDING_JOBS_0_REGION_CODE=KR
-ATLAS_TRENDING_JOBS_0_CATEGORY_ID=0
-ATLAS_TRENDING_JOBS_0_CATEGORY_LABEL=전체
-```
+백엔드가 연결되지 않으면 목록/채팅/로그인/즐겨찾기/재생 기록/게임 기능은 동작하지 않습니다.
 
 ## 실행 방법
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
@@ -156,23 +127,27 @@ npm run lint
 npm test
 ```
 
-## 테스트
+## 테스트 범위
 
-- 카테고리 병합 로직과 Shorts 필터링 테스트
-- 채팅 스팸 방지 로직 테스트
-- 댓글 전송 API 에러 매핑 테스트
-- 채팅 UI 쿨다운 및 상태 전환 테스트
+- 카테고리 정렬 및 메인 카테고리 분리 규칙
+- YouTube 카탈로그 API 요청 생성
+- 재생 위치 저장 API 요청 생성
+- 즐겨찾기 API 요청 생성
+- 채팅 스팸 방지와 에러 매핑
+- 급상승 Query와 표시 규칙
+- Google 로그인 버튼 동작
+- 플레이어, 영상 목록, 채팅 UI 동작
+- 재생 큐 훅 동작
 
-## 아쉬운 점
+## 참고 사항
 
-- 채팅 moderation 기능이 없습니다.
-- 인증, 신고, 차단 기능이 없습니다.
-- 브라우저/단위 테스트 중심이라 실제 API 연동 E2E 검증은 부족합니다.
-- 운영 환경 기준의 상세 모니터링과 에러 추적 설정은 아직 없습니다.
+- 프론트는 YouTube API 키를 직접 다루지 않고 백엔드 API만 호출합니다.
+- `src/lib/supabase.ts`, `supabase/` 디렉터리는 현재 구조와 별도로 남아 있는 보조 자산입니다.
+- 전체 카테고리에서만 급상승 신호와 즐겨찾기 영상 섹션이 활성화됩니다.
 
-## 개선 예정
+## 개선 여지
 
-- Presence 기반 접속자 수 표시
-- 채팅 삭제 및 신고 기능
-- E2E 테스트 및 배포 후 모니터링 보강
-- 메시지 도메인 네이밍 정리
+- 채팅 moderation, 신고, 차단 기능
+- 실제 백엔드와 함께 도는 E2E 테스트
+- 시즌/거래 이력 중심의 게임 화면 확장
+- 운영 모니터링과 에러 추적 강화
