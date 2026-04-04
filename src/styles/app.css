@@ -1548,6 +1548,10 @@
   stroke: #67e8f9;
 }
 
+:root[data-theme='dark'] .app-shell__game-rank-history-line--prebuy {
+  stroke: rgba(103, 232, 249, 0.4);
+}
+
 :root[data-theme='dark'] .app-shell__game-rank-history-line {
   fill: none;
 }
@@ -1556,9 +1560,18 @@
   fill: #67e8f9;
 }
 
+:root[data-theme='dark'] .app-shell__game-rank-history-point--prebuy {
+  fill: rgba(103, 232, 249, 0.5);
+}
+
 :root[data-theme='dark'] .app-shell__game-rank-history-chartout {
   fill: rgba(8, 17, 31, 0.96);
   stroke: #fbbf24;
+}
+
+:root[data-theme='dark'] .app-shell__game-rank-history-chartout--prebuy {
+  fill: rgba(8, 17, 31, 0.88);
+  stroke: rgba(251, 191, 36, 0.58);
 }
 
 :root[data-theme='dark'] .app-shell__game-rank-history-event {
@@ -1574,6 +1587,13 @@
     linear-gradient(180deg, rgba(14, 24, 41, 0.96), rgba(10, 18, 32, 0.9)),
     rgba(8, 17, 31, 0.82);
   border-color: rgba(148, 163, 184, 0.18);
+}
+
+:root[data-theme='dark'] .app-shell__game-rank-history-sample[data-pre-buy='true'] {
+  background:
+    linear-gradient(180deg, rgba(18, 30, 49, 0.88), rgba(10, 18, 32, 0.84)),
+    rgba(8, 17, 31, 0.72);
+  border-style: dashed;
 }
 
 .app-shell__panel--player[data-cinematic='true'] .app-shell__stage-meta {
@@ -1940,14 +1960,28 @@
   stroke-width: 3;
 }
 
+.app-shell__game-rank-history-line--prebuy {
+  stroke: rgba(15, 118, 110, 0.38);
+  stroke-dasharray: 5 6;
+}
+
 .app-shell__game-rank-history-point {
   fill: #0f766e;
+}
+
+.app-shell__game-rank-history-point--prebuy {
+  fill: rgba(15, 118, 110, 0.45);
 }
 
 .app-shell__game-rank-history-chartout {
   fill: #fff;
   stroke: #b45309;
   stroke-width: 2;
+}
+
+.app-shell__game-rank-history-chartout--prebuy {
+  fill: rgba(255, 255, 255, 0.85);
+  stroke: rgba(180, 83, 9, 0.55);
 }
 
 .app-shell__game-rank-history-event {
@@ -1988,6 +2022,11 @@
   gap: 12px;
   grid-template-columns: minmax(0, 1fr) auto;
   padding: 12px 14px;
+}
+
+.app-shell__game-rank-history-sample[data-pre-buy='true'] {
+  background: rgba(255, 255, 255, 0.46);
+  border-style: dashed;
 }
 
 .app-shell__game-rank-history-sample-rank,
