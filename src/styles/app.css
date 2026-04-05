@@ -979,21 +979,24 @@
 .app-shell__game-price-chip[data-tone='gain'],
 .app-shell__game-position-meta [data-tone='gain'],
 .app-shell__game-history-meta [data-tone='gain'],
-.app-shell__game-leaderboard-meta [data-tone='gain'] {
+.app-shell__game-leaderboard-meta [data-tone='gain'],
+.app-shell__game-leaderboard-position-meta [data-tone='gain'] {
   color: #dc2626;
 }
 
 .app-shell__game-price-chip[data-tone='loss'],
 .app-shell__game-position-meta [data-tone='loss'],
 .app-shell__game-history-meta [data-tone='loss'],
-.app-shell__game-leaderboard-meta [data-tone='loss'] {
+.app-shell__game-leaderboard-meta [data-tone='loss'],
+.app-shell__game-leaderboard-position-meta [data-tone='loss'] {
   color: #2563eb;
 }
 
 .app-shell__game-price-chip[data-tone='flat'],
 .app-shell__game-position-meta [data-tone='flat'],
 .app-shell__game-history-meta [data-tone='flat'],
-.app-shell__game-leaderboard-meta [data-tone='flat'] {
+.app-shell__game-leaderboard-meta [data-tone='flat'],
+.app-shell__game-leaderboard-position-meta [data-tone='flat'] {
   color: var(--text-muted);
 }
 
@@ -1124,6 +1127,11 @@
   color: var(--text-muted);
   font-size: 0.76rem;
   line-height: 1.45;
+}
+
+.app-shell__game-rank-emphasis {
+  color: var(--text);
+  font-weight: 700;
 }
 
 .app-shell__game-position-side {
@@ -1432,6 +1440,10 @@
   justify-content: center;
   min-width: 34px;
   padding: 0 10px;
+}
+
+.app-shell__game-leaderboard-item[data-me='false'] .app-shell__game-leaderboard-rank {
+  font-weight: 900;
 }
 
 .app-shell__game-leaderboard-avatar {

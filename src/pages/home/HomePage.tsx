@@ -1384,7 +1384,11 @@ function HomePage() {
                             <div className="app-shell__game-leaderboard-position-copy">
                               <p className="app-shell__game-leaderboard-position-title">{position.title}</p>
                               <p className="app-shell__game-leaderboard-position-meta">
-                                현재 {formatRank(position.currentRank, { chartOut: position.chartOut })} · 평가 금액{' '}
+                                현재{' '}
+                                <span className="app-shell__game-rank-emphasis">
+                                  {formatRank(position.currentRank, { chartOut: position.chartOut })}
+                                </span>{' '}
+                                · 평가 금액{' '}
                                 {formatMaybePoints(position.currentPricePoints)}
                               </p>
                               <p className="app-shell__game-leaderboard-position-meta">
@@ -1488,7 +1492,11 @@ function HomePage() {
                           <div className="app-shell__game-leaderboard-position-copy">
                             <p className="app-shell__game-leaderboard-position-title">{position.title}</p>
                             <p className="app-shell__game-leaderboard-position-meta">
-                              현재 {formatRank(position.currentRank, { chartOut: position.chartOut })} · 평가 금액{' '}
+                              현재{' '}
+                              <span className="app-shell__game-rank-emphasis">
+                                {formatRank(position.currentRank, { chartOut: position.chartOut })}
+                              </span>{' '}
+                              · 평가 금액{' '}
                               {formatMaybePoints(position.currentPricePoints)}
                             </p>
                             <p className="app-shell__game-leaderboard-position-meta">
@@ -1542,9 +1550,12 @@ function HomePage() {
                 <div className="app-shell__game-position-copy">
                   <p className="app-shell__game-position-title">{position.title}</p>
                   <p className="app-shell__game-position-meta">
-                    매수 금액 {formatPoints(position.stakePoints)} · 현재 순위 {formatRank(position.currentRank, {
-                      chartOut: position.chartOut,
-                    })}
+                    매수 금액 {formatPoints(position.stakePoints)} · 현재 순위{' '}
+                    <span className="app-shell__game-rank-emphasis">
+                      {formatRank(position.currentRank, {
+                        chartOut: position.chartOut,
+                      })}
+                    </span>
                   </p>
                   <p className="app-shell__game-position-meta">
                     평가 금액 {formatMaybePoints(position.currentPricePoints)} · 손익{' '}
@@ -1658,13 +1669,16 @@ function HomePage() {
                     <p className="app-shell__game-history-meta">YouTube에서 영상 정보를 다시 불러오는 중입니다.</p>
                   ) : null}
                   <p className="app-shell__game-history-meta">
-                    매수 {formatRank(position.buyRank)} · 매수 금액 {formatPoints(position.stakePoints)}
+                    매수 <span className="app-shell__game-rank-emphasis">{formatRank(position.buyRank)}</span> · 매수 금액{' '}
+                    {formatPoints(position.stakePoints)}
                   </p>
                   <p className="app-shell__game-history-meta">
                     {position.status === 'OPEN' ? '현재' : position.status === 'AUTO_CLOSED' ? '자동청산' : '매도'}{' '}
-                    {formatRank(position.currentRank, {
-                      chartOut: position.chartOut,
-                    })}{' '}
+                    <span className="app-shell__game-rank-emphasis">
+                      {formatRank(position.currentRank, {
+                        chartOut: position.chartOut,
+                      })}
+                    </span>{' '}
                     · {position.status === 'OPEN' ? '평가 금액' : '정산 금액'} {formatMaybePoints(position.currentPricePoints)}
                   </p>
                   <p className="app-shell__game-history-meta">
