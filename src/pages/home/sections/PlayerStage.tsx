@@ -35,6 +35,7 @@ interface PlayerStageProps {
   selectedCountryName: string;
   selectedVideoChannelTitle?: string;
   selectedVideoId?: string;
+  selectedVideoRankLabel?: string;
   selectedVideoStatLabel?: string;
   selectedVideoTitle?: string;
   stageActionContent?: ReactNode;
@@ -74,6 +75,7 @@ function PlayerStage({
   selectedCountryName,
   selectedVideoChannelTitle,
   selectedVideoId,
+  selectedVideoRankLabel,
   selectedVideoStatLabel,
   selectedVideoTitle,
   stageActionContent,
@@ -197,6 +199,9 @@ function PlayerStage({
                       )}
                     </span>
                   </button>
+                  {selectedVideoRankLabel ? (
+                    <span className="app-shell__stage-stat">{selectedVideoRankLabel}</span>
+                  ) : null}
                   {selectedVideoStatLabel ? (
                     <span className="app-shell__stage-stat">{selectedVideoStatLabel}</span>
                   ) : null}

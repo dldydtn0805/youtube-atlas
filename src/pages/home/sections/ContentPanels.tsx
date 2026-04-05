@@ -9,6 +9,7 @@ interface ChartPanelProps {
   buyableVideoSearchStatus?: string;
   chartErrorMessage?: string;
   className?: string;
+  collapsedFeaturedSectionIds?: string[];
   featuredSections?: FeaturedVideoSection[];
   hasNextPage: boolean;
   hasResolvedTrendSignals: boolean;
@@ -18,6 +19,7 @@ interface ChartPanelProps {
   isChartLoading: boolean;
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
+  onToggleFeaturedSectionCollapse?: (sectionId: string) => void;
   onToggleBuyableOnlyFilter?: () => void;
   onSelectVideo: (
     videoId: string,
@@ -39,6 +41,7 @@ interface FavoriteVideosPanelProps {
   favoriteTrendSignalsByVideoId: Record<string, VideoTrendSignal>;
   hasNextPage: boolean;
   hasResolvedTrendSignals: boolean;
+  isCollapsed: boolean;
   isCinematicModeActive: boolean;
   isFavoriteStreamerVideosError: boolean;
   isFavoriteStreamerVideosLoading: boolean;
@@ -51,6 +54,7 @@ interface FavoriteVideosPanelProps {
     playbackQueueId: string,
     triggerElement?: HTMLButtonElement,
   ) => void;
+  onToggleCollapse: () => void;
   selectedCountryName: string;
   selectedVideoId?: string;
   trendSignalsByVideoId: Record<string, VideoTrendSignal>;
@@ -65,6 +69,7 @@ export function ChartPanel({
   buyableVideoSearchStatus,
   chartErrorMessage,
   className,
+  collapsedFeaturedSectionIds,
   featuredSections,
   hasNextPage,
   hasResolvedTrendSignals,
@@ -74,6 +79,7 @@ export function ChartPanel({
   isChartLoading,
   isFetchingNextPage,
   onLoadMore,
+  onToggleFeaturedSectionCollapse,
   onToggleBuyableOnlyFilter,
   onSelectVideo,
   section,
@@ -109,6 +115,7 @@ export function ChartPanel({
         ) : null}
       </div>
       <VideoList
+        collapsedSectionIds={collapsedFeaturedSectionIds}
         errorMessage={chartErrorMessage}
         featuredSections={featuredSections}
         hasNextPage={hasNextPage}
@@ -118,6 +125,7 @@ export function ChartPanel({
         isLoading={isChartLoading}
         onLoadMore={onLoadMore}
         onSelectVideo={onSelectVideo}
+        onToggleSectionCollapse={onToggleFeaturedSectionCollapse}
         section={section}
         sectionEmptyMessage={
           isBuyableOnlyFilterActive
@@ -140,6 +148,7 @@ export function FavoriteVideosPanel({
   favoriteTrendSignalsByVideoId,
   hasNextPage,
   hasResolvedTrendSignals,
+  isCollapsed,
   isCinematicModeActive,
   isFavoriteStreamerVideosError,
   isFavoriteStreamerVideosLoading,
@@ -148,6 +157,7 @@ export function FavoriteVideosPanel({
   isFetchingNextPage,
   onLoadMore,
   onSelectVideo,
+  onToggleCollapse,
   selectedCountryName,
   selectedVideoId,
   trendSignalsByVideoId,
@@ -158,11 +168,21 @@ export function FavoriteVideosPanel({
 
   return (
     <section className={panelClassName}>
-      <div className="app-shell__section-heading">
-        <p className="app-shell__section-eyebrow">Favorite Videos</p>
-        <h2 className="app-shell__section-title">{selectedCountryName} 기준 즐겨찾기 영상</h2>
+      <div className="app-shell__section-heading app-shell__section-heading--chart">
+        <div className="app-shell__section-heading-copy">
+          <p className="app-shell__section-eyebrow">Favorite Videos</p>
+          <h2 className="app-shell__section-title">{selectedCountryName} 기준 즐겨찾기 채널</h2>
+        </div>
+        <button
+          aria-expanded={!isCollapsed}
+          className="app-shell__subtle-toggle"
+          onClick={onToggleCollapse}
+          type="button"
+        >
+          {isCollapsed ? '펼치기' : '숨기기'}
+        </button>
       </div>
-      {authStatus !== 'authenticated' ? (
+      {isCollapsed ? null : authStatus !== 'authenticated' ? (
         <p className="app-shell__favorites-status">
           로그인하면 저장한 채널의 인기 영상을 여기에서 모아 볼 수 있습니다.
         </p>

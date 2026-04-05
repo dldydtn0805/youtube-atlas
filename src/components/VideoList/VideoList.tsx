@@ -17,6 +17,7 @@ interface VideoListProps {
   section?: YouTubeCategorySection;
   sectionEmptyMessage?: string;
   getRankLabel?: (item: YouTubeVideoItem, index: number) => string;
+  collapsedSectionIds?: string[];
   featuredSections?: FeaturedVideoSection[];
   hasResolvedTrendSignals?: boolean;
   selectedVideoId?: string;
@@ -29,6 +30,7 @@ interface VideoListProps {
     sectionCategoryId: string,
     triggerElement?: HTMLButtonElement,
   ) => void;
+  onToggleSectionCollapse?: (sectionId: string) => void;
 }
 
 function formatViewCount(viewCount?: string) {
@@ -52,6 +54,7 @@ function VideoList({
   section,
   sectionEmptyMessage,
   getRankLabel,
+  collapsedSectionIds = [],
   featuredSections = [],
   hasResolvedTrendSignals = false,
   selectedVideoId,
@@ -60,6 +63,7 @@ function VideoList({
   isFetchingNextPage,
   onLoadMore,
   onSelectVideo,
+  onToggleSectionCollapse,
 }: VideoListProps) {
   if (isLoading) {
     return <p className="video-list__status">영상을 불러오는 중입니다.</p>;
@@ -92,12 +96,16 @@ function VideoList({
       eyebrow,
       emptyMessage,
       getRankLabel,
+      isCollapsible,
+      isCollapsed,
       sectionKey,
       showLoadMore,
     }: {
       eyebrow: string;
       emptyMessage?: string;
       getRankLabel?: (item: YouTubeVideoItem, index: number) => string;
+      isCollapsible?: boolean;
+      isCollapsed?: boolean;
       sectionKey?: string;
       showLoadMore: boolean;
     },
@@ -109,13 +117,27 @@ function VideoList({
     return (
       <section key={sectionKey} className="video-list__section" aria-label={`${currentSection.label} 영상`}>
         <header className="video-list__section-header">
-          <div>
-            <p className="video-list__section-eyebrow">{eyebrow}</p>
-            <h3 className="video-list__section-title">{currentSection.label}</h3>
+          <div className="video-list__section-header-main">
+            <div>
+              <p className="video-list__section-eyebrow">{eyebrow}</p>
+              <h3 className="video-list__section-title">{currentSection.label}</h3>
+            </div>
           </div>
-          <p className="video-list__section-description">{currentSection.description}</p>
+          <div className="video-list__section-header-side">
+            {isCollapsible && sectionKey ? (
+              <button
+                aria-expanded={!isCollapsed}
+                className="video-list__section-toggle"
+                onClick={() => onToggleSectionCollapse?.(sectionKey)}
+                type="button"
+              >
+                {isCollapsed ? '펼치기' : '숨기기'}
+              </button>
+            ) : null}
+            <p className="video-list__section-description">{currentSection.description}</p>
+          </div>
         </header>
-        {currentSection.items.length > 0 ? (
+        {!isCollapsed && currentSection.items.length > 0 ? (
           <div className="video-list__grid">
             {currentSection.items.map((item, index) => {
               const trendSignal = trendSignalsByVideoId?.[item.id];
@@ -166,10 +188,10 @@ function VideoList({
               );
             })}
           </div>
-        ) : (
+        ) : !isCollapsed ? (
           <p className="video-list__section-status">{emptyMessage}</p>
-        )}
-        {showLoadMore && hasNextPage ? (
+        ) : null}
+        {!isCollapsed && showLoadMore && hasNextPage ? (
           <div className="video-list__actions">
             <button
               className="video-list__load-more"
@@ -192,6 +214,8 @@ function VideoList({
           eyebrow: eyebrow ?? 'Realtime Movers',
           emptyMessage,
           getRankLabel,
+          isCollapsible: true,
+          isCollapsed: collapsedSectionIds.includes(featuredSection.categoryId),
           sectionKey: featuredSection.categoryId,
           showLoadMore: false,
         }),

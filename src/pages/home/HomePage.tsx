@@ -17,9 +17,12 @@ import {
   FAVORITE_STREAMER_VIDEO_SECTION,
   GAME_PORTFOLIO_QUEUE_ID,
   HISTORY_PLAYBACK_QUEUE_ID,
+  NEW_CHART_ENTRIES_QUEUE_ID,
+  REALTIME_SURGING_QUEUE_ID,
   RESTORED_PLAYBACK_QUEUE_ID,
   findPlaybackQueueIdForVideo,
   filterVideoSection,
+  formatSelectedVideoRankLabel,
   formatVideoViewCount,
   getVideoThumbnailUrl,
   mapGamePositionToVideoItem,
@@ -67,18 +70,51 @@ import {
   useVideoTrendSignals,
 } from '../../features/trending/queries';
 import { fetchVideoById } from '../../features/youtube/api';
-import { usePopularVideosByCategory, useVideoCategories } from '../../features/youtube/queries';
+import { usePopularVideosByCategory, useVideoById, useVideoCategories } from '../../features/youtube/queries';
 import type { YouTubeVideoItem } from '../../features/youtube/types';
 import { ApiRequestError, isApiConfigured } from '../../lib/api';
 import '../../styles/app.css';
 
 const pointsFormatter = new Intl.NumberFormat('ko-KR');
+const COLLAPSED_HOME_SECTIONS_STORAGE_KEY = 'youtube-atlas-collapsed-home-sections';
+const FAVORITES_PANEL_SECTION_ID = 'favorites-panel';
+const RANKING_GAME_SECTION_ID = 'ranking-game';
 const seasonDateTimeFormatter = new Intl.DateTimeFormat('ko-KR', {
   day: 'numeric',
   hour: '2-digit',
   minute: '2-digit',
   month: 'short',
 });
+
+function getInitialCollapsedHomeSectionIds() {
+  if (typeof window === 'undefined') {
+    return [] as string[];
+  }
+
+  const storedValue = window.localStorage.getItem(COLLAPSED_HOME_SECTIONS_STORAGE_KEY);
+
+  if (!storedValue) {
+    return [] as string[];
+  }
+
+  try {
+    const parsedValue = JSON.parse(storedValue) as unknown;
+
+    return Array.isArray(parsedValue)
+      ? parsedValue.filter((value): value is string => typeof value === 'string')
+      : [];
+  } catch {
+    return [] as string[];
+  }
+}
+
+function persistCollapsedHomeSectionIds(sectionIds: string[]) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(COLLAPSED_HOME_SECTIONS_STORAGE_KEY, JSON.stringify(sectionIds));
+}
 
 function formatPlaybackSaveTimestamp(positionSeconds: number) {
   const normalizedSeconds = Math.max(0, Math.floor(positionSeconds));
@@ -199,6 +235,7 @@ function HomePage() {
   const [manualPlaybackSaveStatus, setManualPlaybackSaveStatus] = useState<string | null>(null);
   const [activeGameTab, setActiveGameTab] = useState<'positions' | 'history' | 'leaderboard'>('positions');
   const [isBuyableOnlyFilterActive, setIsBuyableOnlyFilterActive] = useState(false);
+  const [collapsedHomeSectionIds, setCollapsedHomeSectionIds] = useState(getInitialCollapsedHomeSectionIds);
   const [gameActionStatus, setGameActionStatus] = useState<string | null>(null);
   const [gameClock, setGameClock] = useState(() => Date.now());
   const [selectedRankHistoryPosition, setSelectedRankHistoryPosition] = useState<GamePosition | null>(null);
@@ -231,6 +268,10 @@ function HomePage() {
     playerSectionRef,
     playerStageRef,
   });
+
+  useEffect(() => {
+    persistCollapsedHomeSectionIds(collapsedHomeSectionIds);
+  }, [collapsedHomeSectionIds]);
 
   const {
     data: videoCategories = [],
@@ -517,14 +558,55 @@ function HomePage() {
     sortedVideoCategories,
   });
   const selectedVideo = combinedPlayableItems.find((item) => item.id === selectedVideoId);
-  const selectedVideoStatLabel = formatVideoViewCount(selectedVideo?.statistics?.viewCount);
-  const selectedChannelId = selectedVideo?.snippet.channelId?.trim();
   const selectedVideoOpenPosition = selectedVideoId
     ? openGamePositions.find((position) => position.videoId === selectedVideoId)
     : undefined;
   const selectedVideoMarketEntry = selectedVideoId
     ? gameMarket.find((marketVideo) => marketVideo.videoId === selectedVideoId)
     : undefined;
+  const shouldLoadSelectedVideoDetail =
+    isApiConfigured &&
+    Boolean(selectedVideoId) &&
+    (!selectedVideo?.statistics?.viewCount || !selectedVideo?.snippet.channelId?.trim());
+  const { data: selectedVideoDetail } = useVideoById(selectedVideoId, shouldLoadSelectedVideoDetail);
+  const resolvedSelectedVideo =
+    selectedVideo && selectedVideoDetail
+      ? {
+          ...selectedVideoDetail,
+          ...selectedVideo,
+          statistics: selectedVideo.statistics ?? selectedVideoDetail.statistics,
+          snippet: {
+            ...selectedVideoDetail.snippet,
+            ...selectedVideo.snippet,
+            channelId: selectedVideo.snippet.channelId || selectedVideoDetail.snippet.channelId,
+            channelTitle: selectedVideo.snippet.channelTitle || selectedVideoDetail.snippet.channelTitle,
+            title: selectedVideo.snippet.title || selectedVideoDetail.snippet.title,
+          },
+        }
+      : selectedVideoDetail ?? selectedVideo;
+  const selectedVideoTrendSignal = selectedVideoId
+    ? chartTrendSignalsByVideoId[selectedVideoId] ?? favoriteTrendSignalsByVideoId[selectedVideoId]
+    : undefined;
+  const selectedHistoricalPosition = selectedVideoId
+    ? gameHistoryPositions.find((position) => position.videoId === selectedVideoId)
+    : undefined;
+  const selectedVideoCurrentChartRank =
+    selectedVideoMarketEntry?.currentRank ??
+    selectedVideoTrendSignal?.currentRank ??
+    selectedVideoOpenPosition?.currentRank;
+  const selectedVideoIsChartOut =
+    selectedVideoMarketEntry || selectedVideoTrendSignal
+      ? false
+      : (selectedVideoOpenPosition?.chartOut ?? false) || (selectedHistoricalPosition?.chartOut ?? false);
+  const selectedVideoRankLabel = formatSelectedVideoRankLabel(
+    selectedCountryName,
+    selectedVideoCurrentChartRank,
+    {
+      chartOut: selectedVideoIsChartOut,
+    },
+  );
+  const selectedVideoStatLabel = formatVideoViewCount(resolvedSelectedVideo?.statistics?.viewCount);
+  const selectedChannelId = resolvedSelectedVideo?.snippet.channelId?.trim();
   const gameSeasonRegionMismatch =
     Boolean(currentGameSeason?.regionCode) &&
     selectedRegionCode.toUpperCase() !== currentGameSeason?.regionCode.toUpperCase();
@@ -547,6 +629,23 @@ function HomePage() {
     favoriteStreamerVideosError instanceof Error
       ? favoriteStreamerVideosError.message
       : '즐겨찾기 영상을 불러오지 못했습니다.';
+  const isRankingGameCollapsed = collapsedHomeSectionIds.includes(RANKING_GAME_SECTION_ID);
+  const isFavoritesPanelCollapsed = collapsedHomeSectionIds.includes(FAVORITES_PANEL_SECTION_ID);
+  const collapsedFeaturedSectionIds = useMemo(
+    () =>
+      collapsedHomeSectionIds.filter(
+        (sectionId) =>
+          sectionId === REALTIME_SURGING_QUEUE_ID || sectionId === NEW_CHART_ENTRIES_QUEUE_ID,
+      ),
+    [collapsedHomeSectionIds],
+  );
+  const toggleCollapsedSection = useCallback((sectionId: string) => {
+    setCollapsedHomeSectionIds((currentSectionIds) =>
+      currentSectionIds.includes(sectionId)
+        ? currentSectionIds.filter((currentSectionId) => currentSectionId !== sectionId)
+        : [...currentSectionIds, sectionId],
+    );
+  }, []);
   const buyableVideoIdSet = useMemo(
     () => new Set(gameMarket.filter((marketVideo) => marketVideo.canBuy).map((marketVideo) => marketVideo.videoId)),
     [gameMarket],
@@ -590,11 +689,11 @@ function HomePage() {
           getRankLabel: (item: YouTubeVideoItem) => {
             const signal = realtimeSurgingSignalsByVideoId[item.id];
 
-            if (!signal?.rankChange) {
+            if (!signal?.currentRank) {
               return '실시간 급상승';
             }
 
-            return `전체 ${signal.currentRank}위 · ${signal.rankChange > 0 ? '+' : ''}${signal.rankChange}`;
+            return `전체 ${signal.currentRank}위`;
           },
         });
       }
@@ -608,10 +707,10 @@ function HomePage() {
             const signal = newChartEntriesSignalsByVideoId[item.id];
 
             if (!signal?.currentRank) {
-              return '신규 차트 등록';
+              return '신규 진입';
             }
 
-            return `전체 ${signal.currentRank}위 · 신규 진입`;
+            return `전체 ${signal.currentRank}위`;
           },
         });
       }
@@ -1015,16 +1114,16 @@ function HomePage() {
   ]);
 
   async function handleToggleFavoriteStreamer() {
-    if (authStatus !== 'authenticated' || !selectedVideo || !selectedChannelId) {
+    if (authStatus !== 'authenticated' || !resolvedSelectedVideo || !selectedChannelId) {
       return;
     }
 
     try {
       await toggleFavoriteStreamerMutation.mutateAsync({
         channelId: selectedChannelId,
-        channelTitle: selectedVideo.snippet.channelTitle,
+        channelTitle: resolvedSelectedVideo.snippet.channelTitle,
         isFavorited: isSelectedChannelFavorited,
-        thumbnailUrl: selectedVideo.snippet.thumbnails.high.url || null,
+        thumbnailUrl: resolvedSelectedVideo.snippet.thumbnails.high.url || null,
       });
     } catch (error) {
       if (
@@ -1176,7 +1275,7 @@ function HomePage() {
           (currentGameSeason ? '현재 영상은 게임 거래 대상이 아닙니다.' : '활성 시즌이 없습니다.');
   const gameActionContent = null;
   const selectedGameActionTitle =
-    selectedVideoOpenPosition?.title ?? selectedVideo?.snippet.title ?? '선택한 영상';
+    selectedVideoOpenPosition?.title ?? resolvedSelectedVideo?.snippet.title ?? '선택한 영상';
   const isChartActionDisabled = !selectedVideoId || !canShowGameActions;
   const leaderboardContent =
     isGameLeaderboardLoading && !isGameLeaderboardError ? (
@@ -1188,7 +1287,7 @@ function HomePage() {
           : '리더보드를 불러오지 못했습니다.'}
       </p>
     ) : topLeaderboardEntries.length > 0 ? (
-      <>
+      <div className="app-shell__game-leaderboard-stack">
         <ol className="app-shell__game-leaderboard">
           {topLeaderboardEntries.map((entry) => (
             <li
@@ -1222,15 +1321,19 @@ function HomePage() {
                   </p>
                 </div>
                 <p className="app-shell__game-leaderboard-meta">
-                  실현{' '}
+                  실현 금액{' '}
                   <span data-tone={getPointTone(entry.realizedPnlPoints)}>
                     {formatSignedPoints(entry.realizedPnlPoints)}
                   </span>{' '}
-                  · 평가{' '}
+                </p>
+                <p className="app-shell__game-leaderboard-meta">
+                  평가 금액{' '}
                   <span data-tone={getPointTone(entry.unrealizedPnlPoints)}>
                     {formatSignedPoints(entry.unrealizedPnlPoints)}
-                  </span>{' '}
-                  · 보유 {entry.openPositionCount}개
+                  </span>
+                </p>
+                <p className="app-shell__game-leaderboard-meta">
+                  보유 {entry.openPositionCount}개
                 </p>
               </div>
             </li>
@@ -1264,21 +1367,25 @@ function HomePage() {
                   </p>
                 </div>
                 <p className="app-shell__game-leaderboard-meta">
-                  실현{' '}
+                  실현 금액{' '}
                   <span data-tone={getPointTone(myLeaderboardEntry.realizedPnlPoints)}>
                     {formatSignedPoints(myLeaderboardEntry.realizedPnlPoints)}
                   </span>{' '}
-                  · 평가{' '}
+                </p>
+                <p className="app-shell__game-leaderboard-meta">
+                  평가 금액{' '}
                   <span data-tone={getPointTone(myLeaderboardEntry.unrealizedPnlPoints)}>
                     {formatSignedPoints(myLeaderboardEntry.unrealizedPnlPoints)}
-                  </span>{' '}
-                  · 보유 {myLeaderboardEntry.openPositionCount}개
+                  </span>
+                </p>
+                <p className="app-shell__game-leaderboard-meta">
+                  보유 {myLeaderboardEntry.openPositionCount}개
                 </p>
               </div>
             </div>
           </section>
         ) : null}
-      </>
+      </div>
     ) : currentGameSeason ? (
       <p className="app-shell__game-empty">아직 리더보드에 표시할 참가자가 없습니다.</p>
     ) : null;
@@ -1311,11 +1418,12 @@ function HomePage() {
                 <div className="app-shell__game-position-copy">
                   <p className="app-shell__game-position-title">{position.title}</p>
                   <p className="app-shell__game-position-meta">
-                    매수가 {formatPoints(position.stakePoints)} · 현재가 {formatMaybePoints(
-                      position.currentPricePoints,
-                    )} · 현재 {formatRank(position.currentRank, {
+                    매수 금액 {formatPoints(position.stakePoints)} · 현재 순위 {formatRank(position.currentRank, {
                       chartOut: position.chartOut,
-                    })} ·{' '}
+                    })}
+                  </p>
+                  <p className="app-shell__game-position-meta">
+                    평가 금액 {formatMaybePoints(position.currentPricePoints)} · 손익{' '}
                     <span data-tone={getPointTone(position.profitPoints)}>
                       {formatSignedPoints(position.profitPoints)}
                     </span>
@@ -1426,15 +1534,16 @@ function HomePage() {
                     <p className="app-shell__game-history-meta">YouTube에서 영상 정보를 다시 불러오는 중입니다.</p>
                   ) : null}
                   <p className="app-shell__game-history-meta">
-                    매수 {formatGameTimestamp(position.createdAt)} · {formatRank(position.buyRank)} ·{' '}
-                    {formatPoints(position.stakePoints)}
+                    매수 {formatRank(position.buyRank)} · 매수 금액 {formatPoints(position.stakePoints)}
                   </p>
                   <p className="app-shell__game-history-meta">
                     {position.status === 'OPEN' ? '현재' : position.status === 'AUTO_CLOSED' ? '자동청산' : '매도'}{' '}
                     {formatRank(position.currentRank, {
                       chartOut: position.chartOut,
                     })}{' '}
-                    · {position.status === 'OPEN' ? '평가' : '정산'} {formatMaybePoints(position.currentPricePoints)} ·
+                    · {position.status === 'OPEN' ? '평가 금액' : '정산 금액'} {formatMaybePoints(position.currentPricePoints)}
+                  </p>
+                  <p className="app-shell__game-history-meta">
                     손익{' '}
                     <span data-tone={getPointTone(position.profitPoints)}>
                       {formatSignedPoints(position.profitPoints)}
@@ -1477,182 +1586,194 @@ function HomePage() {
               </p>
             ) : null}
           </div>
-          <div className="app-shell__game-panel-metrics">
-            <span className="app-shell__game-panel-metric">
-              <span className="app-shell__game-panel-metric-label">잔액</span>
-              <span className="app-shell__game-panel-metric-value">
-                {currentGameSeason ? formatPoints(currentGameSeason.wallet.balancePoints) : '-'}
-              </span>
-            </span>
-            <span className="app-shell__game-panel-metric">
-              <span className="app-shell__game-panel-metric-label">총자산</span>
-              <span className="app-shell__game-panel-metric-value">
-                {currentGameSeason ? formatPoints(currentGameSeason.wallet.totalAssetPoints) : '-'}
-              </span>
-            </span>
-            <span className="app-shell__game-panel-metric">
-              <span className="app-shell__game-panel-metric-label">
-                {activeGameTab === 'leaderboard'
-                  ? '내 순위'
-                  : activeGameTab === 'history'
-                    ? '거래'
-                    : '보유'}
-              </span>
-              <span className="app-shell__game-panel-metric-value">
-                {activeGameTab === 'leaderboard'
-                  ? myLeaderboardEntry
-                    ? `${myLeaderboardEntry.rank}위`
-                    : '-'
-                  : activeGameTab === 'history'
-                    ? isGameHistoryLoading
-                      ? '...'
-                      : `${gameHistoryPositions.length}건`
-                    : `${openGamePositions.length}/${currentGameSeason?.maxOpenPositions ?? '-'}`}
-              </span>
-            </span>
-          </div>
+          <button
+            aria-expanded={!isRankingGameCollapsed}
+            className="app-shell__subtle-toggle"
+            onClick={() => toggleCollapsedSection(RANKING_GAME_SECTION_ID)}
+            type="button"
+          >
+            {isRankingGameCollapsed ? '펼치기' : '숨기기'}
+          </button>
         </div>
-        <p
-          className="app-shell__game-panel-helper"
-          data-tone={isCurrentVideoGameHelperWarning ? 'warning' : undefined}
-        >
-          {currentGameSeason
-            ? currentVideoGameHelperText
-            : isCurrentGameSeasonLoading
-              ? '게임 시즌을 불러오는 중입니다.'
-              : currentGameSeasonError instanceof Error
-                ? currentGameSeasonError.message
-              : '다음 게임 시즌을 준비 중입니다.'}
-        </p>
-        {currentVideoGamePriceSummary}
-        {gameActionStatus ? <p className="app-shell__game-panel-status">{gameActionStatus}</p> : null}
-        {selectedVideoId ? (
-          <div className="app-shell__game-panel-actions">
-            <div className="app-shell__game-panel-actions-copy">
-              <p className="app-shell__game-panel-actions-eyebrow">
-                {selectedVideoOpenPosition ? 'Selected Position' : 'Selected Video'}
-              </p>
-              <p className="app-shell__game-panel-actions-title">{selectedGameActionTitle}</p>
+        {!isRankingGameCollapsed ? (
+          <>
+            <div className="app-shell__game-panel-metrics">
+              <span className="app-shell__game-panel-metric">
+                <span className="app-shell__game-panel-metric-label">잔액</span>
+                <span className="app-shell__game-panel-metric-value">
+                  {currentGameSeason ? formatPoints(currentGameSeason.wallet.balancePoints) : '-'}
+                </span>
+              </span>
+              <span className="app-shell__game-panel-metric">
+                <span className="app-shell__game-panel-metric-label">총자산</span>
+                <span className="app-shell__game-panel-metric-value">
+                  {currentGameSeason ? formatPoints(currentGameSeason.wallet.totalAssetPoints) : '-'}
+                </span>
+              </span>
+              <span className="app-shell__game-panel-metric">
+                <span className="app-shell__game-panel-metric-label">
+                  {activeGameTab === 'leaderboard'
+                    ? '내 순위'
+                    : activeGameTab === 'history'
+                      ? '거래'
+                      : '보유'}
+                </span>
+                <span className="app-shell__game-panel-metric-value">
+                  {activeGameTab === 'leaderboard'
+                    ? myLeaderboardEntry
+                      ? `${myLeaderboardEntry.rank}위`
+                      : '-'
+                    : activeGameTab === 'history'
+                      ? isGameHistoryLoading
+                        ? '...'
+                        : `${gameHistoryPositions.length}건`
+                      : `${openGamePositions.length}/${currentGameSeason?.maxOpenPositions ?? '-'}`}
+                </span>
+              </span>
             </div>
-            <div className="app-shell__game-panel-actions-buttons">
-              {selectedVideoOpenPosition ? (
-                <>
-                  <button
-                    className="app-shell__game-panel-action"
-                    disabled={isChartActionDisabled}
-                    onClick={() => {
-                      setSelectedVideoRankHistoryVideoId(null);
-                      setSelectedRankHistoryPosition(selectedVideoOpenPosition);
-                    }}
-                    title={
-                      !canShowGameActions
-                        ? '대한민국 전체 카테고리에서만 차트를 볼 수 있습니다.'
-                        : '이 포지션의 랭킹 차트를 엽니다.'
-                    }
-                    type="button"
-                  >
-                    차트
-                  </button>
-                  <button
-                    className="app-shell__game-panel-action"
-                    data-variant="sell"
-                    disabled={!canShowGameActions || isSelectedVideoSellDisabled}
-                    onClick={() => void handleSellPosition(selectedVideoOpenPosition)}
-                    title={
-                      !canShowGameActions
-                        ? '전체 카테고리에서만 매도할 수 있습니다.'
-                        : selectedVideoHoldRemainingSeconds > 0
-                          ? `최소 보유 시간까지 ${formatRemainingHoldSeconds(selectedVideoHoldRemainingSeconds)} 남았습니다.`
-                          : '현재 보유 중인 포지션을 정리합니다.'
-                    }
-                    type="button"
-                  >
-                    {sellGamePositionMutation.isPending &&
-                    sellGamePositionMutation.variables === selectedVideoOpenPosition.id
-                      ? '매도 중...'
-                      : '매도'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="app-shell__game-panel-action"
-                    disabled={isChartActionDisabled}
-                    onClick={() => {
-                      setSelectedRankHistoryPosition(null);
-                      setSelectedVideoRankHistoryVideoId(selectedVideoId);
-                    }}
-                    title={
-                      !canShowGameActions
-                        ? '대한민국 전체 카테고리에서만 차트를 볼 수 있습니다.'
-                        : '선택한 영상의 랭킹 차트를 엽니다.'
-                    }
-                    type="button"
-                  >
-                    차트
-                  </button>
-                  <button
-                    className="app-shell__game-panel-action"
-                    disabled={!canShowGameActions || isSelectedVideoBuyDisabled}
-                    data-variant="buy"
-                    onClick={() => void handleBuyCurrentVideo()}
-                    title={
-                      !canShowGameActions
-                        ? '전체 카테고리에서만 매수할 수 있습니다.'
-                        : buyActionTitle
-                    }
-                    type="button"
-                  >
-                    {buyGamePositionMutation.isPending ? '매수 중...' : '매수'}
-                  </button>
-                </>
-              )}
+            <p
+              className="app-shell__game-panel-helper"
+              data-tone={isCurrentVideoGameHelperWarning ? 'warning' : undefined}
+            >
+              {currentGameSeason
+                ? currentVideoGameHelperText
+                : isCurrentGameSeasonLoading
+                  ? '게임 시즌을 불러오는 중입니다.'
+                  : currentGameSeasonError instanceof Error
+                    ? currentGameSeasonError.message
+                    : '다음 게임 시즌을 준비 중입니다.'}
+            </p>
+            {currentVideoGamePriceSummary}
+            {gameActionStatus ? <p className="app-shell__game-panel-status">{gameActionStatus}</p> : null}
+            {selectedVideoId ? (
+              <div className="app-shell__game-panel-actions">
+                <div className="app-shell__game-panel-actions-copy">
+                  <p className="app-shell__game-panel-actions-eyebrow">
+                    {selectedVideoOpenPosition ? 'Selected Position' : 'Selected Video'}
+                  </p>
+                  <p className="app-shell__game-panel-actions-title">{selectedGameActionTitle}</p>
+                </div>
+                <div className="app-shell__game-panel-actions-buttons">
+                  {selectedVideoOpenPosition ? (
+                    <>
+                      <button
+                        className="app-shell__game-panel-action"
+                        disabled={isChartActionDisabled}
+                        onClick={() => {
+                          setSelectedVideoRankHistoryVideoId(null);
+                          setSelectedRankHistoryPosition(selectedVideoOpenPosition);
+                        }}
+                        title={
+                          !canShowGameActions
+                            ? '대한민국 전체 카테고리에서만 차트를 볼 수 있습니다.'
+                            : '이 포지션의 랭킹 차트를 엽니다.'
+                        }
+                        type="button"
+                      >
+                        차트
+                      </button>
+                      <button
+                        className="app-shell__game-panel-action"
+                        data-variant="sell"
+                        disabled={!canShowGameActions || isSelectedVideoSellDisabled}
+                        onClick={() => void handleSellPosition(selectedVideoOpenPosition)}
+                        title={
+                          !canShowGameActions
+                            ? '전체 카테고리에서만 매도할 수 있습니다.'
+                            : selectedVideoHoldRemainingSeconds > 0
+                              ? `최소 보유 시간까지 ${formatRemainingHoldSeconds(selectedVideoHoldRemainingSeconds)} 남았습니다.`
+                              : '현재 보유 중인 포지션을 정리합니다.'
+                        }
+                        type="button"
+                      >
+                        {sellGamePositionMutation.isPending &&
+                        sellGamePositionMutation.variables === selectedVideoOpenPosition.id
+                          ? '매도 중...'
+                          : '매도'}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="app-shell__game-panel-action"
+                        disabled={isChartActionDisabled}
+                        onClick={() => {
+                          setSelectedRankHistoryPosition(null);
+                          setSelectedVideoRankHistoryVideoId(selectedVideoId);
+                        }}
+                        title={
+                          !canShowGameActions
+                            ? '대한민국 전체 카테고리에서만 차트를 볼 수 있습니다.'
+                            : '선택한 영상의 랭킹 차트를 엽니다.'
+                        }
+                        type="button"
+                      >
+                        차트
+                      </button>
+                      <button
+                        className="app-shell__game-panel-action"
+                        disabled={!canShowGameActions || isSelectedVideoBuyDisabled}
+                        data-variant="buy"
+                        onClick={() => void handleBuyCurrentVideo()}
+                        title={
+                          !canShowGameActions
+                            ? '전체 카테고리에서만 매수할 수 있습니다.'
+                            : buyActionTitle
+                        }
+                        type="button"
+                      >
+                        {buyGamePositionMutation.isPending ? '매수 중...' : '매수'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : null}
+            <div
+              aria-label="게임 패널 탭"
+              className="app-shell__game-tabs"
+              role="tablist"
+            >
+              <button
+                aria-selected={activeGameTab === 'positions'}
+                className="app-shell__game-tab"
+                data-active={activeGameTab === 'positions'}
+                onClick={() => setActiveGameTab('positions')}
+                role="tab"
+                type="button"
+              >
+                내 포지션
+              </button>
+              <button
+                aria-selected={activeGameTab === 'history'}
+                className="app-shell__game-tab"
+                data-active={activeGameTab === 'history'}
+                onClick={() => setActiveGameTab('history')}
+                role="tab"
+                type="button"
+              >
+                거래내역
+              </button>
+              <button
+                aria-selected={activeGameTab === 'leaderboard'}
+                className="app-shell__game-tab"
+                data-active={activeGameTab === 'leaderboard'}
+                onClick={() => setActiveGameTab('leaderboard')}
+                role="tab"
+                type="button"
+              >
+                리더보드
+              </button>
             </div>
-          </div>
+            <div className="app-shell__game-tab-panel" role="tabpanel">
+              {activeGameTab === 'positions'
+                ? positionsContent
+                : activeGameTab === 'history'
+                  ? historyContent
+                  : leaderboardContent}
+            </div>
+          </>
         ) : null}
-        <div
-          aria-label="게임 패널 탭"
-          className="app-shell__game-tabs"
-          role="tablist"
-        >
-          <button
-            aria-selected={activeGameTab === 'positions'}
-            className="app-shell__game-tab"
-            data-active={activeGameTab === 'positions'}
-            onClick={() => setActiveGameTab('positions')}
-            role="tab"
-            type="button"
-          >
-            내 포지션
-          </button>
-          <button
-            aria-selected={activeGameTab === 'history'}
-            className="app-shell__game-tab"
-            data-active={activeGameTab === 'history'}
-            onClick={() => setActiveGameTab('history')}
-            role="tab"
-            type="button"
-          >
-            거래내역
-          </button>
-          <button
-            aria-selected={activeGameTab === 'leaderboard'}
-            className="app-shell__game-tab"
-            data-active={activeGameTab === 'leaderboard'}
-            onClick={() => setActiveGameTab('leaderboard')}
-            role="tab"
-            type="button"
-          >
-            리더보드
-          </button>
-        </div>
-        <div className="app-shell__game-tab-panel" role="tabpanel">
-          {activeGameTab === 'positions'
-            ? positionsContent
-            : activeGameTab === 'history'
-              ? historyContent
-              : leaderboardContent}
-        </div>
       </div>
     ) : null;
 
@@ -1661,6 +1782,7 @@ function HomePage() {
       buyableVideoSearchStatus={buyableVideoSearchStatus}
       chartErrorMessage={chartErrorMessage}
       featuredSections={featuredChartSections}
+      collapsedFeaturedSectionIds={collapsedFeaturedSectionIds}
       hasNextPage={hasNextPage}
       hasResolvedTrendSignals={hasResolvedChartTrendSignals}
       isBuyableOnlyFilterActive={isBuyableOnlyFilterActive}
@@ -1669,6 +1791,7 @@ function HomePage() {
       isChartLoading={isChartLoading}
       isFetchingNextPage={isFetchingNextPage}
       onLoadMore={() => void fetchNextPage()}
+      onToggleFeaturedSectionCollapse={toggleCollapsedSection}
       onToggleBuyableOnlyFilter={() => setIsBuyableOnlyFilterActive((current) => !current)}
       onSelectVideo={handleSelectVideo}
       section={filteredSelectedPlaybackSection}
@@ -1684,6 +1807,7 @@ function HomePage() {
       chartErrorMessage={chartErrorMessage}
       className="app-shell__panel--chart-cinematic"
       featuredSections={featuredChartSections}
+      collapsedFeaturedSectionIds={collapsedFeaturedSectionIds}
       hasNextPage={hasNextPage}
       hasResolvedTrendSignals={hasResolvedChartTrendSignals}
       isBuyableOnlyFilterActive={isBuyableOnlyFilterActive}
@@ -1692,6 +1816,7 @@ function HomePage() {
       isChartLoading={isChartLoading}
       isFetchingNextPage={isFetchingNextPage}
       onLoadMore={() => void fetchNextPage()}
+      onToggleFeaturedSectionCollapse={toggleCollapsedSection}
       onToggleBuyableOnlyFilter={() => setIsBuyableOnlyFilterActive((current) => !current)}
       onSelectVideo={handleSelectVideo}
       section={filteredSelectedPlaybackSection}
@@ -1717,6 +1842,7 @@ function HomePage() {
         !isFavoriteTrendSignalsError
       }
       isCinematicModeActive={isCinematicModeActive}
+      isCollapsed={isFavoritesPanelCollapsed}
       isFavoriteStreamerVideosError={isFavoriteStreamerVideosError}
       isFavoriteStreamerVideosLoading={isFavoriteStreamerVideosLoading}
       isFavoriteStreamersError={isFavoriteStreamersError}
@@ -1724,6 +1850,7 @@ function HomePage() {
       isFetchingNextPage={isFetchingNextFavoriteStreamerVideosPage}
       onLoadMore={() => void fetchNextFavoriteStreamerVideosPage()}
       onSelectVideo={handleSelectVideo}
+      onToggleCollapse={() => toggleCollapsedSection(FAVORITES_PANEL_SECTION_ID)}
       selectedCountryName={selectedCountryName}
       selectedVideoId={selectedVideoId}
       trendSignalsByVideoId={favoriteTrendSignalsByVideoId}
@@ -1794,10 +1921,11 @@ function HomePage() {
           playerViewportRef={playerViewportRef}
           selectedCategoryLabel={selectedCategory?.label}
           selectedCountryName={selectedCountryName}
-          selectedVideoChannelTitle={selectedVideo?.snippet.channelTitle}
+          selectedVideoChannelTitle={resolvedSelectedVideo?.snippet.channelTitle}
           selectedVideoId={selectedVideoId}
+          selectedVideoRankLabel={selectedVideoRankLabel}
           selectedVideoStatLabel={selectedVideoStatLabel}
-          selectedVideoTitle={selectedVideo?.snippet.title}
+          selectedVideoTitle={resolvedSelectedVideo?.snippet.title}
           stageActionContent={gameActionContent}
           supplementalContent={portfolioContent}
           toggleFavoriteStreamerPending={toggleFavoriteStreamerMutation.isPending}
@@ -1809,7 +1937,7 @@ function HomePage() {
             {!isCinematicModeActive ? chartContent : null}
             <CommunityPanel
               selectedVideoId={selectedVideoId}
-              selectedVideoTitle={selectedVideo?.snippet.title}
+              selectedVideoTitle={resolvedSelectedVideo?.snippet.title}
             />
           </>
         ) : (
@@ -1819,7 +1947,7 @@ function HomePage() {
             {!isCinematicModeActive ? chartContent : null}
             <CommunityPanel
               selectedVideoId={selectedVideoId}
-              selectedVideoTitle={selectedVideo?.snippet.title}
+              selectedVideoTitle={resolvedSelectedVideo?.snippet.title}
             />
           </>
         )}
@@ -1858,13 +1986,13 @@ function HomePage() {
         }}
         position={selectedRankHistoryPosition}
         videoFallback={
-          selectedVideo
+          resolvedSelectedVideo
             ? {
-                channelTitle: selectedVideo.snippet.channelTitle,
+                channelTitle: resolvedSelectedVideo.snippet.channelTitle,
                 currentRank: selectedVideoMarketEntry?.currentRank ?? null,
                 chartOut: false,
-                thumbnailUrl: getVideoThumbnailUrl(selectedVideo),
-                title: selectedVideo.snippet.title,
+                thumbnailUrl: getVideoThumbnailUrl(resolvedSelectedVideo),
+                title: resolvedSelectedVideo.snippet.title,
               }
             : null
         }

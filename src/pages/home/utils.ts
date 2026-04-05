@@ -315,7 +315,7 @@ export function buildNewChartEntriesSection(
 
   return {
     categoryId: NEW_CHART_ENTRIES_QUEUE_ID,
-    label: '신규 차트 등록',
+    label: '신규 진입',
     description: '전체 차트에 이번 집계에서 새로 진입한 영상을 모았습니다.',
     items: newChartEntriesData.items.map(mapTrendSignalToVideoItem),
   };
@@ -455,6 +455,22 @@ export function formatVideoViewCount(viewCount?: string) {
   }
 
   return formatCompactCount(parsedViewCount);
+}
+
+export function formatSelectedVideoRankLabel(
+  _countryName: string,
+  rank?: number | null,
+  options?: { chartOut?: boolean },
+) {
+  if (options?.chartOut) {
+    return '차트 아웃';
+  }
+
+  if (typeof rank !== 'number') {
+    return undefined;
+  }
+
+  return `${rank}위`;
 }
 
 export function persistRegionCode(regionCode: RegionCode) {

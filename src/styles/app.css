@@ -447,8 +447,9 @@
 .app-shell__stage-meta {
   align-items: flex-start;
   display: flex;
+  flex-wrap: wrap;
   gap: 18px;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding-top: 16px;
 }
 
@@ -457,7 +458,7 @@
   flex: 1;
   gap: 6px;
   min-width: 0;
-  width: 100%;
+  width: auto;
 }
 
 .app-shell__stage-headline {
@@ -472,17 +473,22 @@
 .app-shell__stage-side {
   align-items: flex-end;
   display: grid;
+  flex: 0 1 320px;
   gap: 12px;
   justify-items: end;
-  min-width: 220px;
-  width: 220px;
+  margin-left: auto;
+  max-width: 100%;
+  min-width: 0;
+  width: min(100%, 320px);
 }
 
 .app-shell__stage-actions {
   align-items: center;
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-end;
+  min-width: 0;
   width: 100%;
 }
 
@@ -522,13 +528,16 @@
   box-sizing: border-box;
   color: var(--text);
   display: inline-flex;
-  flex-shrink: 0;
+  flex: 0 1 auto;
   font-size: 0.88rem;
   font-weight: 700;
   height: 42px;
   justify-content: center;
   line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
   padding: 0 14px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -988,7 +997,26 @@
   gap: 10px;
   list-style: none;
   margin: 0;
+  max-height: min(34rem, 60vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+.app-shell__game-positions::-webkit-scrollbar {
+  width: 8px;
+}
+
+.app-shell__game-positions::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.38);
+  border-radius: 999px;
+}
+
+.app-shell__game-positions::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.08);
+  border-radius: 999px;
 }
 
 .app-shell__game-position {
@@ -1117,7 +1145,26 @@
   gap: 10px;
   list-style: none;
   margin: 0;
+  max-height: min(34rem, 60vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+.app-shell__game-history::-webkit-scrollbar {
+  width: 8px;
+}
+
+.app-shell__game-history::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.38);
+  border-radius: 999px;
+}
+
+.app-shell__game-history::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.08);
+  border-radius: 999px;
 }
 
 .app-shell__game-history-item {
@@ -1253,6 +1300,30 @@
   padding: 0;
 }
 
+.app-shell__game-leaderboard-stack {
+  display: grid;
+  gap: 12px;
+  max-height: min(34rem, 60vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+.app-shell__game-leaderboard-stack::-webkit-scrollbar {
+  width: 8px;
+}
+
+.app-shell__game-leaderboard-stack::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.38);
+  border-radius: 999px;
+}
+
+.app-shell__game-leaderboard-stack::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.08);
+  border-radius: 999px;
+}
+
 .app-shell__game-leaderboard-pinned {
   display: grid;
   gap: 8px;
@@ -1331,7 +1402,7 @@
 
 .app-shell__game-leaderboard-copy {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -1340,6 +1411,7 @@
   display: flex;
   gap: 10px;
   justify-content: space-between;
+  min-width: 0;
 }
 
 .app-shell__game-leaderboard-name,
@@ -2370,20 +2442,42 @@
 
   .app-shell__stage-meta {
     align-items: stretch;
+    display: block;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
+    justify-content: flex-start;
+    padding-top: 12px;
   }
 
   .app-shell__stage-side {
     align-items: flex-end;
+    display: block;
+    gap: 0;
     justify-items: end;
+    margin-left: 0;
+    margin-top: 10px;
     min-width: 0;
     width: 100%;
   }
 
   .app-shell__stage-actions {
     flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
     width: 100%;
+  }
+
+  .app-shell__stage-copy {
+    gap: 2px;
+  }
+
+  .app-shell__stage-channel,
+  .app-shell__stage-helper {
+    line-height: 1.35;
+  }
+
+  .app-shell__stage-helper {
+    font-size: 0.8rem;
   }
 
   .app-shell__stage-action-button {
@@ -2402,8 +2496,14 @@
   }
 
   .app-shell__stage-status {
+    margin-top: 6px;
     max-width: none;
+    min-height: 0;
     text-align: left;
+  }
+
+  .app-shell__stage-status[data-visible='false'] {
+    display: none;
   }
 
   .app-shell__game-panel {
@@ -2413,7 +2513,16 @@
 
   .app-shell__game-panel-header {
     align-items: flex-start;
-    flex-direction: column;
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .app-shell__game-panel-copy {
+    min-width: 0;
+  }
+
+  .app-shell__game-panel-header .app-shell__subtle-toggle {
+    margin-left: auto;
   }
 
   .app-shell__game-panel-metrics {
@@ -2440,39 +2549,131 @@
   }
 
   .app-shell__game-position {
-    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell__game-positions {
+    max-height: min(28rem, 52vh);
+    padding-right: 2px;
   }
 
   .app-shell__game-position-select {
+    align-items: start;
+    gap: 12px;
     grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .app-shell__game-position-copy {
+    gap: 6px;
+  }
+
+  .app-shell__game-position-title {
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    line-height: 1.35;
+    white-space: normal;
+  }
+
+  .app-shell__game-position-meta,
+  .app-shell__game-position-hold {
+    font-size: 0.8rem;
+    line-height: 1.5;
   }
 
   .app-shell__game-position-side {
-    align-items: flex-end;
-    grid-column: auto;
-    justify-items: end;
+    align-items: center;
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    gap: 8px;
+    grid-auto-flow: column;
+    grid-column: 1;
+    justify-content: space-between;
+    justify-items: start;
+    padding-top: 8px;
+    width: 100%;
   }
 
   .app-shell__game-history-item {
-    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell__game-history {
+    max-height: min(28rem, 52vh);
+    padding-right: 2px;
+  }
+
+  .app-shell__game-leaderboard-stack {
+    gap: 10px;
+    max-height: min(28rem, 52vh);
+    padding-right: 2px;
   }
 
   .app-shell__game-history-select {
+    align-items: start;
+    gap: 12px;
     grid-template-columns: 56px minmax(0, 1fr);
   }
 
+  .app-shell__game-history-copy {
+    gap: 6px;
+  }
+
+  .app-shell__game-history-title {
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    line-height: 1.35;
+    white-space: normal;
+  }
+
+  .app-shell__game-history-meta,
+  .app-shell__game-history-time {
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
   .app-shell__game-history-side {
-    align-items: flex-end;
-    grid-column: auto;
-    justify-items: end;
+    align-items: center;
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    grid-auto-flow: column;
+    grid-column: 1;
+    justify-content: space-between;
+    justify-items: start;
+    padding-top: 8px;
+    width: 100%;
   }
 
   .app-shell__game-leaderboard-item {
+    align-items: start;
+    gap: 10px;
     grid-template-columns: auto auto minmax(0, 1fr);
   }
 
   .app-shell__game-leaderboard-copy {
     grid-column: auto;
+    gap: 4px;
+  }
+
+  .app-shell__game-leaderboard-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .app-shell__game-leaderboard-name {
+    font-size: 0.84rem;
+    line-height: 1.3;
+  }
+
+  .app-shell__game-leaderboard-total {
+    font-size: 0.78rem;
+  }
+
+  .app-shell__game-leaderboard-meta {
+    font-size: 0.78rem;
+    line-height: 1.5;
   }
 
   .app-shell__game-leaderboard-head {

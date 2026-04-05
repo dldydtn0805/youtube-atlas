@@ -4,6 +4,7 @@ import {
   buildNewChartEntriesSection,
   buildRealtimeSurgingSection,
   filterVideoSection,
+  formatSelectedVideoRankLabel,
   NEW_CHART_ENTRIES_QUEUE_ID,
   REALTIME_SURGING_QUEUE_ID,
   shouldRenderRealtimeSurgingSection,
@@ -120,7 +121,7 @@ describe('home utils', () => {
           }),
         }),
       ],
-      label: '신규 차트 등록',
+      label: '신규 진입',
     });
   });
 
@@ -223,5 +224,11 @@ describe('home utils', () => {
         loadedItemCount: BUYABLE_ONLY_PREFETCH_LIMIT,
       }),
     ).toBe(false);
+  });
+
+  it('formats the selected video overall rank label', () => {
+    expect(formatSelectedVideoRankLabel('대한민국', 137)).toBe('137위');
+    expect(formatSelectedVideoRankLabel('대한민국', 137, { chartOut: true })).toBe('차트 아웃');
+    expect(formatSelectedVideoRankLabel('대한민국', null)).toBeUndefined();
   });
 });
