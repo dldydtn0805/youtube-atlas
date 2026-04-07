@@ -2900,9 +2900,9 @@
   }
 
   .app-shell__stage-action-button--game {
-    min-width: 56px;
-    padding: 0 14px;
-    width: auto;
+    min-width: 42px;
+    padding: 0;
+    width: 42px;
   }
 
   .app-shell__stage-action-button--history {
