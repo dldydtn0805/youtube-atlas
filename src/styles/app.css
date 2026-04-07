@@ -820,6 +820,18 @@
   line-height: 1.15;
 }
 
+.app-shell__game-panel-metric-value[data-tone='gain'] {
+  color: #dc2626;
+}
+
+.app-shell__game-panel-metric-value[data-tone='loss'] {
+  color: #2563eb;
+}
+
+.app-shell__game-panel-metric-value[data-tone='flat'] {
+  color: var(--text-muted);
+}
+
 .app-shell__game-panel-helper,
 .app-shell__game-panel-status,
 .app-shell__game-empty {

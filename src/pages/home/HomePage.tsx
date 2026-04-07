@@ -1722,21 +1722,32 @@ function HomePage() {
           <>
             <div className="app-shell__game-panel-metrics">
               <span className="app-shell__game-panel-metric">
-                <span className="app-shell__game-panel-metric-label">총자산</span>
-                <span className="app-shell__game-panel-metric-value">
-                  {currentGameSeason ? formatPoints(currentGameSeason.wallet.totalAssetPoints) : '-'}
-                </span>
-              </span>
-              <span className="app-shell__game-panel-metric">
                 <span className="app-shell__game-panel-metric-label">잔액</span>
                 <span className="app-shell__game-panel-metric-value">
                   {currentGameSeason ? formatPoints(currentGameSeason.wallet.balancePoints) : '-'}
                 </span>
               </span>
               <span className="app-shell__game-panel-metric">
+                <span className="app-shell__game-panel-metric-label">총자산</span>
+                <span className="app-shell__game-panel-metric-value">
+                  {currentGameSeason ? formatPoints(currentGameSeason.wallet.totalAssetPoints) : '-'}
+                </span>
+              </span>
+              <span className="app-shell__game-panel-metric">
                 <span className="app-shell__game-panel-metric-label">보유</span>
                 <span className="app-shell__game-panel-metric-value">
                   {`${openGamePositions.length}/${currentGameSeason?.maxOpenPositions ?? '-'}`}
+                </span>
+              </span>
+              <span className="app-shell__game-panel-metric">
+                <span className="app-shell__game-panel-metric-label">손익률</span>
+                <span
+                  className="app-shell__game-panel-metric-value"
+                  data-tone={getPointTone(openPositionsProfitPoints)}
+                >
+                  {currentGameSeason
+                    ? formatSignedProfitRate(openPositionsProfitPoints, openPositionsBuyPoints)
+                    : '-'}
                 </span>
               </span>
               <span className="app-shell__game-panel-metric">
@@ -1749,17 +1760,6 @@ function HomePage() {
                 <span className="app-shell__game-panel-metric-label">총 평가 금액</span>
                 <span className="app-shell__game-panel-metric-value">
                   {currentGameSeason ? formatPoints(openPositionsEvaluationPoints) : '-'}
-                </span>
-              </span>
-              <span className="app-shell__game-panel-metric">
-                <span className="app-shell__game-panel-metric-label">손익률</span>
-                <span
-                  className="app-shell__game-panel-metric-value"
-                  data-tone={getPointTone(openPositionsProfitPoints)}
-                >
-                  {currentGameSeason
-                    ? formatSignedProfitRate(openPositionsProfitPoints, openPositionsBuyPoints)
-                    : '-'}
                 </span>
               </span>
             </div>
