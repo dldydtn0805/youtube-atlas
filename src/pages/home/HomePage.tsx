@@ -14,6 +14,8 @@ import {
   BUYABLE_ONLY_PREFETCH_LIMIT,
   buildNewChartEntriesSection,
   buildRealtimeSurgingSection,
+  calculateSellFeePoints,
+  calculateSettledSellPoints,
   DEFAULT_CATEGORY_ID,
   FAVORITE_STREAMER_VIDEO_SECTION,
   GAME_PORTFOLIO_QUEUE_ID,
@@ -83,6 +85,7 @@ const COLLAPSED_HOME_SECTIONS_STORAGE_KEY = 'youtube-atlas-collapsed-home-sectio
 const FAVORITES_PANEL_SECTION_ID = 'favorites-panel';
 const MAIN_CHART_SECTION_ID = 'chart-main-list';
 const RANKING_GAME_SECTION_ID = 'ranking-game';
+const SELL_FEE_RATE_LABEL = '0.3%';
 const seasonDateTimeFormatter = new Intl.DateTimeFormat('ko-KR', {
   day: 'numeric',
   hour: '2-digit',
@@ -1317,17 +1320,18 @@ function HomePage() {
     () =>
       selectedVideoSellCandidates.reduce(
         (totals, candidate) => {
-          const settledPoints =
+          const grossSellPoints =
             typeof candidate.currentPricePoints === 'number' && Number.isFinite(candidate.currentPricePoints)
               ? candidate.currentPricePoints
               : typeof candidate.profitPoints === 'number' && Number.isFinite(candidate.profitPoints)
                 ? candidate.stakePoints + candidate.profitPoints
                 : candidate.stakePoints;
-          const pnlPoints =
-            typeof candidate.profitPoints === 'number' && Number.isFinite(candidate.profitPoints)
-              ? candidate.profitPoints
-              : settledPoints - candidate.stakePoints;
+          const feePoints = calculateSellFeePoints(grossSellPoints);
+          const settledPoints = calculateSettledSellPoints(grossSellPoints);
+          const pnlPoints = settledPoints - candidate.stakePoints;
 
+          totals.feePoints += feePoints;
+          totals.grossSellPoints += grossSellPoints;
           totals.pnlPoints += pnlPoints;
           totals.settledPoints += settledPoints;
           totals.quantity += candidate.quantity;
@@ -1335,6 +1339,8 @@ function HomePage() {
           return totals;
         },
         {
+          feePoints: 0,
+          grossSellPoints: 0,
           pnlPoints: 0,
           quantity: 0,
           settledPoints: 0,
@@ -1343,6 +1349,7 @@ function HomePage() {
       ),
     [selectedVideoSellCandidates],
   );
+  const sellFeeSummaryNote = `매도 시 체결 금액 기준 ${SELL_FEE_RATE_LABEL} 수수료가 차감됩니다.`;
   const selectedGameActionTitle =
     selectedVideoOpenPosition?.title ?? resolvedSelectedVideo?.snippet.title ?? '선택한 영상';
   const selectedOpenHolding = selectedVideoId
@@ -1498,6 +1505,10 @@ function HomePage() {
         (sum, response) => sum + response.settledPoints,
         0,
       );
+      const totalSellPricePoints = soldPositions.reduce(
+        (sum, response) => sum + response.sellPricePoints,
+        0,
+      );
       const totalPnlPoints = soldPositions.reduce(
         (sum, response) => sum + response.pnlPoints,
         0,
@@ -1506,11 +1517,12 @@ function HomePage() {
         (sum, response) => sum + response.stakePoints,
         0,
       );
+      const totalFeePoints = totalSellPricePoints - totalSettledPoints;
 
       setActiveTradeModal(null);
       setSellQuantity(1);
       setGameActionStatus(
-        `${selectedGameActionTitle} 포지션 ${soldPositions.length}개를 ${formatPoints(totalSettledPoints)} / 손익률 ${formatSignedProfitRate(
+        `${selectedGameActionTitle} 포지션 ${soldPositions.length}개를 정산 ${formatPoints(totalSettledPoints)} / 수수료 ${formatPoints(totalFeePoints)} / 손익률 ${formatSignedProfitRate(
           totalPnlPoints,
           totalStakePoints,
         )} 기준으로 정리했어요.`,
@@ -1769,6 +1781,7 @@ function HomePage() {
         총 매수 {formatPoints(selectedVideoOpenPositionSummary.stakePoints)} · 총 평가{' '}
         {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
       </p>
+      <p className="app-shell__game-panel-actions-summary-line">{sellFeeSummaryNote}</p>
     </div>
   ) : selectedVideoMarketEntry ? (
     <div className="app-shell__game-panel-actions-summary" aria-label="선택한 영상 현재 가격">
@@ -2750,10 +2763,14 @@ function HomePage() {
         onClose={() => setActiveTradeModal(null)}
         onConfirm={() => void handleBuyCurrentVideo()}
         quantity={normalizedBuyQuantity}
-        quantityLabel={`수량 ${normalizedBuyQuantity}개`}
+        summaryItems={[
+          { label: '수량', value: `${normalizedBuyQuantity}개` },
+          { label: '개당 가격', value: formatPoints(selectedVideoUnitPricePoints ?? 0) },
+          { label: '총 매수', value: formatPoints(totalSelectedVideoBuyPoints ?? (selectedVideoUnitPricePoints ?? 0)) },
+        ]}
+        summaryNote={undefined}
         thumbnailUrl={selectedVideoTradeThumbnailUrl}
         title={selectedGameActionTitle}
-        totalPointsLabel={`총 매수 ${formatPoints(totalSelectedVideoBuyPoints ?? (selectedVideoUnitPricePoints ?? 0))}`}
         unitPointsLabel={formatPoints(selectedVideoUnitPricePoints ?? 0)}
       />
       <GameTradeModal
@@ -2775,10 +2792,20 @@ function HomePage() {
         onClose={() => setActiveTradeModal(null)}
         onConfirm={() => void handleSellCurrentVideo()}
         quantity={normalizedSellQuantity}
-        quantityLabel={`수량 ${normalizedSellQuantity}개`}
+        summaryItems={[
+          { label: '수량', value: `${normalizedSellQuantity}개` },
+          { label: '예상 정산', value: formatPoints(selectedVideoSellSummary.settledPoints) },
+          { label: '매도 금액', value: formatPoints(selectedVideoSellSummary.grossSellPoints) },
+          { label: '수수료', value: formatPoints(selectedVideoSellSummary.feePoints) },
+          {
+            label: '예상 손익',
+            tone: getPointTone(selectedVideoSellSummary.pnlPoints),
+            value: formatPoints(selectedVideoSellSummary.pnlPoints),
+          },
+        ]}
+        summaryNote={`예상 정산은 매도 금액 기준 ${SELL_FEE_RATE_LABEL} 수수료를 반영한 값입니다.`}
         thumbnailUrl={selectedVideoTradeThumbnailUrl}
         title={selectedGameActionTitle}
-        totalPointsLabel={`예상 정산 ${formatPoints(selectedVideoSellSummary.settledPoints)}`}
         unitPointsLabel={formatPoints(selectedVideoUnitPricePoints ?? selectedVideoSellSummary.settledPoints ?? 0)}
       />
       {isBuyableVideoSearchLoading ? (

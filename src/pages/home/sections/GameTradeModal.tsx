@@ -1,6 +1,12 @@
 import { createPortal } from 'react-dom';
 import { getFullscreenElement } from '../utils';
 
+interface GameTradeModalSummaryItem {
+  label: string;
+  tone?: 'flat' | 'gain' | 'loss';
+  value: string;
+}
+
 interface GameTradeModalProps {
   confirmLabel: string;
   currentRankLabel: string;
@@ -13,10 +19,10 @@ interface GameTradeModalProps {
   onClose: () => void;
   onConfirm: () => void;
   quantity: number;
-  quantityLabel: string;
+  summaryItems: GameTradeModalSummaryItem[];
+  summaryNote?: string;
   thumbnailUrl?: string | null;
   title: string;
-  totalPointsLabel: string;
   unitPointsLabel: string;
 }
 
@@ -32,10 +38,10 @@ export default function GameTradeModal({
   onClose,
   onConfirm,
   quantity,
-  quantityLabel,
+  summaryItems,
+  summaryNote,
   thumbnailUrl,
   title,
-  totalPointsLabel,
   unitPointsLabel,
 }: GameTradeModalProps) {
   if (!isOpen || typeof document === 'undefined') {
@@ -71,14 +77,6 @@ export default function GameTradeModal({
               {mode === 'buy' ? '몇 개 매수할까요?' : '몇 개 매도할까요?'}
             </h2>
           </div>
-          <button
-            aria-label="거래 모달 닫기"
-            className="app-shell__modal-close"
-            onClick={onClose}
-            type="button"
-          >
-            닫기
-          </button>
         </div>
 
         <div className="app-shell__modal-body">
@@ -147,7 +145,6 @@ export default function GameTradeModal({
                     +
                   </button>
                 </div>
-                <p className="app-shell__game-trade-modal-quantity-note">{quantityLabel}</p>
               </div>
             </div>
 
@@ -156,15 +153,22 @@ export default function GameTradeModal({
                 <p className="app-shell__section-eyebrow">Summary</p>
                 <h3 className="app-shell__modal-field-title">{mode === 'buy' ? '주문 요약' : '정리 요약'}</h3>
               </div>
-              <div className="app-shell__game-trade-modal-summary">
-                <span className="app-shell__game-price-chip">{quantityLabel}</span>
-                <span className="app-shell__game-price-chip">{totalPointsLabel}</span>
-              </div>
+              <dl className="app-shell__game-trade-modal-summary">
+                {summaryItems.map((item) => (
+                  <div key={`${item.label}-${item.value}`} className="app-shell__game-trade-modal-summary-item">
+                    <dt className="app-shell__game-trade-modal-summary-label">{item.label}</dt>
+                    <dd className="app-shell__game-trade-modal-summary-value" data-tone={item.tone}>
+                      {item.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {summaryNote ? <p className="app-shell__game-trade-modal-quantity-note">{summaryNote}</p> : null}
             </div>
           </div>
         </div>
 
-        <div className="app-shell__modal-footer">
+        <div className="app-shell__modal-footer app-shell__modal-footer--trade-actions">
           <button
             className="app-shell__modal-action"
             disabled={isSubmitting || maxQuantity <= 0}
@@ -172,6 +176,14 @@ export default function GameTradeModal({
             type="button"
           >
             {isSubmitting ? '처리 중...' : confirmLabel}
+          </button>
+          <button
+            aria-label="거래 모달 닫기"
+            className="app-shell__modal-close"
+            onClick={onClose}
+            type="button"
+          >
+            닫기
           </button>
         </div>
       </section>

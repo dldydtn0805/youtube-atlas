@@ -3,6 +3,8 @@ import {
   BUYABLE_ONLY_PREFETCH_LIMIT,
   buildNewChartEntriesSection,
   buildRealtimeSurgingSection,
+  calculateSellFeePoints,
+  calculateSettledSellPoints,
   filterVideoSection,
   formatSignedProfitRate,
   formatSelectedVideoRankLabel,
@@ -78,6 +80,18 @@ describe('home utils', () => {
         items: [],
       }),
     ).toBeUndefined();
+  });
+
+  it('calculates a 0.3% sell fee from gross sell points', () => {
+    expect(calculateSellFeePoints(10_000)).toBe(30);
+    expect(calculateSellFeePoints(9_999)).toBe(29);
+    expect(calculateSellFeePoints(0)).toBe(0);
+  });
+
+  it('calculates settled sell points after the 0.3% fee', () => {
+    expect(calculateSettledSellPoints(10_000)).toBe(9_970);
+    expect(calculateSettledSellPoints(1)).toBe(1);
+    expect(calculateSettledSellPoints(null)).toBe(0);
   });
 
   it('builds a new chart entries section for the all category', () => {

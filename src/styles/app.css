@@ -2410,10 +2410,34 @@
   width: min(560px, 100%);
 }
 
-.app-shell__game-trade-modal-head {
-  align-items: center;
+.app-shell__modal--trade .app-shell__modal-header {
+  align-items: flex-start;
+  display: block;
+}
+
+.app-shell__modal--trade .app-shell__modal-footer {
+  justify-content: flex-start;
+}
+
+.app-shell__modal--trade .app-shell__modal-action {
+  min-width: 0;
+}
+
+.app-shell__modal-footer--trade-actions {
   display: grid;
-  gap: 16px;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.app-shell__modal-footer--trade-actions .app-shell__modal-action,
+.app-shell__modal-footer--trade-actions .app-shell__modal-close {
+  width: 100%;
+}
+
+.app-shell__game-trade-modal-head {
+  align-items: start;
+  display: grid;
+  gap: 18px;
   grid-template-columns: 136px minmax(0, 1fr);
 }
 
@@ -2460,6 +2484,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: flex-end;
 }
 
 .app-shell__game-trade-modal-quick-action {
@@ -2500,9 +2525,76 @@
 }
 
 .app-shell__game-trade-modal-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.app-shell__game-trade-modal-summary-item {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+  padding: 14px 16px;
+}
+
+.app-shell__game-trade-modal-summary-item:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.app-shell__game-trade-modal-summary-label {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.app-shell__game-trade-modal-summary-value {
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.app-shell__game-trade-modal-summary-value[data-tone='gain'] {
+  color: #dc2626;
+}
+
+.app-shell__game-trade-modal-summary-value[data-tone='loss'] {
+  color: #2563eb;
+}
+
+.app-shell__game-trade-modal-summary-value[data-tone='flat'] {
+  color: var(--text);
+}
+
+.app-shell__game-trade-modal-controls .app-shell__game-panel-quantity {
+  justify-self: stretch;
+  width: 100%;
+}
+
+.app-shell__game-trade-modal-controls .app-shell__game-panel-quantity-button {
+  flex: 0 0 56px;
+  height: 48px;
+  min-width: 56px;
+}
+
+.app-shell__game-trade-modal-controls .app-shell__game-panel-quantity-input {
+  flex: 1 1 auto;
+  font-size: 1rem;
+  height: 48px;
+  min-width: 0;
+  width: auto;
 }
 
 .app-shell__game-rank-history-empty {
@@ -3326,8 +3418,29 @@
     width: 100%;
   }
 
+  .app-shell__modal--trade .app-shell__modal-header {
+    display: block;
+  }
+
+  .app-shell__modal--trade .app-shell__modal-footer {
+    justify-content: stretch;
+  }
+
+  .app-shell__modal-footer--trade-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .app-shell__game-trade-modal-head {
     grid-template-columns: 1fr;
+  }
+
+  .app-shell__game-trade-modal-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell__game-trade-modal-controls .app-shell__game-panel-quantity {
+    justify-self: stretch;
+    width: 100%;
   }
 
   .app-shell__game-rank-history-sample {

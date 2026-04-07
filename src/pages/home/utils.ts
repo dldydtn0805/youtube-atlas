@@ -20,6 +20,8 @@ export const RESTORED_PLAYBACK_QUEUE_ID = 'last-playback-progress';
 const STORAGE_KEY = 'youtube-atlas-region-code';
 const CINEMATIC_MODE_STORAGE_KEY = 'youtube-atlas-cinematic-mode';
 const THEME_MODE_STORAGE_KEY = 'youtube-atlas-theme-mode';
+const SELL_FEE_NUMERATOR = 3;
+const SELL_FEE_DENOMINATOR = 1000;
 const profitRateFormatter = new Intl.NumberFormat('ko-KR', {
   maximumFractionDigits: 1,
 });
@@ -498,6 +500,22 @@ export function formatSignedProfitRate(profitPoints?: number | null, stakePoints
   }
 
   return '0%';
+}
+
+export function calculateSellFeePoints(grossSellPoints?: number | null) {
+  if (typeof grossSellPoints !== 'number' || !Number.isFinite(grossSellPoints) || grossSellPoints <= 0) {
+    return 0;
+  }
+
+  return Math.floor((grossSellPoints * SELL_FEE_NUMERATOR) / SELL_FEE_DENOMINATOR);
+}
+
+export function calculateSettledSellPoints(grossSellPoints?: number | null) {
+  if (typeof grossSellPoints !== 'number' || !Number.isFinite(grossSellPoints)) {
+    return 0;
+  }
+
+  return Math.max(0, grossSellPoints - calculateSellFeePoints(grossSellPoints));
 }
 
 export function persistRegionCode(regionCode: RegionCode) {
