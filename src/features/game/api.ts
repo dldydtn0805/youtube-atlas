@@ -6,6 +6,7 @@ import type {
   GameMarketVideo,
   GamePosition,
   GamePositionRankHistory,
+  SellGamePositionsInput,
   SellGamePositionResponse,
 } from './types';
 
@@ -61,7 +62,7 @@ export async function fetchGamePositionRankHistory(accessToken: string, position
 }
 
 export async function buyGamePosition(accessToken: string, input: CreateGamePositionInput) {
-  return fetchApi<GamePosition>('/api/game/positions', {
+  return fetchApi<GamePosition[]>('/api/game/positions', {
     method: 'POST',
     headers: {
       ...createAuthorizationHeader(accessToken),
@@ -75,5 +76,16 @@ export async function sellGamePosition(accessToken: string, positionId: number) 
   return fetchApi<SellGamePositionResponse>(`/api/game/positions/${positionId}/sell`, {
     method: 'POST',
     headers: createAuthorizationHeader(accessToken),
+  });
+}
+
+export async function sellGamePositions(accessToken: string, input: SellGamePositionsInput) {
+  return fetchApi<SellGamePositionResponse[]>('/api/game/positions/sell', {
+    method: 'POST',
+    headers: {
+      ...createAuthorizationHeader(accessToken),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
   });
 }

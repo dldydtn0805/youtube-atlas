@@ -5,6 +5,7 @@ import AppHeader from './sections/AppHeader';
 import { ChartPanel, CommunityPanel, FavoriteVideosPanel } from './sections/ContentPanels';
 import { CinematicQuickFilters, FilterModal, FilterSummaryPanel } from './sections/FilterPanels';
 import GameRankHistoryModal from './sections/GameRankHistoryModal';
+import GameTradeModal from './sections/GameTradeModal';
 import PlayerStage from './sections/PlayerStage';
 import useAppPreferences from './hooks/useAppPreferences';
 import useLogoutOnUnauthorized from './hooks/useLogoutOnUnauthorized';
@@ -55,6 +56,7 @@ import {
   useGamePositionRankHistory,
   useMyGamePositions,
   useSellGamePosition,
+  useSellGamePositions,
 } from '../../features/game/queries';
 import type { GameCurrentSeason, GameMarketVideo, GamePosition } from '../../features/game/types';
 import { upsertPlaybackProgress } from '../../features/playback/api';
@@ -185,19 +187,23 @@ function formatGameTimestamp(timestamp?: string | null) {
 function getBuyBalanceDeltaPoints(
   currentGameSeason?: GameCurrentSeason,
   selectedVideoMarketEntry?: GameMarketVideo,
+  quantity = 1,
 ) {
   if (!currentGameSeason || !selectedVideoMarketEntry) {
     return null;
   }
 
-  return currentGameSeason.wallet.balancePoints - selectedVideoMarketEntry.currentPricePoints;
+  const normalizedQuantity = Math.max(1, Math.floor(quantity));
+
+  return currentGameSeason.wallet.balancePoints - selectedVideoMarketEntry.currentPricePoints * normalizedQuantity;
 }
 
 function getBuyRemainingPointsText(
   currentGameSeason?: GameCurrentSeason,
   selectedVideoMarketEntry?: GameMarketVideo,
+  quantity = 1,
 ) {
-  const buyBalanceDeltaPoints = getBuyBalanceDeltaPoints(currentGameSeason, selectedVideoMarketEntry);
+  const buyBalanceDeltaPoints = getBuyBalanceDeltaPoints(currentGameSeason, selectedVideoMarketEntry, quantity);
 
   return typeof buyBalanceDeltaPoints === 'number' && buyBalanceDeltaPoints >= 0
     ? `구매 후 ${formatPointBalance(buyBalanceDeltaPoints)}가 남습니다.`
@@ -207,8 +213,9 @@ function getBuyRemainingPointsText(
 function getBuyShortfallPointsText(
   currentGameSeason?: GameCurrentSeason,
   selectedVideoMarketEntry?: GameMarketVideo,
+  quantity = 1,
 ) {
-  const buyBalanceDeltaPoints = getBuyBalanceDeltaPoints(currentGameSeason, selectedVideoMarketEntry);
+  const buyBalanceDeltaPoints = getBuyBalanceDeltaPoints(currentGameSeason, selectedVideoMarketEntry, quantity);
 
   return typeof buyBalanceDeltaPoints === 'number' && buyBalanceDeltaPoints < 0
     ? `${formatPointBalance(Math.abs(buyBalanceDeltaPoints))}가 부족합니다.`
@@ -228,6 +235,9 @@ function HomePage() {
   const [selectedLeaderboardUserId, setSelectedLeaderboardUserId] = useState<number | null>(null);
   const [selectedRankHistoryPosition, setSelectedRankHistoryPosition] = useState<GamePosition | null>(null);
   const [selectedVideoRankHistoryVideoId, setSelectedVideoRankHistoryVideoId] = useState<string | null>(null);
+  const [activeTradeModal, setActiveTradeModal] = useState<'buy' | 'sell' | null>(null);
+  const [buyQuantity, setBuyQuantity] = useState(1);
+  const [sellQuantity, setSellQuantity] = useState(1);
   const [historyPlaybackVideo, setHistoryPlaybackVideo] = useState<YouTubeVideoItem | null>(null);
   const [historyPlaybackLoadingVideoId, setHistoryPlaybackLoadingVideoId] = useState<string | null>(null);
   const playerStageRef = useRef<HTMLDivElement | null>(null);
@@ -374,6 +384,7 @@ function HomePage() {
   );
   const buyGamePositionMutation = useBuyGamePosition(accessToken);
   const sellGamePositionMutation = useSellGamePosition(accessToken);
+  const sellGamePositionsMutation = useSellGamePositions(accessToken);
 
   const {
     data,
@@ -592,9 +603,11 @@ function HomePage() {
     sortedVideoCategories,
   });
   const selectedVideo = combinedPlayableItems.find((item) => item.id === selectedVideoId);
-  const selectedVideoOpenPosition = selectedVideoId
-    ? openGamePositions.find((position) => position.videoId === selectedVideoId)
-    : undefined;
+  const selectedVideoOpenPositions = useMemo(
+    () => (selectedVideoId ? openGamePositions.filter((position) => position.videoId === selectedVideoId) : []),
+    [openGamePositions, selectedVideoId],
+  );
+  const selectedVideoOpenPosition = selectedVideoOpenPositions[0];
   const selectedVideoMarketEntry = selectedVideoId
     ? gameMarket.find((marketVideo) => marketVideo.videoId === selectedVideoId)
     : undefined;
@@ -624,6 +637,56 @@ function HomePage() {
   const selectedHistoricalPosition = selectedVideoId
     ? gameHistoryPositions.find((position) => position.videoId === selectedVideoId)
     : undefined;
+  const selectedVideoOpenPositionCount = selectedVideoOpenPositions.length;
+  const selectedVideoOpenPositionSummary = useMemo(
+    () =>
+      selectedVideoOpenPositions.reduce(
+        (totals, position) => {
+          const stakePoints =
+            typeof position.stakePoints === 'number' && Number.isFinite(position.stakePoints)
+              ? position.stakePoints
+              : 0;
+          const evaluationPoints =
+            typeof position.currentPricePoints === 'number' && Number.isFinite(position.currentPricePoints)
+              ? position.currentPricePoints
+              : typeof position.profitPoints === 'number' && Number.isFinite(position.profitPoints)
+                ? stakePoints + position.profitPoints
+                : stakePoints;
+          const profitPoints =
+            typeof position.profitPoints === 'number' && Number.isFinite(position.profitPoints)
+              ? position.profitPoints
+              : evaluationPoints - stakePoints;
+
+          totals.stakePoints += stakePoints;
+          totals.evaluationPoints += evaluationPoints;
+          totals.profitPoints += profitPoints;
+          return totals;
+        },
+        {
+          evaluationPoints: 0,
+          profitPoints: 0,
+          stakePoints: 0,
+        },
+      ),
+    [selectedVideoOpenPositions],
+  );
+  const selectedVideoUnitPricePoints = selectedVideoMarketEntry?.currentPricePoints ?? null;
+  const remainingOpenPositionSlots = currentGameSeason
+    ? Math.max(0, currentGameSeason.maxOpenPositions - openGamePositions.length)
+    : 0;
+  const maxBuyQuantity =
+    currentGameSeason && selectedVideoUnitPricePoints
+      ? Math.max(
+          0,
+          Math.min(
+            remainingOpenPositionSlots,
+            Math.floor(currentGameSeason.wallet.balancePoints / selectedVideoUnitPricePoints),
+          ),
+        )
+      : 0;
+  const normalizedBuyQuantity = Math.max(1, Math.floor(buyQuantity));
+  const totalSelectedVideoBuyPoints =
+    typeof selectedVideoUnitPricePoints === 'number' ? selectedVideoUnitPricePoints * normalizedBuyQuantity : null;
   const selectedVideoCurrentChartRank =
     selectedVideoMarketEntry?.currentRank ??
     selectedVideoTrendSignal?.currentRank ??
@@ -631,7 +694,7 @@ function HomePage() {
   const selectedVideoIsChartOut =
     selectedVideoMarketEntry || selectedVideoTrendSignal
       ? false
-      : (selectedVideoOpenPosition?.chartOut ?? false) || (selectedHistoricalPosition?.chartOut ?? false);
+      : selectedVideoOpenPositions.some((position) => position.chartOut) || (selectedHistoricalPosition?.chartOut ?? false);
   const selectedVideoRankLabel = formatSelectedVideoRankLabel(
     selectedCountryName,
     selectedVideoCurrentChartRank,
@@ -807,6 +870,22 @@ function HomePage() {
 
     setIsBuyableOnlyFilterActive(false);
   }, [isBuyableOnlyFilterAvailable]);
+
+  useEffect(() => {
+    setBuyQuantity(1);
+    setSellQuantity(1);
+    setActiveTradeModal(null);
+  }, [selectedVideoId]);
+
+  useEffect(() => {
+    setBuyQuantity((currentQuantity) => {
+      if (maxBuyQuantity <= 0) {
+        return 1;
+      }
+
+      return Math.min(Math.max(1, Math.floor(currentQuantity)), maxBuyQuantity);
+    });
+  }, [maxBuyQuantity]);
 
   useEffect(() => {
     if (!shouldAutoPrefetchBuyableVideos) {
@@ -1043,6 +1122,59 @@ function HomePage() {
     },
     [currentGameSeason, gameClock],
   );
+  const sellableSelectedVideoOpenPositions = useMemo(
+    () =>
+      [...selectedVideoOpenPositions]
+        .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime())
+        .filter((position) => getRemainingHoldSeconds(position) <= 0),
+    [getRemainingHoldSeconds, selectedVideoOpenPositions],
+  );
+  const maxSellQuantity = sellableSelectedVideoOpenPositions.length;
+  const normalizedSellQuantity = Math.max(1, Math.floor(sellQuantity));
+  const selectedVideoSellCandidates = useMemo(
+    () => sellableSelectedVideoOpenPositions.slice(0, normalizedSellQuantity),
+    [normalizedSellQuantity, sellableSelectedVideoOpenPositions],
+  );
+  const selectedVideoSellSummary = useMemo(
+    () =>
+      selectedVideoSellCandidates.reduce(
+        (totals, position) => {
+          const settledPoints =
+            typeof position.currentPricePoints === 'number' && Number.isFinite(position.currentPricePoints)
+              ? position.currentPricePoints
+              : typeof position.profitPoints === 'number' && Number.isFinite(position.profitPoints)
+                ? position.stakePoints + position.profitPoints
+                : position.stakePoints;
+          const pnlPoints =
+            typeof position.profitPoints === 'number' && Number.isFinite(position.profitPoints)
+              ? position.profitPoints
+              : settledPoints - position.stakePoints;
+
+          totals.pnlPoints += pnlPoints;
+          totals.settledPoints += settledPoints;
+          totals.stakePoints += position.stakePoints;
+          return totals;
+        },
+        {
+          pnlPoints: 0,
+          settledPoints: 0,
+          stakePoints: 0,
+        },
+      ),
+    [selectedVideoSellCandidates],
+  );
+  const selectedGameActionTitle =
+    selectedVideoOpenPosition?.title ?? resolvedSelectedVideo?.snippet.title ?? '선택한 영상';
+
+  useEffect(() => {
+    setSellQuantity((currentQuantity) => {
+      if (maxSellQuantity <= 0) {
+        return 1;
+      }
+
+      return Math.min(Math.max(1, Math.floor(currentQuantity)), maxSellQuantity);
+    });
+  }, [maxSellQuantity]);
 
   const handleSellPosition = useCallback(
     async (position: GamePosition) => {
@@ -1094,7 +1226,12 @@ function HomePage() {
       return;
     }
 
-    const buyShortfallMessage = getBuyShortfallPointsText(currentGameSeason, selectedVideoMarketEntry);
+    const clampedBuyQuantity = Math.max(1, Math.floor(buyQuantity));
+    const buyShortfallMessage = getBuyShortfallPointsText(
+      currentGameSeason,
+      selectedVideoMarketEntry,
+      clampedBuyQuantity,
+    );
 
     if (!selectedVideoMarketEntry.canBuy) {
       setGameActionStatus(
@@ -1103,15 +1240,29 @@ function HomePage() {
       return;
     }
 
+    if (maxBuyQuantity <= 0 || clampedBuyQuantity > maxBuyQuantity) {
+      setGameActionStatus(
+        maxBuyQuantity > 0
+          ? `지금은 최대 ${maxBuyQuantity}개까지 한 번에 매수할 수 있습니다.`
+          : buyShortfallMessage ?? '지금은 매수할 수 없습니다.',
+      );
+      return;
+    }
+
     try {
-      await buyGamePositionMutation.mutateAsync({
+      const boughtPositions = await buyGamePositionMutation.mutateAsync({
         categoryId: '0',
         regionCode: currentGameSeason.regionCode,
         stakePoints: selectedVideoMarketEntry.currentPricePoints,
+        quantity: clampedBuyQuantity,
         videoId: selectedVideoId,
       });
+      setActiveTradeModal(null);
+      setBuyQuantity(1);
       setGameActionStatus(
-        `${formatPoints(selectedVideoMarketEntry.currentPricePoints)}로 ${selectedVideoMarketEntry.currentRank}위 영상을 매수했어요.`,
+        `${formatPoints(selectedVideoMarketEntry.currentPricePoints * boughtPositions.length)}로 ${
+          selectedVideoMarketEntry.currentRank
+        }위 영상을 ${boughtPositions.length}개 매수했어요.`,
       );
     } catch (error) {
       if (
@@ -1128,14 +1279,103 @@ function HomePage() {
     }
   }, [
     authStatus,
+    buyQuantity,
     buyGamePositionMutation,
     currentGameSeason,
     currentGameSeasonError,
     gameSeasonRegionMismatch,
     logout,
+    maxBuyQuantity,
     selectedVideoId,
     selectedVideoMarketEntry,
   ]);
+  const handleSellCurrentVideo = useCallback(async () => {
+    if (authStatus !== 'authenticated' || !selectedVideoId) {
+      setGameActionStatus('로그인 후 보유 포지션을 매도할 수 있습니다.');
+      return;
+    }
+
+    const clampedSellQuantity = Math.max(1, Math.floor(sellQuantity));
+
+    if (maxSellQuantity <= 0 || clampedSellQuantity > maxSellQuantity) {
+      setGameActionStatus(
+        maxSellQuantity > 0
+          ? `지금은 최대 ${maxSellQuantity}개까지 매도할 수 있습니다.`
+          : '지금 바로 매도 가능한 포지션이 없습니다.',
+      );
+      return;
+    }
+
+    try {
+      const soldPositions = await sellGamePositionsMutation.mutateAsync({
+        quantity: clampedSellQuantity,
+        videoId: selectedVideoId,
+      });
+      const totalSettledPoints = soldPositions.reduce(
+        (sum, response) => sum + response.settledPoints,
+        0,
+      );
+      const totalPnlPoints = soldPositions.reduce(
+        (sum, response) => sum + response.pnlPoints,
+        0,
+      );
+      const totalStakePoints = soldPositions.reduce(
+        (sum, response) => sum + response.stakePoints,
+        0,
+      );
+
+      setActiveTradeModal(null);
+      setSellQuantity(1);
+      setGameActionStatus(
+        `${selectedGameActionTitle} 포지션 ${soldPositions.length}개를 ${formatPoints(totalSettledPoints)} / 손익률 ${formatSignedProfitRate(
+          totalPnlPoints,
+          totalStakePoints,
+        )} 기준으로 정리했어요.`,
+      );
+    } catch (error) {
+      if (
+        error instanceof ApiRequestError &&
+        (error.code === 'unauthorized' || error.code === 'session_expired')
+      ) {
+        void logout();
+        return;
+      }
+
+      setGameActionStatus(
+        error instanceof Error ? error.message : '일괄 매도에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+      );
+    }
+  }, [
+    authStatus,
+    logout,
+    maxSellQuantity,
+    selectedGameActionTitle,
+    selectedVideoId,
+    sellGamePositionsMutation,
+    sellQuantity,
+  ]);
+
+  const openBuyTradeModal = useCallback(() => {
+    setBuyQuantity((currentQuantity) => {
+      if (maxBuyQuantity <= 0) {
+        return 1;
+      }
+
+      return Math.min(Math.max(1, Math.floor(currentQuantity)), maxBuyQuantity);
+    });
+    setActiveTradeModal('buy');
+  }, [maxBuyQuantity]);
+
+  const openSellTradeModal = useCallback(() => {
+    setSellQuantity((currentQuantity) => {
+      if (maxSellQuantity <= 0) {
+        return 1;
+      }
+
+      return Math.min(Math.max(1, Math.floor(currentQuantity)), maxSellQuantity);
+    });
+    setActiveTradeModal('sell');
+  }, [maxSellQuantity]);
 
   async function handleToggleFavoriteStreamer() {
     if (authStatus !== 'authenticated' || !resolvedSelectedVideo || !selectedChannelId) {
@@ -1216,13 +1456,32 @@ function HomePage() {
     [handleSelectVideo, scrollToPlayerStage],
   );
 
-  const selectedVideoHoldRemainingSeconds = selectedVideoOpenPosition
-    ? getRemainingHoldSeconds(selectedVideoOpenPosition)
-    : 0;
   const myLeaderboardEntry = gameLeaderboard.find((entry) => entry.me);
   const topLeaderboardEntries = gameLeaderboard.slice(0, 10);
-  const buyRemainingPointsText = getBuyRemainingPointsText(currentGameSeason, selectedVideoMarketEntry);
-  const buyShortfallPointsText = getBuyShortfallPointsText(currentGameSeason, selectedVideoMarketEntry);
+  const buyRemainingPointsText = getBuyRemainingPointsText(
+    currentGameSeason,
+    selectedVideoMarketEntry,
+    1,
+  );
+  const buyShortfallPointsText = getBuyShortfallPointsText(
+    currentGameSeason,
+    selectedVideoMarketEntry,
+    1,
+  );
+  const buyModalRemainingPointsText = getBuyRemainingPointsText(
+    currentGameSeason,
+    selectedVideoMarketEntry,
+    normalizedBuyQuantity,
+  );
+  const buyModalShortfallPointsText = getBuyShortfallPointsText(
+    currentGameSeason,
+    selectedVideoMarketEntry,
+    normalizedBuyQuantity,
+  );
+  const sellModalHelperText =
+    maxSellQuantity > 0
+      ? `지금 매도 가능한 포지션은 ${maxSellQuantity}개이며 오래된 순서부터 정리됩니다.`
+      : '지금은 최소 보유 시간이 지나지 않아 매도 가능한 포지션이 없습니다.';
   const currentVideoGameHelperText =
     !canShowGameActions
       ? !isGameRegionSelected
@@ -1230,8 +1489,10 @@ function HomePage() {
         : '매수/매도는 전체 카테고리에서만 가능합니다.'
       : authStatus !== 'authenticated'
       ? '로그인하면 지금 보는 영상도 바로 게임 포지션으로 담을 수 있습니다.'
-      : selectedVideoOpenPosition
-        ? '현재 보유 중인 포지션입니다.'
+      : selectedVideoOpenPositionCount > 0
+        ? selectedVideoMarketEntry?.canBuy
+          ? `현재 이 영상을 ${selectedVideoOpenPositionCount}개 포지션으로 보유 중입니다. 추가 매수도 가능합니다.`
+          : `현재 이 영상을 ${selectedVideoOpenPositionCount}개 포지션으로 보유 중입니다.`
         : selectedVideoMarketEntry
           ? selectedVideoMarketEntry.canBuy
             ? buyRemainingPointsText ?? '지금 바로 매수할 수 있습니다.'
@@ -1248,25 +1509,28 @@ function HomePage() {
   const isCurrentVideoGameHelperWarning = Boolean(
     selectedVideoMarketEntry?.canBuy === false && buyShortfallPointsText,
   );
-  const currentVideoGamePriceSummary = selectedVideoOpenPosition ? (
+  const currentVideoGamePriceSummary = selectedVideoOpenPositionCount > 0 ? (
     <div className="app-shell__game-price-strip" aria-label="선택한 영상 가격 정보">
       <span className="app-shell__game-price-chip">
-        현재 {formatRank(selectedVideoOpenPosition.currentRank, {
-          chartOut: selectedVideoOpenPosition.chartOut,
+        현재 {formatRank(selectedVideoCurrentChartRank, {
+          chartOut: selectedVideoIsChartOut,
         })}
       </span>
-      <span className="app-shell__game-price-chip">매수가 {formatPoints(selectedVideoOpenPosition.stakePoints)}</span>
+      <span className="app-shell__game-price-chip">보유 포지션 {selectedVideoOpenPositionCount}개</span>
       <span className="app-shell__game-price-chip">
-        현재가 {formatMaybePoints(selectedVideoOpenPosition.currentPricePoints)}
+        총 매수 {formatPoints(selectedVideoOpenPositionSummary.stakePoints)}
+      </span>
+      <span className="app-shell__game-price-chip">
+        총 평가 {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
       </span>
       <span
         className="app-shell__game-price-chip"
-        data-tone={getPointTone(selectedVideoOpenPosition.profitPoints)}
+        data-tone={getPointTone(selectedVideoOpenPositionSummary.profitPoints)}
       >
-        손익률{' '}
+        합산 손익률{' '}
         {formatSignedProfitRate(
-          selectedVideoOpenPosition.profitPoints,
-          selectedVideoOpenPosition.stakePoints,
+          selectedVideoOpenPositionSummary.profitPoints,
+          selectedVideoOpenPositionSummary.stakePoints,
         )}
       </span>
     </div>
@@ -1280,30 +1544,87 @@ function HomePage() {
       </span>
     </div>
   ) : null;
-  const isSelectedVideoSellDisabled =
-    !selectedVideoOpenPosition ||
-    selectedVideoHoldRemainingSeconds > 0 ||
-    (sellGamePositionMutation.isPending && sellGamePositionMutation.variables === selectedVideoOpenPosition.id);
   const isSelectedVideoBuyDisabled =
     !selectedVideoId ||
     authStatus !== 'authenticated' ||
     buyGamePositionMutation.isPending ||
     !selectedVideoMarketEntry ||
     !selectedVideoMarketEntry.canBuy ||
+    maxBuyQuantity <= 0 ||
     !currentGameSeason;
+  const isSelectedVideoSellDisabled =
+    !selectedVideoId ||
+    authStatus !== 'authenticated' ||
+    !canShowGameActions ||
+    selectedVideoOpenPositionCount <= 0;
   const buyActionTitle =
     authStatus !== 'authenticated'
       ? '로그인 후 매수할 수 있습니다.'
       : selectedVideoMarketEntry?.canBuy
-        ? buyRemainingPointsText
-          ? buyRemainingPointsText
-          : `${formatPoints(selectedVideoMarketEntry.currentPricePoints)}로 현재 영상을 매수합니다.`
+        ? selectedVideoOpenPositionCount > 0
+          ? '현재 영상의 추가 매수 수량을 선택합니다.'
+          : '현재 영상의 매수 수량을 선택합니다.'
         : buyShortfallPointsText ??
           selectedVideoMarketEntry?.buyBlockedReason ??
           (currentGameSeason ? '현재 영상은 게임 거래 대상이 아닙니다.' : '활성 시즌이 없습니다.');
-  const gameActionContent = null;
-  const selectedGameActionTitle =
-    selectedVideoOpenPosition?.title ?? resolvedSelectedVideo?.snippet.title ?? '선택한 영상';
+  const sellActionTitle =
+    !canShowGameActions
+      ? '전체 카테고리에서만 매도할 수 있습니다.'
+      : maxSellQuantity > 0
+        ? `${maxSellQuantity}개까지 수량을 선택해 매도할 수 있습니다.`
+        : sellModalHelperText;
+  const gameActionContent = selectedVideoId ? (
+    <>
+      <button
+        aria-label="선택한 영상 매수"
+        className="app-shell__stage-action-button app-shell__stage-action-button--game"
+        data-variant="buy"
+        disabled={!canShowGameActions || isSelectedVideoBuyDisabled}
+        onClick={openBuyTradeModal}
+        title={!canShowGameActions ? '전체 카테고리에서만 매수할 수 있습니다.' : buyActionTitle}
+        type="button"
+      >
+        <span className="app-shell__stage-action-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 18V6M12 6l-4 4M12 6l4 4"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.8"
+            />
+          </svg>
+        </span>
+      </button>
+      {selectedVideoOpenPositionCount > 0 ? (
+        <button
+          aria-label="선택한 영상 매도"
+          className="app-shell__stage-action-button app-shell__stage-action-button--game"
+          data-variant="sell"
+          disabled={isSelectedVideoSellDisabled}
+          onClick={openSellTradeModal}
+          title={sellActionTitle}
+          type="button"
+        >
+          <span className="app-shell__stage-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 6v12M12 18l-4-4M12 18l4-4"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+              />
+            </svg>
+          </span>
+        </button>
+      ) : null}
+    </>
+  ) : null;
+  const selectedVideoTradeThumbnailUrl =
+    selectedVideoMarketEntry?.thumbnailUrl ??
+    selectedVideoOpenPosition?.thumbnailUrl ??
+    (resolvedSelectedVideo ? getVideoThumbnailUrl(resolvedSelectedVideo) : null);
   const isChartActionDisabled = !selectedVideoId || !canShowGameActions;
   const selectedLeaderboardEntry = selectedLeaderboardUserId
     ? gameLeaderboard.find((entry) => entry.userId === selectedLeaderboardUserId) ?? null
@@ -1799,85 +2120,118 @@ function HomePage() {
                 <div className="app-shell__game-panel-actions">
                   <div className="app-shell__game-panel-actions-copy">
                     <p className="app-shell__game-panel-actions-eyebrow">
-                      {selectedVideoOpenPosition ? 'Selected Position' : 'Selected Video'}
+                      {selectedVideoOpenPositionCount > 0 ? 'Selected Positions' : 'Selected Video'}
                     </p>
                     <p className="app-shell__game-panel-actions-title">{selectedGameActionTitle}</p>
                   </div>
                   <div className="app-shell__game-panel-actions-buttons">
-                    {selectedVideoOpenPosition ? (
-                      <>
-                        <button
-                          className="app-shell__game-panel-action"
-                          disabled={isChartActionDisabled}
-                          onClick={() => {
-                            setSelectedVideoRankHistoryVideoId(null);
-                            setSelectedRankHistoryPosition(selectedVideoOpenPosition);
-                          }}
-                          title={
-                            !canShowGameActions
-                              ? '대한민국 전체 카테고리에서만 차트를 볼 수 있습니다.'
-                              : '이 포지션의 랭킹 차트를 엽니다.'
-                          }
-                          type="button"
-                        >
-                          차트
-                        </button>
-                        <button
-                          className="app-shell__game-panel-action"
-                          data-variant="sell"
-                          disabled={!canShowGameActions || isSelectedVideoSellDisabled}
-                          onClick={() => void handleSellPosition(selectedVideoOpenPosition)}
-                          title={
-                            !canShowGameActions
-                              ? '전체 카테고리에서만 매도할 수 있습니다.'
-                              : selectedVideoHoldRemainingSeconds > 0
-                                ? `최소 보유 시간까지 ${formatRemainingHoldSeconds(selectedVideoHoldRemainingSeconds)} 남았습니다.`
-                                : '현재 보유 중인 포지션을 정리합니다.'
-                          }
-                          type="button"
-                        >
-                          {sellGamePositionMutation.isPending &&
-                          sellGamePositionMutation.variables === selectedVideoOpenPosition.id
-                            ? '매도 중...'
-                            : '매도'}
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          className="app-shell__game-panel-action"
-                          disabled={isChartActionDisabled}
-                          onClick={() => {
-                            setSelectedRankHistoryPosition(null);
-                            setSelectedVideoRankHistoryVideoId(selectedVideoId);
-                          }}
-                          title={
-                            !canShowGameActions
-                              ? '대한민국 전체 카테고리에서만 차트를 볼 수 있습니다.'
-                              : '선택한 영상의 랭킹 차트를 엽니다.'
-                          }
-                          type="button"
-                        >
-                          차트
-                        </button>
-                        <button
-                          className="app-shell__game-panel-action"
-                          disabled={!canShowGameActions || isSelectedVideoBuyDisabled}
-                          data-variant="buy"
-                          onClick={() => void handleBuyCurrentVideo()}
-                          title={
-                            !canShowGameActions
-                              ? '전체 카테고리에서만 매수할 수 있습니다.'
-                              : buyActionTitle
-                          }
-                          type="button"
-                        >
-                          {buyGamePositionMutation.isPending ? '매수 중...' : '매수'}
-                        </button>
-                      </>
-                    )}
+                    <button
+                      className="app-shell__game-panel-action"
+                      disabled={isChartActionDisabled}
+                      onClick={() => {
+                        setSelectedRankHistoryPosition(null);
+                        setSelectedVideoRankHistoryVideoId(selectedVideoId);
+                      }}
+                      title={
+                        !canShowGameActions
+                          ? '대한민국 전체 카테고리에서만 차트를 볼 수 있습니다.'
+                          : '선택한 영상의 랭킹 차트를 엽니다.'
+                      }
+                      type="button"
+                    >
+                      차트
+                    </button>
+                    <button
+                      className="app-shell__game-panel-action"
+                      disabled={!canShowGameActions || isSelectedVideoBuyDisabled}
+                      data-variant="buy"
+                      onClick={openBuyTradeModal}
+                      title={
+                        !canShowGameActions
+                          ? '전체 카테고리에서만 매수할 수 있습니다.'
+                          : buyActionTitle
+                      }
+                      type="button"
+                    >
+                      {buyGamePositionMutation.isPending ? '매수 중...' : '매수'}
+                    </button>
+                    {selectedVideoOpenPositionCount > 0 ? (
+                      <button
+                        className="app-shell__game-panel-action"
+                        data-variant="sell"
+                        disabled={isSelectedVideoSellDisabled}
+                        onClick={openSellTradeModal}
+                        title={sellActionTitle}
+                        type="button"
+                      >
+                        {sellGamePositionsMutation.isPending ? '매도 중...' : '매도'}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
+                {selectedVideoOpenPositionCount > 0 ? (
+                  <div className="app-shell__game-panel-position-list" aria-label="선택한 영상 보유 포지션 목록">
+                    {selectedVideoOpenPositions.map((position) => {
+                      const remainingHoldSeconds = getRemainingHoldSeconds(position);
+                      const isPendingSell =
+                        sellGamePositionMutation.isPending && sellGamePositionMutation.variables === position.id;
+
+                      return (
+                        <div key={position.id} className="app-shell__game-panel-position-item">
+                          <div className="app-shell__game-panel-position-copy">
+                            <p className="app-shell__game-panel-position-title">
+                              포지션 #{position.id} · 진입 {formatGameTimestamp(position.createdAt)}
+                            </p>
+                            <p className="app-shell__game-panel-position-meta">
+                              매수 {formatPoints(position.stakePoints)} · 현재{' '}
+                              {formatRank(position.currentRank, {
+                                chartOut: position.chartOut,
+                              })}{' '}
+                              · 손익률{' '}
+                              <span data-tone={getPointTone(position.profitPoints)}>
+                                {formatSignedProfitRate(position.profitPoints, position.stakePoints)}
+                              </span>
+                            </p>
+                          </div>
+                          <div className="app-shell__game-panel-position-buttons">
+                            <button
+                              className="app-shell__game-panel-action"
+                              disabled={isChartActionDisabled}
+                              onClick={() => {
+                                setSelectedVideoRankHistoryVideoId(null);
+                                setSelectedRankHistoryPosition(position);
+                              }}
+                              title={
+                                !canShowGameActions
+                                  ? '대한민국 전체 카테고리에서만 차트를 볼 수 있습니다.'
+                                  : '이 포지션의 랭킹 차트를 엽니다.'
+                              }
+                              type="button"
+                            >
+                              차트
+                            </button>
+                            <button
+                              className="app-shell__game-panel-action"
+                              data-variant="sell"
+                              disabled={!canShowGameActions || remainingHoldSeconds > 0 || isPendingSell}
+                              onClick={() => void handleSellPosition(position)}
+                              title={
+                                !canShowGameActions
+                                  ? '전체 카테고리에서만 매도할 수 있습니다.'
+                                  : remainingHoldSeconds > 0
+                                    ? `최소 보유 시간까지 ${formatRemainingHoldSeconds(remainingHoldSeconds)} 남았습니다.`
+                                    : '현재 보유 중인 포지션을 정리합니다.'
+                              }
+                              type="button"
+                            >
+                              {isPendingSell ? '매도 중...' : '매도'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
                 {currentVideoGamePriceSummary}
               </>
             ) : null}
@@ -2150,6 +2504,51 @@ function HomePage() {
               }
             : null
         }
+      />
+      <GameTradeModal
+        confirmLabel={`${normalizedBuyQuantity}개 매수`}
+        currentRankLabel={formatRank(selectedVideoCurrentChartRank, { chartOut: selectedVideoIsChartOut })}
+        helperText={
+          maxBuyQuantity > 0
+            ? buyModalRemainingPointsText ??
+              `현재 가격으로 최대 ${maxBuyQuantity}개까지 한 번에 매수할 수 있습니다.`
+            : buyModalShortfallPointsText ?? selectedVideoMarketEntry?.buyBlockedReason ?? '지금은 추가 매수할 수 없습니다.'
+        }
+        isOpen={activeTradeModal === 'buy' && Boolean(selectedVideoId) && Boolean(selectedVideoMarketEntry)}
+        isSubmitting={buyGamePositionMutation.isPending}
+        maxQuantity={maxBuyQuantity}
+        mode="buy"
+        onChangeQuantity={(quantity) =>
+          setBuyQuantity(maxBuyQuantity > 0 ? Math.min(Math.max(1, quantity), maxBuyQuantity) : Math.max(1, quantity))
+        }
+        onClose={() => setActiveTradeModal(null)}
+        onConfirm={() => void handleBuyCurrentVideo()}
+        quantity={normalizedBuyQuantity}
+        quantityLabel={`수량 ${normalizedBuyQuantity}개`}
+        thumbnailUrl={selectedVideoTradeThumbnailUrl}
+        title={selectedGameActionTitle}
+        totalPointsLabel={`총 매수 ${formatPoints(totalSelectedVideoBuyPoints ?? (selectedVideoUnitPricePoints ?? 0))}`}
+        unitPointsLabel={formatPoints(selectedVideoUnitPricePoints ?? 0)}
+      />
+      <GameTradeModal
+        confirmLabel={`${normalizedSellQuantity}개 매도`}
+        currentRankLabel={formatRank(selectedVideoCurrentChartRank, { chartOut: selectedVideoIsChartOut })}
+        helperText={sellModalHelperText}
+        isOpen={activeTradeModal === 'sell' && Boolean(selectedVideoId) && selectedVideoOpenPositionCount > 0}
+        isSubmitting={sellGamePositionsMutation.isPending}
+        maxQuantity={maxSellQuantity}
+        mode="sell"
+        onChangeQuantity={(quantity) =>
+          setSellQuantity(maxSellQuantity > 0 ? Math.min(Math.max(1, quantity), maxSellQuantity) : Math.max(1, quantity))
+        }
+        onClose={() => setActiveTradeModal(null)}
+        onConfirm={() => void handleSellCurrentVideo()}
+        quantity={normalizedSellQuantity}
+        quantityLabel={`수량 ${normalizedSellQuantity}개`}
+        thumbnailUrl={selectedVideoTradeThumbnailUrl}
+        title={selectedGameActionTitle}
+        totalPointsLabel={`예상 정산 ${formatPoints(selectedVideoSellSummary.settledPoints)}`}
+        unitPointsLabel={formatPoints(selectedVideoUnitPricePoints ?? selectedVideoSellSummary.settledPoints ?? 0)}
       />
       {isBuyableVideoSearchLoading ? (
         <div className="app-shell__fullscreen-loading" role="status" aria-live="polite" aria-modal="true">

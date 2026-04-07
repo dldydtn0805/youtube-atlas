@@ -102,6 +102,12 @@ export interface CreateGamePositionInput {
   categoryId: string;
   videoId: string;
   stakePoints: number;
+  quantity: number;
+}
+
+export interface SellGamePositionsInput {
+  videoId: string;
+  quantity: number;
 }
 
 export interface SellGamePositionResponse {

@@ -8,8 +8,9 @@ import {
   fetchGamePositionRankHistory,
   fetchMyGamePositions,
   sellGamePosition,
+  sellGamePositions,
 } from './api';
-import type { CreateGamePositionInput } from './types';
+import type { CreateGamePositionInput, SellGamePositionsInput } from './types';
 
 export const gameQueryKeys = {
   currentSeason: (accessToken: string | null) => ['game', 'currentSeason', accessToken] as const,
@@ -122,6 +123,29 @@ export function useSellGamePosition(accessToken: string | null) {
       }
 
       return sellGamePosition(accessToken, positionId);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: gameQueryKeys.currentSeason(accessToken) }),
+        queryClient.invalidateQueries({ queryKey: gameQueryKeys.leaderboard(accessToken) }),
+        queryClient.invalidateQueries({ queryKey: gameQueryKeys.market(accessToken) }),
+        queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, '') }),
+        queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, 'OPEN') }),
+      ]);
+    },
+  });
+}
+
+export function useSellGamePositions(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: SellGamePositionsInput) => {
+      if (!accessToken) {
+        throw new Error('로그인이 필요합니다.');
+      }
+
+      return sellGamePositions(accessToken, input);
     },
     onSuccess: async () => {
       await Promise.all([
