@@ -551,6 +551,7 @@ function HomePage() {
     selectedVideoMarketEntry,
     selectedVideoOpenPositionCount,
     selectedVideoOpenPositionSummary,
+    selectedVideoPriceLabel,
     selectedVideoRankLabel,
     selectedVideoRankTrendIndicator,
     selectedVideoSellSummary,
@@ -1310,6 +1311,7 @@ function HomePage() {
           selectedCountryName={selectedCountryName}
           selectedVideoChannelTitle={resolvedSelectedVideo?.snippet.channelTitle}
           selectedVideoId={selectedVideoId}
+          selectedVideoPriceLabel={selectedVideoPriceLabel}
           selectedVideoRankLabel={selectedVideoRankLabel}
           selectedVideoRankTrendLabel={selectedVideoRankTrendIndicator?.label}
           selectedVideoRankTrendTone={selectedVideoRankTrendIndicator?.tone}

@@ -543,8 +543,9 @@
 .app-shell__stage-stats {
   display: inline-flex;
   flex: 0 0 auto;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 10px;
+  justify-content: flex-end;
 }
 
 .app-shell__stage-title {

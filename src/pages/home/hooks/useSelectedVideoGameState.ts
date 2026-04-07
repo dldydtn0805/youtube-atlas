@@ -76,6 +76,7 @@ interface UseSelectedVideoGameStateResult {
   selectedVideoOpenPosition?: GamePosition;
   selectedVideoOpenPositionCount: number;
   selectedVideoOpenPositionSummary: GamePositionSummary;
+  selectedVideoPriceLabel?: string;
   selectedVideoRankLabel?: string;
   selectedVideoRankTrendIndicator: VideoTrendBadge | null;
   selectedVideoSellSummary: GameSellSummary;
@@ -231,6 +232,10 @@ export default function useSelectedVideoGameState({
       chartOut: selectedVideoIsChartOut,
     },
   );
+  const selectedVideoPriceLabel =
+    typeof selectedVideoUnitPricePoints === 'number'
+      ? `${selectedVideoUnitPricePoints.toLocaleString('ko-KR')} P`
+      : undefined;
   const selectedVideoStatLabel = formatVideoViewCount(resolvedSelectedVideo?.statistics?.viewCount);
   const selectedChannelId = resolvedSelectedVideo?.snippet.channelId?.trim();
   const gameSeasonRegionMismatch =
@@ -410,6 +415,7 @@ export default function useSelectedVideoGameState({
     selectedVideoOpenPosition,
     selectedVideoOpenPositionCount,
     selectedVideoOpenPositionSummary,
+    selectedVideoPriceLabel,
     selectedVideoRankLabel,
     selectedVideoRankTrendIndicator,
     selectedVideoSellSummary,

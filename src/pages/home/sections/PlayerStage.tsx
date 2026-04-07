@@ -35,6 +35,7 @@ interface PlayerStageProps {
   selectedCountryName: string;
   selectedVideoChannelTitle?: string;
   selectedVideoId?: string;
+  selectedVideoPriceLabel?: string;
   selectedVideoRankLabel?: string;
   selectedVideoRankTrendLabel?: string;
   selectedVideoRankTrendTone?: 'up' | 'down' | 'steady' | 'new';
@@ -77,6 +78,7 @@ function PlayerStage({
   selectedCountryName,
   selectedVideoChannelTitle,
   selectedVideoId,
+  selectedVideoPriceLabel,
   selectedVideoRankLabel,
   selectedVideoRankTrendLabel,
   selectedVideoRankTrendTone,
@@ -203,8 +205,14 @@ function PlayerStage({
                       )}
                     </span>
                   </button>
-                  {selectedVideoRankLabel || selectedVideoStatLabel ? (
+                  {selectedVideoRankLabel || selectedVideoStatLabel || selectedVideoPriceLabel ? (
                     <div className="app-shell__stage-stats">
+                      {selectedVideoPriceLabel ? (
+                        <span className="app-shell__stage-stat">{selectedVideoPriceLabel}</span>
+                      ) : null}
+                      {selectedVideoStatLabel ? (
+                        <span className="app-shell__stage-stat">{selectedVideoStatLabel}</span>
+                      ) : null}
                       {selectedVideoRankLabel ? (
                         <span className="app-shell__stage-stat">
                           <span>{selectedVideoRankLabel}</span>
@@ -217,9 +225,6 @@ function PlayerStage({
                             </span>
                           ) : null}
                         </span>
-                      ) : null}
-                      {selectedVideoStatLabel ? (
-                        <span className="app-shell__stage-stat">{selectedVideoStatLabel}</span>
                       ) : null}
                     </div>
                   ) : null}
