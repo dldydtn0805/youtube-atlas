@@ -671,6 +671,7 @@ function HomePage() {
     [selectedVideoOpenPositions],
   );
   const selectedVideoUnitPricePoints = selectedVideoMarketEntry?.currentPricePoints ?? null;
+  const selectedVideoAlreadyOwned = selectedVideoOpenPositionCount > 0;
   const remainingOpenPositionSlots = currentGameSeason
     ? Math.max(0, currentGameSeason.maxOpenPositions - openGamePositions.length)
     : 0;
@@ -678,10 +679,12 @@ function HomePage() {
     currentGameSeason && selectedVideoUnitPricePoints
       ? Math.max(
           0,
-          Math.min(
-            remainingOpenPositionSlots,
-            Math.floor(currentGameSeason.wallet.balancePoints / selectedVideoUnitPricePoints),
-          ),
+          selectedVideoAlreadyOwned
+            ? Math.floor(currentGameSeason.wallet.balancePoints / selectedVideoUnitPricePoints)
+            : Math.min(
+                remainingOpenPositionSlots,
+                Math.floor(currentGameSeason.wallet.balancePoints / selectedVideoUnitPricePoints),
+              ),
         )
       : 0;
   const normalizedBuyQuantity = Math.max(1, Math.floor(buyQuantity));
@@ -1478,6 +1481,13 @@ function HomePage() {
     selectedVideoMarketEntry,
     normalizedBuyQuantity,
   );
+  const buyModalHelperText =
+    maxBuyQuantity > 0
+      ? selectedVideoAlreadyOwned
+        ? buyModalRemainingPointsText ?? '이 영상은 보유 포인트가 허용하는 만큼 계속 추가 매수할 수 있습니다.'
+        : buyModalRemainingPointsText ??
+          `새 영상은 최대 ${remainingOpenPositionSlots}종목 한도 안에서 매수할 수 있습니다.`
+      : buyModalShortfallPointsText ?? selectedVideoMarketEntry?.buyBlockedReason ?? '지금은 추가 매수할 수 없습니다.';
   const sellModalHelperText =
     maxSellQuantity > 0
       ? `지금 매도 가능한 포지션은 ${maxSellQuantity}개이며 오래된 순서부터 정리됩니다.`
@@ -1491,7 +1501,7 @@ function HomePage() {
       ? '로그인하면 지금 보는 영상도 바로 게임 포지션으로 담을 수 있습니다.'
       : selectedVideoOpenPositionCount > 0
         ? selectedVideoMarketEntry?.canBuy
-          ? `현재 이 영상을 ${selectedVideoOpenPositionCount}개 포지션으로 보유 중입니다. 추가 매수도 가능합니다.`
+          ? `현재 이 영상을 ${selectedVideoOpenPositionCount}개 포지션으로 보유 중이며, 보유 포인트가 허용하는 만큼 계속 추가 매수할 수 있습니다.`
           : `현재 이 영상을 ${selectedVideoOpenPositionCount}개 포지션으로 보유 중입니다.`
         : selectedVideoMarketEntry
           ? selectedVideoMarketEntry.canBuy
@@ -1575,6 +1585,41 @@ function HomePage() {
         : sellModalHelperText;
   const gameActionContent = selectedVideoId ? (
     <>
+      <button
+        aria-label="선택한 영상 차트"
+        className="app-shell__stage-action-button app-shell__stage-action-button--game"
+        data-variant="chart"
+        disabled={!canShowGameActions}
+        onClick={() => {
+          setSelectedRankHistoryPosition(null);
+          setSelectedVideoRankHistoryVideoId(selectedVideoId);
+        }}
+        title={
+          !canShowGameActions
+            ? '대한민국 전체 카테고리에서만 차트를 볼 수 있습니다.'
+            : '선택한 영상의 랭킹 차트를 엽니다.'
+        }
+        type="button"
+      >
+        <span className="app-shell__stage-action-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M5.75 17.25 10 12.5l2.75 2.75 5.5-6"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.8"
+            />
+            <path
+              d="M15.5 9.25H18.5v3"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.8"
+            />
+          </svg>
+        </span>
+      </button>
       <button
         aria-label="선택한 영상 매수"
         className="app-shell__stage-action-button app-shell__stage-action-button--game"
@@ -2075,7 +2120,7 @@ function HomePage() {
               <span className="app-shell__game-panel-metric">
                 <span className="app-shell__game-panel-metric-label">보유</span>
                 <span className="app-shell__game-panel-metric-value">
-                  {`${openGamePositions.length}/${currentGameSeason?.maxOpenPositions ?? '-'}`}
+                  {`${new Set(openGamePositions.map((position) => position.videoId)).size}/${currentGameSeason?.maxOpenPositions ?? '-'}`}
                 </span>
               </span>
               <span className="app-shell__game-panel-metric">
@@ -2508,19 +2553,19 @@ function HomePage() {
       <GameTradeModal
         confirmLabel={`${normalizedBuyQuantity}개 매수`}
         currentRankLabel={formatRank(selectedVideoCurrentChartRank, { chartOut: selectedVideoIsChartOut })}
-        helperText={
-          maxBuyQuantity > 0
-            ? buyModalRemainingPointsText ??
-              `현재 가격으로 최대 ${maxBuyQuantity}개까지 한 번에 매수할 수 있습니다.`
-            : buyModalShortfallPointsText ?? selectedVideoMarketEntry?.buyBlockedReason ?? '지금은 추가 매수할 수 없습니다.'
-        }
+        helperText={buyModalHelperText}
         isOpen={activeTradeModal === 'buy' && Boolean(selectedVideoId) && Boolean(selectedVideoMarketEntry)}
         isSubmitting={buyGamePositionMutation.isPending}
         maxQuantity={maxBuyQuantity}
         mode="buy"
-        onChangeQuantity={(quantity) =>
-          setBuyQuantity(maxBuyQuantity > 0 ? Math.min(Math.max(1, quantity), maxBuyQuantity) : Math.max(1, quantity))
-        }
+        onChangeQuantity={(quantity) => {
+          if (maxBuyQuantity > 0 && quantity <= 0) {
+            setBuyQuantity(maxBuyQuantity);
+            return;
+          }
+
+          setBuyQuantity(maxBuyQuantity > 0 ? Math.min(Math.max(1, quantity), maxBuyQuantity) : Math.max(1, quantity));
+        }}
         onClose={() => setActiveTradeModal(null)}
         onConfirm={() => void handleBuyCurrentVideo()}
         quantity={normalizedBuyQuantity}
@@ -2538,9 +2583,14 @@ function HomePage() {
         isSubmitting={sellGamePositionsMutation.isPending}
         maxQuantity={maxSellQuantity}
         mode="sell"
-        onChangeQuantity={(quantity) =>
-          setSellQuantity(maxSellQuantity > 0 ? Math.min(Math.max(1, quantity), maxSellQuantity) : Math.max(1, quantity))
-        }
+        onChangeQuantity={(quantity) => {
+          if (maxSellQuantity > 0 && quantity <= 0) {
+            setSellQuantity(maxSellQuantity);
+            return;
+          }
+
+          setSellQuantity(maxSellQuantity > 0 ? Math.min(Math.max(1, quantity), maxSellQuantity) : Math.max(1, quantity));
+        }}
         onClose={() => setActiveTradeModal(null)}
         onConfirm={() => void handleSellCurrentVideo()}
         quantity={normalizedSellQuantity}

@@ -95,8 +95,8 @@ export default function GameTradeModal({
                 <div className="app-shell__game-panel-quantity">
                   <button
                     className="app-shell__game-panel-quantity-button"
-                    disabled={isSubmitting || normalizedQuantity <= 1}
-                    onClick={() => onChangeQuantity(normalizedQuantity - 1)}
+                    disabled={isSubmitting || (mode === 'sell' ? normalizedQuantity <= 1 : maxQuantity <= 0)}
+                    onClick={() => onChangeQuantity(mode === 'buy' ? normalizedQuantity - 1 : normalizedQuantity - 1)}
                     type="button"
                   >
                     -
@@ -106,10 +106,10 @@ export default function GameTradeModal({
                     disabled={isSubmitting || maxQuantity <= 0}
                     inputMode="numeric"
                     max={maxQuantity > 0 ? maxQuantity : undefined}
-                    min={1}
+                    min={mode === 'buy' ? 0 : 1}
                     onChange={(event) => {
                       const nextValue = Number.parseInt(event.target.value, 10);
-                      onChangeQuantity(Number.isFinite(nextValue) ? nextValue : 1);
+                      onChangeQuantity(Number.isFinite(nextValue) ? nextValue : mode === 'buy' ? 0 : 1);
                     }}
                     type="number"
                     value={normalizedQuantity}
