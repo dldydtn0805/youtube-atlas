@@ -36,6 +36,8 @@ interface PlayerStageProps {
   selectedVideoChannelTitle?: string;
   selectedVideoId?: string;
   selectedVideoRankLabel?: string;
+  selectedVideoRankTrendLabel?: string;
+  selectedVideoRankTrendTone?: 'up' | 'down' | 'steady' | 'new';
   selectedVideoStatLabel?: string;
   selectedVideoTitle?: string;
   stageActionContent?: ReactNode;
@@ -76,6 +78,8 @@ function PlayerStage({
   selectedVideoChannelTitle,
   selectedVideoId,
   selectedVideoRankLabel,
+  selectedVideoRankTrendLabel,
+  selectedVideoRankTrendTone,
   selectedVideoStatLabel,
   selectedVideoTitle,
   stageActionContent,
@@ -202,7 +206,17 @@ function PlayerStage({
                   {selectedVideoRankLabel || selectedVideoStatLabel ? (
                     <div className="app-shell__stage-stats">
                       {selectedVideoRankLabel ? (
-                        <span className="app-shell__stage-stat">{selectedVideoRankLabel}</span>
+                        <span className="app-shell__stage-stat">
+                          <span>{selectedVideoRankLabel}</span>
+                          {selectedVideoRankTrendLabel ? (
+                            <span
+                              className="app-shell__stage-rank-trend"
+                              data-tone={selectedVideoRankTrendTone}
+                            >
+                              {selectedVideoRankTrendLabel}
+                            </span>
+                          ) : null}
+                        </span>
                       ) : null}
                       {selectedVideoStatLabel ? (
                         <span className="app-shell__stage-stat">{selectedVideoStatLabel}</span>

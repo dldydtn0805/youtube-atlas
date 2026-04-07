@@ -90,6 +90,8 @@ const seasonDateTimeFormatter = new Intl.DateTimeFormat('ko-KR', {
   month: 'short',
 });
 
+type RankTrendTone = 'up' | 'down' | 'steady' | 'new';
+
 function getInitialCollapsedHomeSectionIds() {
   if (typeof window === 'undefined') {
     return [] as string[];
@@ -133,29 +135,29 @@ function formatPlaybackSaveTimestamp(positionSeconds: number) {
   return [minutes, seconds].map((value) => String(value).padStart(2, '0')).join(':');
 }
 
-function formatRankTrendInlineLabel(options?: {
+function resolveRankTrendIndicator(options?: {
   isNew?: boolean | null;
   previousRank?: number | null;
   rankChange?: number | null;
-}) {
+}): { label: string; tone: RankTrendTone } | null {
   if (!options) {
     return null;
   }
 
   if (options.isNew) {
-    return 'NEW';
+    return { label: 'NEW', tone: 'new' };
   }
 
   if (typeof options.rankChange === 'number' && options.rankChange > 0) {
-    return `▲ ${options.rankChange}`;
+    return { label: `▲${options.rankChange}`, tone: 'up' };
   }
 
   if (typeof options.rankChange === 'number' && options.rankChange < 0) {
-    return `▼ ${Math.abs(options.rankChange)}`;
+    return { label: `▼${Math.abs(options.rankChange)}`, tone: 'down' };
   }
 
   if (options.rankChange === 0 && options.previousRank !== null) {
-    return '• 유지';
+    return { label: '유지', tone: 'steady' };
   }
 
   return null;
@@ -766,15 +768,11 @@ function HomePage() {
       chartOut: selectedVideoIsChartOut,
     },
   );
-  const selectedVideoRankTrendLabel = formatRankTrendInlineLabel({
+  const selectedVideoRankTrendIndicator = resolveRankTrendIndicator({
     isNew: selectedVideoMarketEntry?.isNew ?? selectedVideoTrendSignal?.isNew ?? false,
     previousRank: selectedVideoMarketEntry?.previousRank ?? selectedVideoTrendSignal?.previousRank ?? null,
     rankChange: selectedVideoMarketEntry?.rankChange ?? selectedVideoTrendSignal?.rankChange ?? null,
   });
-  const selectedVideoStageRankLabel =
-    selectedVideoRankLabel && selectedVideoRankTrendLabel
-      ? `${selectedVideoRankLabel} · ${selectedVideoRankTrendLabel}`
-      : selectedVideoRankLabel;
   const selectedVideoStatLabel = formatVideoViewCount(resolvedSelectedVideo?.statistics?.viewCount);
   const selectedChannelId = resolvedSelectedVideo?.snippet.channelId?.trim();
   const gameSeasonRegionMismatch =
@@ -2629,7 +2627,9 @@ function HomePage() {
           selectedCountryName={selectedCountryName}
           selectedVideoChannelTitle={resolvedSelectedVideo?.snippet.channelTitle}
           selectedVideoId={selectedVideoId}
-          selectedVideoRankLabel={selectedVideoStageRankLabel}
+          selectedVideoRankLabel={selectedVideoRankLabel}
+          selectedVideoRankTrendLabel={selectedVideoRankTrendIndicator?.label}
+          selectedVideoRankTrendTone={selectedVideoRankTrendIndicator?.tone}
           selectedVideoStatLabel={selectedVideoStatLabel}
           selectedVideoTitle={resolvedSelectedVideo?.snippet.title}
           stageActionContent={gameActionContent}
