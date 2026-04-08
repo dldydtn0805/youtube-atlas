@@ -185,14 +185,15 @@ function HomePage() {
     data: currentGameSeason,
     error: currentGameSeasonError,
     isLoading: isCurrentGameSeasonLoading,
-  } = useCurrentGameSeason(accessToken, shouldLoadGame);
+  } = useCurrentGameSeason(accessToken, selectedRegionCode, shouldLoadGame);
   const {
     data: gameMarket = [],
     error: gameMarketError,
     isLoading: isGameMarketLoading,
-  } = useGameMarket(accessToken, shouldLoadGame);
+  } = useGameMarket(accessToken, selectedRegionCode, shouldLoadGame);
   const { data: gameDividendOverview, error: gameDividendOverviewError } = useGameDividendOverview(
     accessToken,
+    selectedRegionCode,
     shouldLoadGame,
   );
   const gameMarketSignalsByVideoId = useMemo(
@@ -226,11 +227,11 @@ function HomePage() {
     error: gameLeaderboardError,
     isError: isGameLeaderboardError,
     isLoading: isGameLeaderboardLoading,
-  } = useGameLeaderboard(accessToken, shouldLoadGame);
+  } = useGameLeaderboard(accessToken, selectedRegionCode, shouldLoadGame);
   const {
     data: openGamePositions = [],
     error: openGamePositionsError,
-  } = useMyGamePositions(accessToken, 'OPEN', shouldLoadGame);
+  } = useMyGamePositions(accessToken, selectedRegionCode, 'OPEN', shouldLoadGame);
   const {
     data: selectedLeaderboardPositions = [],
     error: selectedLeaderboardPositionsError,
@@ -239,13 +240,14 @@ function HomePage() {
   } = useGameLeaderboardPositions(
     accessToken,
     selectedLeaderboardUserId,
+    selectedRegionCode,
     shouldLoadGame && activeGameTab === 'leaderboard' && selectedLeaderboardUserId !== null,
   );
   const {
     data: gameHistoryPositions = [],
     error: gameHistoryPositionsError,
     isLoading: isGameHistoryLoading,
-  } = useMyGamePositions(accessToken, '', shouldLoadGame && activeGameTab === 'history', 30);
+  } = useMyGamePositions(accessToken, selectedRegionCode, '', shouldLoadGame && activeGameTab === 'history', 30);
   const {
     data: selectedPositionRankHistory,
     error: selectedPositionRankHistoryError,
@@ -822,6 +824,7 @@ function HomePage() {
       tradeRequestLockRef.current = 'sell';
       setActiveTradeRequest('sell');
       const soldPositions = await sellGamePositionsMutation.mutateAsync({
+        regionCode: selectedRegionCode,
         quantity: clampedSellQuantity,
         videoId: selectedVideoId,
       });
@@ -876,6 +879,7 @@ function HomePage() {
     logout,
     maxSellQuantity,
     selectedGameActionTitle,
+    selectedRegionCode,
     selectedVideoId,
     sellGamePositionsMutation,
     sellQuantity,

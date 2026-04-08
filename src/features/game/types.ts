@@ -138,6 +138,7 @@ export interface CreateGamePositionInput {
 }
 
 export interface SellGamePositionsInput {
+  regionCode: string;
   videoId: string;
   quantity: number;
 }

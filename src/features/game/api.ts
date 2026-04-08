@@ -15,38 +15,48 @@ function createAuthorizationHeader(accessToken: string) {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
-export async function fetchCurrentGameSeason(accessToken: string) {
-  return fetchApi<GameCurrentSeason>('/api/game/seasons/current', {
+export async function fetchCurrentGameSeason(accessToken: string, regionCode: string) {
+  const params = new URLSearchParams({ regionCode });
+
+  return fetchApi<GameCurrentSeason>(`/api/game/seasons/current?${params.toString()}`, {
     headers: createAuthorizationHeader(accessToken),
   });
 }
 
-export async function fetchGameMarket(accessToken: string) {
-  return fetchApi<GameMarketVideo[]>('/api/game/market', {
+export async function fetchGameMarket(accessToken: string, regionCode: string) {
+  const params = new URLSearchParams({ regionCode });
+
+  return fetchApi<GameMarketVideo[]>(`/api/game/market?${params.toString()}`, {
     headers: createAuthorizationHeader(accessToken),
   });
 }
 
-export async function fetchGameLeaderboard(accessToken: string) {
-  return fetchApi<GameLeaderboardEntry[]>('/api/game/leaderboard', {
+export async function fetchGameLeaderboard(accessToken: string, regionCode: string) {
+  const params = new URLSearchParams({ regionCode });
+
+  return fetchApi<GameLeaderboardEntry[]>(`/api/game/leaderboard?${params.toString()}`, {
     headers: createAuthorizationHeader(accessToken),
   });
 }
 
-export async function fetchGameDividendOverview(accessToken: string) {
-  return fetchApi<GameDividendOverview>('/api/game/dividends/overview', {
+export async function fetchGameDividendOverview(accessToken: string, regionCode: string) {
+  const params = new URLSearchParams({ regionCode });
+
+  return fetchApi<GameDividendOverview>(`/api/game/dividends/overview?${params.toString()}`, {
     headers: createAuthorizationHeader(accessToken),
   });
 }
 
-export async function fetchGameLeaderboardPositions(accessToken: string, userId: number) {
-  return fetchApi<GamePosition[]>(`/api/game/leaderboard/${userId}/positions`, {
+export async function fetchGameLeaderboardPositions(accessToken: string, userId: number, regionCode: string) {
+  const params = new URLSearchParams({ regionCode });
+
+  return fetchApi<GamePosition[]>(`/api/game/leaderboard/${userId}/positions?${params.toString()}`, {
     headers: createAuthorizationHeader(accessToken),
   });
 }
 
-export async function fetchMyGamePositions(accessToken: string, status = 'OPEN', limit?: number) {
-  const params = new URLSearchParams();
+export async function fetchMyGamePositions(accessToken: string, regionCode: string, status = 'OPEN', limit?: number) {
+  const params = new URLSearchParams({ regionCode });
 
   if (status.trim()) {
     params.set('status', status);

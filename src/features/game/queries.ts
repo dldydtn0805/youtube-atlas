@@ -14,52 +14,56 @@ import {
 import type { CreateGamePositionInput, SellGamePositionsInput } from './types';
 
 export const gameQueryKeys = {
-  currentSeason: (accessToken: string | null) => ['game', 'currentSeason', accessToken] as const,
-  dividendOverview: (accessToken: string | null) => ['game', 'dividendOverview', accessToken] as const,
-  leaderboard: (accessToken: string | null) => ['game', 'leaderboard', accessToken] as const,
-  leaderboardPositions: (accessToken: string | null, userId: number | null) =>
-    ['game', 'leaderboardPositions', accessToken, userId] as const,
-  market: (accessToken: string | null) => ['game', 'market', accessToken] as const,
-  positions: (accessToken: string | null, status = 'OPEN') =>
-    ['game', 'positions', accessToken, status] as const,
+  currentSeason: (accessToken: string | null, regionCode: string | null) =>
+    ['game', 'currentSeason', accessToken, regionCode] as const,
+  dividendOverview: (accessToken: string | null, regionCode: string | null) =>
+    ['game', 'dividendOverview', accessToken, regionCode] as const,
+  leaderboard: (accessToken: string | null, regionCode: string | null) =>
+    ['game', 'leaderboard', accessToken, regionCode] as const,
+  leaderboardPositions: (accessToken: string | null, userId: number | null, regionCode: string | null) =>
+    ['game', 'leaderboardPositions', accessToken, userId, regionCode] as const,
+  market: (accessToken: string | null, regionCode: string | null) =>
+    ['game', 'market', accessToken, regionCode] as const,
+  positions: (accessToken: string | null, regionCode: string | null, status = 'OPEN') =>
+    ['game', 'positions', accessToken, regionCode, status] as const,
   positionRankHistory: (accessToken: string | null, positionId: number | null) =>
     ['game', 'positionRankHistory', accessToken, positionId] as const,
 };
 
-export function useCurrentGameSeason(accessToken: string | null, enabled = true) {
+export function useCurrentGameSeason(accessToken: string | null, regionCode: string, enabled = true) {
   return useQuery({
-    enabled: enabled && Boolean(accessToken),
-    queryKey: gameQueryKeys.currentSeason(accessToken),
-    queryFn: () => fetchCurrentGameSeason(accessToken as string),
+    enabled: enabled && Boolean(accessToken) && Boolean(regionCode),
+    queryKey: gameQueryKeys.currentSeason(accessToken, regionCode),
+    queryFn: () => fetchCurrentGameSeason(accessToken as string, regionCode),
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
   });
 }
 
-export function useGameMarket(accessToken: string | null, enabled = true) {
+export function useGameMarket(accessToken: string | null, regionCode: string, enabled = true) {
   return useQuery({
-    enabled: enabled && Boolean(accessToken),
-    queryKey: gameQueryKeys.market(accessToken),
-    queryFn: () => fetchGameMarket(accessToken as string),
+    enabled: enabled && Boolean(accessToken) && Boolean(regionCode),
+    queryKey: gameQueryKeys.market(accessToken, regionCode),
+    queryFn: () => fetchGameMarket(accessToken as string, regionCode),
     staleTime: 1000 * 30,
   });
 }
 
-export function useGameLeaderboard(accessToken: string | null, enabled = true) {
+export function useGameLeaderboard(accessToken: string | null, regionCode: string, enabled = true) {
   return useQuery({
-    enabled: enabled && Boolean(accessToken),
-    queryKey: gameQueryKeys.leaderboard(accessToken),
-    queryFn: () => fetchGameLeaderboard(accessToken as string),
+    enabled: enabled && Boolean(accessToken) && Boolean(regionCode),
+    queryKey: gameQueryKeys.leaderboard(accessToken, regionCode),
+    queryFn: () => fetchGameLeaderboard(accessToken as string, regionCode),
     staleTime: 1000 * 15,
   });
 }
 
-export function useGameDividendOverview(accessToken: string | null, enabled = true) {
+export function useGameDividendOverview(accessToken: string | null, regionCode: string, enabled = true) {
   return useQuery({
-    enabled: enabled && Boolean(accessToken),
-    queryKey: gameQueryKeys.dividendOverview(accessToken),
-    queryFn: () => fetchGameDividendOverview(accessToken as string),
+    enabled: enabled && Boolean(accessToken) && Boolean(regionCode),
+    queryKey: gameQueryKeys.dividendOverview(accessToken, regionCode),
+    queryFn: () => fetchGameDividendOverview(accessToken as string, regionCode),
     staleTime: 1000 * 15,
   });
 }
@@ -67,26 +71,28 @@ export function useGameDividendOverview(accessToken: string | null, enabled = tr
 export function useGameLeaderboardPositions(
   accessToken: string | null,
   userId: number | null,
+  regionCode: string,
   enabled = true,
 ) {
   return useQuery({
-    enabled: enabled && Boolean(accessToken) && typeof userId === 'number',
-    queryKey: gameQueryKeys.leaderboardPositions(accessToken, userId),
-    queryFn: () => fetchGameLeaderboardPositions(accessToken as string, userId as number),
+    enabled: enabled && Boolean(accessToken) && typeof userId === 'number' && Boolean(regionCode),
+    queryKey: gameQueryKeys.leaderboardPositions(accessToken, userId, regionCode),
+    queryFn: () => fetchGameLeaderboardPositions(accessToken as string, userId as number, regionCode),
     staleTime: 1000 * 15,
   });
 }
 
 export function useMyGamePositions(
   accessToken: string | null,
+  regionCode: string,
   status = 'OPEN',
   enabled = true,
   limit?: number,
 ) {
   return useQuery({
-    enabled: enabled && Boolean(accessToken),
-    queryKey: [...gameQueryKeys.positions(accessToken, status), limit ?? null],
-    queryFn: () => fetchMyGamePositions(accessToken as string, status, limit),
+    enabled: enabled && Boolean(accessToken) && Boolean(regionCode),
+    queryKey: [...gameQueryKeys.positions(accessToken, regionCode, status), limit ?? null],
+    queryFn: () => fetchMyGamePositions(accessToken as string, regionCode, status, limit),
     staleTime: 1000 * 15,
   });
 }
@@ -117,12 +123,11 @@ export function useBuyGamePosition(accessToken: string | null) {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.currentSeason(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.dividendOverview(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.leaderboard(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.market(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, '') }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, 'OPEN') }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'currentSeason', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'dividendOverview', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'leaderboard', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'market', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'positions', accessToken] }),
       ]);
     },
   });
@@ -141,12 +146,11 @@ export function useSellGamePosition(accessToken: string | null) {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.currentSeason(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.dividendOverview(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.leaderboard(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.market(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, '') }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, 'OPEN') }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'currentSeason', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'dividendOverview', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'leaderboard', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'market', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'positions', accessToken] }),
       ]);
     },
   });
@@ -165,12 +169,11 @@ export function useSellGamePositions(accessToken: string | null) {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.currentSeason(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.dividendOverview(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.leaderboard(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.market(accessToken) }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, '') }),
-        queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, 'OPEN') }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'currentSeason', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'dividendOverview', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'leaderboard', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'market', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'positions', accessToken] }),
       ]);
     },
   });
