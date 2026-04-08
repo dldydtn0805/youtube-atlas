@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   buyGamePosition,
   fetchCurrentGameSeason,
+  fetchGameDividendOverview,
   fetchGameLeaderboard,
   fetchGameLeaderboardPositions,
   fetchGameMarket,
@@ -14,6 +15,7 @@ import type { CreateGamePositionInput, SellGamePositionsInput } from './types';
 
 export const gameQueryKeys = {
   currentSeason: (accessToken: string | null) => ['game', 'currentSeason', accessToken] as const,
+  dividendOverview: (accessToken: string | null) => ['game', 'dividendOverview', accessToken] as const,
   leaderboard: (accessToken: string | null) => ['game', 'leaderboard', accessToken] as const,
   leaderboardPositions: (accessToken: string | null, userId: number | null) =>
     ['game', 'leaderboardPositions', accessToken, userId] as const,
@@ -49,6 +51,15 @@ export function useGameLeaderboard(accessToken: string | null, enabled = true) {
     enabled: enabled && Boolean(accessToken),
     queryKey: gameQueryKeys.leaderboard(accessToken),
     queryFn: () => fetchGameLeaderboard(accessToken as string),
+    staleTime: 1000 * 15,
+  });
+}
+
+export function useGameDividendOverview(accessToken: string | null, enabled = true) {
+  return useQuery({
+    enabled: enabled && Boolean(accessToken),
+    queryKey: gameQueryKeys.dividendOverview(accessToken),
+    queryFn: () => fetchGameDividendOverview(accessToken as string),
     staleTime: 1000 * 15,
   });
 }
@@ -107,6 +118,7 @@ export function useBuyGamePosition(accessToken: string | null) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.currentSeason(accessToken) }),
+        queryClient.invalidateQueries({ queryKey: gameQueryKeys.dividendOverview(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.leaderboard(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.market(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, '') }),
@@ -130,6 +142,7 @@ export function useSellGamePosition(accessToken: string | null) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.currentSeason(accessToken) }),
+        queryClient.invalidateQueries({ queryKey: gameQueryKeys.dividendOverview(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.leaderboard(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.market(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, '') }),
@@ -153,6 +166,7 @@ export function useSellGamePositions(accessToken: string | null) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.currentSeason(accessToken) }),
+        queryClient.invalidateQueries({ queryKey: gameQueryKeys.dividendOverview(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.leaderboard(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.market(accessToken) }),
         queryClient.invalidateQueries({ queryKey: gameQueryKeys.positions(accessToken, '') }),

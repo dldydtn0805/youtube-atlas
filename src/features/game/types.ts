@@ -51,6 +51,40 @@ export interface GameLeaderboardEntry {
   me: boolean;
 }
 
+export interface GameDividendRank {
+  rank: number;
+  weight: number;
+  equalValuePoolSharePercent: number;
+}
+
+export interface GameDividendPosition {
+  positionId: number;
+  videoId: string;
+  title: string;
+  thumbnailUrl: string;
+  currentRank: number | null;
+  quantity: number;
+  currentValuePoints: number | null;
+  rankEligible: boolean;
+  holdEligible: boolean;
+  dividendWeight: number;
+  weightedValuePoints: number;
+  estimatedPoolSharePercent: number;
+  nextEligibleInSeconds: number | null;
+}
+
+export interface GameDividendOverview {
+  eligibleRankCutoff: number;
+  minimumHoldSeconds: number;
+  totalWeightedValuePoints: number;
+  myWeightedValuePoints: number;
+  myEstimatedPoolSharePercent: number;
+  myEligiblePositionCount: number;
+  myWarmingUpPositionCount: number;
+  ranks: GameDividendRank[];
+  positions: GameDividendPosition[];
+}
+
 export interface GamePosition {
   id: number;
   videoId: string;

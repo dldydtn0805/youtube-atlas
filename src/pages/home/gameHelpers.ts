@@ -5,6 +5,9 @@ const pointsFormatter = new Intl.NumberFormat('ko-KR');
 const quantityFormatter = new Intl.NumberFormat('ko-KR', {
   maximumFractionDigits: 2,
 });
+const percentFormatter = new Intl.NumberFormat('ko-KR', {
+  maximumFractionDigits: 2,
+});
 const seasonDateTimeFormatter = new Intl.DateTimeFormat('ko-KR', {
   day: 'numeric',
   hour: '2-digit',
@@ -112,6 +115,14 @@ export function formatHoldCountdown(remainingSeconds: number) {
 
 export function formatPoints(points: number) {
   return `${pointsFormatter.format(points)}P`;
+}
+
+export function formatPercent(value?: number | null) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return '집계 중';
+  }
+
+  return `${percentFormatter.format(value)}%`;
 }
 
 export function formatPointBalance(points: number) {

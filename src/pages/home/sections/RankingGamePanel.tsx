@@ -1,9 +1,15 @@
 import type { ReactNode } from 'react';
-import type { GameCurrentSeason, GameLeaderboardEntry, GamePosition } from '../../../features/game/types';
+import type {
+  GameCurrentSeason,
+  GameDividendOverview,
+  GameLeaderboardEntry,
+  GamePosition,
+} from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import { getPrimaryVideoTrendBadge } from '../../../features/trending/presentation';
 import {
   formatGameQuantity,
+  formatPercent,
   formatGameTimestamp,
   formatHoldCountdown,
   formatMaybePoints,
@@ -19,6 +25,7 @@ type GameTab = 'positions' | 'history' | 'leaderboard';
 
 interface RankingGamePanelShellProps {
   activeGameTab: GameTab;
+  dividendOverview?: ReactNode;
   helperText: string;
   isCollapsed: boolean;
   isHelperWarning: boolean;
@@ -93,6 +100,10 @@ interface RankingGameHistoryTabProps {
   positions: GamePosition[];
   resolvePlaybackQueueId: (videoId: string) => string | undefined;
   selectedVideoId?: string;
+}
+
+interface RankingGameDividendOverviewProps {
+  overview?: GameDividendOverview;
 }
 
 function LeaderboardPositionList({
@@ -287,6 +298,7 @@ function LeaderboardRow({
 
 export function RankingGamePanelShell({
   activeGameTab,
+  dividendOverview,
   helperText,
   isCollapsed,
   isHelperWarning,
@@ -370,6 +382,7 @@ export function RankingGamePanelShell({
             {helperText}
           </p>
           {statusMessage ? <p className="app-shell__game-panel-status">{statusMessage}</p> : null}
+          {dividendOverview}
           {selectedVideoActions}
           <div aria-label="게임 패널 탭" className="app-shell__game-tabs" role="tablist">
             <button
@@ -409,6 +422,85 @@ export function RankingGamePanelShell({
         </>
       ) : null}
     </div>
+  );
+}
+
+export function RankingGameDividendOverview({ overview }: RankingGameDividendOverviewProps) {
+  if (!overview) {
+    return null;
+  }
+
+  return (
+    <section className="app-shell__game-dividend" aria-label="배당 미리보기">
+      <div className="app-shell__game-dividend-header">
+        <div className="app-shell__game-dividend-copy">
+          <p className="app-shell__game-dividend-eyebrow">Dividend Preview</p>
+          <h4 className="app-shell__game-dividend-title">Top {overview.eligibleRankCutoff} 배당 구간</h4>
+          <p className="app-shell__game-dividend-helper">
+            현재 시점 기준 예상 배당 지분입니다. 최소 {formatHoldCountdown(overview.minimumHoldSeconds)} 보유한
+            포지션만 반영돼요.
+          </p>
+        </div>
+        <div className="app-shell__game-dividend-metrics" aria-label="배당 요약">
+          <span className="app-shell__game-dividend-metric">
+            <span className="app-shell__game-dividend-metric-label">내 현재 지분</span>
+            <strong className="app-shell__game-dividend-metric-value">
+              {formatPercent(overview.myEstimatedPoolSharePercent)}
+            </strong>
+          </span>
+          <span className="app-shell__game-dividend-metric">
+            <span className="app-shell__game-dividend-metric-label">배당 대상</span>
+            <strong className="app-shell__game-dividend-metric-value">{overview.myEligiblePositionCount}개</strong>
+          </span>
+          <span className="app-shell__game-dividend-metric">
+            <span className="app-shell__game-dividend-metric-label">대기 중</span>
+            <strong className="app-shell__game-dividend-metric-value">{overview.myWarmingUpPositionCount}개</strong>
+          </span>
+        </div>
+      </div>
+      <ol className="app-shell__game-dividend-ladder">
+        {overview.ranks.map((rank) => (
+          <li key={rank.rank} className="app-shell__game-dividend-rank">
+            <span className="app-shell__game-dividend-rank-label">{rank.rank}위</span>
+            <strong className="app-shell__game-dividend-rank-share">
+              {formatPercent(rank.equalValuePoolSharePercent)}
+            </strong>
+            <span className="app-shell__game-dividend-rank-weight">가중치 {rank.weight}</span>
+          </li>
+        ))}
+      </ol>
+      {overview.positions.length > 0 ? (
+        <ul className="app-shell__game-dividend-positions">
+          {overview.positions.map((position) => (
+            <li key={position.positionId} className="app-shell__game-dividend-position">
+              <img
+                alt=""
+                className="app-shell__game-dividend-position-thumb"
+                loading="lazy"
+                src={position.thumbnailUrl}
+              />
+              <div className="app-shell__game-dividend-position-copy">
+                <p className="app-shell__game-dividend-position-title">{position.title}</p>
+                <p className="app-shell__game-dividend-position-meta">
+                  현재 <span className="app-shell__game-rank-emphasis">{formatRank(position.currentRank)}</span> · 평가{' '}
+                  {formatMaybePoints(position.currentValuePoints)} · 수량 {formatGameQuantity(position.quantity)}
+                </p>
+                <p className="app-shell__game-dividend-position-meta">
+                  {position.holdEligible
+                    ? `현재 예상 지분 ${formatPercent(position.estimatedPoolSharePercent)}`
+                    : position.nextEligibleInSeconds !== null
+                      ? `${formatHoldCountdown(position.nextEligibleInSeconds)} 뒤 배당 반영`
+                      : '배당 대기 중'}
+                  {' · '}가중치 {position.dividendWeight}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="app-shell__game-empty">현재 Top {overview.eligibleRankCutoff} 안에 든 내 보유 포지션이 없습니다.</p>
+      )}
+    </section>
   );
 }
 

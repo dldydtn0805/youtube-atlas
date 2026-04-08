@@ -7,6 +7,7 @@ import GameRankHistoryModal from './sections/GameRankHistoryModal';
 import GameTradeModal from './sections/GameTradeModal';
 import PlayerStage from './sections/PlayerStage';
 import {
+  RankingGameDividendOverview,
   RankingGameHistoryTab,
   RankingGameLeaderboardTab,
   RankingGamePanelShell,
@@ -16,6 +17,8 @@ import {
 import {
   buildOpenGameHoldings,
   DEFAULT_GAME_QUANTITY,
+  formatHoldCountdown,
+  formatPercent,
   formatGameQuantity,
   formatPoints,
   formatRank,
@@ -58,6 +61,7 @@ import { useAuth } from '../../features/auth/useAuth';
 import {
   useBuyGamePosition,
   useCurrentGameSeason,
+  useGameDividendOverview,
   useGameLeaderboard,
   useGameLeaderboardPositions,
   useGameMarket,
@@ -191,6 +195,10 @@ function HomePage() {
     error: gameMarketError,
     isLoading: isGameMarketLoading,
   } = useGameMarket(accessToken, shouldLoadGame);
+  const { data: gameDividendOverview, error: gameDividendOverviewError } = useGameDividendOverview(
+    accessToken,
+    shouldLoadGame,
+  );
   const gameMarketSignalsByVideoId = useMemo(
     () =>
       Object.fromEntries(
@@ -452,6 +460,7 @@ function HomePage() {
   useLogoutOnUnauthorized(favoriteStreamerVideosError, logout);
   useLogoutOnUnauthorized(currentGameSeasonError, logout);
   useLogoutOnUnauthorized(gameLeaderboardError, logout);
+  useLogoutOnUnauthorized(gameDividendOverviewError, logout);
   useLogoutOnUnauthorized(gameMarketError, logout);
   useLogoutOnUnauthorized(openGamePositionsError, logout);
   useLogoutOnUnauthorized(gameHistoryPositionsError, logout);
@@ -971,6 +980,34 @@ function HomePage() {
         총 매수 {formatPoints(selectedVideoOpenPositionSummary.stakePoints)} · 총 평가{' '}
         {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
       </p>
+      {selectedVideoId && gameDividendOverview ? (
+        <p className="app-shell__game-panel-actions-summary-line">
+          {(() => {
+            const selectedRank = selectedVideoCurrentChartRank;
+            const matchingRank = gameDividendOverview.ranks.find((rank) => rank.rank === selectedRank);
+            const positionSharePercent = gameDividendOverview.positions
+              .filter((position) => position.videoId === selectedVideoId && position.holdEligible)
+              .reduce((sum, position) => sum + position.estimatedPoolSharePercent, 0);
+            const warmingUpPosition = gameDividendOverview.positions.find(
+              (position) => position.videoId === selectedVideoId && !position.holdEligible,
+            );
+
+            if (!matchingRank) {
+              return `20위 안에 들면 배당 구간에 들어갑니다.`;
+            }
+
+            if (positionSharePercent > 0) {
+              return `배당 대상 ${matchingRank.rank}위 · 가중치 ${matchingRank.weight} · 내 현재 예상 지분 ${formatPercent(positionSharePercent)}`;
+            }
+
+            if (typeof warmingUpPosition?.nextEligibleInSeconds === 'number') {
+              return `배당 대상 ${matchingRank.rank}위 · ${formatHoldCountdown(warmingUpPosition.nextEligibleInSeconds)} 뒤 배당 반영`;
+            }
+
+            return `배당 대상 ${matchingRank.rank}위 · 동일 금액 기준 배당풀 ${formatPercent(matchingRank.equalValuePoolSharePercent)}`;
+          })()}
+        </p>
+      ) : null}
       <p className="app-shell__game-panel-actions-summary-line">{sellFeeSummaryNote}</p>
     </div>
   ) : selectedVideoMarketEntry ? (
@@ -992,6 +1029,21 @@ function HomePage() {
         ) : null}{' '}
         · 가격 {formatPoints(selectedVideoMarketEntry.currentPricePoints)}
       </p>
+      {gameDividendOverview ? (
+        <p className="app-shell__game-panel-actions-summary-line">
+          {(() => {
+            const matchingRank = gameDividendOverview.ranks.find(
+              (rank) => rank.rank === selectedVideoMarketEntry.currentRank,
+            );
+
+            if (!matchingRank) {
+              return `20위 안 진입 시 배당 구간에 들어갑니다.`;
+            }
+
+            return `배당 대상 ${matchingRank.rank}위 · 가중치 ${matchingRank.weight} · 동일 금액 기준 배당풀 ${formatPercent(matchingRank.equalValuePoolSharePercent)}`;
+          })()}
+        </p>
+      ) : null}
     </div>
   ) : null;
   const gameActionContent = selectedVideoId ? (
@@ -1211,6 +1263,7 @@ function HomePage() {
     isAllCategorySelected && isGameRegionSelected && isApiConfigured && authStatus === 'authenticated' ? (
       <RankingGamePanelShell
         activeGameTab={activeGameTab}
+        dividendOverview={<RankingGameDividendOverview overview={gameDividendOverview} />}
         helperText={rankingGameHelperText}
         isCollapsed={isRankingGameCollapsed}
         isHelperWarning={isCurrentVideoGameHelperWarning}

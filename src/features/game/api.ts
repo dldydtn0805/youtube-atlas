@@ -2,6 +2,7 @@ import { fetchApi } from '../../lib/api';
 import type {
   CreateGamePositionInput,
   GameCurrentSeason,
+  GameDividendOverview,
   GameLeaderboardEntry,
   GameMarketVideo,
   GamePosition,
@@ -28,6 +29,12 @@ export async function fetchGameMarket(accessToken: string) {
 
 export async function fetchGameLeaderboard(accessToken: string) {
   return fetchApi<GameLeaderboardEntry[]>('/api/game/leaderboard', {
+    headers: createAuthorizationHeader(accessToken),
+  });
+}
+
+export async function fetchGameDividendOverview(accessToken: string) {
+  return fetchApi<GameDividendOverview>('/api/game/dividends/overview', {
     headers: createAuthorizationHeader(accessToken),
   });
 }
