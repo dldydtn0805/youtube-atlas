@@ -23,6 +23,7 @@ export default function GameDividendModal({ isOpen, onClose, overview }: GameDiv
 
   const portalTarget = getFullscreenElement();
   const container = portalTarget instanceof HTMLElement ? portalTarget : document.body;
+  const maxDividendRatePercent = Math.max(...overview.ranks.map((rank) => rank.dividendRatePercent), 1);
 
   return createPortal(
     <div className="app-shell__modal-backdrop" onClick={onClose} role="presentation">
@@ -84,17 +85,44 @@ export default function GameDividendModal({ isOpen, onClose, overview }: GameDiv
                 <p className="app-shell__section-eyebrow">Rates</p>
                 <h3 className="app-shell__modal-field-title">1위~20위 고정 배당률</h3>
               </div>
-              <ol className="app-shell__game-dividend-ladder">
+              <div className="app-shell__game-dividend-rate-chart" aria-label="배당률 그래프">
                 {overview.ranks.map((rank) => (
-                  <li key={rank.rank} className="app-shell__game-dividend-rank">
-                    <span className="app-shell__game-dividend-rank-label">{rank.rank}위</span>
-                    <strong className="app-shell__game-dividend-rank-share">
+                  <div key={rank.rank} className="app-shell__game-dividend-rate-row">
+                    <span className="app-shell__game-dividend-rate-rank">{rank.rank}위</span>
+                    <div className="app-shell__game-dividend-rate-bar-track">
+                      <div
+                        className="app-shell__game-dividend-rate-bar-fill"
+                        style={{
+                          width: `${(rank.dividendRatePercent / maxDividendRatePercent) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <strong className="app-shell__game-dividend-rate-value">
                       {formatPercent(rank.dividendRatePercent)}
                     </strong>
-                    <span className="app-shell__game-dividend-rank-weight">고정 배당률</span>
-                  </li>
+                  </div>
                 ))}
-              </ol>
+              </div>
+              <div className="app-shell__game-dividend-rate-table-wrap">
+                <table className="app-shell__game-dividend-rate-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">랭크</th>
+                      <th scope="col">고정 배당률</th>
+                      <th scope="col">10만P 기준</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {overview.ranks.map((rank) => (
+                      <tr key={`table-${rank.rank}`}>
+                        <th scope="row">{rank.rank}위</th>
+                        <td>{formatPercent(rank.dividendRatePercent)}</td>
+                        <td>{formatPoints(Math.round(100_000 * rank.dividendRatePercent / 100))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
 
             <section className="app-shell__modal-field">

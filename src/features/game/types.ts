@@ -3,6 +3,7 @@ export interface GameWallet {
   balancePoints: number;
   reservedPoints: number;
   realizedPnlPoints: number;
+  bonusPoints: number;
   totalAssetPoints: number;
 }
 

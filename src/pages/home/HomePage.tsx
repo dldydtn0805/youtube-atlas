@@ -576,7 +576,6 @@ function HomePage() {
     selectedVideoTrendBadges,
     selectedVideoUnitPricePoints,
     sellActionTitle,
-    sellFeeSummaryNote,
     sellModalHelperText,
     totalSelectedVideoBuyPoints,
   } = useSelectedVideoGameState({
@@ -1011,7 +1010,6 @@ function HomePage() {
           })()}
         </p>
       ) : null}
-      <p className="app-shell__game-panel-actions-summary-line">{sellFeeSummaryNote}</p>
     </div>
   ) : selectedVideoMarketEntry ? (
     <div className="app-shell__game-panel-actions-summary" aria-label="선택한 영상 현재 가격">
@@ -1275,6 +1273,7 @@ function HomePage() {
           <RankingGameDividendOverview
             onOpenDetails={() => setIsDividendModalOpen(true)}
             overview={gameDividendOverview}
+            season={currentGameSeason}
           />
         }
         helperText={rankingGameHelperText}

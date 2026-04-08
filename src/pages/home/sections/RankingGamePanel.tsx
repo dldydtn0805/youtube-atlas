@@ -104,6 +104,7 @@ interface RankingGameHistoryTabProps {
 interface RankingGameDividendOverviewProps {
   onOpenDetails: () => void;
   overview?: GameDividendOverview;
+  season?: GameCurrentSeason;
 }
 
 function LeaderboardPositionList({
@@ -425,7 +426,7 @@ export function RankingGamePanelShell({
   );
 }
 
-export function RankingGameDividendOverview({ onOpenDetails, overview }: RankingGameDividendOverviewProps) {
+export function RankingGameDividendOverview({ onOpenDetails, overview, season }: RankingGameDividendOverviewProps) {
   if (!overview) {
     return null;
   }
@@ -446,6 +447,12 @@ export function RankingGameDividendOverview({ onOpenDetails, overview }: Ranking
             <span className="app-shell__game-dividend-metric-label">내 예상 배당</span>
             <strong className="app-shell__game-dividend-metric-value">
               {formatPoints(overview.myEstimatedDividendPoints)}
+            </strong>
+          </span>
+          <span className="app-shell__game-dividend-metric">
+            <span className="app-shell__game-dividend-metric-label">누적 배당</span>
+            <strong className="app-shell__game-dividend-metric-value">
+              {season ? formatPoints(season.wallet.bonusPoints) : '-'}
             </strong>
           </span>
           <span className="app-shell__game-dividend-metric">

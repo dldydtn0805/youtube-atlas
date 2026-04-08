@@ -14,7 +14,6 @@ import {
   getBuyShortfallPointsText,
   getGamePositionQuantity,
   normalizeGameQuantity,
-  SELL_FEE_RATE_LABEL,
   summarizeGamePositions,
   summarizeSellCandidates,
   type OpenGameHolding,
@@ -89,7 +88,6 @@ interface UseSelectedVideoGameStateResult {
   selectedVideoTrendBadges: VideoTrendBadge[];
   selectedVideoUnitPricePoints: number | null;
   sellActionTitle: string;
-  sellFeeSummaryNote: string;
   sellModalHelperText: string;
   totalSelectedVideoBuyPoints: number | null;
 }
@@ -278,7 +276,6 @@ export default function useSelectedVideoGameState({
     () => summarizeSellCandidates(buildSellCandidates(sellableSelectedVideoOpenPositions, normalizedSellQuantity)),
     [normalizedSellQuantity, sellableSelectedVideoOpenPositions],
   );
-  const sellFeeSummaryNote = `매도 시 체결 금액 기준 ${SELL_FEE_RATE_LABEL} 수수료가 차감됩니다.`;
   const selectedGameActionTitle =
     selectedVideoOpenPosition?.title ?? resolvedSelectedVideo?.snippet.title ?? '선택한 영상';
   const selectedOpenHolding = selectedVideoId
@@ -432,7 +429,6 @@ export default function useSelectedVideoGameState({
     selectedVideoTrendBadges,
     selectedVideoUnitPricePoints,
     sellActionTitle,
-    sellFeeSummaryNote,
     sellModalHelperText,
     totalSelectedVideoBuyPoints,
   };

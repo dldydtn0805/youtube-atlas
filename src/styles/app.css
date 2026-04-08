@@ -1080,6 +1080,74 @@
   line-height: 1.5;
 }
 
+.app-shell__game-dividend-rate-chart {
+  display: grid;
+  gap: 8px;
+}
+
+.app-shell__game-dividend-rate-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 44px minmax(0, 1fr) 64px;
+}
+
+.app-shell__game-dividend-rate-rank,
+.app-shell__game-dividend-rate-value {
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.app-shell__game-dividend-rate-bar-track {
+  background: rgba(148, 163, 184, 0.16);
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.app-shell__game-dividend-rate-bar-fill {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.82), rgba(251, 191, 36, 0.96));
+  border-radius: inherit;
+  height: 100%;
+  min-width: 10px;
+}
+
+.app-shell__game-dividend-rate-table-wrap {
+  overflow-x: auto;
+}
+
+.app-shell__game-dividend-rate-table {
+  border-collapse: collapse;
+  margin-top: 14px;
+  width: 100%;
+}
+
+.app-shell__game-dividend-rate-table th,
+.app-shell__game-dividend-rate-table td {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  padding: 10px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.app-shell__game-dividend-rate-table thead th {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.app-shell__game-dividend-rate-table tbody th,
+.app-shell__game-dividend-rate-table tbody td {
+  color: var(--text);
+}
+
 .app-shell__game-panel-order {
   align-items: center;
   background: rgba(255, 255, 255, 0.56);
@@ -2209,6 +2277,81 @@
     linear-gradient(180deg, rgba(12, 22, 38, 0.9), rgba(10, 18, 32, 0.86)),
     rgba(8, 17, 31, 0.82);
   border-color: rgba(148, 163, 184, 0.18);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend {
+  background:
+    linear-gradient(180deg, rgba(24, 20, 10, 0.94), rgba(15, 18, 28, 0.92)),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.18), transparent 44%);
+  border-color: rgba(251, 191, 36, 0.2);
+  box-shadow: 0 18px 38px rgba(2, 6, 23, 0.24);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-eyebrow {
+  color: #fbbf24;
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-helper,
+:root[data-theme='dark'] .app-shell__game-dividend-action-copy,
+:root[data-theme='dark'] .app-shell__game-dividend-rank-label,
+:root[data-theme='dark'] .app-shell__game-dividend-rank-weight,
+:root[data-theme='dark'] .app-shell__game-dividend-position-meta {
+  color: rgba(226, 232, 240, 0.72);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-metric {
+  background:
+    linear-gradient(180deg, rgba(43, 31, 12, 0.82), rgba(15, 23, 42, 0.78)),
+    rgba(15, 23, 42, 0.82);
+  border-color: rgba(251, 191, 36, 0.18);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-metric-label {
+  color: rgba(252, 211, 77, 0.78);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-metric-value,
+:root[data-theme='dark'] .app-shell__game-dividend-rank-share,
+:root[data-theme='dark'] .app-shell__game-dividend-position-title {
+  color: #f8fafc;
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-rank {
+  background:
+    linear-gradient(180deg, rgba(42, 29, 10, 0.72), rgba(15, 23, 42, 0.72)),
+    rgba(15, 23, 42, 0.74);
+  border-color: rgba(251, 191, 36, 0.16);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-position {
+  background:
+    linear-gradient(180deg, rgba(29, 24, 12, 0.78), rgba(15, 23, 42, 0.78)),
+    rgba(15, 23, 42, 0.78);
+  border-color: rgba(251, 191, 36, 0.16);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-rate-bar-track {
+  background: rgba(148, 163, 184, 0.22);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-rate-bar-fill {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.78), rgba(252, 211, 77, 0.94));
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-rate-table thead th {
+  color: rgba(252, 211, 77, 0.78);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-rate-table th,
+:root[data-theme='dark'] .app-shell__game-dividend-rate-table td {
+  border-bottom-color: rgba(148, 163, 184, 0.18);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-rate-table tbody th,
+:root[data-theme='dark'] .app-shell__game-dividend-rate-table tbody td,
+:root[data-theme='dark'] .app-shell__game-dividend-rate-rank,
+:root[data-theme='dark'] .app-shell__game-dividend-rate-value {
+  color: #f8fafc;
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-helper[data-tone='warning'] {
