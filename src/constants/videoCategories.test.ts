@@ -6,6 +6,7 @@ import {
   sortVideoCategories,
   supportsVideoGameActions,
   supportsVideoTrendSignals,
+  TREND_SNAPSHOT_REGION_CODES,
   VIDEO_GAME_REGION_CODE,
 } from './videoCategories';
 
@@ -57,7 +58,8 @@ describe('video category helpers', () => {
 
   it('allows trend signals only for the all category in the game region', () => {
     expect(supportsVideoTrendSignals('0', VIDEO_GAME_REGION_CODE)).toBe(true);
-    expect(supportsVideoTrendSignals('0', 'US')).toBe(false);
+    expect(TREND_SNAPSHOT_REGION_CODES.every((regionCode) => supportsVideoTrendSignals('0', regionCode))).toBe(true);
+    expect(supportsVideoTrendSignals('0', 'MX')).toBe(false);
     expect(supportsVideoTrendSignals('28', VIDEO_GAME_REGION_CODE)).toBe(false);
     expect(supportsVideoTrendSignals('10', VIDEO_GAME_REGION_CODE)).toBe(false);
     expect(supportsVideoTrendSignals('24', VIDEO_GAME_REGION_CODE)).toBe(false);

@@ -58,6 +58,7 @@ import {
   ALL_VIDEO_CATEGORY_ID,
   sortVideoCategories,
   supportsVideoGameActions,
+  supportsVideoTrendSignals,
   VIDEO_GAME_REGION_CODE,
 } from '../../constants/videoCategories';
 import { useAuth } from '../../features/auth/useAuth';
@@ -301,6 +302,7 @@ function HomePage() {
     countryCodes.find((country) => country.code === selectedRegionCode)?.name ?? selectedRegionCode;
   const isAllCategorySelected = selectedCategory?.id === ALL_VIDEO_CATEGORY_ID;
   const isGameRegionSelected = selectedRegionCode.toUpperCase() === VIDEO_GAME_REGION_CODE;
+  const isTrendRegionSelected = supportsVideoTrendSignals(ALL_VIDEO_CATEGORY_ID, selectedRegionCode);
   const chartViewOptions = [
     { id: 'all', label: '전체' },
     {
@@ -315,16 +317,16 @@ function HomePage() {
     {
       id: 'realtime-surging',
       label: '실시간 급상승',
-      disabled: !isGameRegionSelected,
+      disabled: !isTrendRegionSelected,
     },
     {
       id: 'new-chart-entries',
       label: '신규 진입',
-      disabled: !isGameRegionSelected,
+      disabled: !isTrendRegionSelected,
     },
   ] satisfies Array<{ id: ChartViewMode; label: string; disabled?: boolean }>;
   const effectiveChartView: ChartViewMode =
-    !isGameRegionSelected &&
+    !isTrendRegionSelected &&
     selectedChartView !== 'all' &&
     selectedChartView !== 'favorites' &&
     selectedChartView !== 'popular'

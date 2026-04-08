@@ -149,6 +149,36 @@ describe('fetchPopularVideosByCategory', () => {
     );
     expect(section.nextPageToken).toBe('50');
   });
+
+  it('requests snapshot-backed top videos for other supported trend regions too', async () => {
+    const { fetchPopularVideosByCategory } = await import('./api');
+    const fetchMock = vi.fn().mockResolvedValue(
+      createMockResponse({
+        categoryId: '0',
+        label: '전체',
+        description: '전체',
+        items: [],
+        nextPageToken: undefined,
+      }),
+    );
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchPopularVideosByCategory(
+      'US',
+      {
+        id: '0',
+        label: '전체',
+        description: '전체',
+        sourceIds: [],
+      },
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example.com/api/trending/top-videos?regionCode=US',
+      undefined,
+    );
+  });
 });
 
 describe('fetchVideoById', () => {
