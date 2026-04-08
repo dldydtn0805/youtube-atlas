@@ -193,6 +193,35 @@ export function filterVideoSection(
   };
 }
 
+export function relabelVideoSection(
+  section: YouTubeCategorySection | undefined,
+  label: string,
+) {
+  if (!section) {
+    return undefined;
+  }
+
+  if (section.label === label) {
+    return section;
+  }
+
+  return {
+    ...section,
+    label,
+  };
+}
+
+export function formatTrendRankLabel(
+  signal: VideoTrendSignal | null | undefined,
+  hasResolvedTrendSignals: boolean,
+) {
+  if (typeof signal?.currentRank === 'number') {
+    return `${signal.currentRank}위`;
+  }
+
+  return hasResolvedTrendSignals ? '현재 순위 미집계' : '현재 순위 확인 중';
+}
+
 export function shouldPrefetchBuyableVideos(options: {
   hasNextPage: boolean;
   isBuyableOnlyFilterActive: boolean;

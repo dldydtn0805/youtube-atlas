@@ -1,37 +1,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
 import AppHeader from './sections/AppHeader';
-import { ChartPanel, CommunityPanel } from './sections/ContentPanels';
+import { SelectedVideoGameActionsBundle } from './sections/GameActionContent';
 import GameDividendModal from './sections/GameDividendModal';
-import { FilterBar, RegionFilterModal } from './sections/FilterPanels';
+import { RegionFilterModal } from './sections/FilterPanels';
+import GamePanelSection from './sections/GamePanelSection';
 import GameRankHistoryModal from './sections/GameRankHistoryModal';
 import GameTradeModal from './sections/GameTradeModal';
-import PlayerStage from './sections/PlayerStage';
-import {
-  RankingGameDividendOverview,
-  RankingGameHistoryTab,
-  RankingGameLeaderboardTab,
-  RankingGamePanelShell,
-  RankingGamePositionsTab,
-  RankingGameSelectedVideoActions,
-} from './sections/RankingGamePanel';
+import HomePlaybackSection from './sections/HomePlaybackSection';
 import {
   buildOpenGameHoldings,
-  calculateEstimatedDividendPoints,
-  DEFAULT_GAME_QUANTITY,
-  formatHoldCountdown,
-  formatPercent,
   formatGameQuantity,
   formatPoints,
   formatRank,
-  getBuyShortfallPointsText,
   getPointTone,
   MIN_GAME_QUANTITY,
-  normalizeGameQuantity,
   SELL_FEE_RATE_LABEL,
   summarizeGamePositions,
 } from './gameHelpers';
 import useAppPreferences from './hooks/useAppPreferences';
+import useHomeChartViewState from './hooks/useHomeChartViewState';
+import useHomeGameTradeActions from './hooks/useHomeGameTradeActions';
+import useHomeGameUiState from './hooks/useHomeGameUiState';
 import useHomePlaybackState from './hooks/useHomePlaybackState';
 import useHomeTrendSections from './hooks/useHomeTrendSections';
 import useLogoutOnUnauthorized from './hooks/useLogoutOnUnauthorized';
@@ -41,18 +31,16 @@ import {
   FAVORITE_STREAMER_VIDEO_SECTION,
   GAME_PORTFOLIO_QUEUE_ID,
   HISTORY_PLAYBACK_QUEUE_ID,
-  NEW_CHART_ENTRIES_QUEUE_ID,
-  REALTIME_SURGING_QUEUE_ID,
   filterVideoSection,
-  findPlaybackQueueIdForVideo,
-  formatSignedProfitRate,
   getVideoThumbnailUrl,
   mapGamePositionToVideoItem,
   mergeSections,
+  relabelVideoSection,
   scrollElementToViewportCenter,
   sortedCountryCodes,
   type RegionCode,
 } from './utils';
+import type { ChartViewMode } from './types';
 import countryCodes from '../../constants/countryCodes';
 import {
   ALL_VIDEO_CATEGORY_ID,
@@ -88,9 +76,7 @@ import { ApiRequestError, isApiConfigured } from '../../lib/api';
 import '../../styles/app.css';
 
 const COLLAPSED_HOME_SECTIONS_STORAGE_KEY = 'youtube-atlas-collapsed-home-sections';
-const MAIN_CHART_SECTION_ID = 'chart-main-list';
 const RANKING_GAME_SECTION_ID = 'ranking-game';
-type ChartViewMode = 'all' | 'realtime-surging' | 'new-chart-entries' | 'favorites' | 'popular';
 
 function getInitialCollapsedHomeSectionIds() {
   if (typeof window === 'undefined') {
@@ -127,16 +113,7 @@ function HomePage() {
   const [activeGameTab, setActiveGameTab] = useState<'positions' | 'history' | 'leaderboard'>('positions');
   const [isBuyableOnlyFilterActive, setIsBuyableOnlyFilterActive] = useState(false);
   const [collapsedHomeSectionIds, setCollapsedHomeSectionIds] = useState(getInitialCollapsedHomeSectionIds);
-  const [gameActionStatus, setGameActionStatus] = useState<string | null>(null);
-  const [gameClock, setGameClock] = useState(() => Date.now());
   const [selectedLeaderboardUserId, setSelectedLeaderboardUserId] = useState<number | null>(null);
-  const [selectedRankHistoryPosition, setSelectedRankHistoryPosition] = useState<GamePosition | null>(null);
-  const [selectedVideoRankHistoryVideoId, setSelectedVideoRankHistoryVideoId] = useState<string | null>(null);
-  const [isDividendModalOpen, setIsDividendModalOpen] = useState(false);
-  const [activeTradeModal, setActiveTradeModal] = useState<'buy' | 'sell' | null>(null);
-  const [activeTradeRequest, setActiveTradeRequest] = useState<'buy' | 'sell' | null>(null);
-  const [buyQuantity, setBuyQuantity] = useState(DEFAULT_GAME_QUANTITY);
-  const [sellQuantity, setSellQuantity] = useState(DEFAULT_GAME_QUANTITY);
   const [historyPlaybackVideo, setHistoryPlaybackVideo] = useState<YouTubeVideoItem | null>(null);
   const [historyPlaybackLoadingVideoId, setHistoryPlaybackLoadingVideoId] = useState<string | null>(null);
   const [isRegionModalOpen, setIsRegionModalOpen] = useState(false);
@@ -145,7 +122,6 @@ function HomePage() {
   const videoPlayerRef = useRef<VideoPlayerHandle | null>(null);
   const playerSectionRef = useRef<HTMLElement | null>(null);
   const playerViewportRef = useRef<HTMLDivElement | null>(null);
-  const tradeRequestLockRef = useRef<'buy' | 'sell' | null>(null);
   const {
     cinematicToggleLabel,
     handleToggleCinematicMode,
@@ -249,15 +225,6 @@ function HomePage() {
     isLoading: isGameHistoryLoading,
   } = useMyGamePositions(accessToken, selectedRegionCode, '', shouldLoadGame && activeGameTab === 'history', 30);
   const {
-    data: selectedPositionRankHistory,
-    error: selectedPositionRankHistoryError,
-    isLoading: isPositionRankHistoryLoading,
-  } = useGamePositionRankHistory(
-    accessToken,
-    selectedRankHistoryPosition?.id ?? null,
-    shouldLoadGame && Boolean(selectedRankHistoryPosition),
-  );
-  const {
     evaluationPoints: openPositionsEvaluationPoints,
     profitPoints: openPositionsProfitPoints,
     stakePoints: openPositionsBuyPoints,
@@ -265,19 +232,8 @@ function HomePage() {
   const computedWalletTotalAssetPoints = currentGameSeason
     ? currentGameSeason.wallet.balancePoints + openPositionsEvaluationPoints
     : null;
-  const {
-    data: selectedVideoRankHistory,
-    error: selectedVideoRankHistoryError,
-    isLoading: isVideoRankHistoryLoading,
-  } = useVideoRankHistory(
-    currentGameSeason?.regionCode ?? VIDEO_GAME_REGION_CODE,
-    selectedVideoRankHistoryVideoId ?? undefined,
-    isApiConfigured && Boolean(selectedVideoRankHistoryVideoId),
-  );
   const buyGamePositionMutation = useBuyGamePosition(accessToken);
   const sellGamePositionsMutation = useSellGamePositions(accessToken);
-  const isBuySubmitting = buyGamePositionMutation.isPending || activeTradeRequest === 'buy';
-  const isSellSubmitting = sellGamePositionsMutation.isPending || activeTradeRequest === 'sell';
 
   const {
     data,
@@ -304,39 +260,6 @@ function HomePage() {
     countryCodes.find((country) => country.code === selectedRegionCode)?.name ?? selectedRegionCode;
   const isAllCategorySelected = selectedCategory?.id === ALL_VIDEO_CATEGORY_ID;
   const isTrendRegionSelected = supportsVideoTrendSignals(ALL_VIDEO_CATEGORY_ID, selectedRegionCode);
-  const chartViewOptions = [
-    { id: 'all', label: '전체' },
-    {
-      id: 'popular',
-      label: 'TOP 200',
-    },
-    {
-      id: 'favorites',
-      label: '즐겨찾기',
-      disabled: authStatus !== 'authenticated',
-    },
-    {
-      id: 'realtime-surging',
-      label: '실시간 급상승',
-      disabled: !isTrendRegionSelected,
-    },
-    {
-      id: 'new-chart-entries',
-      label: '신규 진입',
-      disabled: !isTrendRegionSelected,
-    },
-  ] satisfies Array<{ id: ChartViewMode; label: string; disabled?: boolean }>;
-  const effectiveChartView: ChartViewMode =
-    !isTrendRegionSelected &&
-    selectedChartView !== 'all' &&
-    selectedChartView !== 'favorites' &&
-    selectedChartView !== 'popular'
-      ? 'all'
-      : authStatus !== 'authenticated' && selectedChartView === 'favorites'
-        ? 'all'
-        : selectedChartView;
-  const selectedChartViewOption =
-    chartViewOptions.find((option) => option.id === effectiveChartView) ?? chartViewOptions[0];
   const canShowGameActions = supportsVideoGameActions(selectedCategory?.id, selectedRegionCode);
   const shouldLoadFavorites = isApiConfigured && authStatus === 'authenticated';
   const isChartLoading =
@@ -450,6 +373,76 @@ function HomePage() {
     selectedRegionCode,
     shouldLoadFavorites,
   });
+  const shouldShowTop200Label = isAllCategorySelected && isTrendRegionSelected;
+  const displaySelectedPlaybackSection = useMemo(
+    () =>
+      shouldShowTop200Label
+        ? relabelVideoSection(filteredSelectedPlaybackSection, 'TOP 200')
+        : filteredSelectedPlaybackSection,
+    [filteredSelectedPlaybackSection, shouldShowTop200Label],
+  );
+  const favoriteStreamerVideoErrorMessage =
+    favoriteStreamerVideosError instanceof Error
+      ? favoriteStreamerVideosError.message
+      : '즐겨찾기 영상을 불러오지 못했습니다.';
+  const {
+    activeChartBuyableOnlyFilterActive,
+    activeChartBuyableOnlyFilterAvailable,
+    activeChartBuyableVideoSearchStatus,
+    activeChartEmptyMessage,
+    activeChartErrorMessage,
+    activeChartFeaturedSections,
+    activeChartHasNextPage,
+    activeChartHasResolvedTrendSignals,
+    activeChartIsError,
+    activeChartIsFetchingNextPage,
+    activeChartIsLoading,
+    activeChartMainSectionCollapseKey,
+    activeChartOnLoadMore,
+    activeChartRankLabel,
+    activeChartSection,
+    activeChartSectionEyebrow,
+    activeChartTrendSignalsByVideoId,
+    chartViewOptions,
+    effectiveChartView,
+    handleSelectChartView,
+    selectedChartViewOption,
+  } = useHomeChartViewState({
+    authStatus,
+    buyableFavoriteChartSection,
+    buyableVideoSearchStatus,
+    chartErrorMessage,
+    chartTrendSignalsByVideoId,
+    displaySelectedPlaybackSection,
+    favoriteStreamerVideoErrorMessage,
+    favoriteStreamersCount: favoriteStreamers.length,
+    favoriteTrendSignalsByVideoId,
+    fetchNextFavoriteStreamerVideosPage,
+    fetchNextPage,
+    featuredChartSections,
+    hasNextFavoriteStreamerVideosPage,
+    hasNextPage,
+    hasResolvedChartTrendSignals,
+    hasResolvedFavoriteTrendSignals,
+    isBuyableOnlyFilterActive,
+    isBuyableOnlyFilterAvailable,
+    isChartError,
+    isChartLoading,
+    isFavoriteStreamerVideosError,
+    isFavoriteStreamerVideosLoading,
+    isFavoriteStreamersError,
+    isFavoriteStreamersLoading,
+    isFetchingNextFavoriteStreamerVideosPage,
+    isFetchingNextPage,
+    isNewChartEntriesError,
+    isNewChartEntriesLoading,
+    isRealtimeSurgingError,
+    isRealtimeSurgingLoading,
+    isTrendRegionSelected,
+    selectedChartView,
+    setCollapsedHomeSectionIds,
+    setSelectedChartView,
+  });
   const {
     canPlayNextVideo,
     handleManualPlaybackSave,
@@ -482,11 +475,31 @@ function HomePage() {
     user,
     videoPlayerRef,
   });
+  const {
+    activeTradeModal,
+    buyQuantity,
+    closeDividendModal,
+    closeRankHistoryModal,
+    closeTradeModal,
+    gameActionStatus,
+    getRemainingHoldSeconds,
+    isDividendModalOpen,
+    openDividendModal,
+    openRankHistoryModal,
+    selectedRankHistoryPosition,
+    selectedVideoRankHistoryVideoId,
+    sellQuantity,
+    setActiveTradeModal,
+    setBuyQuantity,
+    setGameActionStatus,
+    setSellQuantity,
+  } = useHomeGameUiState({
+    authStatus,
+    currentGameSeason,
+    openGamePositions,
+    selectedVideoId,
+  });
   const openDistinctVideoCount = new Set(openGamePositions.map((position) => position.videoId)).size;
-  const favoriteStreamerVideoErrorMessage =
-    favoriteStreamerVideosError instanceof Error
-      ? favoriteStreamerVideosError.message
-      : '즐겨찾기 영상을 불러오지 못했습니다.';
   const isRankingGameCollapsed = collapsedHomeSectionIds.includes(RANKING_GAME_SECTION_ID);
   const collapsedFeaturedSectionIds = collapsedHomeSectionIds;
   const toggleCollapsedSection = useCallback((sectionId: string) => {
@@ -496,6 +509,25 @@ function HomePage() {
         : [...currentSectionIds, sectionId],
     );
   }, []);
+
+  const {
+    data: selectedPositionRankHistory,
+    error: selectedPositionRankHistoryError,
+    isLoading: isPositionRankHistoryLoading,
+  } = useGamePositionRankHistory(
+    accessToken,
+    selectedRankHistoryPosition?.id ?? null,
+    shouldLoadGame && Boolean(selectedRankHistoryPosition),
+  );
+  const {
+    data: selectedVideoRankHistory,
+    error: selectedVideoRankHistoryError,
+    isLoading: isVideoRankHistoryLoading,
+  } = useVideoRankHistory(
+    currentGameSeason?.regionCode ?? VIDEO_GAME_REGION_CODE,
+    selectedVideoRankHistoryVideoId ?? undefined,
+    isApiConfigured && Boolean(selectedVideoRankHistoryVideoId),
+  );
 
   useLogoutOnUnauthorized(favoriteStreamersError, logout);
   useLogoutOnUnauthorized(favoriteStreamerVideosError, logout);
@@ -513,9 +545,6 @@ function HomePage() {
     }
 
     setActiveGameTab('positions');
-    setGameActionStatus(null);
-    setSelectedRankHistoryPosition(null);
-    setSelectedVideoRankHistoryVideoId(null);
     setHistoryPlaybackLoadingVideoId(null);
     setHistoryPlaybackVideo(null);
   }, [authStatus]);
@@ -529,54 +558,12 @@ function HomePage() {
   }, [isBuyableOnlyFilterAvailable]);
 
   useEffect(() => {
-    setBuyQuantity(1);
-    setSellQuantity(1);
-    setActiveTradeModal(null);
-  }, [selectedVideoId]);
-
-  useEffect(() => {
     if (!shouldAutoPrefetchBuyableVideos) {
       return;
     }
 
     void fetchNextPage();
   }, [fetchNextPage, shouldAutoPrefetchBuyableVideos]);
-
-  useEffect(() => {
-    setGameActionStatus(null);
-  }, [selectedVideoId]);
-
-  useEffect(() => {
-    if (selectedChartView === 'favorites' && authStatus !== 'authenticated') {
-      setSelectedChartView('all');
-      return;
-    }
-
-    if (
-      isTrendRegionSelected ||
-      selectedChartView === 'all' ||
-      selectedChartView === 'favorites' ||
-      selectedChartView === 'popular'
-    ) {
-      return;
-    }
-
-    setSelectedChartView('all');
-  }, [authStatus, isTrendRegionSelected, selectedChartView]);
-
-  useEffect(() => {
-    if (openGamePositions.length === 0) {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      setGameClock(Date.now());
-    }, 30_000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [openGamePositions.length]);
 
   function handleSelectRegion(regionCode: RegionCode) {
     resetForRegionChange();
@@ -585,38 +572,6 @@ function HomePage() {
     setIsRegionModalOpen(false);
   }
 
-  function handleSelectChartView(viewId: string, triggerElement?: HTMLButtonElement) {
-    const nextView = chartViewOptions.find((option) => option.id === viewId);
-
-    if (!nextView || nextView.disabled) {
-      triggerElement?.blur();
-      return;
-    }
-
-    const nextSectionIds = chartViewExpandedSectionIds[nextView.id] ?? [];
-
-    if (nextSectionIds.length > 0) {
-      setCollapsedHomeSectionIds((currentSectionIds) =>
-        currentSectionIds.filter((currentSectionId) => !nextSectionIds.includes(currentSectionId)),
-      );
-    }
-
-    setSelectedChartView(nextView.id);
-    triggerElement?.blur();
-  }
-
-  const getRemainingHoldSeconds = useCallback(
-    (position: GamePosition) => {
-      if (!currentGameSeason) {
-        return 0;
-      }
-
-      const elapsedSeconds = Math.floor((gameClock - new Date(position.createdAt).getTime()) / 1000);
-
-      return Math.max(0, currentGameSeason.minHoldSeconds - elapsedSeconds);
-    },
-    [currentGameSeason, gameClock],
-  );
   const openGameHoldings = useMemo(
     () => buildOpenGameHoldings(openGamePositions, getRemainingHoldSeconds),
     [getRemainingHoldSeconds, openGamePositions],
@@ -667,7 +622,7 @@ function HomePage() {
     gameHistoryPositions,
     gameMarket,
     getRemainingHoldSeconds,
-    isBuySubmitting,
+    isBuySubmitting: buyGamePositionMutation.isPending,
     isCurrentGameSeasonLoading,
     isFavoriteTogglePending: toggleFavoriteStreamerMutation.isPending,
     openGameHoldings,
@@ -682,245 +637,35 @@ function HomePage() {
     sellQuantity,
   });
 
-  useEffect(() => {
-    setBuyQuantity((currentQuantity) => {
-      if (maxBuyQuantity <= 0) {
-        return DEFAULT_GAME_QUANTITY;
-      }
-
-      return Math.min(normalizeGameQuantity(currentQuantity), maxBuyQuantity);
-    });
-  }, [maxBuyQuantity]);
-
-  useEffect(() => {
-    setSellQuantity((currentQuantity) => {
-      if (maxSellQuantity <= 0) {
-        return DEFAULT_GAME_QUANTITY;
-      }
-
-      return Math.min(normalizeGameQuantity(currentQuantity), maxSellQuantity);
-    });
-  }, [maxSellQuantity]);
-
-  const handleBuyCurrentVideo = useCallback(async () => {
-    if (tradeRequestLockRef.current) {
-      return;
-    }
-
-    if (authStatus !== 'authenticated' || !selectedVideoId) {
-      setGameActionStatus('로그인 후 지금 보는 영상을 매수할 수 있습니다.');
-      return;
-    }
-
-    if (!currentGameSeason) {
-      setGameActionStatus(
-        currentGameSeasonError instanceof Error
-          ? currentGameSeasonError.message
-          : '지금은 게임 시즌을 불러올 수 없습니다.',
-      );
-      return;
-    }
-
-    if (!selectedVideoMarketEntry) {
-      setGameActionStatus(
-        gameSeasonRegionMismatch
-          ? `현재 게임은 ${currentGameSeason.regionCode} 시즌 기준으로 진행 중입니다.`
-          : '현재 영상은 아직 게임 거래 대상이 아닙니다.',
-      );
-      return;
-    }
-
-    const clampedBuyQuantity = normalizeGameQuantity(buyQuantity);
-    const buyShortfallMessage = getBuyShortfallPointsText(
-      currentGameSeason,
-      selectedVideoMarketEntry,
-      clampedBuyQuantity,
-    );
-
-    if (!selectedVideoMarketEntry.canBuy) {
-      setGameActionStatus(
-        buyShortfallMessage ?? selectedVideoMarketEntry.buyBlockedReason ?? '지금은 매수할 수 없습니다.',
-      );
-      return;
-    }
-
-    if (maxBuyQuantity <= 0 || clampedBuyQuantity > maxBuyQuantity) {
-      setGameActionStatus(
-        maxBuyQuantity > 0
-          ? `지금은 최대 ${formatGameQuantity(maxBuyQuantity)}까지 한 번에 매수할 수 있습니다.`
-          : buyShortfallMessage ?? '지금은 매수할 수 없습니다.',
-      );
-      return;
-    }
-
-    try {
-      tradeRequestLockRef.current = 'buy';
-      setActiveTradeRequest('buy');
-      await buyGamePositionMutation.mutateAsync({
-        categoryId: '0',
-        regionCode: currentGameSeason.regionCode,
-        stakePoints: selectedVideoMarketEntry.currentPricePoints,
-        quantity: clampedBuyQuantity,
-        videoId: selectedVideoId,
-      });
-      setActiveTradeModal(null);
-      setBuyQuantity(DEFAULT_GAME_QUANTITY);
-      setGameActionStatus(
-        `${formatPoints(totalSelectedVideoBuyPoints ?? selectedVideoMarketEntry.currentPricePoints)}로 ${
-          selectedVideoMarketEntry.currentRank
-        }위 영상을 ${formatGameQuantity(clampedBuyQuantity)} 매수했어요.`,
-      );
-    } catch (error) {
-      if (
-        error instanceof ApiRequestError &&
-        (error.code === 'unauthorized' || error.code === 'session_expired')
-      ) {
-        void logout();
-        return;
-      }
-
-      setGameActionStatus(
-        error instanceof Error ? error.message : '매수에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-      );
-    } finally {
-      tradeRequestLockRef.current = null;
-      setActiveTradeRequest(null);
-    }
-  }, [
+  const {
+    handleBuyCurrentVideo,
+    handleSellCurrentVideo,
+    isBuySubmitting,
+    isSellSubmitting,
+    openBuyTradeModal,
+    openSellTradeModal,
+  } = useHomeGameTradeActions({
     authStatus,
     buyQuantity,
-    buyGamePositionMutation,
     currentGameSeason,
     currentGameSeasonError,
     gameSeasonRegionMismatch,
     logout,
     maxBuyQuantity,
+    maxSellQuantity,
+    mutateBuyGamePosition: buyGamePositionMutation.mutateAsync,
+    mutateSellGamePositions: sellGamePositionsMutation.mutateAsync,
+    selectedGameActionTitle,
     selectedVideoId,
     selectedVideoMarketEntry,
-    totalSelectedVideoBuyPoints,
-  ]);
-  const handleSellCurrentVideo = useCallback(async () => {
-    if (tradeRequestLockRef.current) {
-      return;
-    }
-
-    if (authStatus !== 'authenticated' || !selectedVideoId) {
-      setGameActionStatus('로그인 후 보유 포지션을 매도할 수 있습니다.');
-      return;
-    }
-
-    const clampedSellQuantity = normalizeGameQuantity(sellQuantity);
-
-    if (maxSellQuantity <= 0 || clampedSellQuantity > maxSellQuantity) {
-      setGameActionStatus(
-        maxSellQuantity > 0
-          ? `지금은 최대 ${formatGameQuantity(maxSellQuantity)}까지 매도할 수 있습니다.`
-          : '지금 바로 매도 가능한 포지션이 없습니다.',
-      );
-      return;
-    }
-
-    try {
-      tradeRequestLockRef.current = 'sell';
-      setActiveTradeRequest('sell');
-      const soldPositions = await sellGamePositionsMutation.mutateAsync({
-        regionCode: selectedRegionCode,
-        quantity: clampedSellQuantity,
-        videoId: selectedVideoId,
-      });
-      const totalSettledPoints = soldPositions.reduce(
-        (sum, response) => sum + response.settledPoints,
-        0,
-      );
-      const totalSellPricePoints = soldPositions.reduce(
-        (sum, response) => sum + response.sellPricePoints,
-        0,
-      );
-      const totalPnlPoints = soldPositions.reduce(
-        (sum, response) => sum + response.pnlPoints,
-        0,
-      );
-      const totalStakePoints = soldPositions.reduce(
-        (sum, response) => sum + response.stakePoints,
-        0,
-      );
-      const totalSoldQuantity = soldPositions.reduce(
-        (sum, response) => sum + response.quantity,
-        0,
-      );
-      const totalFeePoints = totalSellPricePoints - totalSettledPoints;
-
-      setActiveTradeModal(null);
-      setSellQuantity(DEFAULT_GAME_QUANTITY);
-      setGameActionStatus(
-        `${selectedGameActionTitle} 포지션 ${formatGameQuantity(totalSoldQuantity)}를 정산 ${formatPoints(totalSettledPoints)} / 수수료 ${formatPoints(totalFeePoints)} / 손익률 ${formatSignedProfitRate(
-          totalPnlPoints,
-          totalStakePoints,
-        )} 기준으로 정리했어요.`,
-      );
-    } catch (error) {
-      if (
-        error instanceof ApiRequestError &&
-        (error.code === 'unauthorized' || error.code === 'session_expired')
-      ) {
-        void logout();
-        return;
-      }
-
-      setGameActionStatus(
-        error instanceof Error ? error.message : '일괄 매도에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-      );
-    } finally {
-      tradeRequestLockRef.current = null;
-      setActiveTradeRequest(null);
-    }
-  }, [
-    authStatus,
-    logout,
-    maxSellQuantity,
-    selectedGameActionTitle,
     selectedRegionCode,
-    selectedVideoId,
-    sellGamePositionsMutation,
     sellQuantity,
-  ]);
-
-  const openBuyTradeModal = useCallback(() => {
-    setBuyQuantity((currentQuantity) => {
-      if (maxBuyQuantity <= 0) {
-        return DEFAULT_GAME_QUANTITY;
-      }
-
-      return Math.min(normalizeGameQuantity(currentQuantity), maxBuyQuantity);
-    });
-    setActiveTradeModal('buy');
-  }, [maxBuyQuantity]);
-
-  const openSellTradeModal = useCallback(() => {
-    setSellQuantity((currentQuantity) => {
-      if (maxSellQuantity <= 0) {
-        return DEFAULT_GAME_QUANTITY;
-      }
-
-      return Math.min(normalizeGameQuantity(currentQuantity), maxSellQuantity);
-    });
-    setActiveTradeModal('sell');
-  }, [maxSellQuantity]);
-
-  const openSelectedVideoRankHistory = useCallback(() => {
-    if (!selectedVideoId) {
-      return;
-    }
-
-    if (selectedVideoHistoryTargetPosition) {
-      setSelectedVideoRankHistoryVideoId(null);
-      setSelectedRankHistoryPosition(selectedVideoHistoryTargetPosition);
-      return;
-    }
-
-    setSelectedRankHistoryPosition(null);
-    setSelectedVideoRankHistoryVideoId(selectedVideoId);
-  }, [selectedVideoHistoryTargetPosition, selectedVideoId]);
+    setActiveTradeModal,
+    setBuyQuantity,
+    setGameActionStatus,
+    setSellQuantity,
+    totalSelectedVideoBuyPoints,
+  });
 
   async function handleToggleFavoriteStreamer() {
     if (authStatus !== 'authenticated' || !resolvedSelectedVideo || !selectedChannelId) {
@@ -998,7 +743,7 @@ function HomePage() {
         setHistoryPlaybackLoadingVideoId(null);
       }
     },
-    [handleSelectVideo, scrollToPlayerStage],
+    [handleSelectVideo, scrollToPlayerStage, setGameActionStatus],
   );
   const handleSelectLeaderboardPositionVideo = useCallback(
     async (position: GamePosition, playbackQueueId?: string) => {
@@ -1027,196 +772,11 @@ function HomePage() {
         setHistoryPlaybackLoadingVideoId(null);
       }
     },
-    [handleSelectVideo, scrollToPlayerStage],
+    [handleSelectVideo, scrollToPlayerStage, setGameActionStatus],
   );
-  const currentVideoGamePriceSummary = selectedVideoOpenPositionCount > 0 ? (
-    <div className="app-shell__game-panel-actions-summary" aria-label="선택한 영상 가격 정보">
-      <p className="app-shell__game-panel-actions-summary-line">
-        현재{' '}
-        {formatRank(selectedVideoCurrentChartRank, {
-          chartOut: selectedVideoIsChartOut,
-        })}
-        {selectedVideoTrendBadges.length > 0 ? (
-          <span className="app-shell__game-panel-actions-trends">
-            {selectedVideoTrendBadges.map((badge) => (
-              <span
-                key={`${badge.tone}-${badge.label}`}
-                className="app-shell__game-panel-actions-trend"
-                data-tone={badge.tone}
-              >
-                {badge.label}
-              </span>
-            ))}
-          </span>
-        ) : null}{' '}
-        · 보유 {formatGameQuantity(selectedVideoOpenPositionSummary.quantity)} · 손익률{' '}
-        <span data-tone={getPointTone(selectedVideoOpenPositionSummary.profitPoints)}>
-          {formatSignedProfitRate(
-            selectedVideoOpenPositionSummary.profitPoints,
-            selectedVideoOpenPositionSummary.stakePoints,
-          )}
-        </span>
-      </p>
-      <p className="app-shell__game-panel-actions-summary-line">
-        총 매수 {formatPoints(selectedVideoOpenPositionSummary.stakePoints)} · 총 평가{' '}
-        {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
-      </p>
-      {selectedVideoId && gameDividendOverview ? (
-        <p className="app-shell__game-panel-actions-summary-line">
-          {(() => {
-            const selectedRank = selectedVideoCurrentChartRank;
-            const matchingRank = gameDividendOverview.ranks.find((rank) => rank.rank === selectedRank);
-            const positionEstimatedDividendPoints = gameDividendOverview.positions
-              .filter((position) => position.videoId === selectedVideoId && position.holdEligible)
-              .reduce((sum, position) => sum + position.estimatedDividendPoints, 0);
-            const warmingUpPosition = gameDividendOverview.positions.find(
-              (position) => position.videoId === selectedVideoId && !position.holdEligible,
-            );
-
-            if (!matchingRank) {
-              return `20위 안에 들면 배당 구간에 들어갑니다.`;
-            }
-
-            if (positionEstimatedDividendPoints > 0) {
-              return `배당 대상 ${matchingRank.rank}위 · 예상 배당 ${formatPoints(positionEstimatedDividendPoints)} · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
-            }
-
-            if (typeof warmingUpPosition?.nextEligibleInSeconds === 'number') {
-              return `배당 대상 ${matchingRank.rank}위 · ${formatHoldCountdown(warmingUpPosition.nextEligibleInSeconds)} 뒤 배당 반영 · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
-            }
-
-            return `배당 대상 ${matchingRank.rank}위 · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
-          })()}
-        </p>
-      ) : null}
-    </div>
-  ) : selectedVideoMarketEntry ? (
-    <div className="app-shell__game-panel-actions-summary" aria-label="선택한 영상 현재 가격">
-      <p className="app-shell__game-panel-actions-summary-line">
-        현재 {formatRank(selectedVideoMarketEntry.currentRank)}
-        {selectedVideoTrendBadges.length > 0 ? (
-          <span className="app-shell__game-panel-actions-trends">
-            {selectedVideoTrendBadges.map((badge) => (
-              <span
-                key={`${badge.tone}-${badge.label}`}
-                className="app-shell__game-panel-actions-trend"
-                data-tone={badge.tone}
-              >
-                {badge.label}
-              </span>
-            ))}
-          </span>
-        ) : null}{' '}
-        · 가격 {formatPoints(selectedVideoMarketEntry.currentPricePoints)}
-      </p>
-      {gameDividendOverview ? (
-        <p className="app-shell__game-panel-actions-summary-line">
-          {(() => {
-            const matchingRank = gameDividendOverview.ranks.find(
-              (rank) => rank.rank === selectedVideoMarketEntry.currentRank,
-            );
-
-            if (!matchingRank) {
-              return `20위 안 진입 시 배당 구간에 들어갑니다.`;
-            }
-
-            const estimatedDividendPoints = calculateEstimatedDividendPoints(
-              selectedVideoMarketEntry.currentPricePoints,
-              matchingRank.dividendRatePercent,
-            );
-
-            return `배당 대상 ${matchingRank.rank}위 · 예상 배당 ${formatPoints(estimatedDividendPoints ?? 0)} · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
-          })()}
-        </p>
-      ) : null}
-    </div>
-  ) : null;
-  const gameActionContent = selectedVideoId ? (
-    <>
-      <button
-        aria-label="선택한 영상 차트"
-        className="app-shell__stage-action-button app-shell__stage-action-button--game"
-        data-variant="chart"
-        disabled={!canShowGameActions}
-        onClick={openSelectedVideoRankHistory}
-        title={
-          !canShowGameActions
-            ? '전체 카테고리에서만 차트를 볼 수 있습니다.'
-            : '선택한 영상의 랭킹 차트를 엽니다.'
-        }
-        type="button"
-      >
-        <span className="app-shell__stage-action-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M5.75 17.25 10 12.5l2.75 2.75 5.5-6"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.8"
-            />
-            <path
-              d="M15.5 9.25H18.5v3"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.8"
-            />
-          </svg>
-        </span>
-      </button>
-      <button
-        aria-label="선택한 영상 매수"
-        className="app-shell__stage-action-button app-shell__stage-action-button--game"
-        data-variant="buy"
-        disabled={!canShowGameActions || isSelectedVideoBuyDisabled}
-        onClick={openBuyTradeModal}
-        title={!canShowGameActions ? '전체 카테고리에서만 매수할 수 있습니다.' : buyActionTitle}
-        type="button"
-      >
-        <span className="app-shell__stage-action-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 18V6M12 6l-4 4M12 6l4 4"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.8"
-            />
-          </svg>
-        </span>
-      </button>
-      {selectedVideoOpenPositionCount > 0 ? (
-        <button
-          aria-label="선택한 영상 매도"
-          className="app-shell__stage-action-button app-shell__stage-action-button--game"
-          data-variant="sell"
-          disabled={isSelectedVideoSellDisabled}
-          onClick={openSellTradeModal}
-          title={sellActionTitle}
-          type="button"
-        >
-          <span className="app-shell__stage-action-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path
-                d="M12 6v12M12 18l-4-4M12 18l4-4"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.8"
-              />
-            </svg>
-          </span>
-        </button>
-      ) : null}
-    </>
-  ) : null;
-  const selectedLeaderboardEntry = selectedLeaderboardUserId
-    ? gameLeaderboard.find((entry) => entry.userId === selectedLeaderboardUserId) ?? null
-    : null;
-  const selectedLeaderboardPositionsTitle = selectedLeaderboardEntry
-    ? `${selectedLeaderboardEntry.displayName}님의 보유 포지션`
-    : '보유 포지션';
+  const handleOpenSelectedVideoRankHistory = useCallback(() => {
+    openRankHistoryModal(selectedVideoId, selectedVideoHistoryTargetPosition);
+  }, [openRankHistoryModal, selectedVideoHistoryTargetPosition, selectedVideoId]);
   const rankingGameHelperText = currentGameSeason
     ? currentVideoGameHelperText
     : isCurrentGameSeasonLoading
@@ -1229,383 +789,106 @@ function HomePage() {
       ? '아직 보유 중인 영상이 없어요. 지금 보는 영상에서 바로 시작할 수 있습니다.'
       : '새 포지션 매수와 기존 포지션 매도는 전체 카테고리에서만 가능합니다.'
     : null;
-  const historyEmptyMessage = currentGameSeason ? '아직 현재 시즌 거래내역이 없습니다.' : null;
-  const resolveHistoryPlaybackQueueId = useCallback(
-    (videoId: string) =>
-      findPlaybackQueueIdForVideo(videoId, {
-        favoriteStreamerVideoSection,
-        gamePortfolioSection,
-        historyPlaybackSection,
-        newChartEntriesSection,
-        realtimeSurgingSection,
-        selectedSection: selectedPlaybackSection,
-      }),
-    [
-      favoriteStreamerVideoSection,
-      gamePortfolioSection,
-      historyPlaybackSection,
-      newChartEntriesSection,
-      realtimeSurgingSection,
-      selectedPlaybackSection,
-    ],
-  );
-  const resolveLeaderboardPlaybackQueueId = useCallback(
-    (videoId: string) =>
-      findPlaybackQueueIdForVideo(videoId, {
-        favoriteStreamerVideoSection,
-        gamePortfolioSection,
-        historyPlaybackSection,
-        newChartEntriesSection,
-        realtimeSurgingSection,
-        selectedSection: selectedPlaybackSection,
-      }),
-    [
-      favoriteStreamerVideoSection,
-      gamePortfolioSection,
-      historyPlaybackSection,
-      newChartEntriesSection,
-      realtimeSurgingSection,
-      selectedPlaybackSection,
-    ],
-  );
-  const leaderboardContent = (
-    <RankingGameLeaderboardTab
-      entries={gameLeaderboard}
-      error={gameLeaderboardError}
-      isError={isGameLeaderboardError}
-      isLoading={isGameLeaderboardLoading}
-      isPositionsError={isSelectedLeaderboardPositionsError}
-      isPositionsLoading={isSelectedLeaderboardPositionsLoading}
-      loadingVideoId={historyPlaybackLoadingVideoId}
-      onSelectPosition={(position, playbackQueueId) => {
-        void handleSelectLeaderboardPositionVideo(position, playbackQueueId);
-      }}
-      onToggleUser={(userId) =>
-        setSelectedLeaderboardUserId((currentUserId) => (currentUserId === userId ? null : userId))
-      }
-      positions={selectedLeaderboardPositions}
-      positionsError={selectedLeaderboardPositionsError}
-      positionsTitle={selectedLeaderboardPositionsTitle}
-      resolvePlaybackQueueId={resolveLeaderboardPlaybackQueueId}
-      season={currentGameSeason}
-      selectedUserId={selectedLeaderboardUserId}
+  const selectedVideoActionsContent = (
+    <SelectedVideoGameActionsBundle
+      buyActionTitle={buyActionTitle}
+      canShowGameActions={canShowGameActions}
+      gameDividendOverview={gameDividendOverview}
+      isBuySubmitting={isBuySubmitting}
+      isChartDisabled={isChartActionDisabled}
+      isSelectedVideoBuyDisabled={isSelectedVideoBuyDisabled}
+      isSelectedVideoSellDisabled={isSelectedVideoSellDisabled}
+      isSellSubmitting={isSellSubmitting}
+      mode="panel"
+      onOpenBuyTradeModal={openBuyTradeModal}
+      onOpenRankHistory={handleOpenSelectedVideoRankHistory}
+      onOpenSellTradeModal={openSellTradeModal}
+      selectedGameActionTitle={selectedGameActionTitle}
+      selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
+      selectedVideoId={selectedVideoId}
+      selectedVideoIsChartOut={selectedVideoIsChartOut}
+      selectedVideoMarketEntry={selectedVideoMarketEntry}
+      selectedVideoOpenPositionCount={selectedVideoOpenPositionCount}
+      selectedVideoOpenPositionSummary={selectedVideoOpenPositionSummary}
+      selectedVideoTradeThumbnailUrl={selectedVideoTradeThumbnailUrl}
+      selectedVideoTrendBadges={selectedVideoTrendBadges}
+      sellActionTitle={sellActionTitle}
     />
   );
-  const positionsContent = (
-    <RankingGamePositionsTab
+  const gameActionContent = (
+    <SelectedVideoGameActionsBundle
+      buyActionTitle={buyActionTitle}
       canShowGameActions={canShowGameActions}
-      emptyMessage={positionsEmptyMessage}
-      favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
-      gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
-      holdings={openGameHoldings}
-      onSelectVideo={handleSelectGamePositionVideo}
+      gameDividendOverview={gameDividendOverview}
+      isBuySubmitting={isBuySubmitting}
+      isSelectedVideoBuyDisabled={isSelectedVideoBuyDisabled}
+      isSelectedVideoSellDisabled={isSelectedVideoSellDisabled}
+      isSellSubmitting={isSellSubmitting}
+      mode="stage"
+      onOpenBuyTradeModal={openBuyTradeModal}
+      onOpenRankHistory={handleOpenSelectedVideoRankHistory}
+      onOpenSellTradeModal={openSellTradeModal}
+      selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
       selectedVideoId={selectedVideoId}
+      selectedVideoIsChartOut={selectedVideoIsChartOut}
+      selectedVideoMarketEntry={selectedVideoMarketEntry}
+      selectedVideoOpenPositionCount={selectedVideoOpenPositionCount}
+      selectedVideoOpenPositionSummary={selectedVideoOpenPositionSummary}
+      selectedVideoTrendBadges={selectedVideoTrendBadges}
+      sellActionTitle={sellActionTitle}
+    />
+  );
+  const portfolioContent = (
+    <GamePanelSection
+      activeGameTab={activeGameTab}
+      authStatus={authStatus}
+      canShowGameActions={canShowGameActions}
+      computedWalletTotalAssetPoints={computedWalletTotalAssetPoints}
+      currentGameSeason={currentGameSeason}
+      favoriteStreamerVideoSection={favoriteStreamerVideoSection}
+      favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
+      gameActionStatus={gameActionStatus}
+      gameDividendOverview={gameDividendOverview}
+      gameHistoryPositions={gameHistoryPositions}
+      gameLeaderboard={gameLeaderboard}
+      gameLeaderboardError={gameLeaderboardError}
+      gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
+      gamePortfolioSection={gamePortfolioSection}
+      hasApiConfigured={isApiConfigured}
+      historyPlaybackLoadingVideoId={historyPlaybackLoadingVideoId}
+      historyPlaybackSection={historyPlaybackSection}
+      isCollapsed={isRankingGameCollapsed}
+      isCurrentVideoGameHelperWarning={isCurrentVideoGameHelperWarning}
+      isGameHistoryLoading={isGameHistoryLoading}
+      isGameLeaderboardError={isGameLeaderboardError}
+      isGameLeaderboardLoading={isGameLeaderboardLoading}
+      isSelectedLeaderboardPositionsError={isSelectedLeaderboardPositionsError}
+      isSelectedLeaderboardPositionsLoading={isSelectedLeaderboardPositionsLoading}
+      newChartEntriesSection={newChartEntriesSection}
+      onOpenDividendModal={openDividendModal}
+      onSelectGameHistoryVideo={handleSelectGameHistoryVideo}
+      onSelectGamePositionVideo={handleSelectGamePositionVideo}
+      onSelectLeaderboardPositionVideo={handleSelectLeaderboardPositionVideo}
+      onSelectTab={setActiveGameTab}
+      onToggleCollapse={() => toggleCollapsedSection(RANKING_GAME_SECTION_ID)}
+      openDistinctVideoCount={openDistinctVideoCount}
+      openGameHoldings={openGameHoldings}
+      openPositionsBuyPoints={openPositionsBuyPoints}
+      openPositionsEvaluationPoints={openPositionsEvaluationPoints}
+      openPositionsProfitPoints={openPositionsProfitPoints}
+      positionsEmptyMessage={positionsEmptyMessage}
+      realtimeSurgingSection={realtimeSurgingSection}
+      seasonStatusMessage={rankingGameHelperText}
+      selectedLeaderboardPositions={selectedLeaderboardPositions}
+      selectedLeaderboardPositionsError={selectedLeaderboardPositionsError}
+      selectedLeaderboardUserId={selectedLeaderboardUserId}
+      selectedPlaybackSection={selectedPlaybackSection}
+      selectedVideoActions={selectedVideoActionsContent}
+      selectedVideoId={selectedVideoId}
+      setSelectedLeaderboardUserId={setSelectedLeaderboardUserId}
       trendSignalsByVideoId={chartTrendSignalsByVideoId}
     />
   );
-  const historyContent = (
-    <RankingGameHistoryTab
-      emptyMessage={historyEmptyMessage}
-      historyPlaybackLoadingVideoId={historyPlaybackLoadingVideoId}
-      isLoading={isGameHistoryLoading}
-      onSelectPosition={(position, playbackQueueId) => {
-        void handleSelectGameHistoryVideo(position, playbackQueueId);
-      }}
-      positions={gameHistoryPositions}
-      resolvePlaybackQueueId={resolveHistoryPlaybackQueueId}
-      selectedVideoId={selectedVideoId}
-    />
-  );
-  const selectedVideoActionsContent = selectedVideoId ? (
-    <RankingGameSelectedVideoActions
-      buyActionTitle={buyActionTitle}
-      canShowGameActions={canShowGameActions}
-      currentVideoGamePriceSummary={currentVideoGamePriceSummary}
-      isBuyDisabled={isSelectedVideoBuyDisabled}
-      isBuySubmitting={isBuySubmitting}
-      isChartDisabled={isChartActionDisabled}
-      isSellDisabled={isSelectedVideoSellDisabled}
-      isSellSubmitting={isSellSubmitting}
-      onOpenBuyTradeModal={openBuyTradeModal}
-      onOpenRankHistory={openSelectedVideoRankHistory}
-      onOpenSellTradeModal={openSellTradeModal}
-      selectedGameActionTitle={selectedGameActionTitle}
-      selectedVideoOpenPositionCount={selectedVideoOpenPositionCount}
-      selectedVideoTradeThumbnailUrl={selectedVideoTradeThumbnailUrl}
-      sellActionTitle={sellActionTitle}
-    />
-  ) : null;
-  const activeGameTabContent =
-    activeGameTab === 'positions'
-      ? positionsContent
-      : activeGameTab === 'history'
-        ? historyContent
-        : leaderboardContent;
-  const portfolioContent =
-    isAllCategorySelected && isApiConfigured && authStatus === 'authenticated' ? (
-      <RankingGamePanelShell
-        activeGameTab={activeGameTab}
-        dividendOverview={
-          <RankingGameDividendOverview
-            onOpenDetails={() => setIsDividendModalOpen(true)}
-            overview={gameDividendOverview}
-            season={currentGameSeason}
-          />
-        }
-        helperText={rankingGameHelperText}
-        isCollapsed={isRankingGameCollapsed}
-        isHelperWarning={isCurrentVideoGameHelperWarning}
-        onSelectTab={setActiveGameTab}
-        onToggleCollapse={() => toggleCollapsedSection(RANKING_GAME_SECTION_ID)}
-        season={currentGameSeason}
-        selectedVideoActions={selectedVideoActionsContent}
-        statusMessage={gameActionStatus}
-        summary={{
-          computedWalletTotalAssetPoints,
-          openDistinctVideoCount,
-          openPositionsBuyPoints,
-          openPositionsEvaluationPoints,
-          openPositionsProfitPoints,
-        }}
-        tabContent={activeGameTabContent}
-      />
-    ) : null;
-  const realtimeSurgingFeaturedSection = featuredChartSections.find(
-    (featuredSection) => featuredSection.section.categoryId === REALTIME_SURGING_QUEUE_ID,
-  );
-  const newChartEntriesFeaturedSection = featuredChartSections.find(
-    (featuredSection) => featuredSection.section.categoryId === NEW_CHART_ENTRIES_QUEUE_ID,
-  );
-  const favoriteChartGetRankLabel = useCallback(
-    (item: YouTubeVideoItem) => {
-      const signal = favoriteTrendSignalsByVideoId[item.id];
-
-      if (signal?.currentRank) {
-        return `${signal.currentRank}위`;
-      }
-
-      return hasResolvedFavoriteTrendSignals ? '현재 순위 미집계' : '현재 순위 확인 중';
-    },
-    [favoriteTrendSignalsByVideoId, hasResolvedFavoriteTrendSignals],
-  );
-  const popularChartGetRankLabel = useCallback(
-    (item: YouTubeVideoItem) => {
-      const signal = chartTrendSignalsByVideoId[item.id];
-
-      if (signal?.currentRank) {
-        return `${signal.currentRank}위`;
-      }
-
-      return hasResolvedChartTrendSignals ? '현재 순위 미집계' : '현재 순위 확인 중';
-    },
-    [chartTrendSignalsByVideoId, hasResolvedChartTrendSignals],
-  );
-  const favoriteFeaturedSection =
-    authStatus === 'authenticated' && buyableFavoriteChartSection
-      ? {
-          section: buyableFavoriteChartSection,
-          eyebrow: 'Favorite Videos',
-          emptyMessage:
-            favoriteStreamers.length === 0
-              ? '저장한 채널이 생기면 해당 채널의 인기 영상을 여기에서 바로 볼 수 있습니다.'
-              : isBuyableOnlyFilterActive
-                ? '지금 매수 가능한 즐겨찾기 영상이 없습니다. 필터를 해제하거나 다른 보기를 확인해 보세요.'
-              : undefined,
-          getRankLabel: favoriteChartGetRankLabel,
-        }
-      : undefined;
-  const activeChartSection =
-    effectiveChartView === 'realtime-surging'
-        ? realtimeSurgingFeaturedSection?.section
-      : effectiveChartView === 'new-chart-entries'
-        ? newChartEntriesFeaturedSection?.section
-        : effectiveChartView === 'favorites'
-          ? buyableFavoriteChartSection
-          : effectiveChartView === 'popular'
-            ? filteredSelectedPlaybackSection
-        : filteredSelectedPlaybackSection;
-  const activeChartFeaturedSections: typeof featuredChartSections =
-    effectiveChartView === 'all'
-      ? favoriteFeaturedSection
-        ? [...featuredChartSections, favoriteFeaturedSection]
-        : featuredChartSections
-      : [];
-  const activeChartSectionEyebrow =
-    effectiveChartView === 'realtime-surging'
-      ? realtimeSurgingFeaturedSection?.eyebrow
-      : effectiveChartView === 'new-chart-entries'
-        ? newChartEntriesFeaturedSection?.eyebrow
-        : effectiveChartView === 'favorites'
-          ? 'Favorite Videos'
-          : effectiveChartView === 'popular'
-            ? 'Popular Videos'
-        : 'Category Ranking';
-  const activeChartRankLabel =
-    effectiveChartView === 'realtime-surging'
-      ? realtimeSurgingFeaturedSection?.getRankLabel
-      : effectiveChartView === 'new-chart-entries'
-        ? newChartEntriesFeaturedSection?.getRankLabel
-        : effectiveChartView === 'favorites'
-          ? favoriteChartGetRankLabel
-          : effectiveChartView === 'popular'
-            ? popularChartGetRankLabel
-        : undefined;
-  const activeChartEmptyMessage =
-    effectiveChartView === 'realtime-surging'
-      ? realtimeSurgingFeaturedSection?.emptyMessage
-      : effectiveChartView === 'new-chart-entries'
-        ? newChartEntriesFeaturedSection?.emptyMessage
-        : effectiveChartView === 'favorites'
-          ? favoriteStreamers.length === 0
-            ? '저장한 채널이 생기면 해당 채널의 인기 영상을 여기에서 바로 볼 수 있습니다.'
-            : isBuyableOnlyFilterActive
-              ? '지금 매수 가능한 즐겨찾기 영상이 없습니다. 필터를 해제하거나 다른 보기를 확인해 보세요.'
-            : undefined
-        : undefined;
-  const isTrendOnlyViewSelected = effectiveChartView !== 'all';
-  const activeTrendViewIsLoading =
-    effectiveChartView === 'realtime-surging'
-      ? isRealtimeSurgingLoading
-      : effectiveChartView === 'new-chart-entries'
-        ? isNewChartEntriesLoading
-        : effectiveChartView === 'favorites'
-          ? isFavoriteStreamersLoading || isFavoriteStreamerVideosLoading
-        : false;
-  const activeTrendViewIsError =
-    effectiveChartView === 'realtime-surging'
-      ? isRealtimeSurgingError
-      : effectiveChartView === 'new-chart-entries'
-        ? isNewChartEntriesError
-        : effectiveChartView === 'favorites'
-          ? isFavoriteStreamersError || isFavoriteStreamerVideosError
-        : false;
-  const activeChartIsLoading =
-    effectiveChartView === 'favorites'
-      ? activeTrendViewIsLoading
-      : isTrendOnlyViewSelected
-        ? isChartLoading || activeTrendViewIsLoading
-        : isChartLoading;
-  const activeChartIsError =
-    effectiveChartView === 'favorites'
-      ? activeTrendViewIsError
-      : isTrendOnlyViewSelected
-        ? isChartError || activeTrendViewIsError
-        : isChartError;
-  const activeChartErrorMessage =
-    effectiveChartView === 'favorites'
-      ? isFavoriteStreamersError
-        ? '즐겨찾기 채널을 불러오지 못했습니다.'
-        : favoriteStreamerVideoErrorMessage
-      : activeTrendViewIsError && !chartErrorMessage
-        ? '선택한 차트 보기를 불러오지 못했습니다.'
-        : chartErrorMessage;
-  const activeChartHasNextPage =
-    effectiveChartView === 'favorites'
-      ? hasNextFavoriteStreamerVideosPage
-      : effectiveChartView === 'realtime-surging' || effectiveChartView === 'new-chart-entries'
-        ? false
-        : hasNextPage;
-  const activeChartMainSectionCollapseKey = isTrendOnlyViewSelected
-    ? activeChartSection?.categoryId
-    : MAIN_CHART_SECTION_ID;
-  const activeChartHasResolvedTrendSignals =
-    effectiveChartView === 'favorites' ? hasResolvedFavoriteTrendSignals : hasResolvedChartTrendSignals;
-  const activeChartIsFetchingNextPage =
-    effectiveChartView === 'favorites' ? isFetchingNextFavoriteStreamerVideosPage : isFetchingNextPage;
-  const activeChartTrendSignalsByVideoId =
-    effectiveChartView === 'favorites' ? favoriteTrendSignalsByVideoId : chartTrendSignalsByVideoId;
-  const activeChartOnLoadMore =
-    effectiveChartView === 'favorites'
-      ? () => void fetchNextFavoriteStreamerVideosPage()
-      : () => void fetchNextPage();
-  const activeChartBuyableOnlyFilterAvailable = isBuyableOnlyFilterAvailable;
-  const activeChartBuyableOnlyFilterActive = isBuyableOnlyFilterActive;
-  const activeChartBuyableVideoSearchStatus = buyableVideoSearchStatus;
-  const chartViewExpandedSectionIds: Partial<Record<ChartViewMode, string[]>> = {
-    all: [
-      MAIN_CHART_SECTION_ID,
-      ...featuredChartSections.map(({ section }) => section.categoryId),
-      ...(favoriteFeaturedSection ? [favoriteFeaturedSection.section.categoryId] : []),
-    ],
-    favorites: buyableFavoriteChartSection?.categoryId ? [buyableFavoriteChartSection.categoryId] : [],
-    'new-chart-entries': newChartEntriesFeaturedSection?.section.categoryId
-      ? [newChartEntriesFeaturedSection.section.categoryId]
-      : [],
-    popular: filteredSelectedPlaybackSection?.categoryId ? [filteredSelectedPlaybackSection.categoryId] : [],
-    'realtime-surging': realtimeSurgingFeaturedSection?.section.categoryId
-      ? [realtimeSurgingFeaturedSection.section.categoryId]
-      : [],
-  };
-
-  const chartContent = (
-    <ChartPanel
-      getRankLabel={activeChartRankLabel}
-      buyableVideoSearchStatus={activeChartBuyableVideoSearchStatus}
-      chartErrorMessage={activeChartErrorMessage}
-      featuredSections={activeChartFeaturedSections}
-      collapsedFeaturedSectionIds={collapsedFeaturedSectionIds}
-      hasNextPage={activeChartHasNextPage}
-      hasResolvedTrendSignals={activeChartHasResolvedTrendSignals}
-      isBuyableOnlyFilterActive={activeChartBuyableOnlyFilterActive}
-      isBuyableOnlyFilterAvailable={activeChartBuyableOnlyFilterAvailable}
-      isChartError={activeChartIsError}
-      isChartLoading={activeChartIsLoading}
-      isFetchingNextPage={activeChartIsFetchingNextPage}
-      mainSectionCollapseKey={activeChartMainSectionCollapseKey}
-      onLoadMore={activeChartOnLoadMore}
-      onToggleFeaturedSectionCollapse={toggleCollapsedSection}
-      onToggleBuyableOnlyFilter={() => setIsBuyableOnlyFilterActive((current) => !current)}
-      onSelectVideo={handleSelectVideo}
-      primarySectionEyebrow={activeChartSectionEyebrow}
-      section={activeChartSection}
-      sectionEmptyMessage={activeChartEmptyMessage}
-      selectedCategoryLabel={selectedChartViewOption.label}
-      selectedCountryName={selectedCountryName}
-      selectedVideoId={selectedVideoId}
-      trendSignalsByVideoId={activeChartTrendSignalsByVideoId}
-    />
-  );
-
-  const cinematicChartContent = (
-    <ChartPanel
-      getRankLabel={activeChartRankLabel}
-      buyableVideoSearchStatus={activeChartBuyableVideoSearchStatus}
-      chartErrorMessage={activeChartErrorMessage}
-      className="app-shell__panel--chart-cinematic"
-      featuredSections={activeChartFeaturedSections}
-      collapsedFeaturedSectionIds={collapsedFeaturedSectionIds}
-      hasNextPage={activeChartHasNextPage}
-      hasResolvedTrendSignals={activeChartHasResolvedTrendSignals}
-      isBuyableOnlyFilterActive={activeChartBuyableOnlyFilterActive}
-      isBuyableOnlyFilterAvailable={activeChartBuyableOnlyFilterAvailable}
-      isChartError={activeChartIsError}
-      isChartLoading={activeChartIsLoading}
-      isFetchingNextPage={activeChartIsFetchingNextPage}
-      mainSectionCollapseKey={activeChartMainSectionCollapseKey}
-      onLoadMore={activeChartOnLoadMore}
-      onToggleFeaturedSectionCollapse={toggleCollapsedSection}
-      onToggleBuyableOnlyFilter={() => setIsBuyableOnlyFilterActive((current) => !current)}
-      onSelectVideo={handleSelectVideo}
-      primarySectionEyebrow={activeChartSectionEyebrow}
-      section={activeChartSection}
-      sectionEmptyMessage={activeChartEmptyMessage}
-      selectedCategoryLabel={selectedChartViewOption.label}
-      selectedCountryName={selectedCountryName}
-      selectedVideoId={selectedVideoId}
-      trendSignalsByVideoId={activeChartTrendSignalsByVideoId}
-    />
-  );
-  const filterContent = (
-    <FilterBar
-      onOpenRegionModal={() => setIsRegionModalOpen(true)}
-      onSelectView={handleSelectChartView}
-      selectedCountryName={selectedCountryName}
-      selectedViewId={effectiveChartView}
-      selectedViewLabel={selectedChartViewOption.label}
-      viewOptions={chartViewOptions}
-    />
-  );
-
   return (
     <div className="app-shell">
       <AppHeader
@@ -1619,69 +902,87 @@ function HomePage() {
         user={user}
       />
       <main className="app-shell__main">
-        <PlayerStage
-          authStatus={authStatus}
-          canNavigateVideos={canPlayNextVideo}
-          chartContent={cinematicChartContent}
-          cinematicToggleLabel={cinematicToggleLabel}
-          favoriteToggleHelperText={favoriteToggleHelperText}
-          favoriteToggleLabel={favoriteToggleLabel}
-          filterContent={filterContent}
-          isChartLoading={isChartLoading}
-          isCinematicModeActive={isCinematicModeActive}
-          isFavoriteToggleDisabled={!selectedChannelId || toggleFavoriteStreamerMutation.isPending}
-          isManualPlaybackSaveDisabled={
-            authStatus !== 'authenticated' || !selectedVideoId || isManualPlaybackSavePending
-          }
-          isMobileLayout={isMobileLayout}
-          isSelectedChannelFavorited={isSelectedChannelFavorited}
-          manualPlaybackSaveButtonLabel={isManualPlaybackSavePending ? '스크랩 중...' : '스크랩'}
-          manualPlaybackSaveStatus={manualPlaybackSaveStatus ?? undefined}
-          onManualPlaybackSave={() => void handleManualPlaybackSave()}
-          onNextVideo={handlePlayNextVideo}
-          onOpenRegionModal={() => setIsRegionModalOpen(true)}
-          onPlaybackRestoreApplied={handlePlaybackRestoreApplied}
-          onPreviousVideo={handlePlayPreviousVideo}
-          onToggleCinematicMode={() => void handleToggleCinematicMode()}
-          onToggleFavoriteStreamer={() => void handleToggleFavoriteStreamer()}
-          playbackRestore={pendingPlaybackRestore}
-          playerRef={videoPlayerRef}
-          playerSectionRef={playerSectionRef}
-          playerStageRef={playerStageRef}
-          playerViewportRef={playerViewportRef}
-          selectedCategoryLabel={selectedChartViewOption.label}
-          selectedCountryName={selectedCountryName}
-          selectedVideoChannelTitle={resolvedSelectedVideo?.snippet.channelTitle}
-          selectedVideoId={selectedVideoId}
-          selectedVideoPriceLabel={selectedVideoPriceLabel}
-          selectedVideoRankLabel={selectedVideoRankLabel}
-          selectedVideoRankTrendLabel={selectedVideoRankTrendIndicator?.label}
-          selectedVideoRankTrendTone={selectedVideoRankTrendIndicator?.tone}
-          selectedVideoStatLabel={selectedVideoStatLabel}
-          selectedVideoTitle={resolvedSelectedVideo?.snippet.title}
-          stageActionContent={gameActionContent}
-          supplementalContent={portfolioContent}
-          toggleFavoriteStreamerPending={toggleFavoriteStreamerMutation.isPending}
+        <HomePlaybackSection
+          chartPanelProps={{
+            buyableVideoSearchStatus: activeChartBuyableVideoSearchStatus,
+            chartErrorMessage: activeChartErrorMessage,
+            collapsedFeaturedSectionIds,
+            featuredSections: activeChartFeaturedSections,
+            getRankLabel: activeChartRankLabel,
+            hasNextPage: activeChartHasNextPage,
+            hasResolvedTrendSignals: activeChartHasResolvedTrendSignals,
+            isBuyableOnlyFilterActive: activeChartBuyableOnlyFilterActive,
+            isBuyableOnlyFilterAvailable: activeChartBuyableOnlyFilterAvailable,
+            isChartError: activeChartIsError,
+            isChartLoading: activeChartIsLoading,
+            isFetchingNextPage: activeChartIsFetchingNextPage,
+            mainSectionCollapseKey: activeChartMainSectionCollapseKey,
+            onLoadMore: activeChartOnLoadMore,
+            onSelectVideo: handleSelectVideo,
+            onToggleBuyableOnlyFilter: () => setIsBuyableOnlyFilterActive((current) => !current),
+            onToggleFeaturedSectionCollapse: toggleCollapsedSection,
+            primarySectionEyebrow: activeChartSectionEyebrow,
+            section: activeChartSection,
+            sectionEmptyMessage: activeChartEmptyMessage,
+            selectedCategoryLabel: selectedChartViewOption.label,
+            selectedCountryName,
+            selectedVideoId,
+            trendSignalsByVideoId: activeChartTrendSignalsByVideoId,
+          }}
+          communityPanelProps={{
+            selectedVideoId,
+            selectedVideoTitle: resolvedSelectedVideo?.snippet.title,
+          }}
+          filterBarProps={{
+            onOpenRegionModal: () => setIsRegionModalOpen(true),
+            onSelectView: handleSelectChartView,
+            selectedCountryName,
+            selectedViewId: effectiveChartView,
+            selectedViewLabel: selectedChartViewOption.label,
+            viewOptions: chartViewOptions,
+          }}
+          playerStageProps={{
+            authStatus,
+            canNavigateVideos: canPlayNextVideo,
+            cinematicToggleLabel,
+            favoriteToggleHelperText,
+            favoriteToggleLabel,
+            isChartLoading,
+            isCinematicModeActive,
+            isFavoriteToggleDisabled: !selectedChannelId || toggleFavoriteStreamerMutation.isPending,
+            isManualPlaybackSaveDisabled:
+              authStatus !== 'authenticated' || !selectedVideoId || isManualPlaybackSavePending,
+            isMobileLayout,
+            isSelectedChannelFavorited,
+            manualPlaybackSaveButtonLabel: isManualPlaybackSavePending ? '스크랩 중...' : '스크랩',
+            manualPlaybackSaveStatus: manualPlaybackSaveStatus ?? undefined,
+            onManualPlaybackSave: () => void handleManualPlaybackSave(),
+            onNextVideo: handlePlayNextVideo,
+            onOpenRegionModal: () => setIsRegionModalOpen(true),
+            onPlaybackRestoreApplied: handlePlaybackRestoreApplied,
+            onPreviousVideo: handlePlayPreviousVideo,
+            onToggleCinematicMode: () => void handleToggleCinematicMode(),
+            onToggleFavoriteStreamer: () => void handleToggleFavoriteStreamer(),
+            playbackRestore: pendingPlaybackRestore,
+            playerRef: videoPlayerRef,
+            playerSectionRef,
+            playerStageRef,
+            playerViewportRef,
+            selectedCategoryLabel: selectedChartViewOption.label,
+            selectedCountryName,
+            selectedVideoChannelTitle: resolvedSelectedVideo?.snippet.channelTitle,
+            selectedVideoId,
+            selectedVideoPriceLabel,
+            selectedVideoRankLabel,
+            selectedVideoRankTrendLabel: selectedVideoRankTrendIndicator?.label,
+            selectedVideoRankTrendTone: selectedVideoRankTrendIndicator?.tone,
+            selectedVideoStatLabel,
+            selectedVideoTitle: resolvedSelectedVideo?.snippet.title,
+            stageActionContent: gameActionContent,
+            supplementalContent: portfolioContent,
+            toggleFavoriteStreamerPending: toggleFavoriteStreamerMutation.isPending,
+          }}
         />
-        {isMobileLayout ? (
-          <>
-            {!isCinematicModeActive ? filterContent : null}
-            {!isCinematicModeActive ? chartContent : null}
-            <CommunityPanel
-              selectedVideoId={selectedVideoId}
-              selectedVideoTitle={resolvedSelectedVideo?.snippet.title}
-            />
-          </>
-        ) : (
-          <>
-            {!isCinematicModeActive ? filterContent : null}
-            {!isCinematicModeActive ? chartContent : null}
-            <CommunityPanel
-              selectedVideoId={selectedVideoId}
-              selectedVideoTitle={resolvedSelectedVideo?.snippet.title}
-            />
-          </>
-        )}
       </main>
       <GameRankHistoryModal
         error={
@@ -1694,10 +995,7 @@ function HomePage() {
         history={selectedPositionRankHistory ?? selectedVideoRankHistory}
         isLoading={isPositionRankHistoryLoading || isVideoRankHistoryLoading}
         isOpen={Boolean(selectedRankHistoryPosition || selectedVideoRankHistoryVideoId)}
-        onClose={() => {
-          setSelectedRankHistoryPosition(null);
-          setSelectedVideoRankHistoryVideoId(null);
-        }}
+        onClose={closeRankHistoryModal}
         position={selectedRankHistoryPosition}
         videoFallback={
           resolvedSelectedVideo
@@ -1720,7 +1018,7 @@ function HomePage() {
       />
       <GameDividendModal
         isOpen={isDividendModalOpen}
-        onClose={() => setIsDividendModalOpen(false)}
+        onClose={closeDividendModal}
         overview={gameDividendOverview}
       />
       <GameTradeModal
@@ -1743,7 +1041,7 @@ function HomePage() {
               : Math.max(MIN_GAME_QUANTITY, quantity),
           );
         }}
-        onClose={() => setActiveTradeModal(null)}
+        onClose={closeTradeModal}
         onConfirm={() => void handleBuyCurrentVideo()}
         quantity={normalizedBuyQuantity}
         summaryItems={[
@@ -1776,7 +1074,7 @@ function HomePage() {
               : Math.max(MIN_GAME_QUANTITY, quantity),
           );
         }}
-        onClose={() => setActiveTradeModal(null)}
+        onClose={closeTradeModal}
         onConfirm={() => void handleSellCurrentVideo()}
         quantity={normalizedSellQuantity}
         summaryItems={[

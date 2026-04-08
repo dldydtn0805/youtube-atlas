@@ -54,7 +54,7 @@ describe('useVideoTrendSignals', () => {
   it('does not request trend signals outside the supported region', async () => {
     const { useVideoTrendSignals } = await import('./queries');
 
-    renderHook(() => useVideoTrendSignals('US', '0', ['video-1']), {
+    renderHook(() => useVideoTrendSignals('FR', '0', ['video-1']), {
       wrapper: createWrapper(),
     });
 

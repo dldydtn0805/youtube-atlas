@@ -8,8 +8,10 @@ import {
   filterVideoSection,
   formatSignedProfitRate,
   formatSelectedVideoRankLabel,
+  formatTrendRankLabel,
   NEW_CHART_ENTRIES_QUEUE_ID,
   REALTIME_SURGING_QUEUE_ID,
+  relabelVideoSection,
   shouldRenderRealtimeSurgingSection,
   shouldPrefetchBuyableVideos,
 } from './utils';
@@ -199,6 +201,25 @@ describe('home utils', () => {
     });
   });
 
+  it('relabels a video section without changing its items', () => {
+    expect(
+      relabelVideoSection(
+        {
+          categoryId: '0',
+          description: '테스트 섹션',
+          items: [],
+          label: '전체',
+        },
+        'TOP 200',
+      ),
+    ).toEqual({
+      categoryId: '0',
+      description: '테스트 섹션',
+      items: [],
+      label: 'TOP 200',
+    });
+  });
+
   it('prefetches more pages only while buyable-only filtering needs more videos', () => {
     expect(
       shouldPrefetchBuyableVideos({
@@ -245,6 +266,30 @@ describe('home utils', () => {
     expect(formatSelectedVideoRankLabel('대한민국', 137)).toBe('137위');
     expect(formatSelectedVideoRankLabel('대한민국', 137, { chartOut: true })).toBe('차트 아웃');
     expect(formatSelectedVideoRankLabel('대한민국', null)).toBeUndefined();
+  });
+
+  it('formats current trend ranks before falling back to loading or missing states', () => {
+    expect(
+      formatTrendRankLabel(
+        {
+          categoryId: '0',
+          categoryLabel: '전체',
+          capturedAt: '2026-04-04T00:00:00.000Z',
+          currentRank: 4,
+          currentViewCount: 1000,
+          isNew: false,
+          previousRank: 4,
+          previousViewCount: 900,
+          rankChange: 0,
+          regionCode: 'KR',
+          videoId: 'video-1',
+          viewCountDelta: 100,
+        },
+        true,
+      ),
+    ).toBe('4위');
+    expect(formatTrendRankLabel(undefined, false)).toBe('현재 순위 확인 중');
+    expect(formatTrendRankLabel(undefined, true)).toBe('현재 순위 미집계');
   });
 
   it('formats position profit as a signed percentage', () => {
