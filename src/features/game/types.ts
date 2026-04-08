@@ -53,8 +53,7 @@ export interface GameLeaderboardEntry {
 
 export interface GameDividendRank {
   rank: number;
-  weight: number;
-  equalValuePoolSharePercent: number;
+  dividendRatePercent: number;
 }
 
 export interface GameDividendPosition {
@@ -67,18 +66,15 @@ export interface GameDividendPosition {
   currentValuePoints: number | null;
   rankEligible: boolean;
   holdEligible: boolean;
-  dividendWeight: number;
-  weightedValuePoints: number;
-  estimatedPoolSharePercent: number;
+  dividendRatePercent: number;
+  estimatedDividendPoints: number;
   nextEligibleInSeconds: number | null;
 }
 
 export interface GameDividendOverview {
   eligibleRankCutoff: number;
   minimumHoldSeconds: number;
-  totalWeightedValuePoints: number;
-  myWeightedValuePoints: number;
-  myEstimatedPoolSharePercent: number;
+  myEstimatedDividendPoints: number;
   myEligiblePositionCount: number;
   myWarmingUpPositionCount: number;
   ranks: GameDividendRank[];

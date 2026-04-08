@@ -9,7 +9,6 @@ import type { VideoTrendSignal } from '../../../features/trending/types';
 import { getPrimaryVideoTrendBadge } from '../../../features/trending/presentation';
 import {
   formatGameQuantity,
-  formatPercent,
   formatGameTimestamp,
   formatHoldCountdown,
   formatMaybePoints,
@@ -103,6 +102,7 @@ interface RankingGameHistoryTabProps {
 }
 
 interface RankingGameDividendOverviewProps {
+  onOpenDetails: () => void;
   overview?: GameDividendOverview;
 }
 
@@ -425,7 +425,7 @@ export function RankingGamePanelShell({
   );
 }
 
-export function RankingGameDividendOverview({ overview }: RankingGameDividendOverviewProps) {
+export function RankingGameDividendOverview({ onOpenDetails, overview }: RankingGameDividendOverviewProps) {
   if (!overview) {
     return null;
   }
@@ -437,15 +437,15 @@ export function RankingGameDividendOverview({ overview }: RankingGameDividendOve
           <p className="app-shell__game-dividend-eyebrow">Dividend Preview</p>
           <h4 className="app-shell__game-dividend-title">Top {overview.eligibleRankCutoff} 배당 구간</h4>
           <p className="app-shell__game-dividend-helper">
-            현재 시점 기준 예상 배당 지분입니다. 최소 {formatHoldCountdown(overview.minimumHoldSeconds)} 보유한
+            현재 평가금액 기준 예상 배당입니다. 최소 {formatHoldCountdown(overview.minimumHoldSeconds)} 보유한
             포지션만 반영돼요.
           </p>
         </div>
         <div className="app-shell__game-dividend-metrics" aria-label="배당 요약">
           <span className="app-shell__game-dividend-metric">
-            <span className="app-shell__game-dividend-metric-label">내 현재 지분</span>
+            <span className="app-shell__game-dividend-metric-label">내 예상 배당</span>
             <strong className="app-shell__game-dividend-metric-value">
-              {formatPercent(overview.myEstimatedPoolSharePercent)}
+              {formatPoints(overview.myEstimatedDividendPoints)}
             </strong>
           </span>
           <span className="app-shell__game-dividend-metric">
@@ -458,48 +458,14 @@ export function RankingGameDividendOverview({ overview }: RankingGameDividendOve
           </span>
         </div>
       </div>
-      <ol className="app-shell__game-dividend-ladder">
-        {overview.ranks.map((rank) => (
-          <li key={rank.rank} className="app-shell__game-dividend-rank">
-            <span className="app-shell__game-dividend-rank-label">{rank.rank}위</span>
-            <strong className="app-shell__game-dividend-rank-share">
-              {formatPercent(rank.equalValuePoolSharePercent)}
-            </strong>
-            <span className="app-shell__game-dividend-rank-weight">가중치 {rank.weight}</span>
-          </li>
-        ))}
-      </ol>
-      {overview.positions.length > 0 ? (
-        <ul className="app-shell__game-dividend-positions">
-          {overview.positions.map((position) => (
-            <li key={position.positionId} className="app-shell__game-dividend-position">
-              <img
-                alt=""
-                className="app-shell__game-dividend-position-thumb"
-                loading="lazy"
-                src={position.thumbnailUrl}
-              />
-              <div className="app-shell__game-dividend-position-copy">
-                <p className="app-shell__game-dividend-position-title">{position.title}</p>
-                <p className="app-shell__game-dividend-position-meta">
-                  현재 <span className="app-shell__game-rank-emphasis">{formatRank(position.currentRank)}</span> · 평가{' '}
-                  {formatMaybePoints(position.currentValuePoints)} · 수량 {formatGameQuantity(position.quantity)}
-                </p>
-                <p className="app-shell__game-dividend-position-meta">
-                  {position.holdEligible
-                    ? `현재 예상 지분 ${formatPercent(position.estimatedPoolSharePercent)}`
-                    : position.nextEligibleInSeconds !== null
-                      ? `${formatHoldCountdown(position.nextEligibleInSeconds)} 뒤 배당 반영`
-                      : '배당 대기 중'}
-                  {' · '}가중치 {position.dividendWeight}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="app-shell__game-empty">현재 Top {overview.eligibleRankCutoff} 안에 든 내 보유 포지션이 없습니다.</p>
-      )}
+      <div className="app-shell__game-dividend-actions">
+        <p className="app-shell__game-dividend-action-copy">
+          1위~20위 고정 배당률과 내 배당 대상 포지션은 상세 모달에서 확인할 수 있어요.
+        </p>
+        <button className="app-shell__game-panel-action" onClick={onOpenDetails} type="button">
+          배당 표 보기
+        </button>
+      </div>
     </section>
   );
 }

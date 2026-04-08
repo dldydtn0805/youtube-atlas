@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
 import AppHeader from './sections/AppHeader';
 import { ChartPanel, CommunityPanel, FavoriteVideosPanel } from './sections/ContentPanels';
+import GameDividendModal from './sections/GameDividendModal';
 import { CinematicQuickFilters, FilterModal, FilterSummaryPanel } from './sections/FilterPanels';
 import GameRankHistoryModal from './sections/GameRankHistoryModal';
 import GameTradeModal from './sections/GameTradeModal';
@@ -16,6 +17,7 @@ import {
 } from './sections/RankingGamePanel';
 import {
   buildOpenGameHoldings,
+  calculateEstimatedDividendPoints,
   DEFAULT_GAME_QUANTITY,
   formatHoldCountdown,
   formatPercent,
@@ -128,6 +130,7 @@ function HomePage() {
   const [selectedLeaderboardUserId, setSelectedLeaderboardUserId] = useState<number | null>(null);
   const [selectedRankHistoryPosition, setSelectedRankHistoryPosition] = useState<GamePosition | null>(null);
   const [selectedVideoRankHistoryVideoId, setSelectedVideoRankHistoryVideoId] = useState<string | null>(null);
+  const [isDividendModalOpen, setIsDividendModalOpen] = useState(false);
   const [activeTradeModal, setActiveTradeModal] = useState<'buy' | 'sell' | null>(null);
   const [activeTradeRequest, setActiveTradeRequest] = useState<'buy' | 'sell' | null>(null);
   const [buyQuantity, setBuyQuantity] = useState(DEFAULT_GAME_QUANTITY);
@@ -985,9 +988,9 @@ function HomePage() {
           {(() => {
             const selectedRank = selectedVideoCurrentChartRank;
             const matchingRank = gameDividendOverview.ranks.find((rank) => rank.rank === selectedRank);
-            const positionSharePercent = gameDividendOverview.positions
+            const positionEstimatedDividendPoints = gameDividendOverview.positions
               .filter((position) => position.videoId === selectedVideoId && position.holdEligible)
-              .reduce((sum, position) => sum + position.estimatedPoolSharePercent, 0);
+              .reduce((sum, position) => sum + position.estimatedDividendPoints, 0);
             const warmingUpPosition = gameDividendOverview.positions.find(
               (position) => position.videoId === selectedVideoId && !position.holdEligible,
             );
@@ -996,15 +999,15 @@ function HomePage() {
               return `20위 안에 들면 배당 구간에 들어갑니다.`;
             }
 
-            if (positionSharePercent > 0) {
-              return `배당 대상 ${matchingRank.rank}위 · 가중치 ${matchingRank.weight} · 내 현재 예상 지분 ${formatPercent(positionSharePercent)}`;
+            if (positionEstimatedDividendPoints > 0) {
+              return `배당 대상 ${matchingRank.rank}위 · 예상 배당 ${formatPoints(positionEstimatedDividendPoints)} · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
             }
 
             if (typeof warmingUpPosition?.nextEligibleInSeconds === 'number') {
-              return `배당 대상 ${matchingRank.rank}위 · ${formatHoldCountdown(warmingUpPosition.nextEligibleInSeconds)} 뒤 배당 반영`;
+              return `배당 대상 ${matchingRank.rank}위 · ${formatHoldCountdown(warmingUpPosition.nextEligibleInSeconds)} 뒤 배당 반영 · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
             }
 
-            return `배당 대상 ${matchingRank.rank}위 · 동일 금액 기준 배당풀 ${formatPercent(matchingRank.equalValuePoolSharePercent)}`;
+            return `배당 대상 ${matchingRank.rank}위 · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
           })()}
         </p>
       ) : null}
@@ -1040,7 +1043,12 @@ function HomePage() {
               return `20위 안 진입 시 배당 구간에 들어갑니다.`;
             }
 
-            return `배당 대상 ${matchingRank.rank}위 · 가중치 ${matchingRank.weight} · 동일 금액 기준 배당풀 ${formatPercent(matchingRank.equalValuePoolSharePercent)}`;
+            const estimatedDividendPoints = calculateEstimatedDividendPoints(
+              selectedVideoMarketEntry.currentPricePoints,
+              matchingRank.dividendRatePercent,
+            );
+
+            return `배당 대상 ${matchingRank.rank}위 · 예상 배당 ${formatPoints(estimatedDividendPoints ?? 0)} · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
           })()}
         </p>
       ) : null}
@@ -1263,7 +1271,12 @@ function HomePage() {
     isAllCategorySelected && isGameRegionSelected && isApiConfigured && authStatus === 'authenticated' ? (
       <RankingGamePanelShell
         activeGameTab={activeGameTab}
-        dividendOverview={<RankingGameDividendOverview overview={gameDividendOverview} />}
+        dividendOverview={
+          <RankingGameDividendOverview
+            onOpenDetails={() => setIsDividendModalOpen(true)}
+            overview={gameDividendOverview}
+          />
+        }
         helperText={rankingGameHelperText}
         isCollapsed={isRankingGameCollapsed}
         isHelperWarning={isCurrentVideoGameHelperWarning}
@@ -1502,6 +1515,11 @@ function HomePage() {
               }
             : null
         }
+      />
+      <GameDividendModal
+        isOpen={isDividendModalOpen}
+        onClose={() => setIsDividendModalOpen(false)}
+        overview={gameDividendOverview}
       />
       <GameTradeModal
         confirmLabel={`${formatGameQuantity(normalizedBuyQuantity)} 매수`}

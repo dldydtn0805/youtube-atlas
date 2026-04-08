@@ -981,6 +981,20 @@
   line-height: 1.2;
 }
 
+.app-shell__game-dividend-actions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.app-shell__game-dividend-action-copy {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
 .app-shell__game-dividend-ladder {
   display: grid;
   gap: 8px;
@@ -3375,6 +3389,11 @@
 
   .app-shell__game-dividend-metrics {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .app-shell__game-dividend-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .app-shell__game-dividend-position {
