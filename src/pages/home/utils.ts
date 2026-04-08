@@ -1,5 +1,5 @@
 import countryCodes from '../../constants/countryCodes';
-import { ALL_VIDEO_CATEGORY_ID } from '../../constants/videoCategories';
+import { ALL_VIDEO_CATEGORY_ID, TREND_SNAPSHOT_REGION_CODES } from '../../constants/videoCategories';
 import type { GamePosition } from '../../features/game/types';
 import type { PlaybackProgress } from '../../features/playback/types';
 import { formatCompactCount } from '../../features/trending/presentation';
@@ -43,11 +43,11 @@ export interface PendingPlaybackRestore {
   positionSeconds: number;
 }
 
-const SUPPORTED_REGION_CODES = new Set<string>(countryCodes.map((country) => country.code));
+const SUPPORTED_REGION_CODES = new Set<string>(TREND_SNAPSHOT_REGION_CODES);
 
-export const sortedCountryCodes = [...countryCodes].sort((left, right) =>
-  left.name.localeCompare(right.name, 'ko'),
-);
+export const sortedCountryCodes = countryCodes
+  .filter((country) => SUPPORTED_REGION_CODES.has(country.code))
+  .sort((left, right) => left.name.localeCompare(right.name, 'ko'));
 
 export function isSupportedRegionCode(regionCode: string): regionCode is RegionCode {
   return SUPPORTED_REGION_CODES.has(regionCode);
