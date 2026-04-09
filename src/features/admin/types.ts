@@ -66,10 +66,16 @@ export interface AdminFavoriteSummary {
 export interface AdminDashboard {
   metrics: AdminSummaryMetrics;
   activeSeason: AdminSeasonSummary | null;
+  activeSeasons?: AdminSeasonSummary[];
   latestTrendRun: AdminTrendRunSummary | null;
   recentUsers: AdminUserSummary[];
   recentComments: AdminCommentSummary[];
   recentFavorites: AdminFavoriteSummary[];
+}
+
+export interface AdminSeasonScheduleUpdateRequest {
+  startAt: string;
+  endAt: string;
 }
 
 export interface AdminPlaybackProgress {
@@ -93,6 +99,7 @@ export interface AdminCoinTierSummary {
 export interface AdminUserGameSummary {
   seasonId: number;
   seasonName: string;
+  regionCode: string;
   participating: boolean;
   balancePoints: number | null;
   reservedPoints: number | null;
@@ -116,6 +123,7 @@ export interface AdminUserDetail {
   favoriteCount: number;
   lastPlaybackProgress: AdminPlaybackProgress | null;
   activeSeasonGame: AdminUserGameSummary | null;
+  activeSeasonGames?: AdminUserGameSummary[];
 }
 
 export interface AdminUserList {
@@ -126,6 +134,7 @@ export interface AdminUserList {
 }
 
 export interface AdminWalletUpdateRequest {
+  seasonId: number;
   balancePoints: number;
   reservedPoints: number;
   realizedPnlPoints: number;

@@ -1,6 +1,8 @@
 import { fetchApi } from '../../lib/api';
 import type {
   AdminDashboard,
+  AdminSeasonScheduleUpdateRequest,
+  AdminSeasonSummary,
   AdminUserDetail,
   AdminUserList,
   AdminWalletUpdateRequest,
@@ -12,6 +14,28 @@ function createAuthorizationHeader(accessToken: string) {
 
 export async function fetchAdminDashboard(accessToken: string) {
   return fetchApi<AdminDashboard>('/api/admin/dashboard', {
+    headers: createAuthorizationHeader(accessToken),
+  });
+}
+
+export async function updateAdminSeasonSchedule(
+  accessToken: string,
+  seasonId: number,
+  request: AdminSeasonScheduleUpdateRequest,
+) {
+  return fetchApi<AdminSeasonSummary>(`/api/admin/seasons/${seasonId}`, {
+    method: 'PATCH',
+    headers: {
+      ...createAuthorizationHeader(accessToken),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+}
+
+export async function closeAdminSeason(accessToken: string, seasonId: number) {
+  return fetchApi<void>(`/api/admin/seasons/${seasonId}/close`, {
+    method: 'POST',
     headers: createAuthorizationHeader(accessToken),
   });
 }

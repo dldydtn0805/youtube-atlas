@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  closeAdminSeason,
   deleteAdminUser,
   fetchAdminDashboard,
   fetchAdminUserDetail,
   fetchAdminUsers,
+  updateAdminSeasonSchedule,
   updateAdminUserWallet,
 } from './api';
-import type { AdminWalletUpdateRequest } from './types';
+import type { AdminSeasonScheduleUpdateRequest, AdminWalletUpdateRequest } from './types';
 
 export const adminQueryKeys = {
   all: (accessToken: string | null) => ['admin', accessToken] as const,
@@ -60,6 +62,40 @@ export function useUpdateAdminUserWallet(accessToken: string | null) {
         queryClient.invalidateQueries({ queryKey: adminQueryKeys.dashboard(accessToken) }),
         queryClient.invalidateQueries({ queryKey: ['admin', accessToken, 'users'] }),
         queryClient.invalidateQueries({ queryKey: adminQueryKeys.userDetail(accessToken, data.id) }),
+      ]);
+    },
+  });
+}
+
+export function useUpdateAdminSeasonSchedule(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      seasonId,
+      request,
+    }: {
+      seasonId: number;
+      request: AdminSeasonScheduleUpdateRequest;
+    }) => updateAdminSeasonSchedule(accessToken as string, seasonId, request),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: adminQueryKeys.dashboard(accessToken) }),
+        queryClient.invalidateQueries({ queryKey: ['admin', accessToken, 'user'] }),
+      ]);
+    },
+  });
+}
+
+export function useCloseAdminSeason(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (seasonId: number) => closeAdminSeason(accessToken as string, seasonId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: adminQueryKeys.dashboard(accessToken) }),
+        queryClient.invalidateQueries({ queryKey: ['admin', accessToken, 'user'] }),
       ]);
     },
   });

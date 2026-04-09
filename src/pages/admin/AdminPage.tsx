@@ -2,18 +2,22 @@ import { useEffect, useState } from 'react';
 import GoogleLoginButton from '../../components/GoogleLoginButton/GoogleLoginButton';
 import { useAuth } from '../../features/auth/useAuth';
 import {
+  useCloseAdminSeason,
   useAdminDashboard,
   useAdminUserDetail,
   useAdminUsers,
   useDeleteAdminUser,
+  useUpdateAdminSeasonSchedule,
   useUpdateAdminUserWallet,
 } from '../../features/admin/queries';
 import type {
   AdminCommentSummary,
   AdminFavoriteSummary,
+  AdminSeasonSummary,
   AdminTrendSnapshot,
   AdminCoinTierSummary,
   AdminUserDetail,
+  AdminUserGameSummary,
   AdminUserSummary,
 } from '../../features/admin/types';
 import useLogoutOnUnauthorized from '../home/hooks/useLogoutOnUnauthorized';
@@ -59,6 +63,60 @@ function getRemainingCoinsToNextTier(coinBalance: number | null | undefined, nex
   }
 
   return Math.max(nextTier.minCoinBalance - coinBalance, 0);
+}
+
+function getActiveSeasonGames(user: AdminUserDetail | null | undefined) {
+  if (!user) {
+    return [] as AdminUserGameSummary[];
+  }
+
+  if (Array.isArray(user.activeSeasonGames) && user.activeSeasonGames.length > 0) {
+    return user.activeSeasonGames;
+  }
+
+  return user.activeSeasonGame ? [user.activeSeasonGame] : [];
+}
+
+function getDashboardActiveSeasons(dashboard: { activeSeason?: AdminSeasonSummary | null; activeSeasons?: AdminSeasonSummary[] } | null | undefined) {
+  if (!dashboard) {
+    return [] as AdminSeasonSummary[];
+  }
+
+  if (Array.isArray(dashboard.activeSeasons) && dashboard.activeSeasons.length > 0) {
+    return dashboard.activeSeasons;
+  }
+
+  return dashboard.activeSeason ? [dashboard.activeSeason] : [];
+}
+
+function formatDateTimeInput(value: string | null | undefined) {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return localDate.toISOString().slice(0, 16);
+}
+
+function parseDateTimeInput(value: string, label: string) {
+  const normalized = value.trim();
+
+  if (!normalized) {
+    throw new Error(`${label} 시각을 입력해주세요.`);
+  }
+
+  const parsedDate = new Date(normalized);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    throw new Error(`${label} 시각 형식이 올바르지 않습니다.`);
+  }
+
+  return parsedDate.toISOString();
 }
 
 function MetricCard({
@@ -225,6 +283,8 @@ function UserDirectoryTable({
 
 function UserDetailPanel({
   user,
+  selectedSeasonId,
+  onSelectSeason,
   walletDraft,
   onWalletDraftChange,
   onSaveWallet,
@@ -233,6 +293,8 @@ function UserDetailPanel({
   isDeleting,
 }: {
   user: AdminUserDetail;
+  selectedSeasonId: number | null;
+  onSelectSeason: (seasonId: number) => void;
   walletDraft: {
     balancePoints: string;
     reservedPoints: string;
@@ -248,9 +310,14 @@ function UserDetailPanel({
   isSaving: boolean;
   isDeleting: boolean;
 }) {
+  const activeSeasonGames = getActiveSeasonGames(user);
+  const selectedSeasonGame =
+    activeSeasonGames.find((item) => item.seasonId === selectedSeasonId) ??
+    activeSeasonGames[0] ??
+    null;
   const remainingCoinsToNextTier = getRemainingCoinsToNextTier(
-    user.activeSeasonGame?.coinBalance,
-    user.activeSeasonGame?.nextCoinTier,
+    selectedSeasonGame?.coinBalance,
+    selectedSeasonGame?.nextCoinTier,
   );
 
   return (
@@ -289,20 +356,39 @@ function UserDetailPanel({
         <div className="admin-page__section-header">
           <h3 className="admin-page__section-title">활성 시즌 지갑 수정</h3>
           <span className="admin-page__section-caption">
-            {user.activeSeasonGame ? user.activeSeasonGame.seasonName : '활성 시즌 없음'}
+            {selectedSeasonGame ? `${selectedSeasonGame.regionCode} · ${selectedSeasonGame.seasonName}` : '활성 시즌 없음'}
           </span>
         </div>
-        {user.activeSeasonGame ? (
+        {activeSeasonGames.length > 1 ? (
+          <div className="admin-page__season-selector" role="tablist" aria-label="활성 시즌 지갑 선택">
+            {activeSeasonGames.map((seasonGame) => (
+              <button
+                aria-selected={seasonGame.seasonId === selectedSeasonId}
+                className="admin-page__season-tab"
+                data-active={seasonGame.seasonId === selectedSeasonId}
+                key={seasonGame.seasonId}
+                onClick={() => onSelectSeason(seasonGame.seasonId)}
+                role="tab"
+                type="button"
+              >
+                <strong>{seasonGame.regionCode}</strong>
+                <span>{seasonGame.seasonName}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {selectedSeasonGame ? (
           <>
             <div className="admin-page__detail-list admin-page__detail-list--compact">
-              <p><span>참여 여부</span><strong>{user.activeSeasonGame.participating ? '참여 중' : '미참여'}</strong></p>
-              <p><span>오픈 포지션</span><strong>{formatNumber(user.activeSeasonGame.openPositionCount)}</strong></p>
-              <p><span>종료 포지션</span><strong>{formatNumber(user.activeSeasonGame.closedPositionCount)}</strong></p>
-              <p><span>코인 보유량</span><strong>{formatNumber(user.activeSeasonGame.coinBalance)}</strong></p>
-              <p><span>현재 티어</span><strong>{user.activeSeasonGame.currentCoinTier?.displayName ?? '-'}</strong></p>
-              <p><span>다음 티어</span><strong>{user.activeSeasonGame.nextCoinTier?.displayName ?? '최종 티어'}</strong></p>
+              <p><span>지역</span><strong>{selectedSeasonGame.regionCode}</strong></p>
+              <p><span>참여 여부</span><strong>{selectedSeasonGame.participating ? '참여 중' : '미참여'}</strong></p>
+              <p><span>오픈 포지션</span><strong>{formatNumber(selectedSeasonGame.openPositionCount)}</strong></p>
+              <p><span>종료 포지션</span><strong>{formatNumber(selectedSeasonGame.closedPositionCount)}</strong></p>
+              <p><span>코인 보유량</span><strong>{formatNumber(selectedSeasonGame.coinBalance)}</strong></p>
+              <p><span>현재 티어</span><strong>{selectedSeasonGame.currentCoinTier?.displayName ?? '-'}</strong></p>
+              <p><span>다음 티어</span><strong>{selectedSeasonGame.nextCoinTier?.displayName ?? '최종 티어'}</strong></p>
               <p><span>다음 티어까지</span><strong>{remainingCoinsToNextTier !== null ? formatNumber(remainingCoinsToNextTier) : '-'}</strong></p>
-              <p><span>총 자산</span><strong>{formatNumber(user.activeSeasonGame.totalAssetPoints)}</strong></p>
+              <p><span>총 자산</span><strong>{formatNumber(selectedSeasonGame.totalAssetPoints)}</strong></p>
             </div>
             <div className="admin-page__form-grid">
               <label className="admin-page__field">
@@ -398,6 +484,9 @@ export default function AdminPage() {
   const [searchInput, setSearchInput] = useState('');
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  const [seasonDrafts, setSeasonDrafts] = useState<Record<number, { startAt: string; endAt: string }>>({});
+  const [seasonActionState, setSeasonActionState] = useState<{ seasonId: number; type: 'save' | 'close' } | null>(null);
   const [walletDraft, setWalletDraft] = useState({
     balancePoints: '',
     reservedPoints: '',
@@ -409,6 +498,8 @@ export default function AdminPage() {
   const dashboardQuery = useAdminDashboard(accessToken, status === 'authenticated');
   const usersQuery = useAdminUsers(accessToken, submittedQuery, status === 'authenticated');
   const detailQuery = useAdminUserDetail(accessToken, selectedUserId, status === 'authenticated');
+  const updateSeasonMutation = useUpdateAdminSeasonSchedule(accessToken);
+  const closeSeasonMutation = useCloseAdminSeason(accessToken);
   const updateWalletMutation = useUpdateAdminUserWallet(accessToken);
   const deleteUserMutation = useDeleteAdminUser(accessToken);
 
@@ -430,7 +521,39 @@ export default function AdminPage() {
   }, [selectedUserId, usersQuery.data]);
 
   useEffect(() => {
-    const game = detailQuery.data?.activeSeasonGame;
+    const activeSeasons = getDashboardActiveSeasons(dashboardQuery.data);
+
+    setSeasonDrafts((current) =>
+      Object.fromEntries(
+        activeSeasons.map((season) => [
+          season.id,
+          {
+            startAt: current[season.id]?.startAt ?? formatDateTimeInput(season.startAt),
+            endAt: current[season.id]?.endAt ?? formatDateTimeInput(season.endAt),
+          },
+        ]),
+      ),
+    );
+  }, [dashboardQuery.data]);
+
+  useEffect(() => {
+    const activeSeasonGames = getActiveSeasonGames(detailQuery.data);
+    const nextSelectedSeasonId =
+      activeSeasonGames.find((item) => item.seasonId === selectedSeasonId)?.seasonId ??
+      activeSeasonGames[0]?.seasonId ??
+      null;
+
+    if (nextSelectedSeasonId !== selectedSeasonId) {
+      setSelectedSeasonId(nextSelectedSeasonId);
+    }
+  }, [detailQuery.data, selectedSeasonId]);
+
+  useEffect(() => {
+    const activeSeasonGames = getActiveSeasonGames(detailQuery.data);
+    const game =
+      activeSeasonGames.find((item) => item.seasonId === selectedSeasonId) ??
+      activeSeasonGames[0] ??
+      null;
 
     if (!game) {
       setWalletDraft({
@@ -448,7 +571,7 @@ export default function AdminPage() {
       realizedPnlPoints: String(game.realizedPnlPoints ?? 0),
       coinBalance: String(game.coinBalance ?? 0),
     });
-  }, [detailQuery.data]);
+  }, [detailQuery.data, selectedSeasonId]);
 
   const errorMessage =
     dashboardQuery.error instanceof ApiRequestError
@@ -471,13 +594,77 @@ export default function AdminPage() {
     }));
   };
 
+  const handleSeasonDraftChange = (seasonId: number, field: 'startAt' | 'endAt', value: string) => {
+    setSeasonDrafts((current) => ({
+      ...current,
+      [seasonId]: {
+        startAt: current[seasonId]?.startAt ?? '',
+        endAt: current[seasonId]?.endAt ?? '',
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSeasonSave = (season: AdminSeasonSummary) => {
+    const draft = seasonDrafts[season.id];
+
+    try {
+      const request = {
+        startAt: parseDateTimeInput(draft?.startAt ?? '', '시작'),
+        endAt: parseDateTimeInput(draft?.endAt ?? '', '종료'),
+      };
+
+      setActionMessage(null);
+      setSeasonActionState({ seasonId: season.id, type: 'save' });
+      updateSeasonMutation.mutate(
+        { seasonId: season.id, request },
+        {
+          onSuccess: () => {
+            setActionMessage(`${season.regionCode} 시즌 시간이 저장되었습니다.`);
+            setSeasonActionState(null);
+          },
+          onError: (error) => {
+            setActionMessage(error instanceof Error ? error.message : '시즌 시간 저장에 실패했습니다.');
+            setSeasonActionState(null);
+          },
+        },
+      );
+    } catch (error) {
+      setActionMessage(error instanceof Error ? error.message : '시즌 시간을 확인해주세요.');
+    }
+  };
+
+  const handleSeasonClose = (season: AdminSeasonSummary) => {
+    const confirmed = window.confirm(
+      `${season.regionCode} · ${season.name} 시즌을 지금 종료할까요? 오픈 포지션 정산과 시즌 종료 처리가 바로 실행됩니다.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setActionMessage(null);
+    setSeasonActionState({ seasonId: season.id, type: 'close' });
+    closeSeasonMutation.mutate(season.id, {
+      onSuccess: () => {
+        setActionMessage(`${season.regionCode} 시즌을 종료했습니다.`);
+        setSeasonActionState(null);
+      },
+      onError: (error) => {
+        setActionMessage(error instanceof Error ? error.message : '시즌 종료에 실패했습니다.');
+        setSeasonActionState(null);
+      },
+    });
+  };
+
   const handleWalletSave = () => {
-    if (!selectedUserId) {
+    if (!selectedUserId || !selectedSeasonId) {
       return;
     }
 
     try {
       const request = {
+        seasonId: selectedSeasonId,
         balancePoints: parsePointInput(walletDraft.balancePoints, '가용 포인트'),
         reservedPoints: parsePointInput(walletDraft.reservedPoints, '예약 포인트'),
         realizedPnlPoints: parsePointInput(walletDraft.realizedPnlPoints, '실현 손익'),
@@ -633,14 +820,22 @@ export default function AdminPage() {
 
           <section className="admin-page__grid">
             <article className="admin-page__panel">
-              <h2 className="admin-page__section-title">활성 시즌</h2>
-              {dashboardQuery.data.activeSeason ? (
-                <div className="admin-page__detail-list">
-                  <p><span>이름</span><strong>{dashboardQuery.data.activeSeason.name}</strong></p>
-                  <p><span>상태</span><strong>{dashboardQuery.data.activeSeason.status}</strong></p>
-                  <p><span>지역</span><strong>{dashboardQuery.data.activeSeason.regionCode}</strong></p>
-                  <p><span>시작</span><strong>{formatDateTime(dashboardQuery.data.activeSeason.startAt)}</strong></p>
-                  <p><span>종료</span><strong>{formatDateTime(dashboardQuery.data.activeSeason.endAt)}</strong></p>
+              <h2 className="admin-page__section-title">활성 시즌 현황</h2>
+              {getDashboardActiveSeasons(dashboardQuery.data).length ? (
+                <div className="admin-page__season-overview-list">
+                  {getDashboardActiveSeasons(dashboardQuery.data).map((season) => (
+                    <article className="admin-page__season-overview-card" key={season.id}>
+                      <div className="admin-page__section-header">
+                        <strong>{season.regionCode}</strong>
+                        <span className="admin-page__pill">{season.status}</span>
+                      </div>
+                      <div className="admin-page__detail-list">
+                        <p><span>이름</span><strong>{season.name}</strong></p>
+                        <p><span>시작</span><strong>{formatDateTime(season.startAt)}</strong></p>
+                        <p><span>종료</span><strong>{formatDateTime(season.endAt)}</strong></p>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               ) : (
                 <p className="admin-page__muted">현재 활성 시즌이 없습니다.</p>
@@ -663,6 +858,80 @@ export default function AdminPage() {
                 <p className="admin-page__muted">아직 수집된 트렌딩 데이터가 없습니다.</p>
               )}
             </article>
+          </section>
+
+          <section className="admin-page__panel">
+            <div className="admin-page__section-header">
+              <div>
+                <h2 className="admin-page__section-title">시즌 운영</h2>
+                <p className="admin-page__section-caption">시작/종료 시간을 수정하거나 시즌을 즉시 종료할 수 있습니다.</p>
+              </div>
+            </div>
+            {getDashboardActiveSeasons(dashboardQuery.data).length ? (
+              <div className="admin-page__season-management-list">
+                {getDashboardActiveSeasons(dashboardQuery.data).map((season) => {
+                  const draft = seasonDrafts[season.id] ?? {
+                    startAt: formatDateTimeInput(season.startAt),
+                    endAt: formatDateTimeInput(season.endAt),
+                  };
+                  const isSavingSeason = seasonActionState?.type === 'save' && seasonActionState.seasonId === season.id && updateSeasonMutation.isPending;
+                  const isClosingSeason = seasonActionState?.type === 'close' && seasonActionState.seasonId === season.id && closeSeasonMutation.isPending;
+
+                  return (
+                    <article className="admin-page__season-management-card" key={season.id}>
+                      <div className="admin-page__section-header">
+                        <div>
+                          <h3 className="admin-page__section-title">{season.regionCode} 시즌</h3>
+                          <p className="admin-page__section-caption">{season.name}</p>
+                        </div>
+                        <span className="admin-page__pill">{season.status}</span>
+                      </div>
+                      <div className="admin-page__detail-list admin-page__detail-list--compact">
+                        <p><span>생성일</span><strong>{formatDateTime(season.createdAt)}</strong></p>
+                      </div>
+                      <div className="admin-page__form-grid">
+                        <label className="admin-page__field">
+                          <span>시작 시각</span>
+                          <input
+                            onChange={(event) => handleSeasonDraftChange(season.id, 'startAt', event.target.value)}
+                            type="datetime-local"
+                            value={draft.startAt}
+                          />
+                        </label>
+                        <label className="admin-page__field">
+                          <span>종료 시각</span>
+                          <input
+                            onChange={(event) => handleSeasonDraftChange(season.id, 'endAt', event.target.value)}
+                            type="datetime-local"
+                            value={draft.endAt}
+                          />
+                        </label>
+                      </div>
+                      <div className="admin-page__action-row">
+                        <button
+                          className="admin-page__button"
+                          disabled={isSavingSeason || isClosingSeason}
+                          onClick={() => handleSeasonSave(season)}
+                          type="button"
+                        >
+                          {isSavingSeason ? '저장 중...' : '시즌 시간 저장'}
+                        </button>
+                        <button
+                          className="admin-page__button admin-page__button--danger"
+                          disabled={isSavingSeason || isClosingSeason}
+                          onClick={() => handleSeasonClose(season)}
+                          type="button"
+                        >
+                          {isClosingSeason ? '종료 중...' : '시즌 즉시 종료'}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="admin-page__muted">현재 운영 중인 활성 시즌이 없습니다.</p>
+            )}
           </section>
 
           <section className="admin-page__panel">
@@ -713,7 +982,9 @@ export default function AdminPage() {
                     isSaving={updateWalletMutation.isPending}
                     onDeleteUser={handleDeleteUser}
                     onSaveWallet={handleWalletSave}
+                    onSelectSeason={setSelectedSeasonId}
                     onWalletDraftChange={handleWalletDraftChange}
+                    selectedSeasonId={selectedSeasonId}
                     user={detailQuery.data}
                     walletDraft={walletDraft}
                   />
