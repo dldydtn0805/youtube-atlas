@@ -129,6 +129,18 @@
   --game-tier-accent-strong: #93c5fd;
 }
 
+.app-shell__game-tier[data-current-tier='MASTER'] {
+  --game-tier-accent-rgb: 168, 85, 247;
+  --game-tier-accent: #a855f7;
+  --game-tier-accent-strong: #d8b4fe;
+}
+
+.app-shell__game-tier[data-current-tier='LEGEND'] {
+  --game-tier-accent-rgb: 244, 63, 94;
+  --game-tier-accent: #f43f5e;
+  --game-tier-accent-strong: #fda4af;
+}
+
 .app-shell__game-tier-copy {
   display: grid;
   gap: 4px;
@@ -273,6 +285,18 @@
   --game-tier-step-rgb: 96, 165, 250;
   --game-tier-step-accent: #60a5fa;
   --game-tier-step-strong: #93c5fd;
+}
+
+.app-shell__game-tier-step[data-tier-code='MASTER'] {
+  --game-tier-step-rgb: 168, 85, 247;
+  --game-tier-step-accent: #a855f7;
+  --game-tier-step-strong: #d8b4fe;
+}
+
+.app-shell__game-tier-step[data-tier-code='LEGEND'] {
+  --game-tier-step-rgb: 244, 63, 94;
+  --game-tier-step-accent: #f43f5e;
+  --game-tier-step-strong: #fda4af;
 }
 
 .app-shell__game-tier-step[data-reached='true'] {
