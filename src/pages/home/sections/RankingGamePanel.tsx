@@ -437,11 +437,9 @@ export function RankingGameDividendOverview({ onOpenDetails, overview, season }:
         <div className="app-shell__game-dividend-copy">
           <p className="app-shell__game-dividend-eyebrow">Dividend Preview</p>
           <h4 className="app-shell__game-dividend-title">Top {overview.eligibleRankCutoff} 배당 구간</h4>
-          <p className="app-shell__game-dividend-helper">
-            현재 평가금액 기준 예상 배당입니다. 최소 {formatHoldCountdown(overview.minimumHoldSeconds)} 보유한
-            포지션만 반영돼요.
-          </p>
         </div>
+      </div>
+      <div className="app-shell__game-dividend-actions">
         <div className="app-shell__game-dividend-metrics" aria-label="배당 요약">
           <span className="app-shell__game-dividend-metric">
             <span className="app-shell__game-dividend-metric-label">내 예상 배당</span>
@@ -460,11 +458,6 @@ export function RankingGameDividendOverview({ onOpenDetails, overview, season }:
             <strong className="app-shell__game-dividend-metric-value">{overview.myEligiblePositionCount}개</strong>
           </span>
         </div>
-      </div>
-      <div className="app-shell__game-dividend-actions">
-        <p className="app-shell__game-dividend-action-copy">
-          1위~20위 고정 배당률과 내 배당 대상 포지션은 상세 모달에서 확인할 수 있어요.
-        </p>
         <button className="app-shell__game-panel-action" onClick={onOpenDetails} type="button">
           배당 표 보기
         </button>

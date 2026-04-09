@@ -137,11 +137,7 @@ export function FilterBar({
       <div className="app-shell__filter-fields">
         <div className="app-shell__filter-bar" aria-label="탐색 필터 선택">
           <div className="app-shell__quick-category-group" aria-label="차트 보기 선택">
-            <QuickViewButtons
-              onSelectView={onSelectView}
-              options={viewOptions}
-              selectedViewId={selectedViewId}
-            />
+            <QuickViewButtons onSelectView={onSelectView} options={viewOptions} selectedViewId={selectedViewId} />
           </div>
         </div>
       </div>

@@ -104,26 +104,6 @@ export default function GameDividendModal({ isOpen, onClose, overview }: GameDiv
                   </div>
                 ))}
               </div>
-              <div className="app-shell__game-dividend-rate-table-wrap">
-                <table className="app-shell__game-dividend-rate-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">랭크</th>
-                      <th scope="col">고정 배당률</th>
-                      <th scope="col">10만P 기준</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {overview.ranks.map((rank) => (
-                      <tr key={`table-${rank.rank}`}>
-                        <th scope="row">{rank.rank}위</th>
-                        <td>{formatPercent(rank.dividendRatePercent)}</td>
-                        <td>{formatPoints(Math.round(100_000 * rank.dividendRatePercent / 100))}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </section>
 
             <section className="app-shell__modal-field">

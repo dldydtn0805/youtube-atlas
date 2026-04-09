@@ -10,10 +10,8 @@
 }
 
 .app-shell__game-dividend-header {
-  align-items: start;
   display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
 }
 
 .app-shell__game-dividend-copy {
@@ -23,8 +21,7 @@
 }
 
 .app-shell__game-dividend-eyebrow,
-.app-shell__game-dividend-title,
-.app-shell__game-dividend-helper {
+.app-shell__game-dividend-title {
   margin: 0;
 }
 
@@ -41,12 +38,6 @@
   font-size: 0.92rem;
   font-weight: 800;
   line-height: 1.35;
-}
-
-.app-shell__game-dividend-helper {
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  line-height: 1.5;
 }
 
 .app-shell__game-dividend-metrics {
@@ -85,13 +76,6 @@
   display: flex;
   gap: 12px;
   justify-content: space-between;
-}
-
-.app-shell__game-dividend-action-copy {
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  line-height: 1.5;
-  margin: 0;
 }
 
 .app-shell__game-dividend-ladder {
@@ -204,8 +188,6 @@
   color: #fbbf24;
 }
 
-:root[data-theme='dark'] .app-shell__game-dividend-helper,
-:root[data-theme='dark'] .app-shell__game-dividend-action-copy,
 :root[data-theme='dark'] .app-shell__game-dividend-rank-label,
 :root[data-theme='dark'] .app-shell__game-dividend-rank-weight {
   color: rgba(226, 232, 240, 0.72);

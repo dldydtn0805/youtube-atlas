@@ -219,6 +219,13 @@
   color: var(--text-inverse);
 }
 
+:root[data-theme='dark'] .app-shell__subtle-toggle[data-active='true'] {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.32);
+  color: #0f172a;
+}
+
 .app-shell__collapse-toggle {
   align-items: center;
   background: transparent;
