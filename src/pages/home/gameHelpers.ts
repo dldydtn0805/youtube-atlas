@@ -170,17 +170,17 @@ export function formatPercent(value?: number | null) {
   return `${percentFormatter.format(value)}%`;
 }
 
-export function calculateEstimatedDividendPoints(currentValuePoints?: number | null, dividendRatePercent?: number | null) {
+export function calculateEstimatedCoinYield(currentValuePoints?: number | null, coinRatePercent?: number | null) {
   if (
     typeof currentValuePoints !== 'number' ||
     !Number.isFinite(currentValuePoints) ||
-    typeof dividendRatePercent !== 'number' ||
-    !Number.isFinite(dividendRatePercent)
+    typeof coinRatePercent !== 'number' ||
+    !Number.isFinite(coinRatePercent)
   ) {
     return null;
   }
 
-  return Math.round((currentValuePoints * dividendRatePercent) / 100);
+  return Math.round((currentValuePoints * coinRatePercent) / 100);
 }
 
 export function formatPointBalance(points: number) {

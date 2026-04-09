@@ -1,8 +1,8 @@
 import './RankingGamePanel.css';
 import type { ReactNode } from 'react';
 import type {
+  GameCoinOverview,
   GameCurrentSeason,
-  GameDividendOverview,
   GameLeaderboardEntry,
   GamePosition,
 } from '../../../features/game/types';
@@ -102,9 +102,9 @@ interface RankingGameHistoryTabProps {
   selectedVideoId?: string;
 }
 
-interface RankingGameDividendOverviewProps {
+interface RankingGameCoinOverviewProps {
   onOpenDetails: () => void;
-  overview?: GameDividendOverview;
+  overview?: GameCoinOverview;
   season?: GameCurrentSeason;
 }
 
@@ -447,50 +447,50 @@ export function RankingGamePanelShell({
   );
 }
 
-export function RankingGameDividendOverview({ onOpenDetails, overview, season }: RankingGameDividendOverviewProps) {
+export function RankingGameCoinOverview({ onOpenDetails, overview, season }: RankingGameCoinOverviewProps) {
   if (!overview) {
     return null;
   }
 
   return (
-    <section className="app-shell__game-dividend" aria-label="배당 미리보기">
+    <section className="app-shell__game-dividend" aria-label="시즌 코인 미리보기">
       <div className="app-shell__game-dividend-header">
         <div className="app-shell__game-dividend-copy">
-          <p className="app-shell__game-dividend-eyebrow">Dividend Preview</p>
-          <h4 className="app-shell__game-dividend-title">Top {overview.eligibleRankCutoff} 배당 구간</h4>
+          <p className="app-shell__game-dividend-eyebrow">Season Coin</p>
+          <h4 className="app-shell__game-dividend-title">Top {overview.eligibleRankCutoff} 코인 생산 구간</h4>
         </div>
       </div>
       <div className="app-shell__game-dividend-actions">
-        <div className="app-shell__game-dividend-metrics app-shell__game-dividend-metrics--preview" aria-label="배당 요약">
+        <div className="app-shell__game-dividend-metrics app-shell__game-dividend-metrics--preview" aria-label="코인 요약">
           <span className="app-shell__game-dividend-metric">
-            <span className="app-shell__game-dividend-metric-label">내 예상 배당</span>
+            <span className="app-shell__game-dividend-metric-label">내 예상 생산</span>
             <strong
               className="app-shell__game-dividend-metric-value"
-              title={formatFullPoints(overview.myEstimatedDividendPoints)}
+              title={formatFullPoints(overview.myEstimatedCoinYield)}
             >
-              {formatPoints(overview.myEstimatedDividendPoints)}
+              {formatPoints(overview.myEstimatedCoinYield)}
             </strong>
           </span>
           <span className="app-shell__game-dividend-metric">
-            <span className="app-shell__game-dividend-metric-label">누적 배당</span>
+            <span className="app-shell__game-dividend-metric-label">보유 코인</span>
             <strong
               className="app-shell__game-dividend-metric-value"
-              title={season ? formatFullPoints(season.wallet.bonusPoints) : undefined}
+              title={season ? formatFullPoints(season.wallet.coinBalance) : undefined}
             >
-              {season ? formatPoints(season.wallet.bonusPoints) : '-'}
+              {season ? formatPoints(season.wallet.coinBalance) : '-'}
             </strong>
           </span>
           <span className="app-shell__game-dividend-metric">
-            <span className="app-shell__game-dividend-metric-label">배당 대상</span>
-            <strong className="app-shell__game-dividend-metric-value">{overview.myEligiblePositionCount}개</strong>
+            <span className="app-shell__game-dividend-metric-label">생산 중</span>
+            <strong className="app-shell__game-dividend-metric-value">{overview.myActiveProducerCount}개</strong>
           </span>
           <span className="app-shell__game-dividend-metric">
-            <span className="app-shell__game-dividend-metric-label">배당 대기중</span>
+            <span className="app-shell__game-dividend-metric-label">준비 중</span>
             <strong className="app-shell__game-dividend-metric-value">{overview.myWarmingUpPositionCount}개</strong>
           </span>
         </div>
         <button className="app-shell__game-panel-action" onClick={onOpenDetails} type="button">
-          배당 표 보기
+          코인 표 보기
         </button>
       </div>
     </section>

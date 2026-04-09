@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
 import AppHeader from './sections/AppHeader';
 import { SelectedVideoGameActionsBundle } from './sections/GameActionContent';
-import GameDividendModal from './sections/GameDividendModal';
+import GameCoinModal from './sections/GameDividendModal';
 import { RegionFilterModal } from './sections/FilterPanels';
 import GamePanelSection from './sections/GamePanelSection';
 import GameRankHistoryModal from './sections/GameRankHistoryModal';
@@ -55,7 +55,7 @@ import { useAuth } from '../../features/auth/useAuth';
 import {
   useBuyGamePosition,
   useCurrentGameSeason,
-  useGameDividendOverview,
+  useGameCoinOverview,
   useGameLeaderboard,
   useGameLeaderboardPositions,
   useGameMarket,
@@ -169,7 +169,7 @@ function HomePage() {
     error: gameMarketError,
     isLoading: isGameMarketLoading,
   } = useGameMarket(accessToken, selectedRegionCode, shouldLoadGame);
-  const { data: gameDividendOverview, error: gameDividendOverviewError } = useGameDividendOverview(
+  const { data: gameCoinOverview, error: gameCoinOverviewError } = useGameCoinOverview(
     accessToken,
     selectedRegionCode,
     shouldLoadGame,
@@ -480,13 +480,13 @@ function HomePage() {
   const {
     activeTradeModal,
     buyQuantity,
-    closeDividendModal,
+    closeCoinModal,
     closeRankHistoryModal,
     closeTradeModal,
     gameActionStatus,
     getRemainingHoldSeconds,
-    isDividendModalOpen,
-    openDividendModal,
+    isCoinModalOpen,
+    openCoinModal,
     openRankHistoryModal,
     selectedRankHistoryPosition,
     selectedVideoRankHistoryVideoId,
@@ -535,7 +535,7 @@ function HomePage() {
   useLogoutOnUnauthorized(favoriteStreamerVideosError, logout);
   useLogoutOnUnauthorized(currentGameSeasonError, logout);
   useLogoutOnUnauthorized(gameLeaderboardError, logout);
-  useLogoutOnUnauthorized(gameDividendOverviewError, logout);
+  useLogoutOnUnauthorized(gameCoinOverviewError, logout);
   useLogoutOnUnauthorized(gameMarketError, logout);
   useLogoutOnUnauthorized(openGamePositionsError, logout);
   useLogoutOnUnauthorized(gameHistoryPositionsError, logout);
@@ -795,7 +795,7 @@ function HomePage() {
     <SelectedVideoGameActionsBundle
       buyActionTitle={buyActionTitle}
       canShowGameActions={canShowGameActions}
-      gameDividendOverview={gameDividendOverview}
+      gameCoinOverview={gameCoinOverview}
       isBuySubmitting={isBuySubmitting}
       isChartDisabled={isChartActionDisabled}
       isSelectedVideoBuyDisabled={isSelectedVideoBuyDisabled}
@@ -821,7 +821,7 @@ function HomePage() {
     <SelectedVideoGameActionsBundle
       buyActionTitle={buyActionTitle}
       canShowGameActions={canShowGameActions}
-      gameDividendOverview={gameDividendOverview}
+      gameCoinOverview={gameCoinOverview}
       isBuySubmitting={isBuySubmitting}
       isSelectedVideoBuyDisabled={isSelectedVideoBuyDisabled}
       isSelectedVideoSellDisabled={isSelectedVideoSellDisabled}
@@ -845,12 +845,12 @@ function HomePage() {
       activeGameTab={activeGameTab}
       authStatus={authStatus}
       canShowGameActions={canShowGameActions}
+      coinOverview={gameCoinOverview}
       computedWalletTotalAssetPoints={computedWalletTotalAssetPoints}
       currentGameSeason={currentGameSeason}
       favoriteStreamerVideoSection={favoriteStreamerVideoSection}
       favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
       gameActionStatus={gameActionStatus}
-      gameDividendOverview={gameDividendOverview}
       gameHistoryPositions={gameHistoryPositions}
       gameLeaderboard={gameLeaderboard}
       gameLeaderboardError={gameLeaderboardError}
@@ -867,7 +867,7 @@ function HomePage() {
       isSelectedLeaderboardPositionsError={isSelectedLeaderboardPositionsError}
       isSelectedLeaderboardPositionsLoading={isSelectedLeaderboardPositionsLoading}
       newChartEntriesSection={newChartEntriesSection}
-      onOpenDividendModal={openDividendModal}
+      onOpenCoinModal={openCoinModal}
       onSelectGameHistoryVideo={handleSelectGameHistoryVideo}
       onSelectGamePositionVideo={handleSelectGamePositionVideo}
       onSelectLeaderboardPositionVideo={handleSelectLeaderboardPositionVideo}
@@ -899,7 +899,7 @@ function HomePage() {
   const isAnyModalOpen =
     isRankHistoryModalOpen ||
     isRegionModalOpen ||
-    isDividendModalOpen ||
+    isCoinModalOpen ||
     isBuyTradeModalOpen ||
     isSellTradeModalOpen;
   const buyableVideoSearchOverlay =
@@ -1053,10 +1053,10 @@ function HomePage() {
         regionOptions={regionOptions}
         selectedRegionCode={selectedRegionCode}
       />
-      <GameDividendModal
-        isOpen={isDividendModalOpen}
-        onClose={closeDividendModal}
-        overview={gameDividendOverview}
+      <GameCoinModal
+        isOpen={isCoinModalOpen}
+        onClose={closeCoinModal}
+        overview={gameCoinOverview}
       />
       <GameTradeModal
         confirmLabel={`${formatGameQuantity(normalizedBuyQuantity)} 매수`}

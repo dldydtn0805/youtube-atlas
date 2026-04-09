@@ -1,8 +1,8 @@
 import { fetchApi } from '../../lib/api';
 import type {
   CreateGamePositionInput,
+  GameCoinOverview,
   GameCurrentSeason,
-  GameDividendOverview,
   GameLeaderboardEntry,
   GameMarketVideo,
   GamePosition,
@@ -39,10 +39,10 @@ export async function fetchGameLeaderboard(accessToken: string, regionCode: stri
   });
 }
 
-export async function fetchGameDividendOverview(accessToken: string, regionCode: string) {
+export async function fetchGameCoinOverview(accessToken: string, regionCode: string) {
   const params = new URLSearchParams({ regionCode });
 
-  return fetchApi<GameDividendOverview>(`/api/game/dividends/overview?${params.toString()}`, {
+  return fetchApi<GameCoinOverview>(`/api/game/coins/overview?${params.toString()}`, {
     headers: createAuthorizationHeader(accessToken),
   });
 }

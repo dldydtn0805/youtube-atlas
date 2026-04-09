@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import type { GameDividendOverview } from '../../../features/game/types';
+import type { GameCoinOverview } from '../../../features/game/types';
 import {
   formatGameQuantity,
   formatHoldCountdown,
@@ -14,7 +14,7 @@ import './GameDividendModal.css';
 interface GameDividendModalProps {
   isOpen: boolean;
   onClose: () => void;
-  overview?: GameDividendOverview;
+  overview?: GameCoinOverview;
 }
 
 export default function GameDividendModal({ isOpen, onClose, overview }: GameDividendModalProps) {
@@ -24,7 +24,7 @@ export default function GameDividendModal({ isOpen, onClose, overview }: GameDiv
 
   const portalTarget = getFullscreenElement();
   const container = portalTarget instanceof HTMLElement ? portalTarget : document.body;
-  const maxDividendRatePercent = Math.max(...overview.ranks.map((rank) => rank.dividendRatePercent), 1);
+  const maxCoinRatePercent = Math.max(...overview.ranks.map((rank) => rank.coinRatePercent), 1);
 
   return createPortal(
     <div className="app-shell__modal-backdrop" onClick={onClose} role="presentation">
@@ -37,13 +37,13 @@ export default function GameDividendModal({ isOpen, onClose, overview }: GameDiv
       >
         <div className="app-shell__modal-header">
           <div className="app-shell__section-heading">
-            <p className="app-shell__section-eyebrow">Dividend Table</p>
+            <p className="app-shell__section-eyebrow">Season Coin Table</p>
             <h2 className="app-shell__section-title" id="game-dividend-modal-title">
-              배당 표
+              시즌 코인 표
             </h2>
           </div>
           <button
-            aria-label="배당 표 모달 닫기"
+            aria-label="시즌 코인 표 모달 닫기"
             className="app-shell__modal-close"
             onClick={onClose}
             type="button"
@@ -57,25 +57,29 @@ export default function GameDividendModal({ isOpen, onClose, overview }: GameDiv
             <section className="app-shell__modal-field">
               <div className="app-shell__section-heading">
                 <p className="app-shell__section-eyebrow">Overview</p>
-                <h3 className="app-shell__modal-field-title">내 배당 요약</h3>
+                <h3 className="app-shell__modal-field-title">내 시즌 코인 요약</h3>
               </div>
               <p className="app-shell__modal-field-copy">
-                현재 평가금액 기준 예상 배당입니다. 최소 {formatHoldCountdown(overview.minimumHoldSeconds)} 보유한
-                포지션만 반영돼요.
+                코인은 Top {overview.eligibleRankCutoff} 종목을 충분히 보유한 포지션만 생산합니다. 최소{' '}
+                {formatHoldCountdown(overview.minimumHoldSeconds)} 보유한 포지션만 반영돼요.
               </p>
-              <div className="app-shell__game-dividend-metrics" aria-label="배당 요약">
+              <div className="app-shell__game-dividend-metrics" aria-label="코인 요약">
                 <span className="app-shell__game-dividend-metric">
-                  <span className="app-shell__game-dividend-metric-label">내 예상 배당</span>
+                  <span className="app-shell__game-dividend-metric-label">보유 코인</span>
                   <strong className="app-shell__game-dividend-metric-value">
-                    {formatPoints(overview.myEstimatedDividendPoints)}
+                    {formatPoints(overview.myCoinBalance)}
                   </strong>
                 </span>
                 <span className="app-shell__game-dividend-metric">
-                  <span className="app-shell__game-dividend-metric-label">배당 대상</span>
-                  <strong className="app-shell__game-dividend-metric-value">{overview.myEligiblePositionCount}개</strong>
+                  <span className="app-shell__game-dividend-metric-label">예상 생산</span>
+                  <strong className="app-shell__game-dividend-metric-value">{formatPoints(overview.myEstimatedCoinYield)}</strong>
                 </span>
                 <span className="app-shell__game-dividend-metric">
-                  <span className="app-shell__game-dividend-metric-label">대기 중</span>
+                  <span className="app-shell__game-dividend-metric-label">생산 중</span>
+                  <strong className="app-shell__game-dividend-metric-value">{overview.myActiveProducerCount}개</strong>
+                </span>
+                <span className="app-shell__game-dividend-metric">
+                  <span className="app-shell__game-dividend-metric-label">준비 중</span>
                   <strong className="app-shell__game-dividend-metric-value">{overview.myWarmingUpPositionCount}개</strong>
                 </span>
               </div>
@@ -84,9 +88,9 @@ export default function GameDividendModal({ isOpen, onClose, overview }: GameDiv
             <section className="app-shell__modal-field">
               <div className="app-shell__section-heading">
                 <p className="app-shell__section-eyebrow">Rates</p>
-                <h3 className="app-shell__modal-field-title">1위~20위 고정 배당률</h3>
+                <h3 className="app-shell__modal-field-title">1위~20위 고정 코인 생산률</h3>
               </div>
-              <div className="app-shell__game-dividend-rate-chart" aria-label="배당률 그래프">
+              <div className="app-shell__game-dividend-rate-chart" aria-label="코인 생산률 그래프">
                 {overview.ranks.map((rank) => (
                   <div key={rank.rank} className="app-shell__game-dividend-rate-row">
                     <span className="app-shell__game-dividend-rate-rank">{rank.rank}위</span>
@@ -94,12 +98,12 @@ export default function GameDividendModal({ isOpen, onClose, overview }: GameDiv
                       <div
                         className="app-shell__game-dividend-rate-bar-fill"
                         style={{
-                          width: `${(rank.dividendRatePercent / maxDividendRatePercent) * 100}%`,
+                          width: `${(rank.coinRatePercent / maxCoinRatePercent) * 100}%`,
                         }}
                       />
                     </div>
                     <strong className="app-shell__game-dividend-rate-value">
-                      {formatPercent(rank.dividendRatePercent)}
+                      {formatPercent(rank.coinRatePercent)}
                     </strong>
                   </div>
                 ))}
@@ -109,7 +113,7 @@ export default function GameDividendModal({ isOpen, onClose, overview }: GameDiv
             <section className="app-shell__modal-field">
               <div className="app-shell__section-heading">
                 <p className="app-shell__section-eyebrow">My Positions</p>
-                <h3 className="app-shell__modal-field-title">내 배당 대상 포지션</h3>
+                <h3 className="app-shell__modal-field-title">내 코인 대상 포지션</h3>
               </div>
               {overview.positions.length > 0 ? (
                 <ul className="app-shell__game-dividend-positions">
@@ -128,12 +132,12 @@ export default function GameDividendModal({ isOpen, onClose, overview }: GameDiv
                           평가 {formatMaybePoints(position.currentValuePoints)} · 수량 {formatGameQuantity(position.quantity)}
                         </p>
                         <p className="app-shell__game-dividend-position-meta">
-                          {position.holdEligible
-                            ? `예상 배당 ${formatPoints(position.estimatedDividendPoints)}`
-                            : position.nextEligibleInSeconds !== null
-                              ? `${formatHoldCountdown(position.nextEligibleInSeconds)} 뒤 배당 반영`
-                              : '배당 대기 중'}
-                          {' · '}배당률 {formatPercent(position.dividendRatePercent)}
+                          {position.productionActive
+                            ? `예상 생산 ${formatPoints(position.estimatedCoinYield)}`
+                            : position.nextProductionInSeconds !== null
+                              ? `${formatHoldCountdown(position.nextProductionInSeconds)} 뒤 생산 시작`
+                              : '코인 준비 중'}
+                          {' · '}생산률 {formatPercent(position.coinRatePercent)}
                         </p>
                       </div>
                     </li>

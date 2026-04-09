@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   buyGamePosition,
   fetchCurrentGameSeason,
-  fetchGameDividendOverview,
+  fetchGameCoinOverview,
   fetchGameLeaderboard,
   fetchGameLeaderboardPositions,
   fetchGameMarket,
@@ -16,8 +16,8 @@ import type { CreateGamePositionInput, SellGamePositionsInput } from './types';
 export const gameQueryKeys = {
   currentSeason: (accessToken: string | null, regionCode: string | null) =>
     ['game', 'currentSeason', accessToken, regionCode] as const,
-  dividendOverview: (accessToken: string | null, regionCode: string | null) =>
-    ['game', 'dividendOverview', accessToken, regionCode] as const,
+  coinOverview: (accessToken: string | null, regionCode: string | null) =>
+    ['game', 'coinOverview', accessToken, regionCode] as const,
   leaderboard: (accessToken: string | null, regionCode: string | null) =>
     ['game', 'leaderboard', accessToken, regionCode] as const,
   leaderboardPositions: (accessToken: string | null, userId: number | null, regionCode: string | null) =>
@@ -59,11 +59,11 @@ export function useGameLeaderboard(accessToken: string | null, regionCode: strin
   });
 }
 
-export function useGameDividendOverview(accessToken: string | null, regionCode: string, enabled = true) {
+export function useGameCoinOverview(accessToken: string | null, regionCode: string, enabled = true) {
   return useQuery({
     enabled: enabled && Boolean(accessToken) && Boolean(regionCode),
-    queryKey: gameQueryKeys.dividendOverview(accessToken, regionCode),
-    queryFn: () => fetchGameDividendOverview(accessToken as string, regionCode),
+    queryKey: gameQueryKeys.coinOverview(accessToken, regionCode),
+    queryFn: () => fetchGameCoinOverview(accessToken as string, regionCode),
     staleTime: 1000 * 15,
   });
 }
@@ -124,7 +124,7 @@ export function useBuyGamePosition(accessToken: string | null) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['game', 'currentSeason', accessToken] }),
-        queryClient.invalidateQueries({ queryKey: ['game', 'dividendOverview', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'coinOverview', accessToken] }),
         queryClient.invalidateQueries({ queryKey: ['game', 'leaderboard', accessToken] }),
         queryClient.invalidateQueries({ queryKey: ['game', 'market', accessToken] }),
         queryClient.invalidateQueries({ queryKey: ['game', 'positions', accessToken] }),
@@ -147,7 +147,7 @@ export function useSellGamePosition(accessToken: string | null) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['game', 'currentSeason', accessToken] }),
-        queryClient.invalidateQueries({ queryKey: ['game', 'dividendOverview', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'coinOverview', accessToken] }),
         queryClient.invalidateQueries({ queryKey: ['game', 'leaderboard', accessToken] }),
         queryClient.invalidateQueries({ queryKey: ['game', 'market', accessToken] }),
         queryClient.invalidateQueries({ queryKey: ['game', 'positions', accessToken] }),
@@ -170,7 +170,7 @@ export function useSellGamePositions(accessToken: string | null) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['game', 'currentSeason', accessToken] }),
-        queryClient.invalidateQueries({ queryKey: ['game', 'dividendOverview', accessToken] }),
+        queryClient.invalidateQueries({ queryKey: ['game', 'coinOverview', accessToken] }),
         queryClient.invalidateQueries({ queryKey: ['game', 'leaderboard', accessToken] }),
         queryClient.invalidateQueries({ queryKey: ['game', 'market', accessToken] }),
         queryClient.invalidateQueries({ queryKey: ['game', 'positions', accessToken] }),

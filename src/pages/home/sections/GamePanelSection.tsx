@@ -1,8 +1,8 @@
 import { useCallback, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import type { AuthStatus } from '../../../features/auth/types';
 import type {
+  GameCoinOverview,
   GameCurrentSeason,
-  GameDividendOverview,
   GameLeaderboardEntry,
   GamePosition,
 } from '../../../features/game/types';
@@ -11,7 +11,7 @@ import type { YouTubeCategorySection } from '../../../features/youtube/types';
 import { findPlaybackQueueIdForVideo } from '../utils';
 import type { OpenGameHolding } from '../gameHelpers';
 import {
-  RankingGameDividendOverview,
+  RankingGameCoinOverview,
   RankingGameHistoryTab,
   RankingGameLeaderboardTab,
   RankingGamePanelShell,
@@ -24,12 +24,12 @@ interface GamePanelSectionProps {
   activeGameTab: GameTab;
   authStatus: AuthStatus;
   canShowGameActions: boolean;
+  coinOverview?: GameCoinOverview;
   computedWalletTotalAssetPoints: number | null;
   currentGameSeason?: GameCurrentSeason;
   favoriteStreamerVideoSection?: YouTubeCategorySection;
   favoriteTrendSignalsByVideoId: Record<string, VideoTrendSignal>;
   gameActionStatus: string | null;
-  gameDividendOverview?: GameDividendOverview;
   gameHistoryPositions: GamePosition[];
   gameLeaderboard: GameLeaderboardEntry[];
   gameLeaderboardError: unknown;
@@ -46,7 +46,7 @@ interface GamePanelSectionProps {
   isSelectedLeaderboardPositionsError: boolean;
   isSelectedLeaderboardPositionsLoading: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
-  onOpenDividendModal: () => void;
+  onOpenCoinModal: () => void;
   onSelectGameHistoryVideo: (position: GamePosition, playbackQueueId?: string) => void | Promise<void>;
   onSelectGamePositionVideo: (videoId: string) => void;
   onSelectLeaderboardPositionVideo: (position: GamePosition, playbackQueueId?: string) => void | Promise<void>;
@@ -74,12 +74,12 @@ export default function GamePanelSection({
   activeGameTab,
   authStatus,
   canShowGameActions,
+  coinOverview,
   computedWalletTotalAssetPoints,
   currentGameSeason,
   favoriteStreamerVideoSection,
   favoriteTrendSignalsByVideoId,
   gameActionStatus,
-  gameDividendOverview,
   gameHistoryPositions,
   gameLeaderboard,
   gameLeaderboardError,
@@ -96,7 +96,7 @@ export default function GamePanelSection({
   isSelectedLeaderboardPositionsError,
   isSelectedLeaderboardPositionsLoading,
   newChartEntriesSection,
-  onOpenDividendModal,
+  onOpenCoinModal,
   onSelectGameHistoryVideo,
   onSelectGamePositionVideo,
   onSelectLeaderboardPositionVideo,
@@ -213,9 +213,9 @@ export default function GamePanelSection({
     <RankingGamePanelShell
       activeGameTab={activeGameTab}
       dividendOverview={
-        <RankingGameDividendOverview
-          onOpenDetails={onOpenDividendModal}
-          overview={gameDividendOverview}
+        <RankingGameCoinOverview
+          onOpenDetails={onOpenCoinModal}
+          overview={coinOverview}
           season={currentGameSeason}
         />
       }

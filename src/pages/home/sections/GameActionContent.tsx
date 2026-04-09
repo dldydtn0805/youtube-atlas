@@ -1,7 +1,7 @@
-import type { GameDividendOverview, GameMarketVideo } from '../../../features/game/types';
+import type { GameCoinOverview, GameMarketVideo } from '../../../features/game/types';
 import type { VideoTrendBadge } from '../../../features/trending/presentation';
 import {
-  calculateEstimatedDividendPoints,
+  calculateEstimatedCoinYield,
   formatGameQuantity,
   formatHoldCountdown,
   formatPercent,
@@ -15,7 +15,7 @@ import { RankingGameSelectedVideoActions } from './RankingGamePanel';
 import './GameActionContent.css';
 
 interface GameSelectedVideoPriceSummaryProps {
-  gameDividendOverview?: GameDividendOverview;
+  gameCoinOverview?: GameCoinOverview;
   selectedVideoCurrentChartRank: number | null | undefined;
   selectedVideoId?: string;
   selectedVideoIsChartOut: boolean;
@@ -41,7 +41,7 @@ interface GameStageActionsProps {
 interface SelectedVideoGameActionsBundleProps {
   buyActionTitle: string;
   canShowGameActions: boolean;
-  gameDividendOverview?: GameDividendOverview;
+  gameCoinOverview?: GameCoinOverview;
   isBuySubmitting?: boolean;
   isChartDisabled?: boolean;
   isSelectedVideoBuyDisabled: boolean;
@@ -84,7 +84,7 @@ function TrendBadges({ badges }: { badges: VideoTrendBadge[] }) {
 }
 
 export function GameSelectedVideoPriceSummary({
-  gameDividendOverview,
+  gameCoinOverview,
   selectedVideoCurrentChartRank,
   selectedVideoId,
   selectedVideoIsChartOut,
@@ -114,32 +114,32 @@ export function GameSelectedVideoPriceSummary({
           총 매수 {formatPoints(selectedVideoOpenPositionSummary.stakePoints)} · 총 평가{' '}
           {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
         </p>
-        {selectedVideoId && gameDividendOverview ? (
+        {selectedVideoId && gameCoinOverview ? (
           <p className="app-shell__game-selected-summary-line">
             {(() => {
-              const matchingRank = gameDividendOverview.ranks.find(
+              const matchingRank = gameCoinOverview.ranks.find(
                 (rank) => rank.rank === selectedVideoCurrentChartRank,
               );
-              const positionEstimatedDividendPoints = gameDividendOverview.positions
-                .filter((position) => position.videoId === selectedVideoId && position.holdEligible)
-                .reduce((sum, position) => sum + position.estimatedDividendPoints, 0);
-              const warmingUpPosition = gameDividendOverview.positions.find(
-                (position) => position.videoId === selectedVideoId && !position.holdEligible,
+              const positionEstimatedCoinYield = gameCoinOverview.positions
+                .filter((position) => position.videoId === selectedVideoId && position.productionActive)
+                .reduce((sum, position) => sum + position.estimatedCoinYield, 0);
+              const warmingUpPosition = gameCoinOverview.positions.find(
+                (position) => position.videoId === selectedVideoId && !position.productionActive,
               );
 
               if (!matchingRank) {
-                return '20위 안에 들면 배당 구간에 들어갑니다.';
+                return '20위 안에 들면 시즌 코인 생산이 시작됩니다.';
               }
 
-              if (positionEstimatedDividendPoints > 0) {
-                return `배당 대상 ${matchingRank.rank}위 · 예상 배당 ${formatPoints(positionEstimatedDividendPoints)} · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
+              if (positionEstimatedCoinYield > 0) {
+                return `코인 생산 중 ${matchingRank.rank}위 · 예상 생산 ${formatPoints(positionEstimatedCoinYield)} · 생산률 ${formatPercent(matchingRank.coinRatePercent)}`;
               }
 
-              if (typeof warmingUpPosition?.nextEligibleInSeconds === 'number') {
-                return `배당 대상 ${matchingRank.rank}위 · ${formatHoldCountdown(warmingUpPosition.nextEligibleInSeconds)} 뒤 배당 반영 · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
+              if (typeof warmingUpPosition?.nextProductionInSeconds === 'number') {
+                return `코인 대상 ${matchingRank.rank}위 · ${formatHoldCountdown(warmingUpPosition.nextProductionInSeconds)} 뒤 생산 시작 · 생산률 ${formatPercent(matchingRank.coinRatePercent)}`;
               }
 
-              return `배당 대상 ${matchingRank.rank}위 · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
+              return `코인 대상 ${matchingRank.rank}위 · 생산률 ${formatPercent(matchingRank.coinRatePercent)}`;
             })()}
           </p>
         ) : null}
@@ -158,23 +158,23 @@ export function GameSelectedVideoPriceSummary({
         <TrendBadges badges={selectedVideoTrendBadges} /> · 가격{' '}
         {formatPoints(selectedVideoMarketEntry.currentPricePoints)}
       </p>
-      {gameDividendOverview ? (
+      {gameCoinOverview ? (
         <p className="app-shell__game-selected-summary-line">
           {(() => {
-            const matchingRank = gameDividendOverview.ranks.find(
+            const matchingRank = gameCoinOverview.ranks.find(
               (rank) => rank.rank === selectedVideoMarketEntry.currentRank,
             );
 
             if (!matchingRank) {
-              return '20위 안 진입 시 배당 구간에 들어갑니다.';
+              return '20위 안 진입 시 시즌 코인 생산 구간에 들어갑니다.';
             }
 
-            const estimatedDividendPoints = calculateEstimatedDividendPoints(
+            const estimatedCoinYield = calculateEstimatedCoinYield(
               selectedVideoMarketEntry.currentPricePoints,
-              matchingRank.dividendRatePercent,
+              matchingRank.coinRatePercent,
             );
 
-            return `배당 대상 ${matchingRank.rank}위 · 예상 배당 ${formatPoints(estimatedDividendPoints ?? 0)} · 배당률 ${formatPercent(matchingRank.dividendRatePercent)}`;
+            return `코인 대상 ${matchingRank.rank}위 · 예상 생산 ${formatPoints(estimatedCoinYield ?? 0)} · 생산률 ${formatPercent(matchingRank.coinRatePercent)}`;
           })()}
         </p>
       ) : null}
@@ -283,7 +283,7 @@ export function GameStageActions({
 export function SelectedVideoGameActionsBundle({
   buyActionTitle,
   canShowGameActions,
-  gameDividendOverview,
+  gameCoinOverview,
   isBuySubmitting = false,
   isChartDisabled = false,
   isSelectedVideoBuyDisabled,
@@ -306,7 +306,7 @@ export function SelectedVideoGameActionsBundle({
 }: SelectedVideoGameActionsBundleProps) {
   const currentVideoGamePriceSummary = (
     <GameSelectedVideoPriceSummary
-      gameDividendOverview={gameDividendOverview}
+      gameCoinOverview={gameCoinOverview}
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
       selectedVideoId={selectedVideoId}
       selectedVideoIsChartOut={selectedVideoIsChartOut}

@@ -3,7 +3,7 @@ export interface GameWallet {
   balancePoints: number;
   reservedPoints: number;
   realizedPnlPoints: number;
-  bonusPoints: number;
+  coinBalance: number;
   totalAssetPoints: number;
 }
 
@@ -52,12 +52,12 @@ export interface GameLeaderboardEntry {
   me: boolean;
 }
 
-export interface GameDividendRank {
+export interface GameCoinRank {
   rank: number;
-  dividendRatePercent: number;
+  coinRatePercent: number;
 }
 
-export interface GameDividendPosition {
+export interface GameCoinPosition {
   positionId: number;
   videoId: string;
   title: string;
@@ -66,20 +66,21 @@ export interface GameDividendPosition {
   quantity: number;
   currentValuePoints: number | null;
   rankEligible: boolean;
-  holdEligible: boolean;
-  dividendRatePercent: number;
-  estimatedDividendPoints: number;
-  nextEligibleInSeconds: number | null;
+  productionActive: boolean;
+  coinRatePercent: number;
+  estimatedCoinYield: number;
+  nextProductionInSeconds: number | null;
 }
 
-export interface GameDividendOverview {
+export interface GameCoinOverview {
   eligibleRankCutoff: number;
   minimumHoldSeconds: number;
-  myEstimatedDividendPoints: number;
-  myEligiblePositionCount: number;
+  myCoinBalance: number;
+  myEstimatedCoinYield: number;
+  myActiveProducerCount: number;
   myWarmingUpPositionCount: number;
-  ranks: GameDividendRank[];
-  positions: GameDividendPosition[];
+  ranks: GameCoinRank[];
+  positions: GameCoinPosition[];
 }
 
 export interface GamePosition {
