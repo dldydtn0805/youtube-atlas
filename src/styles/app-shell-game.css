@@ -46,6 +46,10 @@
   grid-template-columns: repeat(3, minmax(88px, 1fr));
 }
 
+.app-shell__game-dividend-metrics--preview {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .app-shell__game-dividend-metric {
   background: rgba(255, 255, 255, 0.74);
   border: 1px solid rgba(234, 179, 8, 0.16);

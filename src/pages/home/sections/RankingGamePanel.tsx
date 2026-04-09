@@ -461,7 +461,7 @@ export function RankingGameDividendOverview({ onOpenDetails, overview, season }:
         </div>
       </div>
       <div className="app-shell__game-dividend-actions">
-        <div className="app-shell__game-dividend-metrics" aria-label="배당 요약">
+        <div className="app-shell__game-dividend-metrics app-shell__game-dividend-metrics--preview" aria-label="배당 요약">
           <span className="app-shell__game-dividend-metric">
             <span className="app-shell__game-dividend-metric-label">내 예상 배당</span>
             <strong
@@ -483,6 +483,10 @@ export function RankingGameDividendOverview({ onOpenDetails, overview, season }:
           <span className="app-shell__game-dividend-metric">
             <span className="app-shell__game-dividend-metric-label">배당 대상</span>
             <strong className="app-shell__game-dividend-metric-value">{overview.myEligiblePositionCount}개</strong>
+          </span>
+          <span className="app-shell__game-dividend-metric">
+            <span className="app-shell__game-dividend-metric-label">배당 대기중</span>
+            <strong className="app-shell__game-dividend-metric-value">{overview.myWarmingUpPositionCount}개</strong>
           </span>
         </div>
         <button className="app-shell__game-panel-action" onClick={onOpenDetails} type="button">
