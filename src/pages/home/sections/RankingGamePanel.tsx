@@ -17,6 +17,7 @@ import {
   formatGameTimestamp,
   formatHoldCountdown,
   formatMaybePoints,
+  formatPercent,
   formatPoints,
   formatRank,
   formatSeasonDateTime,

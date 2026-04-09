@@ -36,7 +36,7 @@ function buildCoinRateLinePoints(overview: GameCoinOverview, width: number, heig
     .join(' ');
 }
 
-function getRateChartY(gridIndex: number, width: number, height: number, totalGridLines: number) {
+function getRateChartY(gridIndex: number, height: number, totalGridLines: number) {
   const paddingY = 16;
   const innerHeight = Math.max(height - paddingY * 2, 1);
   const ratio = totalGridLines <= 1 ? 0 : gridIndex / (totalGridLines - 1);
@@ -183,7 +183,7 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
                         </linearGradient>
                       </defs>
                       {yAxisTicks.map((_, index) => {
-                        const y = getRateChartY(index, chartWidth, chartHeight, yAxisTicks.length);
+                        const y = getRateChartY(index, chartHeight, yAxisTicks.length);
                         return (
                           <line
                             key={`y-grid-${index}`}
