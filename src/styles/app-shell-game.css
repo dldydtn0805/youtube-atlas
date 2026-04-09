@@ -1,0 +1,259 @@
+.app-shell__game-dividend {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.7)),
+    radial-gradient(circle at top right, rgba(250, 204, 21, 0.18), transparent 46%);
+  border: 1px solid rgba(234, 179, 8, 0.18);
+  border-radius: 18px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.app-shell__game-dividend-header {
+  align-items: start;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.app-shell__game-dividend-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.app-shell__game-dividend-eyebrow,
+.app-shell__game-dividend-title,
+.app-shell__game-dividend-helper {
+  margin: 0;
+}
+
+.app-shell__game-dividend-eyebrow {
+  color: #a16207;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-shell__game-dividend-title {
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.app-shell__game-dividend-helper {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.app-shell__game-dividend-metrics {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(88px, 1fr));
+}
+
+.app-shell__game-dividend-metric {
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(234, 179, 8, 0.16);
+  border-radius: 14px;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.app-shell__game-dividend-metric-label {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.app-shell__game-dividend-metric-value {
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.app-shell__game-dividend-actions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.app-shell__game-dividend-action-copy {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.app-shell__game-dividend-ladder {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.app-shell__game-dividend-rank {
+  align-items: start;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(234, 179, 8, 0.12);
+  border-radius: 14px;
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px;
+}
+
+.app-shell__game-dividend-rank-label,
+.app-shell__game-dividend-rank-weight {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+.app-shell__game-dividend-rank-share {
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.app-shell__game-position-meta [data-tone='gain'],
+.app-shell__game-history-meta [data-tone='gain'],
+.app-shell__game-leaderboard-meta [data-tone='gain'],
+.app-shell__game-leaderboard-position-meta [data-tone='gain'] {
+  color: #dc2626;
+}
+
+.app-shell__game-position-meta [data-tone='loss'],
+.app-shell__game-history-meta [data-tone='loss'],
+.app-shell__game-leaderboard-meta [data-tone='loss'],
+.app-shell__game-leaderboard-position-meta [data-tone='loss'] {
+  color: #2563eb;
+}
+
+.app-shell__game-position-meta [data-tone='flat'],
+.app-shell__game-history-meta [data-tone='flat'],
+.app-shell__game-leaderboard-meta [data-tone='flat'],
+.app-shell__game-leaderboard-position-meta [data-tone='flat'] {
+  color: var(--text-muted);
+}
+
+.app-shell__game-rank-emphasis {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.app-shell__game-history-time {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.app-shell__game-history-status {
+  align-items: center;
+  background: var(--surface-stat);
+  border: 1px solid var(--surface-stat-border);
+  border-radius: 999px;
+  color: var(--text);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.app-shell__game-history-status[data-status='open'] {
+  background: rgba(14, 116, 144, 0.1);
+  border-color: rgba(14, 116, 144, 0.18);
+  color: #0f766e;
+}
+
+.app-shell__game-history-status[data-status='closed'] {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.app-shell__game-history-status[data-status='auto'] {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #b45309;
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend {
+  background:
+    linear-gradient(180deg, rgba(24, 20, 10, 0.94), rgba(15, 18, 28, 0.92)),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.18), transparent 44%);
+  border-color: rgba(251, 191, 36, 0.2);
+  box-shadow: 0 18px 38px rgba(2, 6, 23, 0.24);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-eyebrow {
+  color: #fbbf24;
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-helper,
+:root[data-theme='dark'] .app-shell__game-dividend-action-copy,
+:root[data-theme='dark'] .app-shell__game-dividend-rank-label,
+:root[data-theme='dark'] .app-shell__game-dividend-rank-weight {
+  color: rgba(226, 232, 240, 0.72);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-metric {
+  background:
+    linear-gradient(180deg, rgba(43, 31, 12, 0.82), rgba(15, 23, 42, 0.78)),
+    rgba(15, 23, 42, 0.82);
+  border-color: rgba(251, 191, 36, 0.18);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-metric-label {
+  color: rgba(252, 211, 77, 0.78);
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-metric-value,
+:root[data-theme='dark'] .app-shell__game-dividend-rank-share {
+  color: #f8fafc;
+}
+
+:root[data-theme='dark'] .app-shell__game-dividend-rank {
+  background:
+    linear-gradient(180deg, rgba(42, 29, 10, 0.72), rgba(15, 23, 42, 0.72)),
+    rgba(15, 23, 42, 0.74);
+  border-color: rgba(251, 191, 36, 0.16);
+}
+
+:root[data-theme='dark'] .app-shell__game-position-sell {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.22), rgba(220, 38, 38, 0.12));
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #fee2e2;
+}
+
+:root[data-theme='dark'] .app-shell__game-history-status[data-status='open'] {
+  background: rgba(45, 212, 191, 0.12);
+  border-color: rgba(45, 212, 191, 0.24);
+  color: #99f6e4;
+}
+
+:root[data-theme='dark'] .app-shell__game-history-status[data-status='closed'] {
+  background: rgba(226, 232, 240, 0.08);
+  border-color: rgba(148, 163, 184, 0.16);
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .app-shell__game-history-status[data-status='auto'] {
+  background: rgba(250, 204, 21, 0.12);
+  border-color: rgba(250, 204, 21, 0.2);
+  color: #fde68a;
+}

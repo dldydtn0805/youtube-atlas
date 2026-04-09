@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { isApiConfigured } from '../../lib/api';
 import { useAuth } from '../../features/auth/useAuth';
+import './GoogleLoginButton.css';
 
 const GOOGLE_IDENTITY_SCRIPT_SELECTOR = 'script[data-google-identity-script="true"]';
 const GOOGLE_IDENTITY_SCRIPT_URL = 'https://accounts.google.com/gsi/client';

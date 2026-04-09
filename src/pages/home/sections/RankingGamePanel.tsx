@@ -1,3 +1,4 @@
+import './RankingGamePanel.css';
 import type { ReactNode } from 'react';
 import type {
   GameCurrentSeason,
@@ -679,7 +680,7 @@ export function RankingGamePositionsTab({
                   {holdingRankTrendBadge ? (
                     <span className="app-shell__game-position-trends">
                       <span
-                        className="app-shell__game-panel-actions-trend app-shell__game-position-trend"
+                        className="app-shell__game-position-trend"
                         data-tone={holdingRankTrendBadge.tone}
                       >
                         {holdingRankTrendBadge.label}

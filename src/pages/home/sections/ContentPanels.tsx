@@ -4,6 +4,7 @@ import type { AuthStatus } from '../../../features/auth/types';
 import type { FavoriteStreamer } from '../../../features/favorites/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features/youtube/types';
+import './ContentPanels.css';
 
 interface ChartPanelProps {
   buyableVideoSearchStatus?: string;

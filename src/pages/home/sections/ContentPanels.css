@@ -1,0 +1,45 @@
+.app-shell__stage-stack[data-cinematic='true'] > .app-shell__panel--chart-cinematic {
+  justify-self: stretch;
+  width: 100%;
+}
+
+.app-shell__panel--chart-cinematic {
+  backdrop-filter: blur(22px);
+  background: var(--surface-panel-highlight);
+  border-color: var(--border);
+  box-shadow: var(--shadow-soft);
+  width: 100%;
+}
+
+.app-shell__panel--chart-cinematic .app-shell__section-eyebrow {
+  color: var(--text-muted);
+}
+
+.app-shell__panel--chart-cinematic .app-shell__section-title {
+  color: var(--text);
+}
+
+.app-shell__favorites-status {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .app-shell__panel--favorites,
+  .app-shell__panel--community,
+  .app-shell__panel--chart {
+    padding: 16px;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .app-shell__panel--favorites,
+  .app-shell__panel--community,
+  .app-shell__panel--chart {
+    border-radius: 22px;
+    padding: 14px;
+  }
+}

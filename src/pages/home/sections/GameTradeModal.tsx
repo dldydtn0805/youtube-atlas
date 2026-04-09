@@ -7,6 +7,7 @@ import {
   toDisplayGameQuantity,
 } from '../gameHelpers';
 import { getFullscreenElement } from '../utils';
+import './GameTradeModal.css';
 
 interface GameTradeModalSummaryItem {
   label: string;

@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import SearchBar, { type SearchBarOption } from '../../../components/SearchBar/SearchBar';
 import { getFullscreenElement } from '../utils';
+import './FilterPanels.css';
 
 interface ViewOption {
   id: string;

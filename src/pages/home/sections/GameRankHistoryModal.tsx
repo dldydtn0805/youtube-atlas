@@ -7,6 +7,7 @@ import type {
 } from '../../../features/game/types';
 import type { VideoRankHistory } from '../../../features/trending/types';
 import { getFullscreenElement } from '../utils';
+import './GameRankHistoryModal.css';
 
 interface GameRankHistoryModalProps {
   error?: Error | null;

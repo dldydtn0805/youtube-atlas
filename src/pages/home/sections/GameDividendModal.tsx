@@ -9,6 +9,7 @@ import {
   formatRank,
 } from '../gameHelpers';
 import { getFullscreenElement } from '../utils';
+import './GameDividendModal.css';
 
 interface GameDividendModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export default function GameDividendModal({ isOpen, onClose, overview }: GameDiv
       <section
         aria-labelledby="game-dividend-modal-title"
         aria-modal="true"
-        className="app-shell__modal app-shell__modal--history"
+        className="app-shell__modal app-shell__modal--dividend"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >

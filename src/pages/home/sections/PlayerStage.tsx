@@ -2,6 +2,7 @@ import type { ReactNode, RefObject } from 'react';
 import VideoPlayer, { type VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
 import type { AuthStatus } from '../../../features/auth/types';
 import type { PendingPlaybackRestore } from '../utils';
+import './PlayerStage.css';
 
 interface PlayerStageProps {
   authStatus: AuthStatus;

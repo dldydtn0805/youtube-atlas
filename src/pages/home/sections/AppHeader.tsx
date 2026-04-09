@@ -1,5 +1,6 @@
 import GoogleLoginButton from '../../../components/GoogleLoginButton/GoogleLoginButton';
 import type { AuthStatus, AuthUser } from '../../../features/auth/types';
+import './AppHeader.css';
 
 interface AppHeaderProps {
   authStatus: AuthStatus;

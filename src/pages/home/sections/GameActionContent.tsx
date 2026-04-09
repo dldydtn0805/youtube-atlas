@@ -12,6 +12,7 @@ import {
 } from '../gameHelpers';
 import { formatSignedProfitRate } from '../utils';
 import { RankingGameSelectedVideoActions } from './RankingGamePanel';
+import './GameActionContent.css';
 
 interface GameSelectedVideoPriceSummaryProps {
   gameDividendOverview?: GameDividendOverview;
@@ -68,11 +69,11 @@ function TrendBadges({ badges }: { badges: VideoTrendBadge[] }) {
   }
 
   return (
-    <span className="app-shell__game-panel-actions-trends">
+    <span className="app-shell__game-trend-badges">
       {badges.map((badge) => (
         <span
           key={`${badge.tone}-${badge.label}`}
-          className="app-shell__game-panel-actions-trend"
+          className="app-shell__game-trend-badge"
           data-tone={badge.tone}
         >
           {badge.label}
@@ -94,8 +95,8 @@ export function GameSelectedVideoPriceSummary({
 }: GameSelectedVideoPriceSummaryProps) {
   if (selectedVideoOpenPositionCount > 0) {
     return (
-      <div className="app-shell__game-panel-actions-summary" aria-label="선택한 영상 가격 정보">
-        <p className="app-shell__game-panel-actions-summary-line">
+      <div className="app-shell__game-selected-summary" aria-label="선택한 영상 가격 정보">
+        <p className="app-shell__game-selected-summary-line">
           현재{' '}
           {formatRank(selectedVideoCurrentChartRank, {
             chartOut: selectedVideoIsChartOut,
@@ -109,12 +110,12 @@ export function GameSelectedVideoPriceSummary({
             )}
           </span>
         </p>
-        <p className="app-shell__game-panel-actions-summary-line">
+        <p className="app-shell__game-selected-summary-line">
           총 매수 {formatPoints(selectedVideoOpenPositionSummary.stakePoints)} · 총 평가{' '}
           {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
         </p>
         {selectedVideoId && gameDividendOverview ? (
-          <p className="app-shell__game-panel-actions-summary-line">
+          <p className="app-shell__game-selected-summary-line">
             {(() => {
               const matchingRank = gameDividendOverview.ranks.find(
                 (rank) => rank.rank === selectedVideoCurrentChartRank,
@@ -151,14 +152,14 @@ export function GameSelectedVideoPriceSummary({
   }
 
   return (
-    <div className="app-shell__game-panel-actions-summary" aria-label="선택한 영상 현재 가격">
-      <p className="app-shell__game-panel-actions-summary-line">
+    <div className="app-shell__game-selected-summary" aria-label="선택한 영상 현재 가격">
+      <p className="app-shell__game-selected-summary-line">
         현재 {formatRank(selectedVideoMarketEntry.currentRank)}
         <TrendBadges badges={selectedVideoTrendBadges} /> · 가격{' '}
         {formatPoints(selectedVideoMarketEntry.currentPricePoints)}
       </p>
       {gameDividendOverview ? (
-        <p className="app-shell__game-panel-actions-summary-line">
+        <p className="app-shell__game-selected-summary-line">
           {(() => {
             const matchingRank = gameDividendOverview.ranks.find(
               (rank) => rank.rank === selectedVideoMarketEntry.currentRank,
