@@ -199,13 +199,13 @@ function getCoinProductionSummary(positions: GameCoinPosition[]) {
     activeMetricDetail:
       activePositions.length > 0
         ? nextPayoutInSeconds !== null
-          ? `${formatHoldCountdown(nextPayoutInSeconds)} 뒤 생산`
+          ? `${formatHoldCountdown(nextPayoutInSeconds)} 뒤 채굴`
           : '이번 집계 반영'
         : null,
     warmingMetricDetail:
       warmingPositions.length > 0
         ? nextProductionInSeconds !== null
-          ? `${formatHoldCountdown(nextProductionInSeconds)} 뒤 시작`
+          ? `${formatHoldCountdown(nextProductionInSeconds)} 뒤 채굴 시작`
           : '진행 대기 중'
         : null,
     hasActiveProduction: activeCoinYield > 0,
@@ -602,7 +602,7 @@ export function RankingGameCoinOverview({
         <div className="app-shell__game-dividend-copy">
           <p className="app-shell__game-dividend-eyebrow">Season Coin</p>
           <h4 className="app-shell__game-dividend-title">
-            {overview ? `Top ${overview.eligibleRankCutoff} 코인 생산 현황` : '시즌 코인 티어'}
+            {overview ? `Top ${overview.eligibleRankCutoff} 코인 채굴 현황` : '시즌 코인 티어'}
           </h4>
         </div>
       </div>
@@ -610,7 +610,7 @@ export function RankingGameCoinOverview({
         {overview ? (
           <div className="app-shell__game-dividend-metrics app-shell__game-dividend-metrics--preview" aria-label="코인 요약">
             <span className="app-shell__game-dividend-metric">
-              <span className="app-shell__game-dividend-metric-label">예상 생산량</span>
+              <span className="app-shell__game-dividend-metric-label">예상 채굴량</span>
               <strong
                 className="app-shell__game-dividend-metric-value"
                 title={formatFullCoins(overview.myEstimatedCoinYield)}
@@ -632,14 +632,14 @@ export function RankingGameCoinOverview({
               <span className="app-shell__game-dividend-metric-detail" aria-hidden="true" />
             </span>
             <span className="app-shell__game-dividend-metric">
-              <span className="app-shell__game-dividend-metric-label">생산 진행 중</span>
+              <span className="app-shell__game-dividend-metric-label">채굴 진행 중</span>
               <strong className="app-shell__game-dividend-metric-value">{overview.myActiveProducerCount}개</strong>
               <span className="app-shell__game-dividend-metric-detail">
                 {productionSummary?.activeMetricDetail ?? ''}
               </span>
             </span>
             <span className="app-shell__game-dividend-metric">
-              <span className="app-shell__game-dividend-metric-label">생산 대기</span>
+              <span className="app-shell__game-dividend-metric-label">채굴 대기</span>
               <strong className="app-shell__game-dividend-metric-value">{overview.myWarmingUpPositionCount}개</strong>
               <span className="app-shell__game-dividend-metric-detail">
                 {productionSummary?.warmingMetricDetail ?? ''}
@@ -912,18 +912,20 @@ export function RankingGamePositionsTab({
                     {formatSignedProfitRate(holding.profitPoints, holding.stakePoints)}
                   </span>
                 </p>
-                {coinSummary.hasActiveProduction ? (
+                {holding.chartOut ? (
+                  <p className="app-shell__game-position-meta">차트 아웃 상태라 코인 채굴이 중지되었습니다.</p>
+                ) : coinSummary.hasActiveProduction ? (
                   <p className="app-shell__game-position-meta">
-                    생산 진행 중 · 예상 생산량 {formatCoins(coinSummary.activeCoinYield)}
+                    채굴 진행 중 · 예상 채굴량 {formatCoins(coinSummary.activeCoinYield)}
                   </p>
                 ) : coinSummary.hasWarmingPositions ? (
                   <p className="app-shell__game-position-meta">
-                    생산 대기 중
+                    채굴 대기 중
                     {coinSummary.warmingMetricDetail ? ` · ${coinSummary.warmingMetricDetail}` : ''}
                   </p>
                 ) : coinPositions.length > 0 ? (
                   <p className="app-shell__game-position-meta">
-                    코인 생산 대상 · 기본 {formatPercent(coinSummary.baseRatePercent)} 생산
+                    코인 채굴 대상 · 기본 {formatPercent(coinSummary.baseRatePercent)} 채굴
                   </p>
                 ) : null}
               </div>

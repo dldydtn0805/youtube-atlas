@@ -129,19 +129,23 @@ export function GameSelectedVideoPriceSummary({
               );
               const rankCutoffLabel = `Top ${gameCoinOverview.eligibleRankCutoff}`;
 
+              if (selectedVideoIsChartOut) {
+                return '차트 아웃 상태에서는 코인 채굴이 진행되지 않습니다.';
+              }
+
               if (!matchingRank) {
-                return `${rankCutoffLabel} 안에 들면 시즌 코인 생산이 시작됩니다.`;
+                return `${rankCutoffLabel} 안에 들면 시즌 코인 채굴이 시작됩니다.`;
               }
 
               if (positionEstimatedCoinYield > 0) {
-                return `생산 진행 중 · 예상 생산량 ${formatCoins(positionEstimatedCoinYield)}`;
+                return `채굴 진행 중 · 예상 채굴량 ${formatCoins(positionEstimatedCoinYield)}`;
               }
 
               if (typeof warmingUpPosition?.nextProductionInSeconds === 'number') {
-                return `생산 대기 중 · ${formatHoldCountdown(warmingUpPosition.nextProductionInSeconds)} 뒤 시작`;
+                return `채굴 대기 중 · ${formatHoldCountdown(warmingUpPosition.nextProductionInSeconds)} 뒤 시작`;
               }
 
-              return `코인 생산 대상 · 평가금액의 ${formatPercent(matchingRank.coinRatePercent)} 생산`;
+              return `코인 채굴 대상 · 평가금액의 ${formatPercent(matchingRank.coinRatePercent)}만큼 채굴`;
             })()}
           </p>
         ) : null}
@@ -168,8 +172,12 @@ export function GameSelectedVideoPriceSummary({
             );
             const rankCutoffLabel = `Top ${gameCoinOverview.eligibleRankCutoff}`;
 
+            if (selectedVideoIsChartOut) {
+              return '차트 아웃 상태에서는 코인 채굴이 진행되지 않습니다.';
+            }
+
             if (!matchingRank) {
-              return `${rankCutoffLabel} 안에 진입하면 시즌 코인 생산 현황에 반영됩니다.`;
+              return `${rankCutoffLabel} 안에 진입하면 시즌 코인 채굴 현황에 반영됩니다.`;
             }
 
             const estimatedCoinYield = calculateEstimatedCoinYield(
@@ -177,7 +185,7 @@ export function GameSelectedVideoPriceSummary({
               matchingRank.coinRatePercent,
             );
 
-            return `예상 생산량 ${formatCoins(estimatedCoinYield ?? 0)}`;
+            return `예상 채굴량 ${formatCoins(estimatedCoinYield ?? 0)}`;
           })()}
         </p>
       ) : null}

@@ -1260,7 +1260,7 @@ function HomePage() {
                   value: formatPoints(selectedVideoBuyCoinSummary.nextEvaluationPoints),
                 },
                 {
-                  label: '예상 코인 생산량',
+                  label: '예상 코인 채굴량',
                   value:
                     typeof selectedVideoBuyCoinSummary.estimatedCoinYield === 'number'
                       ? formatCoins(selectedVideoBuyCoinSummary.estimatedCoinYield)
