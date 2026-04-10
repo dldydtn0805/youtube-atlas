@@ -11,42 +11,39 @@
   margin: 0;
 }
 
+.app-shell__game-selected-summary-label {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.app-shell__game-selected-summary-badges {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
 .app-shell__game-trend-badges {
   display: inline-flex;
   gap: 6px;
-  margin-left: 6px;
+  margin-left: 0;
   vertical-align: middle;
 }
 
-.app-shell__game-trend-badge {
+.app-shell__game-trend-badge,
+.app-shell__game-selected-status-badge {
   align-items: center;
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 999px;
+  color: var(--text-muted);
   display: inline-flex;
   font-size: 0.68rem;
   font-weight: 800;
   line-height: 1;
   min-height: 20px;
   padding: 0 7px;
-}
-
-.app-shell__game-trend-badge[data-tone='up'] {
-  background: rgba(220, 38, 38, 0.12);
-  color: #dc2626;
-}
-
-.app-shell__game-trend-badge[data-tone='down'] {
-  background: rgba(37, 99, 235, 0.12);
-  color: #2563eb;
-}
-
-.app-shell__game-trend-badge[data-tone='steady'] {
-  background: rgba(148, 163, 184, 0.14);
-  color: var(--text-muted);
-}
-
-.app-shell__game-trend-badge[data-tone='new'] {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
 }
 
 @media (max-width: 768px) {

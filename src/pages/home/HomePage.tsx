@@ -724,6 +724,7 @@ function HomePage() {
     normalizedBuyQuantity,
     normalizedSellQuantity,
     selectedChannelId,
+    selectedGameActionChannelTitle,
     selectedGameActionTitle,
     selectedVideoCurrentChartRank,
     selectedVideoHistoryTargetPosition,
@@ -970,6 +971,7 @@ function HomePage() {
       onOpenBuyTradeModal={openBuyTradeModal}
       onOpenRankHistory={handleOpenSelectedVideoRankHistory}
       onOpenSellTradeModal={openSellTradeModal}
+      selectedGameActionChannelTitle={selectedGameActionChannelTitle}
       selectedGameActionTitle={selectedGameActionTitle}
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
       selectedVideoId={selectedVideoId}
@@ -995,6 +997,7 @@ function HomePage() {
       onOpenBuyTradeModal={openBuyTradeModal}
       onOpenRankHistory={handleOpenSelectedVideoRankHistory}
       onOpenSellTradeModal={openSellTradeModal}
+      selectedGameActionChannelTitle={selectedGameActionChannelTitle}
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
       selectedVideoId={selectedVideoId}
       selectedVideoIsChartOut={selectedVideoIsChartOut}
@@ -1260,7 +1263,7 @@ function HomePage() {
                   value: formatPoints(selectedVideoBuyCoinSummary.nextEvaluationPoints),
                 },
                 {
-                  label: '예상 코인 채굴량',
+                  label: '코인 채굴량',
                   value:
                     typeof selectedVideoBuyCoinSummary.estimatedCoinYield === 'number'
                       ? formatCoins(selectedVideoBuyCoinSummary.estimatedCoinYield)
@@ -1299,16 +1302,16 @@ function HomePage() {
         quantity={normalizedSellQuantity}
         summaryItems={[
           { label: '수량', value: formatGameQuantity(normalizedSellQuantity) },
-          { label: '예상 정산', value: formatPoints(selectedVideoSellSummary.settledPoints) },
+          { label: '정산 금액', value: formatPoints(selectedVideoSellSummary.settledPoints) },
           { label: '매도 금액', value: formatPoints(selectedVideoSellSummary.grossSellPoints) },
           { label: '수수료', value: formatPoints(selectedVideoSellSummary.feePoints) },
           {
-            label: '예상 손익',
+            label: '손익',
             tone: getPointTone(selectedVideoSellSummary.pnlPoints),
             value: formatPoints(selectedVideoSellSummary.pnlPoints),
           },
         ]}
-        summaryNote={`예상 정산은 매도 금액 기준 ${SELL_FEE_RATE_LABEL} 수수료를 반영한 값입니다.`}
+        summaryNote={`정산 금액은 매도 금액 기준 ${SELL_FEE_RATE_LABEL} 수수료를 반영한 값입니다.`}
         thumbnailUrl={selectedVideoTradeThumbnailUrl}
         title={selectedGameActionTitle}
         unitPointsLabel={formatPoints(selectedVideoUnitPricePoints ?? selectedVideoSellSummary.settledPoints ?? 0)}

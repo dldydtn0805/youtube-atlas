@@ -72,6 +72,7 @@ interface UseSelectedVideoGameStateResult {
   normalizedBuyQuantity: number;
   normalizedSellQuantity: number;
   selectedChannelId?: string;
+  selectedGameActionChannelTitle: string;
   selectedGameActionTitle: string;
   selectedVideoCurrentChartRank: number | null | undefined;
   selectedVideoHistoryTargetPosition: GamePosition | null;
@@ -412,6 +413,11 @@ export default function useSelectedVideoGameState({
     selectedVideoMarketEntry?.thumbnailUrl ??
     selectedVideoOpenPosition?.thumbnailUrl ??
     (resolvedSelectedVideo ? getVideoThumbnailUrl(resolvedSelectedVideo) : null);
+  const selectedGameActionChannelTitle =
+    selectedVideoOpenPosition?.channelTitle ??
+    selectedVideoMarketEntry?.channelTitle ??
+    resolvedSelectedVideo?.snippet.channelTitle ??
+    '';
   const isChartActionDisabled = !selectedVideoId || !canShowGameActions;
 
   return {
@@ -432,6 +438,7 @@ export default function useSelectedVideoGameState({
     normalizedBuyQuantity,
     normalizedSellQuantity,
     selectedChannelId,
+    selectedGameActionChannelTitle,
     selectedGameActionTitle,
     selectedVideoCurrentChartRank,
     selectedVideoHistoryTargetPosition,

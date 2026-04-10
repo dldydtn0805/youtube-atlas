@@ -3,7 +3,6 @@ import type { VideoTrendBadge } from '../../../features/trending/presentation';
 import {
   calculateEstimatedCoinYield,
   formatCoins,
-  formatGameQuantity,
   formatHoldCountdown,
   formatPercent,
   formatPoints,
@@ -52,6 +51,7 @@ interface SelectedVideoGameActionsBundleProps {
   onOpenBuyTradeModal: () => void;
   onOpenRankHistory: () => void;
   onOpenSellTradeModal: () => void;
+  selectedGameActionChannelTitle?: string;
   selectedGameActionTitle?: string;
   selectedVideoCurrentChartRank: number | null | undefined;
   selectedVideoId?: string;
@@ -84,6 +84,24 @@ function TrendBadges({ badges }: { badges: VideoTrendBadge[] }) {
   );
 }
 
+function formatSelectedPositionTrendBadgeLabel(badge: VideoTrendBadge) {
+  if (badge.tone === 'steady') {
+    return '유지';
+  }
+
+  if (badge.tone === 'up') {
+    const matchedNumber = badge.label.match(/\d+/);
+    return matchedNumber ? `${matchedNumber[0]}위 상승` : badge.label;
+  }
+
+  if (badge.tone === 'down') {
+    const matchedNumber = badge.label.match(/\d+/);
+    return matchedNumber ? `${matchedNumber[0]}위 하락` : badge.label;
+  }
+
+  return badge.label;
+}
+
 export function GameSelectedVideoPriceSummary({
   gameCoinOverview,
   selectedVideoCurrentChartRank,
@@ -95,60 +113,88 @@ export function GameSelectedVideoPriceSummary({
   selectedVideoTrendBadges,
 }: GameSelectedVideoPriceSummaryProps) {
   if (selectedVideoOpenPositionCount > 0) {
+    const selectedPositionTrendBadges = selectedVideoTrendBadges.map((badge) => ({
+      ...badge,
+      label: formatSelectedPositionTrendBadgeLabel(badge),
+    }));
+    const selectedVideoCoinPositions =
+      selectedVideoId && gameCoinOverview
+        ? gameCoinOverview.positions.filter((position) => position.videoId === selectedVideoId)
+        : [];
+    const matchingRank = gameCoinOverview?.ranks.find((rank) => rank.rank === selectedVideoCurrentChartRank);
+    const activeVideoCoinPositions = selectedVideoCoinPositions.filter((position) => position.productionActive);
+    const positionCoinYield = activeVideoCoinPositions.reduce((sum, position) => sum + position.estimatedCoinYield, 0);
+    const nearestPayoutInSeconds = activeVideoCoinPositions.reduce<number | null>((nearest, position) => {
+      if (typeof position.nextPayoutInSeconds !== 'number') {
+        return nearest;
+      }
+
+      return nearest === null ? position.nextPayoutInSeconds : Math.min(nearest, position.nextPayoutInSeconds);
+    }, null);
+    const warmingUpPosition = selectedVideoCoinPositions.find((position) => !position.productionActive);
+    const maxHoldBoostPercent = selectedVideoCoinPositions.reduce(
+      (highest, position) => Math.max(highest, position.holdBoostPercent),
+      0,
+    );
+    const hasBoostBadge = !selectedVideoIsChartOut && selectedVideoCoinPositions.length > 0;
+    const statusBadge = selectedVideoIsChartOut
+      ? null
+      : positionCoinYield > 0
+        ? nearestPayoutInSeconds !== null
+          ? `${formatHoldCountdown(nearestPayoutInSeconds)} 뒤 채굴`
+          : '채굴 중'
+        : typeof warmingUpPosition?.nextProductionInSeconds === 'number'
+          ? `${formatHoldCountdown(warmingUpPosition.nextProductionInSeconds)} 뒤 채굴`
+          : matchingRank
+            ? '채굴 대상'
+            : null;
+    const detailCopy = selectedVideoIsChartOut
+      ? '차트 아웃 상태에서는 코인 채굴이 진행되지 않습니다.'
+      : !matchingRank
+        ? `Top ${gameCoinOverview?.eligibleRankCutoff ?? 0} 안에 들면 시즌 코인 채굴이 시작됩니다.`
+        : positionCoinYield > 0
+          ? null
+          : typeof warmingUpPosition?.nextProductionInSeconds === 'number'
+            ? '채굴 준비 중'
+            : `기본 채굴률 ${formatPercent(matchingRank.coinRatePercent)}`;
+
     return (
       <div className="app-shell__game-selected-summary" aria-label="선택한 영상 가격 정보">
         <p className="app-shell__game-selected-summary-line">
-          현재{' '}
+          <span className="app-shell__game-selected-summary-label">순위</span>{' '}
           {formatRank(selectedVideoCurrentChartRank, {
             chartOut: selectedVideoIsChartOut,
           })}
-          <TrendBadges badges={selectedVideoTrendBadges} /> · 보유{' '}
-          {formatGameQuantity(selectedVideoOpenPositionSummary.quantity)} · 손익률{' '}
-          <span data-tone={getPointTone(selectedVideoOpenPositionSummary.profitPoints)}>
+          {' · '}<span className="app-shell__game-selected-summary-label">금액</span>{' '}
+          {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
+          {' · '}<span className="app-shell__game-selected-summary-label">손익률</span>{' '}
+          <span data-tone={selectedVideoIsChartOut ? undefined : getPointTone(selectedVideoOpenPositionSummary.profitPoints)}>
             {formatSignedProfitRate(
               selectedVideoOpenPositionSummary.profitPoints,
               selectedVideoOpenPositionSummary.stakePoints,
+              {
+                unavailableText: selectedVideoIsChartOut ? '-' : undefined,
+              },
             )}
           </span>
+          {positionCoinYield > 0 ? (
+            <>
+              {' · '}<span className="app-shell__game-selected-summary-label">채굴량</span> {formatCoins(positionCoinYield)}
+            </>
+          ) : null}
         </p>
-        <p className="app-shell__game-selected-summary-line">
-          총 매수 {formatPoints(selectedVideoOpenPositionSummary.stakePoints)} · 총 평가{' '}
-          {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
-        </p>
-        {selectedVideoId && gameCoinOverview ? (
-          <p className="app-shell__game-selected-summary-line">
-            {(() => {
-              const matchingRank = gameCoinOverview.ranks.find(
-                (rank) => rank.rank === selectedVideoCurrentChartRank,
-              );
-              const positionEstimatedCoinYield = gameCoinOverview.positions
-                .filter((position) => position.videoId === selectedVideoId && position.productionActive)
-                .reduce((sum, position) => sum + position.estimatedCoinYield, 0);
-              const warmingUpPosition = gameCoinOverview.positions.find(
-                (position) => position.videoId === selectedVideoId && !position.productionActive,
-              );
-              const rankCutoffLabel = `Top ${gameCoinOverview.eligibleRankCutoff}`;
-
-              if (selectedVideoIsChartOut) {
-                return '차트 아웃 상태에서는 코인 채굴이 진행되지 않습니다.';
-              }
-
-              if (!matchingRank) {
-                return `${rankCutoffLabel} 안에 들면 시즌 코인 채굴이 시작됩니다.`;
-              }
-
-              if (positionEstimatedCoinYield > 0) {
-                return `채굴 진행 중 · 예상 채굴량 ${formatCoins(positionEstimatedCoinYield)}`;
-              }
-
-              if (typeof warmingUpPosition?.nextProductionInSeconds === 'number') {
-                return `채굴 대기 중 · ${formatHoldCountdown(warmingUpPosition.nextProductionInSeconds)} 뒤 시작`;
-              }
-
-              return `코인 채굴 대상 · 평가금액의 ${formatPercent(matchingRank.coinRatePercent)}만큼 채굴`;
-            })()}
+        {selectedVideoTrendBadges.length > 0 || statusBadge || hasBoostBadge ? (
+          <p className="app-shell__game-selected-summary-badges">
+            <TrendBadges badges={selectedPositionTrendBadges} />
+            {statusBadge ? <span className="app-shell__game-selected-status-badge">{statusBadge}</span> : null}
+            {hasBoostBadge ? (
+              <span className="app-shell__game-selected-status-badge">
+                부스트 +{formatPercent(maxHoldBoostPercent)}
+              </span>
+            ) : null}
           </p>
         ) : null}
+        {detailCopy ? <p className="app-shell__game-selected-summary-line">{detailCopy}</p> : null}
       </div>
     );
   }
@@ -157,38 +203,26 @@ export function GameSelectedVideoPriceSummary({
     return null;
   }
 
+  const selectedVideoMatchingRank = gameCoinOverview?.ranks.find(
+    (rank) => rank.rank === selectedVideoMarketEntry.currentRank,
+  );
+  const selectedVideoCoinYield =
+    gameCoinOverview && !selectedVideoIsChartOut && selectedVideoMatchingRank
+      ? calculateEstimatedCoinYield(
+          selectedVideoMarketEntry.currentPricePoints,
+          selectedVideoMatchingRank.coinRatePercent,
+        ) ?? 0
+      : 0;
+
   return (
     <div className="app-shell__game-selected-summary" aria-label="선택한 영상 현재 가격">
       <p className="app-shell__game-selected-summary-line">
-        현재 {formatRank(selectedVideoMarketEntry.currentRank)}
-        <TrendBadges badges={selectedVideoTrendBadges} /> · 가격{' '}
+        <span className="app-shell__game-selected-summary-label">순위</span>{' '}
+        {formatRank(selectedVideoMarketEntry.currentRank)}
+        {' · '}<span className="app-shell__game-selected-summary-label">금액</span>{' '}
         {formatPoints(selectedVideoMarketEntry.currentPricePoints)}
+        {' · '}<span className="app-shell__game-selected-summary-label">채굴량</span> {formatCoins(selectedVideoCoinYield)}
       </p>
-      {gameCoinOverview ? (
-        <p className="app-shell__game-selected-summary-line">
-          {(() => {
-            const matchingRank = gameCoinOverview.ranks.find(
-              (rank) => rank.rank === selectedVideoMarketEntry.currentRank,
-            );
-            const rankCutoffLabel = `Top ${gameCoinOverview.eligibleRankCutoff}`;
-
-            if (selectedVideoIsChartOut) {
-              return '차트 아웃 상태에서는 코인 채굴이 진행되지 않습니다.';
-            }
-
-            if (!matchingRank) {
-              return `${rankCutoffLabel} 안에 진입하면 시즌 코인 채굴 현황에 반영됩니다.`;
-            }
-
-            const estimatedCoinYield = calculateEstimatedCoinYield(
-              selectedVideoMarketEntry.currentPricePoints,
-              matchingRank.coinRatePercent,
-            );
-
-            return `예상 채굴량 ${formatCoins(estimatedCoinYield ?? 0)}`;
-          })()}
-        </p>
-      ) : null}
     </div>
   );
 }
@@ -304,6 +338,7 @@ export function SelectedVideoGameActionsBundle({
   onOpenBuyTradeModal,
   onOpenRankHistory,
   onOpenSellTradeModal,
+  selectedGameActionChannelTitle,
   selectedGameActionTitle,
   selectedVideoCurrentChartRank,
   selectedVideoId,
@@ -362,6 +397,7 @@ export function SelectedVideoGameActionsBundle({
       onOpenBuyTradeModal={onOpenBuyTradeModal}
       onOpenRankHistory={onOpenRankHistory}
       onOpenSellTradeModal={onOpenSellTradeModal}
+      selectedGameActionChannelTitle={selectedGameActionChannelTitle}
       selectedGameActionTitle={selectedGameActionTitle}
       selectedVideoOpenPositionCount={selectedVideoOpenPositionCount}
       selectedVideoTradeThumbnailUrl={selectedVideoTradeThumbnailUrl}

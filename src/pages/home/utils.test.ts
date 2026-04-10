@@ -346,4 +346,9 @@ describe('home utils', () => {
     expect(formatSignedProfitRate(100, null)).toBe('집계 중');
     expect(formatSignedProfitRate(100, 0)).toBe('집계 중');
   });
+
+  it('supports overriding the fallback text when a profit rate is unavailable', () => {
+    expect(formatSignedProfitRate(null, 1000, { unavailableText: '-' })).toBe('-');
+    expect(formatSignedProfitRate(100, 0, { unavailableText: '-' })).toBe('-');
+  });
 });

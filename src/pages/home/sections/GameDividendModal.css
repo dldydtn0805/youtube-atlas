@@ -134,7 +134,8 @@
   align-items: center;
   display: flex;
   gap: 8px;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .app-shell__game-dividend-position-title,
@@ -144,9 +145,11 @@
 
 .app-shell__game-dividend-position-title {
   color: var(--text);
+  flex: 1 1 180px;
   font-size: 0.82rem;
   font-weight: 800;
   line-height: 1.35;
+  min-width: 0;
 }
 
 .app-shell__game-dividend-position-meta {
@@ -168,19 +171,35 @@
 }
 
 .app-shell__coin-boost-badge {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.92)),
-    rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  align-items: center;
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 999px;
-  color: var(--text);
+  color: var(--text-muted);
   display: inline-flex;
   flex: 0 0 auto;
   font-size: 0.68rem;
-  font-weight: 900;
+  font-weight: 800;
+  gap: 3px;
   line-height: 1;
-  padding: 5px 8px;
+  max-width: 100%;
+  min-height: 18px;
+  padding: 0 6px;
   white-space: nowrap;
+}
+
+.app-shell__coin-boost-badge-label {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  opacity: 0.92;
+}
+
+.app-shell__coin-boost-badge-rate {
+  color: inherit;
+  font-size: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: inherit;
 }
 
 :root[data-theme='dark'] .app-shell__game-dividend-position-title {
@@ -229,11 +248,17 @@
 }
 
 :root[data-theme='dark'] .app-shell__coin-boost-badge {
-  background:
-    linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.88)),
-    rgba(15, 23, 42, 0.88);
+  background: rgba(148, 163, 184, 0.14);
   border-color: rgba(148, 163, 184, 0.18);
-  color: #f8fafc;
+  color: rgba(226, 232, 240, 0.72);
+}
+
+:root[data-theme='dark'] .app-shell__coin-boost-badge-label {
+  color: inherit;
+}
+
+:root[data-theme='dark'] .app-shell__coin-boost-badge-rate {
+  color: inherit;
 }
 
 @media (max-width: 768px) {
@@ -244,5 +269,9 @@
   .app-shell__game-dividend-position {
     align-items: start;
     grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .app-shell__game-dividend-position-title {
+    flex-basis: 100%;
   }
 }

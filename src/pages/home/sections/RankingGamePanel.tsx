@@ -10,7 +10,6 @@ import type {
 } from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import {
-  formatCoinBoostMultiplier,
   formatCoins,
   formatFullCoins,
   formatFullPoints,
@@ -25,10 +24,28 @@ import {
   getPointTone,
   type OpenGameHolding,
 } from '../gameHelpers';
-import { formatSignedProfitRate } from '../utils';
+import { calculateSellFeePoints, calculateSettledSellPoints, formatSignedProfitRate } from '../utils';
 import GameCoinTierSummary from './GameCoinTierSummary';
 
 type GameTab = 'positions' | 'history' | 'leaderboard';
+
+function inferGrossSellPointsFromSettled(settledPoints?: number | null) {
+  if (typeof settledPoints !== 'number' || !Number.isFinite(settledPoints) || settledPoints < 0) {
+    return null;
+  }
+
+  const maxFeeGuess = Math.ceil((settledPoints * 3) / 997) + 2;
+
+  for (let feePoints = 0; feePoints <= maxFeeGuess; feePoints += 1) {
+    const grossSellPoints = settledPoints + feePoints;
+
+    if (calculateSettledSellPoints(grossSellPoints) === settledPoints) {
+      return grossSellPoints;
+    }
+  }
+
+  return null;
+}
 
 interface RankingGamePanelShellProps {
   activeGameTab: GameTab;
@@ -63,6 +80,7 @@ interface RankingGameSelectedVideoActionsProps {
   onOpenBuyTradeModal: () => void;
   onOpenRankHistory: () => void;
   onOpenSellTradeModal: () => void;
+  selectedGameActionChannelTitle?: string;
   selectedGameActionTitle: string;
   selectedVideoOpenPositionCount: number;
   selectedVideoTradeThumbnailUrl?: string | null;
@@ -156,11 +174,11 @@ function getHoldingRankDiffBadge(holding: Pick<OpenGameHolding, 'buyRank' | 'cur
   const rankDiff = holding.buyRank - holding.currentRank;
 
   if (rankDiff > 0) {
-    return { label: `▲${rankDiff}`, tone: 'up' as const };
+    return { label: `${rankDiff}위 상승`, tone: 'up' as const };
   }
 
   if (rankDiff < 0) {
-    return { label: `▼${Math.abs(rankDiff)}`, tone: 'down' as const };
+    return { label: `${Math.abs(rankDiff)}위 하락`, tone: 'down' as const };
   }
 
   return { label: '유지', tone: 'steady' as const };
@@ -265,8 +283,10 @@ function LeaderboardPositionList({
                     {formatRank(position.currentRank, { chartOut: position.chartOut })}
                   </span>{' '}
                   · 손익률{' '}
-                  <span data-tone={getPointTone(position.profitPoints)}>
-                    {formatSignedProfitRate(position.profitPoints, position.stakePoints)}
+                  <span data-tone={position.chartOut ? undefined : getPointTone(position.profitPoints)}>
+                    {formatSignedProfitRate(position.profitPoints, position.stakePoints, {
+                      unavailableText: position.chartOut ? '-' : undefined,
+                    })}
                   </span>
                 </p>
               </div>
@@ -614,7 +634,7 @@ export function RankingGameCoinOverview({
         {overview ? (
           <div className="app-shell__game-dividend-metrics app-shell__game-dividend-metrics--preview" aria-label="코인 요약">
             <span className="app-shell__game-dividend-metric">
-              <span className="app-shell__game-dividend-metric-label">예상 채굴량</span>
+              <span className="app-shell__game-dividend-metric-label">채굴량</span>
               <strong
                 className="app-shell__game-dividend-metric-value"
                 title={formatFullCoins(overview.myEstimatedCoinYield)}
@@ -672,6 +692,7 @@ export function RankingGameSelectedVideoActions({
   onOpenBuyTradeModal,
   onOpenRankHistory,
   onOpenSellTradeModal,
+  selectedGameActionChannelTitle,
   selectedGameActionTitle,
   selectedVideoOpenPositionCount,
   selectedVideoTradeThumbnailUrl,
@@ -694,6 +715,9 @@ export function RankingGameSelectedVideoActions({
           ) : null}
           <div className="app-shell__game-panel-actions-body">
             <p className="app-shell__game-panel-actions-title">{selectedGameActionTitle}</p>
+            {selectedGameActionChannelTitle ? (
+              <p className="app-shell__game-panel-actions-channel">{selectedGameActionChannelTitle}</p>
+            ) : null}
             {currentVideoGamePriceSummary}
           </div>
         </div>
@@ -840,10 +864,31 @@ export function RankingGamePositionsTab({
         const holdingRankTrendBadge = getHoldingRankDiffBadge(holding);
         const coinPositions = coinOverview?.positions.filter((position) => position.positionId === holding.positionId) ?? [];
         const coinSummary = getCoinProductionSummary(coinPositions);
+        const hasCoinBoostBadge = !holding.chartOut && coinPositions.length > 0;
         const maxHoldBoostPercent = coinPositions.reduce(
-          (highest, position) => Math.max(highest, position.productionActive ? position.holdBoostPercent : 0),
+          (highest, position) => Math.max(highest, position.holdBoostPercent),
           0,
         );
+        const activeCoinYieldText = coinSummary.hasActiveProduction ? formatCoins(coinSummary.activeCoinYield) : null;
+        const positionStatusBadge = holding.chartOut
+          ? null
+          : coinSummary.hasActiveProduction
+            ? coinSummary.activeMetricDetail ?? '채굴 중'
+            : coinSummary.hasWarmingPositions
+              ? coinSummary.warmingMetricDetail ?? '채굴 대기'
+              : coinPositions.length > 0
+                ? '채굴 대상'
+                : null;
+        const positionDetailCopy = holding.chartOut
+          ? '차트 아웃 상태라 코인 채굴이 중지되었습니다.'
+          : coinSummary.hasActiveProduction
+            ? null
+            : coinSummary.hasWarmingPositions
+              ? '채굴 준비 중'
+              : coinPositions.length > 0
+                ? `기본 채굴률 ${formatPercent(coinSummary.baseRatePercent)}`
+                : null;
+        const hasDetailBadges = Boolean(holdingRankTrendBadge || positionStatusBadge || hasCoinBoostBadge);
 
         return (
           <li key={holding.positionId} className="app-shell__game-position" data-selected={isSelectedPosition}>
@@ -881,57 +926,61 @@ export function RankingGamePositionsTab({
               <div className="app-shell__game-position-copy">
                 <div className="app-shell__game-position-heading">
                   <p className="app-shell__game-position-title">{holding.title}</p>
-                  {maxHoldBoostPercent > 0 ? (
-                    <span
-                      className="app-shell__coin-boost-badge"
-                      title={`최대 보유 부스트 ${formatPercent(maxHoldBoostPercent)}`}
-                    >
-                      {formatCoinBoostMultiplier(maxHoldBoostPercent)}
+                </div>
+                <p className="app-shell__game-position-channel">{holding.channelTitle}</p>
+                <div className="app-shell__game-position-body">
+                  <p className="app-shell__game-position-meta">
+                    <span className="app-shell__game-position-meta-label">순위</span>{' '}
+                    <span className="app-shell__game-position-rank">
+                      {formatRank(holding.currentRank, {
+                        chartOut: holding.chartOut,
+                      })}
                     </span>
+                    {' · '}<span className="app-shell__game-position-meta-label">금액</span> {formatMaybePoints(holding.currentPricePoints)}
+                    {' · '}<span className="app-shell__game-position-meta-label">손익률</span>{' '}
+                    <span data-tone={holding.chartOut ? undefined : getPointTone(holding.profitPoints)}>
+                      {formatSignedProfitRate(holding.profitPoints, holding.stakePoints, {
+                        unavailableText: holding.chartOut ? '-' : undefined,
+                      })}
+                    </span>
+                  {activeCoinYieldText ? (
+                    <>
+                      {' · '}<span className="app-shell__game-position-meta-label">채굴량</span> {activeCoinYieldText}
+                    </>
+                  ) : null}
+                </p>
+                  {hasDetailBadges || positionDetailCopy ? (
+                    <div className="app-shell__game-position-detail">
+                      {hasDetailBadges ? (
+                        <span className="app-shell__game-position-detail-badges">
+                          {holdingRankTrendBadge ? (
+                            <span
+                              className="app-shell__game-position-trend"
+                              data-tone={holdingRankTrendBadge.tone}
+                            >
+                              {holdingRankTrendBadge.label}
+                            </span>
+                          ) : null}
+                          {positionStatusBadge ? (
+                            <span className="app-shell__game-position-trend" data-tone="steady">
+                              {positionStatusBadge}
+                            </span>
+                          ) : null}
+                          {hasCoinBoostBadge ? (
+                            <span
+                              className="app-shell__coin-boost-badge"
+                              title={`최대 보유 부스트 ${formatPercent(maxHoldBoostPercent)}`}
+                            >
+                              <span className="app-shell__coin-boost-badge-label">부스트</span>
+                              <span className="app-shell__coin-boost-badge-rate">+{formatPercent(maxHoldBoostPercent)}</span>
+                            </span>
+                          ) : null}
+                        </span>
+                      ) : null}
+                      <p className="app-shell__game-position-detail-copy">{positionDetailCopy}</p>
+                    </div>
                   ) : null}
                 </div>
-                <p className="app-shell__game-position-meta">
-                  현재 순위{' '}
-                  <span className="app-shell__game-rank-emphasis">
-                    {formatRank(holding.currentRank, {
-                      chartOut: holding.chartOut,
-                    })}
-                  </span>
-                  {' · '}매수 순위 {formatRank(holding.buyRank)}
-                  {' · '}보유 수량 {formatGameQuantity(holding.quantity)}
-                  {holdingRankTrendBadge ? (
-                    <span className="app-shell__game-position-trends">
-                      <span
-                        className="app-shell__game-position-trend"
-                        data-tone={holdingRankTrendBadge.tone}
-                      >
-                        {holdingRankTrendBadge.label}
-                      </span>
-                    </span>
-                  ) : null}
-                </p>
-                <p className="app-shell__game-position-meta">
-                  총 매수 {formatPoints(holding.stakePoints)} · 총 평가 {formatMaybePoints(holding.currentPricePoints)} · 손익률{' '}
-                  <span data-tone={getPointTone(holding.profitPoints)}>
-                    {formatSignedProfitRate(holding.profitPoints, holding.stakePoints)}
-                  </span>
-                </p>
-                {holding.chartOut ? (
-                  <p className="app-shell__game-position-meta">차트 아웃 상태라 코인 채굴이 중지되었습니다.</p>
-                ) : coinSummary.hasActiveProduction ? (
-                  <p className="app-shell__game-position-meta">
-                    채굴 진행 중 · 예상 채굴량 {formatCoins(coinSummary.activeCoinYield)}
-                  </p>
-                ) : coinSummary.hasWarmingPositions ? (
-                  <p className="app-shell__game-position-meta">
-                    채굴 대기 중
-                    {coinSummary.warmingMetricDetail ? ` · ${coinSummary.warmingMetricDetail}` : ''}
-                  </p>
-                ) : coinPositions.length > 0 ? (
-                  <p className="app-shell__game-position-meta">
-                    코인 채굴 대상 · 기본 {formatPercent(coinSummary.baseRatePercent)} 채굴
-                  </p>
-                ) : null}
               </div>
             </button>
             <div className="app-shell__game-position-side">
@@ -978,10 +1027,13 @@ export function RankingGameHistoryTab({
         const isSelectable = Boolean(playbackQueueId);
         const isSelectedPosition = position.videoId === selectedVideoId;
         const isLoadingHistoryPlayback = historyPlaybackLoadingVideoId === position.videoId;
+        const isClosedPosition = position.status !== 'OPEN';
         const historyStatusTone =
           position.status === 'OPEN' ? 'open' : position.status === 'AUTO_CLOSED' ? 'auto' : 'closed';
         const historyStatusLabel =
-          position.status === 'OPEN' ? '보유 중' : position.status === 'AUTO_CLOSED' ? '자동 청산' : '매도 완료';
+          position.status === 'OPEN' ? '매수 완료' : position.status === 'AUTO_CLOSED' ? '자동 청산' : '매도 완료';
+        const grossSellPoints = isClosedPosition ? inferGrossSellPointsFromSettled(position.currentPricePoints) : null;
+        const sellFeePoints = grossSellPoints !== null ? calculateSellFeePoints(grossSellPoints) : null;
 
         return (
           <li key={position.id} className="app-shell__game-history-item" data-selected={isSelectedPosition}>
@@ -1005,41 +1057,58 @@ export function RankingGameHistoryTab({
                 src={position.thumbnailUrl}
               />
               <div className="app-shell__game-history-copy">
-                <p className="app-shell__game-history-title">{position.title}</p>
+                <div className="app-shell__game-history-heading">
+                  <p className="app-shell__game-history-title">{position.title}</p>
+                </div>
+                <p className="app-shell__game-history-channel">{position.channelTitle}</p>
                 {isLoadingHistoryPlayback ? (
                   <p className="app-shell__game-history-meta">YouTube에서 영상 정보를 다시 불러오는 중입니다.</p>
                 ) : null}
-                <p className="app-shell__game-history-meta">
-                  매수 <span className="app-shell__game-rank-emphasis">{formatRank(position.buyRank)}</span> · 매수 금액{' '}
-                  {formatPoints(position.stakePoints)}
-                </p>
-                <p className="app-shell__game-history-meta">
-                  {position.status === 'OPEN' ? '현재' : position.status === 'AUTO_CLOSED' ? '자동청산' : '매도'}{' '}
-                  <span className="app-shell__game-rank-emphasis">
-                    {formatRank(position.currentRank, {
-                      chartOut: position.chartOut,
-                    })}
-                  </span>{' '}
-                  · {position.status === 'OPEN' ? '평가 금액' : '정산 금액'} {formatMaybePoints(position.currentPricePoints)}
-                </p>
-                <p className="app-shell__game-history-meta">
-                  손익률{' '}
-                  <span data-tone={getPointTone(position.profitPoints)}>
-                    {formatSignedProfitRate(position.profitPoints, position.stakePoints)}
-                  </span>
-                </p>
+                <div className="app-shell__game-history-body">
+                  {isClosedPosition ? (
+                    <p className="app-shell__game-history-meta">
+                      <span className="app-shell__game-history-meta-label">순위</span>{' '}
+                      <span className="app-shell__game-history-rank">
+                        {formatRank(position.currentRank, {
+                          chartOut: position.chartOut,
+                        })}
+                      </span>
+                      {' · '}<span className="app-shell__game-history-meta-label">정산금</span>{' '}
+                      {formatMaybePoints(position.currentPricePoints)}
+                      {' · '}<span className="app-shell__game-history-meta-label">손익률</span>{' '}
+                      <span data-tone={position.chartOut ? undefined : getPointTone(position.profitPoints)}>
+                        {formatSignedProfitRate(position.profitPoints, position.stakePoints, {
+                          unavailableText: position.chartOut ? '-' : undefined,
+                        })}
+                      </span>
+                      {' · '}<span className="app-shell__game-history-meta-label">수수료</span>{' '}
+                      {sellFeePoints !== null ? formatPoints(sellFeePoints) : '집계 중'}
+                    </p>
+                  ) : (
+                    <p className="app-shell__game-history-meta">
+                      <span className="app-shell__game-history-meta-label">순위</span>{' '}
+                      <span className="app-shell__game-history-rank">{formatRank(position.buyRank)}</span>
+                      {' · '}<span className="app-shell__game-history-meta-label">매수금</span> {formatPoints(position.stakePoints)}
+                    </p>
+                  )}
+                  <div className="app-shell__game-history-detail">
+                    <div className="app-shell__game-history-detail-badges">
+                      <span
+                        className="app-shell__game-history-badge app-shell__game-history-badge--status"
+                        data-status={historyStatusTone}
+                      >
+                        {historyStatusLabel}
+                      </span>
+                      <span className="app-shell__game-history-badge">
+                        {position.closedAt
+                          ? `종료 ${formatGameTimestamp(position.closedAt)}`
+                          : `진입 ${formatGameTimestamp(position.createdAt)}`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </button>
-            <div className="app-shell__game-history-side">
-              <span className="app-shell__game-history-status" data-status={historyStatusTone}>
-                {historyStatusLabel}
-              </span>
-              <p className="app-shell__game-history-time">
-                {position.closedAt
-                  ? `종료 ${formatGameTimestamp(position.closedAt)}`
-                  : `진입 ${formatGameTimestamp(position.createdAt)}`}
-              </p>
-            </div>
           </li>
         );
       })}

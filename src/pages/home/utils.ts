@@ -532,7 +532,13 @@ export function formatSelectedVideoRankLabel(
   return `${rank}위`;
 }
 
-export function formatSignedProfitRate(profitPoints?: number | null, stakePoints?: number | null) {
+export function formatSignedProfitRate(
+  profitPoints?: number | null,
+  stakePoints?: number | null,
+  options?: { unavailableText?: string },
+) {
+  const unavailableText = options?.unavailableText ?? '집계 중';
+
   if (
     typeof profitPoints !== 'number' ||
     typeof stakePoints !== 'number' ||
@@ -540,7 +546,7 @@ export function formatSignedProfitRate(profitPoints?: number | null, stakePoints
     !Number.isFinite(stakePoints) ||
     stakePoints <= 0
   ) {
-    return '집계 중';
+    return unavailableText;
   }
 
   const roundedProfitRate = Math.round((profitPoints / stakePoints) * 1000) / 10;

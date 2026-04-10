@@ -1,7 +1,6 @@
 import { createPortal } from 'react-dom';
 import type { GameCoinOverview, GameCoinTierProgress } from '../../../features/game/types';
 import {
-  formatCoinBoostMultiplier,
   formatCoins,
   formatGameQuantity,
   formatHoldCountdown,
@@ -89,7 +88,7 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
                     </strong>
                   </span>
                   <span className="app-shell__game-dividend-metric">
-                    <span className="app-shell__game-dividend-metric-label">예상 채굴량</span>
+                    <span className="app-shell__game-dividend-metric-label">채굴량</span>
                     <strong className="app-shell__game-dividend-metric-value">{formatCoins(overview.myEstimatedCoinYield)}</strong>
                   </span>
                   <span className="app-shell__game-dividend-metric">
@@ -169,9 +168,10 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
                         <div className="app-shell__game-dividend-position-copy">
                           <div className="app-shell__game-dividend-position-heading">
                             <p className="app-shell__game-dividend-position-title">{position.title}</p>
-                            {position.productionActive && position.holdBoostPercent > 0 ? (
+                            {!(!position.rankEligible && position.currentRank === null) ? (
                               <span className="app-shell__coin-boost-badge" title={`보유 시간 부스트 ${formatPercent(position.holdBoostPercent)}`}>
-                                {formatCoinBoostMultiplier(position.holdBoostPercent)}
+                                <span className="app-shell__coin-boost-badge-label">부스트</span>
+                                <span className="app-shell__coin-boost-badge-rate">+{formatPercent(position.holdBoostPercent)}</span>
                               </span>
                             ) : null}
                           </div>
@@ -188,8 +188,8 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
                           <p className="app-shell__game-dividend-position-meta">
                             {position.productionActive
                               ? typeof position.nextPayoutInSeconds === 'number'
-                                ? `${formatHoldCountdown(position.nextPayoutInSeconds)} 뒤 예상 채굴량 ${formatCoins(position.estimatedCoinYield)}`
-                                : `이번 집계 예상 채굴량 ${formatCoins(position.estimatedCoinYield)}`
+                                ? `${formatHoldCountdown(position.nextPayoutInSeconds)} 뒤 채굴량 ${formatCoins(position.estimatedCoinYield)}`
+                                : `이번 집계 채굴량 ${formatCoins(position.estimatedCoinYield)}`
                               : !position.rankEligible && position.currentRank === null
                                 ? '차트 아웃 상태라 코인 채굴이 중지되었습니다.'
                                 : !position.rankEligible
