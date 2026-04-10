@@ -29,6 +29,65 @@
   width: min(var(--app-content-max-width), 100%);
 }
 
+.app-shell__panel--filters,
+.app-shell__panel--player:not([data-cinematic='true']),
+.app-shell__panel--chart,
+.app-shell__panel--chart-cinematic {
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+}
+
+.app-shell__panel--filters::before,
+.app-shell__panel--player:not([data-cinematic='true'])::before,
+.app-shell__panel--chart::before,
+.app-shell__panel--chart-cinematic::before {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.42) 18%,
+    rgba(255, 255, 255, 0.88) 50%,
+    rgba(255, 255, 255, 0.34) 82%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.42),
+    0 2px 0 rgba(15, 23, 42, 0.08);
+  content: '';
+  height: 1px;
+  inset: 0 0 auto;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
+.app-shell__panel--filters > *,
+.app-shell__panel--player:not([data-cinematic='true']) > *,
+.app-shell__panel--chart > *,
+.app-shell__panel--chart-cinematic > * {
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-theme='dark'] .app-shell__panel--filters::before,
+:root[data-theme='dark'] .app-shell__panel--player:not([data-cinematic='true'])::before,
+:root[data-theme='dark'] .app-shell__panel--chart::before,
+:root[data-theme='dark'] .app-shell__panel--chart-cinematic::before {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.36) 18%,
+    rgba(255, 255, 255, 0.82) 50%,
+    rgba(255, 255, 255, 0.28) 82%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  box-shadow:
+    0 0 10px rgba(255, 255, 255, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.05);
+  opacity: 1;
+}
+
 .app-shell__mobile-stack {
   display: grid;
   gap: 18px;

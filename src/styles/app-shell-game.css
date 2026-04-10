@@ -347,10 +347,13 @@
     rgba(255, 255, 255, 0.38) 82%,
     rgba(255, 255, 255, 0) 100%
   );
-  box-shadow: 0 1px 0 rgba(148, 163, 184, 0.08);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.42),
+    0 2px 0 rgba(15, 23, 42, 0.08);
   content: '';
   height: 1px;
   inset: 0 0 auto;
+  opacity: 0;
   pointer-events: none;
   position: absolute;
   z-index: 1;
@@ -930,6 +933,7 @@
   box-shadow:
     0 0 10px rgba(255, 255, 255, 0.08),
     0 1px 0 rgba(255, 255, 255, 0.05);
+  opacity: 1;
 }
 
 :root[data-theme='dark'] .app-shell__game-tier[data-surface-variant='season-coin'] .app-shell__game-tier-card {
