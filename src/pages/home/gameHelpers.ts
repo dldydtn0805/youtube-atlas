@@ -27,6 +27,7 @@ export interface OpenGameHolding {
   title: string;
   channelTitle: string;
   thumbnailUrl: string;
+  buyRank: number;
   currentRank: number | null;
   chartOut: boolean;
   quantity: number;
@@ -380,6 +381,7 @@ export function buildOpenGameHoldings(
         title: position.title,
         channelTitle: position.channelTitle,
         thumbnailUrl: position.thumbnailUrl,
+        buyRank: position.buyRank,
         currentRank: position.currentRank,
         chartOut: position.chartOut,
         quantity,

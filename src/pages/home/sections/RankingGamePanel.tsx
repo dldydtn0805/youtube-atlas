@@ -9,7 +9,6 @@ import type {
   GamePosition,
 } from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
-import { getPrimaryVideoTrendBadge } from '../../../features/trending/presentation';
 import {
   formatCoinBoostMultiplier,
   formatCoins,
@@ -131,6 +130,24 @@ function formatSignedPoints(points?: number | null) {
   }
 
   return '0P';
+}
+
+function getHoldingRankDiffBadge(holding: Pick<OpenGameHolding, 'buyRank' | 'currentRank' | 'chartOut'>) {
+  if (holding.chartOut || typeof holding.currentRank !== 'number') {
+    return null;
+  }
+
+  const rankDiff = holding.buyRank - holding.currentRank;
+
+  if (rankDiff > 0) {
+    return { label: `▲${rankDiff}`, tone: 'up' as const };
+  }
+
+  if (rankDiff < 0) {
+    return { label: `▼${Math.abs(rankDiff)}`, tone: 'down' as const };
+  }
+
+  return { label: '유지', tone: 'steady' as const };
 }
 
 function getCoinProductionSummary(positions: GameCoinPosition[]) {
@@ -789,12 +806,12 @@ export function RankingGamePositionsTab({
   canShowGameActions,
   coinOverview,
   emptyMessage,
-  favoriteTrendSignalsByVideoId,
-  gameMarketSignalsByVideoId,
+  favoriteTrendSignalsByVideoId: _favoriteTrendSignalsByVideoId,
+  gameMarketSignalsByVideoId: _gameMarketSignalsByVideoId,
   holdings,
   onSelectPosition,
   selectedPositionId,
-  trendSignalsByVideoId,
+  trendSignalsByVideoId: _trendSignalsByVideoId,
 }: RankingGamePositionsTabProps) {
   if (holdings.length === 0) {
     return emptyMessage ? <p className="app-shell__game-empty">{emptyMessage}</p> : null;
@@ -804,11 +821,7 @@ export function RankingGamePositionsTab({
     <ul className="app-shell__game-positions">
       {holdings.map((holding) => {
         const isSelectedPosition = holding.positionId === selectedPositionId;
-        const holdingRankTrendBadge = getPrimaryVideoTrendBadge(
-          gameMarketSignalsByVideoId[holding.videoId] ??
-            trendSignalsByVideoId[holding.videoId] ??
-            favoriteTrendSignalsByVideoId[holding.videoId],
-        );
+        const holdingRankTrendBadge = getHoldingRankDiffBadge(holding);
         const coinPositions = coinOverview?.positions.filter((position) => position.positionId === holding.positionId) ?? [];
         const coinSummary = getCoinProductionSummary(coinPositions);
         const maxHoldBoostPercent = coinPositions.reduce(
@@ -827,7 +840,7 @@ export function RankingGamePositionsTab({
                   title: holding.title,
                   channelTitle: holding.channelTitle,
                   thumbnailUrl: holding.thumbnailUrl,
-                  buyRank: holding.currentRank ?? 0,
+                  buyRank: holding.buyRank,
                   currentRank: holding.currentRank,
                   rankDiff: null,
                   quantity: holding.quantity,
@@ -862,12 +875,14 @@ export function RankingGamePositionsTab({
                   ) : null}
                 </div>
                 <p className="app-shell__game-position-meta">
-                  보유 수량 {formatGameQuantity(holding.quantity)} · 현재 순위{' '}
+                  현재 순위{' '}
                   <span className="app-shell__game-rank-emphasis">
                     {formatRank(holding.currentRank, {
                       chartOut: holding.chartOut,
                     })}
                   </span>
+                  {' · '}매수 순위 {formatRank(holding.buyRank)}
+                  {' · '}보유 수량 {formatGameQuantity(holding.quantity)}
                   {holdingRankTrendBadge ? (
                     <span className="app-shell__game-position-trends">
                       <span
