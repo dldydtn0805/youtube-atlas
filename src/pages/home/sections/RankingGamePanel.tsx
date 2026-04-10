@@ -1,5 +1,5 @@
 import './RankingGamePanel.css';
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import type {
   GameCoinOverview,
   GameCoinPosition,
@@ -24,7 +24,7 @@ import {
   getPointTone,
   type OpenGameHolding,
 } from '../gameHelpers';
-import { calculateSellFeePoints, calculateSettledSellPoints, formatSignedProfitRate } from '../utils';
+import { calculateSellFeePoints, formatSignedProfitRate } from '../utils';
 import GameCoinTierSummary from './GameCoinTierSummary';
 
 type GameTab = 'positions' | 'history' | 'leaderboard';
@@ -34,17 +34,7 @@ function inferGrossSellPointsFromSettled(settledPoints?: number | null) {
     return null;
   }
 
-  const maxFeeGuess = Math.ceil((settledPoints * 3) / 997) + 2;
-
-  for (let feePoints = 0; feePoints <= maxFeeGuess; feePoints += 1) {
-    const grossSellPoints = settledPoints + feePoints;
-
-    if (calculateSettledSellPoints(grossSellPoints) === settledPoints) {
-      return grossSellPoints;
-    }
-  }
-
-  return null;
+  return Math.floor((settledPoints * 1000) / 997);
 }
 
 interface RankingGamePanelShellProps {
@@ -132,6 +122,20 @@ interface RankingGameCoinOverviewProps {
   onOpenDetails: () => void;
   overview?: GameCoinOverview;
   season?: GameCurrentSeason;
+}
+
+function areRankingGameHistoryTabPropsEqual(
+  prevProps: RankingGameHistoryTabProps,
+  nextProps: RankingGameHistoryTabProps,
+) {
+  return (
+    prevProps.emptyMessage === nextProps.emptyMessage &&
+    prevProps.historyPlaybackLoadingVideoId === nextProps.historyPlaybackLoadingVideoId &&
+    prevProps.isLoading === nextProps.isLoading &&
+    prevProps.positions === nextProps.positions &&
+    prevProps.resolvePlaybackQueueId === nextProps.resolvePlaybackQueueId &&
+    prevProps.selectedVideoId === nextProps.selectedVideoId
+  );
 }
 
 function formatSignedPoints(points?: number | null) {
@@ -485,83 +489,92 @@ export function RankingGamePanelShell({
       </div>
       {!isCollapsed ? (
         <>
-          <div className="app-shell__game-panel-metrics">
-            <span className="app-shell__game-panel-metric app-shell__game-panel-metric--hero">
-              <span className="app-shell__game-panel-metric-label">잔액</span>
-              <span
-                className="app-shell__game-panel-metric-value"
-                title={season ? formatFullPoints(season.wallet.balancePoints) : undefined}
-              >
-                {season ? formatPoints(season.wallet.balancePoints) : '-'}
-              </span>
-              <span className="app-shell__game-panel-metric-meta">즉시 매수 가능 포인트</span>
-            </span>
-            <span className="app-shell__game-panel-metric app-shell__game-panel-metric--hero">
-              <span className="app-shell__game-panel-metric-label">총자산</span>
-              <span
-                className="app-shell__game-panel-metric-value"
-                title={
-                  summary.computedWalletTotalAssetPoints !== null
-                    ? formatFullPoints(summary.computedWalletTotalAssetPoints)
-                    : undefined
-                }
-              >
-                {summary.computedWalletTotalAssetPoints !== null
-                  ? formatPoints(summary.computedWalletTotalAssetPoints)
-                  : '-'}
-              </span>
-              <span className="app-shell__game-panel-metric-meta">잔액 + 현재 평가 금액</span>
-            </span>
-            <span className="app-shell__game-panel-metric app-shell__game-panel-metric--hero app-shell__game-panel-metric--capacity">
-              <span className="app-shell__game-panel-metric-label">보유</span>
-              <span className="app-shell__game-panel-metric-value">
-                {`${summary.openDistinctVideoCount}/${season?.maxOpenPositions ?? '-'}`}
-              </span>
-              <span className="app-shell__game-panel-metric-meta">
-                {remainingOpenSlots !== null ? `남은 슬롯 ${remainingOpenSlots}개` : '보유 가능한 슬롯 집계 중'}
-              </span>
-              <span className="app-shell__game-panel-metric-meter" aria-hidden="true">
-                <span style={{ width: `${holdingCapacityPercent}%` }} />
-              </span>
-            </span>
-            <span className="app-shell__game-panel-metric">
-              <span className="app-shell__game-panel-metric-label">손익률</span>
-              <span
-                className="app-shell__game-panel-metric-value"
-                data-tone={profitPointsTone}
-              >
-                {season ? formatSignedProfitRate(summary.openPositionsProfitPoints, summary.openPositionsBuyPoints) : '-'}
-              </span>
-              <span className="app-shell__game-panel-metric-meta" data-tone={profitPointsTone}>
-                평가 손익 {formatSignedPoints(summary.openPositionsProfitPoints)}
-              </span>
-            </span>
-            <span className="app-shell__game-panel-metric">
-              <span className="app-shell__game-panel-metric-label">총 매수 금액</span>
-              <span
-                className="app-shell__game-panel-metric-value"
-                title={season ? formatFullPoints(summary.openPositionsBuyPoints) : undefined}
-              >
-                {season ? formatPoints(summary.openPositionsBuyPoints) : '-'}
-              </span>
-              <span className="app-shell__game-panel-metric-meta">현재 보유 포지션 원금</span>
-            </span>
-            <span className="app-shell__game-panel-metric">
-              <span className="app-shell__game-panel-metric-label">총 평가 금액</span>
-              <span
-                className="app-shell__game-panel-metric-value"
-                title={season ? formatFullPoints(summary.openPositionsEvaluationPoints) : undefined}
-              >
-                {season ? formatPoints(summary.openPositionsEvaluationPoints) : '-'}
-              </span>
-              <span className="app-shell__game-panel-metric-meta">최신 시세 기준 평가</span>
-            </span>
+          <div className="app-shell__game-panel-overview">
+            {dividendOverview ? <div className="app-shell__game-panel-overview-main">{dividendOverview}</div> : null}
+            <div className="app-shell__game-panel-overview-side">
+              <section className="app-shell__game-wallet" aria-label="지갑 현황">
+                <div className="app-shell__game-wallet-copy">
+                  <p className="app-shell__game-wallet-eyebrow">Wallet</p>
+                  <h4 className="app-shell__game-wallet-title">지갑</h4>
+                </div>
+                <div className="app-shell__game-panel-metrics">
+                  <span className="app-shell__game-panel-metric app-shell__game-panel-metric--hero">
+                    <span className="app-shell__game-panel-metric-label">잔액</span>
+                    <span
+                      className="app-shell__game-panel-metric-value"
+                      title={season ? formatFullPoints(season.wallet.balancePoints) : undefined}
+                    >
+                      {season ? formatPoints(season.wallet.balancePoints) : '-'}
+                    </span>
+                    <span className="app-shell__game-panel-metric-meta">즉시 매수 가능 포인트</span>
+                  </span>
+                  <span className="app-shell__game-panel-metric app-shell__game-panel-metric--hero">
+                    <span className="app-shell__game-panel-metric-label">총자산</span>
+                    <span
+                      className="app-shell__game-panel-metric-value"
+                      title={
+                        summary.computedWalletTotalAssetPoints !== null
+                          ? formatFullPoints(summary.computedWalletTotalAssetPoints)
+                          : undefined
+                      }
+                    >
+                      {summary.computedWalletTotalAssetPoints !== null
+                        ? formatPoints(summary.computedWalletTotalAssetPoints)
+                        : '-'}
+                    </span>
+                    <span className="app-shell__game-panel-metric-meta">잔액 + 현재 평가 금액</span>
+                  </span>
+                  <span className="app-shell__game-panel-metric app-shell__game-panel-metric--hero app-shell__game-panel-metric--capacity">
+                    <span className="app-shell__game-panel-metric-label">보유</span>
+                    <span className="app-shell__game-panel-metric-value">
+                      {`${summary.openDistinctVideoCount}/${season?.maxOpenPositions ?? '-'}`}
+                    </span>
+                    <span className="app-shell__game-panel-metric-meta">
+                      {remainingOpenSlots !== null ? `남은 슬롯 ${remainingOpenSlots}개` : '보유 가능한 슬롯 집계 중'}
+                    </span>
+                    <span className="app-shell__game-panel-metric-meter" aria-hidden="true">
+                      <span style={{ width: `${holdingCapacityPercent}%` }} />
+                    </span>
+                  </span>
+                  <span className="app-shell__game-panel-metric">
+                    <span className="app-shell__game-panel-metric-label">손익률</span>
+                    <span className="app-shell__game-panel-metric-value" data-tone={profitPointsTone}>
+                      {season
+                        ? formatSignedProfitRate(summary.openPositionsProfitPoints, summary.openPositionsBuyPoints)
+                        : '-'}
+                    </span>
+                    <span className="app-shell__game-panel-metric-meta" data-tone={profitPointsTone}>
+                      평가 손익 {formatSignedPoints(summary.openPositionsProfitPoints)}
+                    </span>
+                  </span>
+                  <span className="app-shell__game-panel-metric">
+                    <span className="app-shell__game-panel-metric-label">총 매수 금액</span>
+                    <span
+                      className="app-shell__game-panel-metric-value"
+                      title={season ? formatFullPoints(summary.openPositionsBuyPoints) : undefined}
+                    >
+                      {season ? formatPoints(summary.openPositionsBuyPoints) : '-'}
+                    </span>
+                    <span className="app-shell__game-panel-metric-meta">현재 보유 포지션 원금</span>
+                  </span>
+                  <span className="app-shell__game-panel-metric">
+                    <span className="app-shell__game-panel-metric-label">총 평가 금액</span>
+                    <span
+                      className="app-shell__game-panel-metric-value"
+                      title={season ? formatFullPoints(summary.openPositionsEvaluationPoints) : undefined}
+                    >
+                      {season ? formatPoints(summary.openPositionsEvaluationPoints) : '-'}
+                    </span>
+                    <span className="app-shell__game-panel-metric-meta">최신 시세 기준 평가</span>
+                  </span>
+                </div>
+                <p className="app-shell__game-panel-helper" data-tone={isHelperWarning ? 'warning' : undefined}>
+                  {helperText}
+                </p>
+                {statusMessage ? <p className="app-shell__game-panel-status">{statusMessage}</p> : null}
+              </section>
+            </div>
           </div>
-          <p className="app-shell__game-panel-helper" data-tone={isHelperWarning ? 'warning' : undefined}>
-            {helperText}
-          </p>
-          {statusMessage ? <p className="app-shell__game-panel-status">{statusMessage}</p> : null}
-          {dividendOverview}
           {selectedVideoActions}
           <div aria-label="게임 패널 탭" className="app-shell__game-tabs" role="tablist">
             <button
@@ -629,52 +642,50 @@ export function RankingGameCoinOverview({
             {overview ? `Top ${overview.eligibleRankCutoff} 코인 채굴 현황` : '시즌 코인 티어'}
           </h4>
         </div>
-      </div>
-      <div className="app-shell__game-dividend-actions">
-        {overview ? (
-          <div className="app-shell__game-dividend-metrics app-shell__game-dividend-metrics--preview" aria-label="코인 요약">
-            <span className="app-shell__game-dividend-metric">
-              <span className="app-shell__game-dividend-metric-label">채굴량</span>
-              <strong
-                className="app-shell__game-dividend-metric-value"
-                title={formatFullCoins(overview.myEstimatedCoinYield)}
-              >
-                {formatCoins(overview.myEstimatedCoinYield)}
-              </strong>
-              <span className="app-shell__game-dividend-metric-detail" aria-hidden="true" />
-            </span>
-            <span className="app-shell__game-dividend-metric">
-              <span className="app-shell__game-dividend-metric-label">보유 코인</span>
-              <strong
-                className="app-shell__game-dividend-metric-value"
-                title={formatFullCoins(coinTierProgress?.coinBalance ?? season?.wallet.coinBalance ?? 0)}
-              >
-                {typeof (coinTierProgress?.coinBalance ?? season?.wallet.coinBalance) === 'number'
-                  ? formatCoins(coinTierProgress?.coinBalance ?? season?.wallet.coinBalance ?? 0)
-                  : '-'}
-              </strong>
-              <span className="app-shell__game-dividend-metric-detail" aria-hidden="true" />
-            </span>
-            <span className="app-shell__game-dividend-metric">
-              <span className="app-shell__game-dividend-metric-label">채굴 진행 중</span>
-              <strong className="app-shell__game-dividend-metric-value">{overview.myActiveProducerCount}개</strong>
-              <span className="app-shell__game-dividend-metric-detail">
-                {productionSummary?.activeMetricDetail ?? ''}
-              </span>
-            </span>
-            <span className="app-shell__game-dividend-metric">
-              <span className="app-shell__game-dividend-metric-label">채굴 대기</span>
-              <strong className="app-shell__game-dividend-metric-value">{overview.myWarmingUpPositionCount}개</strong>
-              <span className="app-shell__game-dividend-metric-detail">
-                {productionSummary?.warmingMetricDetail ?? ''}
-              </span>
-            </span>
-          </div>
-        ) : null}
         <button className="app-shell__game-panel-action" onClick={onOpenDetails} type="button">
           상세 보기
         </button>
       </div>
+      {overview ? (
+        <div className="app-shell__game-dividend-metrics app-shell__game-dividend-metrics--preview" aria-label="코인 요약">
+          <span className="app-shell__game-dividend-metric">
+            <span className="app-shell__game-dividend-metric-label">채굴량</span>
+            <strong
+              className="app-shell__game-dividend-metric-value"
+              title={formatFullCoins(overview.myEstimatedCoinYield)}
+            >
+              {formatCoins(overview.myEstimatedCoinYield)}
+            </strong>
+            <span className="app-shell__game-dividend-metric-detail" aria-hidden="true" />
+          </span>
+          <span className="app-shell__game-dividend-metric">
+            <span className="app-shell__game-dividend-metric-label">보유 코인</span>
+            <strong
+              className="app-shell__game-dividend-metric-value"
+              title={formatFullCoins(coinTierProgress?.coinBalance ?? season?.wallet.coinBalance ?? 0)}
+            >
+              {typeof (coinTierProgress?.coinBalance ?? season?.wallet.coinBalance) === 'number'
+                ? formatCoins(coinTierProgress?.coinBalance ?? season?.wallet.coinBalance ?? 0)
+                : '-'}
+            </strong>
+            <span className="app-shell__game-dividend-metric-detail" aria-hidden="true" />
+          </span>
+          <span className="app-shell__game-dividend-metric">
+            <span className="app-shell__game-dividend-metric-label">채굴 진행 중</span>
+            <strong className="app-shell__game-dividend-metric-value">{overview.myActiveProducerCount}개</strong>
+            <span className="app-shell__game-dividend-metric-detail">
+              {productionSummary?.activeMetricDetail ?? ''}
+            </span>
+          </span>
+          <span className="app-shell__game-dividend-metric">
+            <span className="app-shell__game-dividend-metric-label">채굴 대기</span>
+            <strong className="app-shell__game-dividend-metric-value">{overview.myWarmingUpPositionCount}개</strong>
+            <span className="app-shell__game-dividend-metric-detail">
+              {productionSummary?.warmingMetricDetail ?? ''}
+            </span>
+          </span>
+        </div>
+      ) : null}
       <GameCoinTierSummary progress={coinTierProgress} showLadder={false} surfaceVariant="season-coin" title="현재 티어" />
     </section>
   );
@@ -1003,7 +1014,7 @@ export function RankingGamePositionsTab({
   );
 }
 
-export function RankingGameHistoryTab({
+function RankingGameHistoryTabComponent({
   emptyMessage,
   historyPlaybackLoadingVideoId,
   isLoading,
@@ -1031,7 +1042,7 @@ export function RankingGameHistoryTab({
         const historyStatusTone =
           position.status === 'OPEN' ? 'open' : position.status === 'AUTO_CLOSED' ? 'auto' : 'closed';
         const historyStatusLabel =
-          position.status === 'OPEN' ? '매수 완료' : position.status === 'AUTO_CLOSED' ? '자동 청산' : '매도 완료';
+          position.status === 'OPEN' ? '보유중' : position.status === 'AUTO_CLOSED' ? '자동 청산' : '매도 완료';
         const grossSellPoints = isClosedPosition ? inferGrossSellPointsFromSettled(position.currentPricePoints) : null;
         const sellFeePoints = grossSellPoints !== null ? calculateSellFeePoints(grossSellPoints) : null;
 
@@ -1068,6 +1079,8 @@ export function RankingGameHistoryTab({
                   {isClosedPosition ? (
                     <p className="app-shell__game-history-meta">
                       <span className="app-shell__game-history-meta-label">순위</span>{' '}
+                      <span className="app-shell__game-history-rank">{formatRank(position.buyRank)}</span>
+                      {' → '}
                       <span className="app-shell__game-history-rank">
                         {formatRank(position.currentRank, {
                           chartOut: position.chartOut,
@@ -1075,6 +1088,10 @@ export function RankingGameHistoryTab({
                       </span>
                       {' · '}<span className="app-shell__game-history-meta-label">정산금</span>{' '}
                       {formatMaybePoints(position.currentPricePoints)}
+                      {' · '}<span className="app-shell__game-history-meta-label">손익금</span>{' '}
+                      <span data-tone={position.chartOut ? undefined : getPointTone(position.profitPoints)}>
+                        {formatSignedPoints(position.profitPoints)}
+                      </span>
                       {' · '}<span className="app-shell__game-history-meta-label">손익률</span>{' '}
                       <span data-tone={position.chartOut ? undefined : getPointTone(position.profitPoints)}>
                         {formatSignedProfitRate(position.profitPoints, position.stakePoints, {
@@ -1115,3 +1132,8 @@ export function RankingGameHistoryTab({
     </ul>
   );
 }
+
+export const RankingGameHistoryTab = memo(
+  RankingGameHistoryTabComponent,
+  areRankingGameHistoryTabPropsEqual,
+);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
@@ -942,6 +942,11 @@ function HomePage() {
     },
     [handleSelectVideo, scrollToPlayerStage, setGameActionStatus],
   );
+  const handleSelectGameTab = useCallback((tab: 'positions' | 'history' | 'leaderboard') => {
+    startTransition(() => {
+      setActiveGameTab(tab);
+    });
+  }, []);
   const handleOpenSelectedVideoRankHistory = useCallback(() => {
     openRankHistoryModal(selectedVideoId, selectedVideoHistoryTargetPosition);
   }, [openRankHistoryModal, selectedVideoHistoryTargetPosition, selectedVideoId]);
@@ -1040,7 +1045,7 @@ function HomePage() {
       onSelectGameHistoryVideo={handleSelectGameHistoryVideo}
       onSelectGamePositionVideo={handleSelectGamePositionVideo}
       onSelectLeaderboardPositionVideo={handleSelectLeaderboardPositionVideo}
-      onSelectTab={setActiveGameTab}
+      onSelectTab={handleSelectGameTab}
       onToggleCollapse={() => toggleCollapsedSection(RANKING_GAME_SECTION_ID)}
       openDistinctVideoCount={openDistinctVideoCount}
       openGameHoldings={openGameHoldings}
