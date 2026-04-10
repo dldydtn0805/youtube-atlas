@@ -98,6 +98,8 @@ export interface GameCoinPosition {
   rankEligible: boolean;
   productionActive: boolean;
   coinRatePercent: number;
+  holdBoostPercent: number;
+  effectiveCoinRatePercent: number;
   estimatedCoinYield: number;
   nextProductionInSeconds: number | null;
   nextPayoutInSeconds: number | null;

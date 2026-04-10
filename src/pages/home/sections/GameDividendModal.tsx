@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import type { GameCoinOverview, GameCoinTierProgress } from '../../../features/game/types';
 import {
+  formatCoinBoostMultiplier,
   formatCoins,
   formatGameQuantity,
   formatHoldCountdown,
@@ -105,11 +106,13 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
                   <ul className="app-shell__game-dividend-rule-list">
                     <li>Top {overview.eligibleRankCutoff} 안에 든 포지션만 코인 생산 대상이 됩니다.</li>
                     <li>{formatHoldCountdown(overview.minimumHoldSeconds)} 이상 보유하면 생산 대기 상태에서 생산 진행 중으로 전환됩니다.</li>
-                    <li>코인은 5분마다 한 번씩 적립됩니다.</li>
-                    <li>적립 시점의 최신 차트와 평가금액 기준으로 코인이 계산됩니다.</li>
-                    <li>예를 들어 1위는 평가금액의 {formatPercent(topRate)}, {overview.eligibleRankCutoff}위는 {formatPercent(bottomRate)}가 적립됩니다.</li>
-                    <li>순위가 높을수록 적립률이 더 가파르게 올라가며, 특히 상위권일수록 보상이 크게 커집니다.</li>
-                    <li>같은 5분 적립 슬롯에서는 같은 포지션이 한 번만 반영됩니다.</li>
+                    <li>생산 시작 후에는 보유 시간이 길수록 10분마다 추가 부스트가 붙습니다.</li>
+                    <li>보유 시간 부스트는 최대 100%까지 누적되어 최종 생산 효율은 최대 2배가 됩니다.</li>
+                    <li>코인은 5분마다 한 번씩 생산됩니다.</li>
+                    <li>생산 시점의 최신 차트와 평가금액 기준으로 코인이 계산됩니다.</li>
+                    <li>예를 들어 1위는 평가금액의 {formatPercent(topRate)}, {overview.eligibleRankCutoff}위는 {formatPercent(bottomRate)}가 생산됩니다.</li>
+                    <li>순위가 높을수록 생산률이 더 가파르게 올라가며, 특히 상위권일수록 보상이 크게 커집니다.</li>
+                    <li>같은 5분 생산 슬롯에서는 같은 포지션이 한 번만 반영됩니다.</li>
                     <li>여러 포지션이 조건을 만족하면 생산량이 합산됩니다.</li>
                   </ul>
                 </div>
@@ -166,7 +169,14 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
                           src={position.thumbnailUrl}
                         />
                         <div className="app-shell__game-dividend-position-copy">
-                          <p className="app-shell__game-dividend-position-title">{position.title}</p>
+                          <div className="app-shell__game-dividend-position-heading">
+                            <p className="app-shell__game-dividend-position-title">{position.title}</p>
+                            {position.productionActive && position.holdBoostPercent > 0 ? (
+                              <span className="app-shell__coin-boost-badge" title={`보유 시간 부스트 ${formatPercent(position.holdBoostPercent)}`}>
+                                {formatCoinBoostMultiplier(position.holdBoostPercent)}
+                              </span>
+                            ) : null}
+                          </div>
                           <p className="app-shell__game-dividend-position-meta">
                             현재 <span className="app-shell__game-rank-emphasis">{formatRank(position.currentRank)}</span> ·
                             평가 {formatMaybePoints(position.currentValuePoints)} · 수량 {formatGameQuantity(position.quantity)}
@@ -174,12 +184,15 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
                           <p className="app-shell__game-dividend-position-meta">
                             {position.productionActive
                               ? typeof position.nextPayoutInSeconds === 'number'
-                                ? `${formatHoldCountdown(position.nextPayoutInSeconds)} 뒤 예상 ${formatCoins(position.estimatedCoinYield)} 적립`
-                                : `이번 집계 예상 ${formatCoins(position.estimatedCoinYield)} 적립`
+                                ? `${formatHoldCountdown(position.nextPayoutInSeconds)} 뒤 예상 생산량 ${formatCoins(position.estimatedCoinYield)}`
+                                : `이번 집계 예상 생산량 ${formatCoins(position.estimatedCoinYield)}`
                               : position.nextProductionInSeconds !== null
                                 ? `${formatHoldCountdown(position.nextProductionInSeconds)} 뒤 생산 시작`
                                 : '코인 생산 대상'}
-                            {' · '}평가금액의 {formatPercent(position.coinRatePercent)} 적립
+                            {' · '}기본 {formatPercent(position.coinRatePercent)}
+                            {position.holdBoostPercent > 0
+                              ? ` + 보유 부스트 ${formatPercent(position.holdBoostPercent)} = 최종 ${formatPercent(position.effectiveCoinRatePercent)}`
+                              : ` = 현재 ${formatPercent(position.effectiveCoinRatePercent)}`}
                           </p>
                         </div>
                       </li>

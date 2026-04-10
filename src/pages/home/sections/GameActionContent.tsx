@@ -134,19 +134,14 @@ export function GameSelectedVideoPriceSummary({
               }
 
               if (positionEstimatedCoinYield > 0) {
-                const nextPayoutInSeconds = gameCoinOverview.positions.find(
-                  (position) => position.videoId === selectedVideoId && position.productionActive,
-                )?.nextPayoutInSeconds;
-                return typeof nextPayoutInSeconds === 'number'
-                  ? `생산 진행 중 · ${formatHoldCountdown(nextPayoutInSeconds)} 뒤 예상 ${formatCoins(positionEstimatedCoinYield)} 적립`
-                  : `생산 진행 중 · 이번 집계 예상 ${formatCoins(positionEstimatedCoinYield)}`;
+                return `생산 진행 중 · 예상 생산량 ${formatCoins(positionEstimatedCoinYield)}`;
               }
 
               if (typeof warmingUpPosition?.nextProductionInSeconds === 'number') {
                 return `생산 대기 중 · ${formatHoldCountdown(warmingUpPosition.nextProductionInSeconds)} 뒤 시작`;
               }
 
-              return `코인 생산 대상 · 평가금액의 ${formatPercent(matchingRank.coinRatePercent)} 적립`;
+              return `코인 생산 대상 · 평가금액의 ${formatPercent(matchingRank.coinRatePercent)} 생산`;
             })()}
           </p>
         ) : null}
@@ -182,7 +177,7 @@ export function GameSelectedVideoPriceSummary({
               matchingRank.coinRatePercent,
             );
 
-            return `지금 진입하면 다음 적립 때 예상 ${formatCoins(estimatedCoinYield ?? 0)}`;
+            return `예상 생산량 ${formatCoins(estimatedCoinYield ?? 0)}`;
           })()}
         </p>
       ) : null}

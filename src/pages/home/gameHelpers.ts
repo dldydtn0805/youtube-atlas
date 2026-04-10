@@ -182,6 +182,14 @@ export function formatPercent(value?: number | null) {
   return `${percentFormatter.format(value)}%`;
 }
 
+export function formatCoinBoostMultiplier(holdBoostPercent?: number | null) {
+  if (typeof holdBoostPercent !== 'number' || !Number.isFinite(holdBoostPercent) || holdBoostPercent <= 0) {
+    return null;
+  }
+
+  return `x${percentFormatter.format(1 + holdBoostPercent / 100)}`;
+}
+
 export function calculateEstimatedCoinYield(currentValuePoints?: number | null, coinRatePercent?: number | null) {
   if (
     typeof currentValuePoints !== 'number' ||

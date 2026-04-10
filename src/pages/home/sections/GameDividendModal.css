@@ -109,6 +109,13 @@
   min-width: 0;
 }
 
+.app-shell__game-dividend-position-heading {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
 .app-shell__game-dividend-position-title,
 .app-shell__game-dividend-position-meta {
   margin: 0;
@@ -129,6 +136,20 @@
 
 :root[data-theme='dark'] .app-shell__game-dividend-position-meta {
   color: rgba(226, 232, 240, 0.72);
+}
+
+.app-shell__coin-boost-badge {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(251, 191, 36, 0.34));
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  border-radius: 999px;
+  color: #b45309;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 5px 8px;
+  white-space: nowrap;
 }
 
 :root[data-theme='dark'] .app-shell__game-dividend-position-title {
@@ -170,6 +191,12 @@
 }
 
 :root[data-theme='dark'] .app-shell__game-dividend-rate-example-value {
+  color: #fde68a;
+}
+
+:root[data-theme='dark'] .app-shell__coin-boost-badge {
+  background: linear-gradient(135deg, rgba(180, 83, 9, 0.34), rgba(251, 191, 36, 0.24));
+  border-color: rgba(252, 211, 77, 0.2);
   color: #fde68a;
 }
 

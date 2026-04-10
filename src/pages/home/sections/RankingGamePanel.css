@@ -46,6 +46,14 @@
   margin: 0;
 }
 
+.app-shell__game-position-heading {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+
 .app-shell__game-panel-metrics {
   display: grid;
   gap: 10px;
