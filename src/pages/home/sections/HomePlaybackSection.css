@@ -1,17 +1,23 @@
 .app-shell__sticky-selected-video-slot {
   backdrop-filter: blur(18px);
-  position: sticky;
+  left: 50%;
+  position: fixed;
   top: 12px;
+  transform: translateX(-50%);
+  width: min(calc(100% - 24px), var(--app-content-max-width));
   z-index: 14;
 }
 
 .app-shell__sticky-selected-video-frame {
-  margin: 0 auto;
-  width: min(var(--app-content-max-width), 100%);
+  width: 100%;
+}
+
+.app-shell__stage-stack[data-cinematic='true'] .app-shell__sticky-selected-video-slot {
+  width: min(calc(100% - 24px), var(--app-cinematic-max-width));
 }
 
 .app-shell__stage-stack[data-cinematic='true'] .app-shell__sticky-selected-video-frame {
-  width: min(var(--app-cinematic-max-width), 100%);
+  width: 100%;
 }
 
 .app-shell__sticky-selected-video-frame > * {
@@ -40,7 +46,9 @@
 
 @media (max-width: 768px) {
   .app-shell__sticky-selected-video-slot {
-    top: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    top: auto;
+    width: calc(100% - 16px);
   }
 
   .app-shell__sticky-selected-video-frame .app-shell__game-panel-actions {

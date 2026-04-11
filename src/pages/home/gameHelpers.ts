@@ -116,6 +116,16 @@ export function formatHoldCountdown(remainingSeconds: number) {
   return `${seconds}초`;
 }
 
+export function formatMiningStatusLabel(status: 'active' | 'warming', remainingSeconds?: number | null) {
+  const prefix = status === 'active' ? '채굴 진행 중' : '채굴 대기';
+
+  if (typeof remainingSeconds !== 'number' || !Number.isFinite(remainingSeconds)) {
+    return prefix;
+  }
+
+  return `${prefix} · ${formatHoldCountdown(remainingSeconds)}`;
+}
+
 export function formatFullPoints(points: number) {
   return `${pointsFormatter.format(points)}P`;
 }

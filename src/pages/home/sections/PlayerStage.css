@@ -275,7 +275,7 @@
 }
 
 .app-shell__stage-summary .app-shell__game-selected-summary-badges {
-  gap: 8px;
+  gap: 6px;
 }
 
 .app-shell__stage-summary .app-shell__game-trend-badge,
@@ -283,9 +283,9 @@
   background: var(--surface-chip-muted);
   border-color: var(--border);
   color: var(--text-muted);
-  font-size: 0.72rem;
-  min-height: 30px;
-  padding: 0 12px;
+  font-size: 0.62rem;
+  min-height: 24px;
+  padding: 0 9px;
 }
 
 .app-shell__stage-helper {

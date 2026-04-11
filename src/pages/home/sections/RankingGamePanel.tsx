@@ -16,6 +16,7 @@ import {
   formatGameQuantity,
   formatGameTimestamp,
   formatHoldCountdown,
+  formatMiningStatusLabel,
   formatMaybePoints,
   formatPercent,
   formatPoints,
@@ -65,6 +66,7 @@ interface RankingGameSelectedVideoActionsProps {
   isChartDisabled: boolean;
   isSellDisabled: boolean;
   isSellSubmitting: boolean;
+  onContentClick?: () => void;
   onHeaderClick?: () => void;
   onOpenBuyTradeModal: () => void;
   onOpenRankHistory: () => void;
@@ -218,18 +220,16 @@ function getCoinProductionSummary(positions: GameCoinPosition[]) {
     activeCoinYield,
     activeRatePercent: activePositionWithHighestBoost?.effectiveCoinRatePercent ?? null,
     activeHoldBoostPercent: activePositionWithHighestBoost?.holdBoostPercent ?? 0,
+    activeRemainingSeconds: nextPayoutInSeconds,
     activeMetricDetail:
       activePositions.length > 0
-        ? nextPayoutInSeconds !== null
-          ? `${formatHoldCountdown(nextPayoutInSeconds)} 뒤 채굴`
-          : '이번 집계 반영'
+        ? formatMiningStatusLabel('active', nextPayoutInSeconds)
         : null,
     warmingMetricDetail:
       warmingPositions.length > 0
-        ? nextProductionInSeconds !== null
-          ? `${formatHoldCountdown(nextProductionInSeconds)} 뒤 채굴 시작`
-          : '진행 대기 중'
+        ? formatMiningStatusLabel('warming', nextProductionInSeconds)
         : null,
+    warmingRemainingSeconds: nextProductionInSeconds,
     hasActiveProduction: activeCoinYield > 0,
     hasWarmingPositions: warmingPositions.length > 0,
     baseRatePercent: positions[0]?.coinRatePercent ?? null,
@@ -692,14 +692,18 @@ export function RankingGameCoinOverview({
             <span className="app-shell__game-dividend-metric-label">채굴 진행 중</span>
             <strong className="app-shell__game-dividend-metric-value">{overview.myActiveProducerCount}개</strong>
             <span className="app-shell__game-dividend-metric-detail">
-              {productionSummary?.activeMetricDetail ?? ''}
+              {typeof productionSummary?.activeRemainingSeconds === 'number'
+                ? formatHoldCountdown(productionSummary.activeRemainingSeconds)
+                : ''}
             </span>
           </span>
           <span className="app-shell__game-dividend-metric">
             <span className="app-shell__game-dividend-metric-label">채굴 대기</span>
             <strong className="app-shell__game-dividend-metric-value">{overview.myWarmingUpPositionCount}개</strong>
             <span className="app-shell__game-dividend-metric-detail">
-              {productionSummary?.warmingMetricDetail ?? ''}
+              {typeof productionSummary?.warmingRemainingSeconds === 'number'
+                ? formatHoldCountdown(productionSummary.warmingRemainingSeconds)
+                : ''}
             </span>
           </span>
         </div>
@@ -717,6 +721,7 @@ export function RankingGameSelectedVideoActions({
   isChartDisabled,
   isSellDisabled,
   isSellSubmitting,
+  onContentClick,
   onHeaderClick,
   onOpenBuyTradeModal,
   onOpenRankHistory,
@@ -761,7 +766,24 @@ export function RankingGameSelectedVideoActions({
           </div>
         ) : null}
       </div>
-      <div className="app-shell__game-panel-actions-content">
+      <div
+        aria-expanded={onContentClick ? 'true' : undefined}
+        className="app-shell__game-panel-actions-content"
+        data-clickable={onContentClick ? 'true' : undefined}
+        onClick={onContentClick}
+        onKeyDown={
+          onContentClick
+            ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onContentClick();
+                }
+              }
+            : undefined
+        }
+        role={onContentClick ? 'button' : undefined}
+        tabIndex={onContentClick ? 0 : undefined}
+      >
         <div className="app-shell__game-panel-actions-main">
           {selectedVideoTradeThumbnailUrl ? (
             <img
@@ -779,7 +801,11 @@ export function RankingGameSelectedVideoActions({
             {currentVideoGamePriceSummary}
           </div>
         </div>
-        <div className="app-shell__game-panel-actions-buttons">
+        <div
+          className="app-shell__game-panel-actions-buttons"
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
           {selectedVideoOpenPositionCount === 0 ? (
             <div className="app-shell__game-panel-action-item">
               <button
@@ -983,7 +1009,7 @@ export function RankingGamePositionsTab({
         const positionStatusBadge = holding.chartOut
           ? '차트 아웃'
           : coinSummary.hasActiveProduction
-            ? coinSummary.activeMetricDetail ?? '채굴 중'
+            ? coinSummary.activeMetricDetail ?? '채굴 진행 중'
             : coinSummary.hasWarmingPositions
               ? coinSummary.warmingMetricDetail ?? '채굴 대기'
               : coinPositions.length > 0
@@ -1003,14 +1029,14 @@ export function RankingGamePositionsTab({
           : holding.sellableQuantity > 0
             ? `${formatGameQuantity(holding.sellableQuantity)} 매도 가능`
             : holding.nextSellableInSeconds !== null
-              ? `${formatHoldCountdown(holding.nextSellableInSeconds)} 후 매도 가능`
+              ? `매도 대기 · ${formatHoldCountdown(holding.nextSellableInSeconds)}`
               : '아직 매도 가능 수량 없음';
         const hasDetailBadges = Boolean(
           holdingRankTrendBadge || positionStatusBadge || hasCoinBoostBadge || sellableStatusBadge,
         );
         const holdStatusText =
           canShowGameActions && holding.sellableQuantity > 0 && holding.lockedQuantity > 0 && holding.nextSellableInSeconds !== null
-            ? `${formatGameQuantity(holding.lockedQuantity)}는 ${formatHoldCountdown(holding.nextSellableInSeconds)} 후 매도 가능`
+            ? `잠금 ${formatGameQuantity(holding.lockedQuantity)} · ${formatHoldCountdown(holding.nextSellableInSeconds)}`
             : null;
 
         return (

@@ -5,7 +5,7 @@ import {
   calculateEstimatedCoinYield,
   formatCoins,
   formatGameQuantity,
-  formatHoldCountdown,
+  formatMiningStatusLabel,
   formatPercent,
   formatPoints,
   formatRank,
@@ -51,6 +51,7 @@ interface SelectedVideoGameActionsBundleProps {
   isSelectedVideoSellDisabled: boolean;
   isSellSubmitting?: boolean;
   maxSellQuantity?: number;
+  onContentClick?: () => void;
   mode: 'panel' | 'stage';
   onHeaderClick?: () => void;
   onOpenBuyTradeModal: () => void;
@@ -148,11 +149,9 @@ export function GameSelectedVideoPriceSummary({
     const statusBadge = selectedVideoIsChartOut
       ? '차트 아웃'
       : positionCoinYield > 0
-        ? nearestPayoutInSeconds !== null
-          ? `${formatHoldCountdown(nearestPayoutInSeconds)} 뒤 채굴`
-          : '채굴 중'
+        ? formatMiningStatusLabel('active', nearestPayoutInSeconds)
         : typeof warmingUpPosition?.nextProductionInSeconds === 'number'
-          ? `${formatHoldCountdown(warmingUpPosition.nextProductionInSeconds)} 뒤 채굴`
+          ? formatMiningStatusLabel('warming', warmingUpPosition.nextProductionInSeconds)
           : matchingRank
             ? '채굴 대상'
             : null;
@@ -387,6 +386,7 @@ export function SelectedVideoGameActionsBundle({
   isSelectedVideoSellDisabled,
   isSellSubmitting = false,
   maxSellQuantity = 0,
+  onContentClick,
   mode,
   onHeaderClick,
   onOpenBuyTradeModal,
@@ -450,6 +450,7 @@ export function SelectedVideoGameActionsBundle({
       isChartDisabled={isChartDisabled}
       isSellDisabled={isSelectedVideoSellDisabled}
       isSellSubmitting={isSellSubmitting}
+      onContentClick={onContentClick}
       onHeaderClick={onHeaderClick}
       onOpenBuyTradeModal={onOpenBuyTradeModal}
       onOpenRankHistory={onOpenRankHistory}

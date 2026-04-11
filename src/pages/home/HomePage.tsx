@@ -936,7 +936,11 @@ function HomePage() {
       ? '아직 보유 중인 영상이 없어요. 지금 보는 영상에서 바로 시작할 수 있습니다.'
       : '새 포지션 매수와 기존 포지션 매도는 전체 카테고리에서만 가능합니다.'
     : null;
-  const renderSelectedVideoActionsContent = (panelControls?: ReactNode, onHeaderClick?: () => void) => (
+  const renderSelectedVideoActionsContent = (
+    panelControls?: ReactNode,
+    onHeaderClick?: () => void,
+    onContentClick?: () => void,
+  ) => (
     <SelectedVideoGameActionsBundle
       buyActionTitle={buyActionTitle}
       canShowGameActions={canShowGameActions}
@@ -947,6 +951,7 @@ function HomePage() {
       isSelectedVideoSellDisabled={isSelectedVideoSellDisabled}
       isSellSubmitting={isSellSubmitting}
       maxSellQuantity={maxSellQuantity}
+      onContentClick={onContentClick}
       mode="panel"
       onHeaderClick={onHeaderClick}
       onOpenBuyTradeModal={openBuyTradeModal}
@@ -993,6 +998,7 @@ function HomePage() {
   const stageMetadataContent = (
     <GameSelectedVideoPriceSummary
       gameCoinOverview={liveGameCoinOverview}
+      maxSellQuantity={maxSellQuantity}
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
       selectedVideoId={selectedVideoId}
       selectedVideoIsChartOut={selectedVideoIsChartOut}
@@ -1215,6 +1221,7 @@ function HomePage() {
                 </button>
               </>,
               onToggleCollapse,
+              onScrollToTop,
             )
           }
         />
