@@ -151,7 +151,6 @@ function HomePage() {
     isDarkMode,
     isMobileLayout,
     selectedRegionCode,
-    themeToggleDisplayLabel,
     themeToggleLabel,
     updateRegionCode,
   } = useAppPreferences({
@@ -1133,7 +1132,6 @@ function HomePage() {
         isLoggingOut={isLoggingOut}
         onLogout={() => void logout()}
         onToggleThemeMode={handleToggleThemeMode}
-        themeToggleDisplayLabel={themeToggleDisplayLabel}
         themeToggleLabel={themeToggleLabel}
         user={user}
       />

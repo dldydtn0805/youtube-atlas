@@ -83,71 +83,71 @@
 }
 
 :root[data-theme='dark'] {
-  --bg: #08111f;
-  --surface: rgba(10, 18, 32, 0.78);
-  --surface-strong: rgba(12, 21, 36, 0.92);
-  --surface-muted: rgba(15, 24, 40, 0.76);
-  --border: rgba(148, 163, 184, 0.18);
-  --border-strong: rgba(148, 163, 184, 0.28);
-  --text: #edf4ff;
-  --text-muted: #9eb0cb;
+  --bg: #000;
+  --surface: rgba(10, 10, 10, 0.78);
+  --surface-strong: rgba(18, 18, 18, 0.92);
+  --surface-muted: rgba(24, 24, 24, 0.76);
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --text: #f5f5f5;
+  --text-muted: #a3a3a3;
   --accent: #7cc4ff;
   --accent-soft: rgba(124, 196, 255, 0.18);
   --shadow-soft: 0 24px 72px rgba(2, 6, 23, 0.5);
   --shadow-card: 0 16px 40px rgba(2, 6, 23, 0.42);
-  --page-bg: #08111f;
+  --page-bg: #000;
   --page-overlay-top: transparent;
   --page-overlay-bottom: transparent;
-  --surface-interactive: rgba(9, 18, 31, 0.88);
-  --surface-interactive-hover: rgba(16, 28, 47, 0.98);
-  --surface-emphasis: linear-gradient(135deg, #4f5c6f, #2a3442);
-  --surface-emphasis-hover: linear-gradient(135deg, #5d6a7d, #334050);
+  --surface-interactive: rgba(12, 12, 12, 0.88);
+  --surface-interactive-hover: rgba(24, 24, 24, 0.98);
+  --surface-emphasis: linear-gradient(135deg, #4a4a4a, #171717);
+  --surface-emphasis-hover: linear-gradient(135deg, #5a5a5a, #202020);
   --surface-emphasis-shadow: 0 18px 38px rgba(15, 23, 42, 0.34);
   --surface-emphasis-shadow-hover: 0 20px 42px rgba(15, 23, 42, 0.4);
   --surface-panel-highlight:
-    linear-gradient(180deg, rgba(8, 17, 31, 0.97), rgba(11, 23, 40, 0.94)),
-    rgba(9, 18, 31, 0.92);
+    linear-gradient(180deg, rgba(8, 8, 8, 0.97), rgba(18, 18, 18, 0.94)),
+    rgba(10, 10, 10, 0.92);
   --surface-panel-highlight-alt:
-    linear-gradient(180deg, rgba(9, 18, 31, 0.96), rgba(13, 26, 45, 0.92)),
-    rgba(9, 18, 31, 0.88);
+    linear-gradient(180deg, rgba(10, 10, 10, 0.96), rgba(22, 22, 22, 0.92)),
+    rgba(10, 10, 10, 0.88);
   --surface-control:
-    linear-gradient(180deg, rgba(17, 30, 50, 0.96), rgba(10, 18, 32, 0.84)),
+    linear-gradient(180deg, rgba(26, 26, 26, 0.96), rgba(12, 12, 12, 0.84)),
     var(--surface-strong);
   --surface-control-hover:
-    linear-gradient(180deg, rgba(22, 37, 61, 0.98), rgba(14, 24, 40, 0.92)),
-    rgba(12, 22, 38, 0.98);
-  --surface-chip: rgba(15, 24, 40, 0.92);
-  --surface-chip-muted: rgba(148, 163, 184, 0.1);
-  --surface-input: rgba(7, 14, 26, 0.92);
-  --surface-input-strong: rgba(9, 17, 30, 0.96);
+    linear-gradient(180deg, rgba(34, 34, 34, 0.98), rgba(16, 16, 16, 0.92)),
+    rgba(14, 14, 14, 0.98);
+  --surface-chip: rgba(18, 18, 18, 0.92);
+  --surface-chip-muted: rgba(255, 255, 255, 0.08);
+  --surface-input: rgba(8, 8, 8, 0.92);
+  --surface-input-strong: rgba(14, 14, 14, 0.96);
   --surface-player-frame:
-    linear-gradient(180deg, rgba(30, 41, 59, 0.62), rgba(2, 6, 23, 0.88)),
-    rgba(7, 13, 24, 0.9);
+    linear-gradient(180deg, rgba(28, 28, 28, 0.62), rgba(4, 4, 4, 0.88)),
+    rgba(10, 10, 10, 0.9);
   --surface-player-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   --surface-stage-bg:
-    radial-gradient(circle at top, rgba(56, 189, 248, 0.16), transparent 30%),
-    linear-gradient(180deg, #040b18 0%, #091321 48%, #0f172a 100%);
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.06), transparent 30%),
+    linear-gradient(180deg, #020202 0%, #080808 48%, #111111 100%);
   --surface-stage-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.02),
-    inset 0 -1px 0 rgba(148, 163, 184, 0.08);
-  --surface-stat: rgba(148, 163, 184, 0.12);
-  --surface-stat-border: rgba(148, 163, 184, 0.16);
-  --surface-card-hover: rgba(17, 30, 49, 0.98);
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  --surface-stat: rgba(255, 255, 255, 0.08);
+  --surface-stat-border: rgba(255, 255, 255, 0.12);
+  --surface-card-hover: rgba(22, 22, 22, 0.98);
   --surface-card-hover-border: rgba(124, 196, 255, 0.32);
   --shadow-card-hover: 0 24px 54px rgba(2, 6, 23, 0.52);
-  --surface-thumbnail-border: rgba(148, 163, 184, 0.16);
+  --surface-thumbnail-border: rgba(255, 255, 255, 0.12);
   --surface-comment-section:
-    radial-gradient(circle at top left, rgba(56, 189, 248, 0.14), transparent 34%),
-    linear-gradient(180deg, rgba(8, 17, 31, 0.96), rgba(10, 20, 36, 0.92));
-  --surface-comment-list: linear-gradient(180deg, rgba(8, 17, 31, 0.96), rgba(11, 22, 38, 0.9));
-  --surface-message: rgba(16, 28, 47, 0.92);
-  --surface-composer: rgba(10, 18, 32, 0.88);
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.05), transparent 34%),
+    linear-gradient(180deg, rgba(10, 10, 10, 0.96), rgba(18, 18, 18, 0.92));
+  --surface-comment-list: linear-gradient(180deg, rgba(10, 10, 10, 0.96), rgba(16, 16, 16, 0.9));
+  --surface-message: rgba(20, 20, 20, 0.92);
+  --surface-composer: rgba(12, 12, 12, 0.88);
   --surface-modal:
-    linear-gradient(180deg, rgba(8, 17, 31, 0.98), rgba(11, 23, 40, 0.95)),
+    linear-gradient(180deg, rgba(8, 8, 8, 0.98), rgba(18, 18, 18, 0.95)),
     var(--surface);
-  --surface-modal-field: rgba(12, 22, 38, 0.9);
+  --surface-modal-field: rgba(16, 16, 16, 0.9);
   --modal-backdrop:
-    radial-gradient(circle at top, rgba(56, 189, 248, 0.14), transparent 26%),
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 26%),
     rgba(2, 6, 23, 0.72);
   --focus-ring: 0 0 0 4px rgba(124, 196, 255, 0.16);
   --accent-border: rgba(124, 196, 255, 0.28);

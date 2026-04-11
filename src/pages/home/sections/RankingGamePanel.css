@@ -72,14 +72,9 @@
   --game-wallet-accent: #c26832;
   --game-wallet-accent-strong: #f2a66d;
   background:
-    radial-gradient(circle at top left, rgba(var(--game-wallet-accent-rgb), 0.08), transparent 42%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, rgb(var(--game-wallet-accent-rgb)) 7%, rgba(255, 255, 255, 0.98)),
-      rgba(255, 255, 255, 0.92)
-    ),
-    rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(var(--game-wallet-accent-rgb), 0.18);
+    radial-gradient(circle at top left, rgba(var(--game-wallet-accent-rgb), 0.09), transparent 40%),
+    color-mix(in srgb, rgb(var(--game-wallet-accent-rgb)) 9%, rgba(247, 249, 251, 0.97));
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 18px;
   display: grid;
   gap: 10px;
@@ -92,8 +87,8 @@
   position: relative;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.88),
-    inset 0 -1px 0 rgba(var(--game-wallet-accent-rgb), 0.05),
-    0 12px 24px rgba(15, 23, 42, 0.05);
+    inset 0 -1px 0 rgba(var(--game-wallet-accent-rgb), 0.06),
+    0 12px 24px rgba(15, 23, 42, 0.06);
 }
 
 .app-shell__game-wallet::before {
@@ -174,7 +169,7 @@
 }
 
 .app-shell__game-wallet-eyebrow {
-  color: color-mix(in srgb, var(--text-muted) 64%, var(--game-wallet-accent) 36%);
+  color: color-mix(in srgb, var(--text-muted) 72%, var(--game-wallet-accent) 28%);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -189,32 +184,47 @@
 }
 
 .app-shell__game-wallet .app-shell__game-panel-metric + .app-shell__game-panel-metric {
-  border-top-color: rgba(var(--game-wallet-accent-rgb), 0.12);
+  border-top-color: color-mix(in srgb, rgba(148, 163, 184, 0.14) 76%, rgb(var(--game-wallet-accent-rgb)) 24%);
 }
 
 .app-shell__game-wallet .app-shell__game-panel-metric-label {
-  color: color-mix(in srgb, var(--text-muted) 74%, var(--game-wallet-accent) 26%);
+  color: color-mix(in srgb, var(--text-muted) 78%, var(--game-wallet-accent) 22%);
 }
 
 .app-shell__game-wallet .app-shell__game-panel-metric-meter {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.38), transparent 50%),
-    linear-gradient(180deg, rgba(var(--game-wallet-accent-rgb), 0.08), rgba(148, 163, 184, 0.12));
+    linear-gradient(180deg, rgba(var(--game-wallet-accent-rgb), 0.08), rgba(203, 213, 225, 0.22));
   box-shadow:
     inset 0 1px 2px rgba(148, 163, 184, 0.12),
-    0 0 0 1px rgba(var(--game-wallet-accent-rgb), 0.08);
+    0 0 0 1px color-mix(in srgb, rgba(148, 163, 184, 0.1) 74%, rgb(var(--game-wallet-accent-rgb)) 26%);
+}
+
+.app-shell__game-wallet .app-shell__game-panel-metric--capacity .app-shell__game-panel-metric-meter {
+  background: color-mix(in srgb, rgb(var(--game-wallet-accent-rgb)) 24%, rgba(255, 255, 255, 0.92));
+  box-shadow: inset 0 1px 2px rgba(148, 163, 184, 0.1);
+  height: 8px;
 }
 
 .app-shell__game-wallet .app-shell__game-panel-metric-meter span {
-  background: linear-gradient(90deg, var(--game-wallet-accent), var(--game-wallet-accent-strong));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--game-wallet-accent) 56%, #94a3b8 44%), color-mix(in srgb, var(--game-wallet-accent-strong) 40%, #cbd5e1 60%));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 6px 14px rgba(var(--game-wallet-accent-rgb), 0.18);
+    0 6px 14px rgba(var(--game-wallet-accent-rgb), 0.16);
+}
+
+.app-shell__game-wallet .app-shell__game-panel-metric--capacity .app-shell__game-panel-metric-meter span {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--game-wallet-accent) 82%, #111111 18%),
+    color-mix(in srgb, var(--game-wallet-accent-strong) 58%, #111111 42%)
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .app-shell__game-wallet .app-shell__game-panel-helper,
 .app-shell__game-wallet .app-shell__game-panel-status {
-  color: color-mix(in srgb, var(--text-muted) 86%, var(--game-wallet-accent) 14%);
+  color: color-mix(in srgb, var(--text-muted) 84%, var(--game-wallet-accent) 16%);
 }
 
 @media (min-width: 769px) {
@@ -1202,27 +1212,27 @@
 
 .app-shell__game-leaderboard-item--button:hover,
 .app-shell__game-leaderboard-item--button:focus-visible {
-  border-color: rgba(14, 116, 144, 0.24);
-  box-shadow: 0 10px 24px rgba(14, 116, 144, 0.08);
+  border-color: rgba(115, 115, 115, 0.24);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   outline: none;
 }
 
 .app-shell__game-leaderboard-item--button[data-expanded='true'] {
-  border-color: rgba(14, 116, 144, 0.28);
+  border-color: rgba(115, 115, 115, 0.28);
 }
 
 .app-shell__game-leaderboard-item[data-me='true'] {
   background:
-    linear-gradient(90deg, rgba(14, 116, 144, 0.12), rgba(14, 116, 144, 0.02)),
+    linear-gradient(90deg, rgba(115, 115, 115, 0.1), rgba(115, 115, 115, 0.02)),
     rgba(255, 255, 255, 0.72);
-  border-color: rgba(14, 116, 144, 0.34);
-  box-shadow: 0 10px 24px rgba(14, 116, 144, 0.1);
+  border-color: rgba(115, 115, 115, 0.26);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 .app-shell__game-leaderboard-item[data-me='true'] .app-shell__game-leaderboard-rank {
-  background: rgba(14, 116, 144, 0.12);
-  border-color: rgba(14, 116, 144, 0.26);
-  color: #0f766e;
+  background: rgba(115, 115, 115, 0.1);
+  border-color: rgba(115, 115, 115, 0.18);
+  color: #3f3f46;
 }
 
 .app-shell__game-leaderboard-item[data-me='true'] .app-shell__game-leaderboard-name {
@@ -1429,9 +1439,9 @@
 
 :root[data-theme='dark'] .app-shell__game-panel {
   background:
-    linear-gradient(135deg, rgba(15, 23, 42, 0.82), rgba(30, 41, 59, 0.88)),
+    linear-gradient(135deg, rgba(10, 10, 10, 0.9), rgba(24, 24, 24, 0.94)),
     var(--surface-elevated);
-  border-color: rgba(148, 163, 184, 0.22);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-metric--hero {
@@ -1447,26 +1457,21 @@
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-metric-meta[data-tone='loss'] {
-  color: #93c5fd;
+  color: #d4d4d8;
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-metric-meter {
-  background: rgba(51, 65, 85, 0.7);
+  background: rgba(64, 64, 64, 0.7);
 }
 
 :root[data-theme='dark'] .app-shell__game-wallet {
   background:
-    radial-gradient(circle at top left, rgba(var(--game-wallet-accent-rgb), 0.16), transparent 44%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, rgb(var(--game-wallet-accent-rgb)) 12%, rgba(16, 28, 47, 0.92)),
-      rgba(9, 16, 30, 0.82)
-    ),
-    rgba(10, 18, 32, 0.42);
-  border-color: rgba(var(--game-wallet-accent-rgb), 0.24);
+    radial-gradient(circle at top left, rgba(var(--game-wallet-accent-rgb), 0.15), transparent 42%),
+    color-mix(in srgb, rgb(var(--game-wallet-accent-rgb)) 13%, rgba(10, 10, 10, 0.95));
+  border-color: rgba(255, 255, 255, 0.14);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 -1px 0 rgba(var(--game-wallet-accent-rgb), 0.08),
+    inset 0 -1px 0 rgba(var(--game-wallet-accent-rgb), 0.07),
     0 18px 34px rgba(2, 6, 23, 0.28);
 }
 
@@ -1477,20 +1482,26 @@
 }
 
 :root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-metric + .app-shell__game-panel-metric {
-  border-top-color: rgba(var(--game-wallet-accent-rgb), 0.16);
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 :root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-metric-label {
-  color: color-mix(in srgb, rgba(226, 232, 240, 0.72) 72%, var(--game-wallet-accent-strong) 28%);
+  color: color-mix(in srgb, rgba(245, 245, 245, 0.72) 74%, var(--game-wallet-accent-strong) 26%);
 }
 
 :root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-metric-meter {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 55%),
-    linear-gradient(180deg, rgba(var(--game-wallet-accent-rgb), 0.16), rgba(51, 65, 85, 0.6));
+    linear-gradient(180deg, rgba(var(--game-wallet-accent-rgb), 0.14), rgba(48, 48, 48, 0.6));
   box-shadow:
     inset 0 1px 2px rgba(2, 6, 23, 0.28),
-    0 0 0 1px rgba(var(--game-wallet-accent-rgb), 0.16);
+    0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-metric--capacity .app-shell__game-panel-metric-meter {
+  background: color-mix(in srgb, rgb(var(--game-wallet-accent-rgb)) 18%, rgba(34, 34, 34, 0.9));
+  box-shadow: inset 0 1px 2px rgba(2, 6, 23, 0.24);
+  height: 8px;
 }
 
 :root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-metric-meter span {
@@ -1499,13 +1510,18 @@
     0 8px 18px rgba(var(--game-wallet-accent-rgb), 0.28);
 }
 
+:root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-metric--capacity .app-shell__game-panel-metric-meter span {
+  background: linear-gradient(90deg, var(--game-wallet-accent-strong), color-mix(in srgb, var(--game-wallet-accent-strong) 72%, white 28%));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
 :root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-helper,
 :root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-status {
-  color: color-mix(in srgb, rgba(226, 232, 240, 0.72) 86%, var(--game-wallet-accent-strong) 14%);
+  color: color-mix(in srgb, rgba(245, 245, 245, 0.72) 82%, var(--game-wallet-accent-strong) 18%);
 }
 
 :root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-status {
-  color: color-mix(in srgb, rgba(248, 250, 252, 0.92) 90%, var(--game-wallet-accent-strong) 10%);
+  color: rgba(250, 250, 250, 0.92);
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-metric {
@@ -1515,62 +1531,62 @@
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-metric + .app-shell__game-panel-metric {
-  border-top-color: rgba(148, 163, 184, 0.14);
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-actions {
   background:
-    linear-gradient(180deg, rgba(12, 22, 38, 0.94), rgba(10, 18, 32, 0.9)),
-    rgba(8, 17, 31, 0.82);
-  border-color: rgba(148, 163, 184, 0.18);
+    linear-gradient(180deg, rgba(18, 18, 18, 0.94), rgba(10, 10, 10, 0.9)),
+    rgba(8, 8, 8, 0.82);
+  border-color: rgba(255, 255, 255, 0.12);
   box-shadow: 0 16px 34px rgba(2, 6, 23, 0.28);
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-action {
   background:
-    linear-gradient(180deg, rgba(18, 31, 52, 0.96), rgba(10, 18, 32, 0.88)),
-    rgba(10, 18, 32, 0.9);
-  border-color: rgba(148, 163, 184, 0.22);
+    linear-gradient(180deg, rgba(28, 28, 28, 0.96), rgba(12, 12, 12, 0.88)),
+    rgba(10, 10, 10, 0.9);
+  border-color: rgba(255, 255, 255, 0.14);
   color: var(--text);
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-action:hover,
 :root[data-theme='dark'] .app-shell__game-panel-action:focus-visible {
   background:
-    linear-gradient(180deg, rgba(24, 40, 66, 0.98), rgba(13, 24, 42, 0.94)),
-    rgba(12, 22, 38, 0.96);
-  border-color: rgba(124, 196, 255, 0.24);
+    linear-gradient(180deg, rgba(36, 36, 36, 0.98), rgba(18, 18, 18, 0.94)),
+    rgba(16, 16, 16, 0.96);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-action-utility {
-  background: rgba(18, 31, 52, 0.82);
-  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(22, 22, 22, 0.82);
+  border-color: rgba(255, 255, 255, 0.14);
   color: var(--text-muted);
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-action-utility:hover,
 :root[data-theme='dark'] .app-shell__game-panel-action-utility:focus-visible {
-  background: rgba(24, 40, 66, 0.96);
-  border-color: rgba(124, 196, 255, 0.24);
+  background: rgba(32, 32, 32, 0.96);
+  border-color: rgba(255, 255, 255, 0.22);
   color: var(--text);
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-action[data-variant='chart'] {
-  background: linear-gradient(180deg, rgba(14, 165, 233, 0.24), rgba(6, 182, 212, 0.14));
-  border-color: rgba(103, 232, 249, 0.28);
-  color: #cffafe;
+  background: linear-gradient(180deg, rgba(52, 52, 52, 0.32), rgba(24, 24, 24, 0.18));
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f5f5f5;
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-action[data-variant='chart']:hover,
 :root[data-theme='dark'] .app-shell__game-panel-action[data-variant='chart']:focus-visible {
-  background: linear-gradient(180deg, rgba(34, 211, 238, 0.28), rgba(6, 182, 212, 0.18));
-  border-color: rgba(165, 243, 252, 0.34);
+  background: linear-gradient(180deg, rgba(68, 68, 68, 0.34), rgba(28, 28, 28, 0.22));
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-action[data-variant='chart']:disabled {
-  background: linear-gradient(180deg, rgba(14, 165, 233, 0.16), rgba(6, 182, 212, 0.1));
-  border-color: rgba(103, 232, 249, 0.18);
-  color: #a5f3fc;
+  background: linear-gradient(180deg, rgba(42, 42, 42, 0.2), rgba(20, 20, 20, 0.14));
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #a3a3a3;
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-action[data-variant='buy'] {
@@ -1617,15 +1633,23 @@
 }
 
 :root[data-theme='dark'] .app-shell__game-position {
-  background: rgba(15, 23, 42, 0.64);
-  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(14, 14, 14, 0.72);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='dark'] .app-shell__game-position[data-selected='true'] {
+  background:
+    linear-gradient(180deg, rgba(30, 30, 30, 0.94), rgba(14, 14, 14, 0.88)),
+    rgba(14, 14, 14, 0.78);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
 }
 
 :root[data-theme='dark'] .app-shell__coin-boost-badge,
 :root[data-theme='dark'] .app-shell__game-position-trend {
-  background: rgba(148, 163, 184, 0.14);
-  border-color: rgba(148, 163, 184, 0.18);
-  color: rgba(226, 232, 240, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(245, 245, 245, 0.72);
 }
 
 :root[data-theme='dark'] .app-shell__coin-boost-badge-label {
@@ -1637,14 +1661,14 @@
 }
 
 :root[data-theme='dark'] .app-shell__game-history-item {
-  background: rgba(15, 23, 42, 0.64);
-  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(14, 14, 14, 0.72);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 :root[data-theme='dark'] .app-shell__game-history-badge {
-  background: rgba(148, 163, 184, 0.14);
-  border-color: rgba(148, 163, 184, 0.18);
-  color: rgba(226, 232, 240, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(245, 245, 245, 0.72);
 }
 
 :root[data-theme='dark'] .app-shell__game-history-badge--status[data-status='open'] {
@@ -1652,27 +1676,27 @@
 }
 
 :root[data-theme='dark'] .app-shell__game-tab[data-active='true'] {
-  background: rgba(226, 232, 240, 0.12);
+  background: rgba(255, 255, 255, 0.12);
   color: var(--text);
 }
 
 :root[data-theme='dark'] .app-shell__game-leaderboard-item {
-  background: rgba(15, 23, 42, 0.64);
-  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(14, 14, 14, 0.72);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 :root[data-theme='dark'] .app-shell__game-leaderboard-item[data-me='true'] {
   background:
-    linear-gradient(90deg, rgba(45, 212, 191, 0.12), rgba(45, 212, 191, 0.03)),
-    rgba(15, 23, 42, 0.64);
-  border-color: rgba(45, 212, 191, 0.28);
-  box-shadow: 0 10px 24px rgba(8, 145, 178, 0.14);
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(14, 14, 14, 0.72);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 :root[data-theme='dark'] .app-shell__game-leaderboard-item[data-me='true'] .app-shell__game-leaderboard-rank {
-  background: rgba(45, 212, 191, 0.12);
-  border-color: rgba(45, 212, 191, 0.24);
-  color: #99f6e4;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f5f5f5;
 }
 
 :root[data-theme='dark'] .app-shell__game-leaderboard-item[data-me='true'] .app-shell__game-leaderboard-name {
@@ -1680,8 +1704,8 @@
 }
 
 :root[data-theme='dark'] .app-shell__game-leaderboard-positions {
-  background: rgba(8, 17, 31, 0.68);
-  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(8, 8, 8, 0.78);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 @media (max-width: 768px) {

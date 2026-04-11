@@ -87,8 +87,8 @@
   align-items: center;
   aspect-ratio: 16 / 9;
   background:
-    radial-gradient(circle at top, rgba(0, 113, 227, 0.14), transparent 44%),
-    #0f172a;
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.06), transparent 44%),
+    #0a0a0a;
   border-radius: 18px;
   color: rgba(255, 255, 255, 0.82);
   display: flex;

@@ -29,7 +29,6 @@ function useAppPreferences({ playerSectionRef, playerStageRef }: UseAppPreferenc
   const isDarkMode = themeMode === 'dark';
   const cinematicToggleLabel = isCinematicModeActive ? '기본 보기' : '시네마틱 모드';
   const themeToggleLabel = isDarkMode ? '라이트 모드' : '다크 모드';
-  const themeToggleDisplayLabel = isDarkMode ? '☀' : '☾';
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -150,7 +149,6 @@ function useAppPreferences({ playerSectionRef, playerStageRef }: UseAppPreferenc
     isDarkMode,
     isMobileLayout,
     selectedRegionCode,
-    themeToggleDisplayLabel,
     themeToggleLabel,
     updateRegionCode,
   };

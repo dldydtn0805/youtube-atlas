@@ -8,9 +8,43 @@ interface AppHeaderProps {
   isLoggingOut: boolean;
   onLogout: () => void;
   onToggleThemeMode: () => void;
-  themeToggleDisplayLabel: string;
   themeToggleLabel: string;
   user?: AuthUser | null;
+}
+
+function ThemeToggleIcon({ isDarkMode }: { isDarkMode: boolean }) {
+  if (isDarkMode) {
+    return (
+      <svg
+        aria-hidden="true"
+        className="app-shell__theme-toggle-icon"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M14.5 3.5a7.5 7.5 0 1 0 6 12 8.5 8.5 0 1 1-6-12Z"
+          fill="currentColor"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="app-shell__theme-toggle-icon"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle cx="12" cy="12" fill="currentColor" r="4.5" />
+      <path
+        d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
 }
 
 function AppHeader({
@@ -19,7 +53,6 @@ function AppHeader({
   isLoggingOut,
   onLogout,
   onToggleThemeMode,
-  themeToggleDisplayLabel,
   themeToggleLabel,
   user,
 }: AppHeaderProps) {
@@ -38,7 +71,7 @@ function AppHeader({
             onClick={onToggleThemeMode}
             type="button"
           >
-            {themeToggleDisplayLabel}
+            <ThemeToggleIcon isDarkMode={isDarkMode} />
           </button>
           {authStatus === 'authenticated' && user ? (
             <div className="app-shell__auth-session">

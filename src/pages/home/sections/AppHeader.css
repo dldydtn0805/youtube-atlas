@@ -57,6 +57,12 @@
     color 0.22s ease;
 }
 
+.app-shell__theme-toggle-icon {
+  display: block;
+  height: 18px;
+  width: 18px;
+}
+
 .app-shell__theme-toggle:hover,
 .app-shell__theme-toggle:focus-visible {
   background: rgba(148, 163, 184, 0.12);
