@@ -6,6 +6,6 @@ name = "World-Best-YouTube"
 script = ""
 
 [[actions]]
-name = "실행됨"
+name = "run"
 icon = "run"
 command = "npm run dev"

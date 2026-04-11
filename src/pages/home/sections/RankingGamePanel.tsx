@@ -454,6 +454,8 @@ export function RankingGamePanelShell({
   tabContent,
 }: RankingGamePanelShellProps) {
   const maxOpenPositions = season?.maxOpenPositions ?? null;
+  const hasDividendOverview = Boolean(dividendOverview);
+  const hasSelectedVideoActions = Boolean(selectedVideoActions);
   const remainingOpenSlots =
     typeof maxOpenPositions === 'number' ? Math.max(0, maxOpenPositions - summary.openDistinctVideoCount) : null;
   const holdingCapacityPercent =
@@ -489,8 +491,11 @@ export function RankingGamePanelShell({
       </div>
       {!isCollapsed ? (
         <>
-          <div className="app-shell__game-panel-overview">
-            {dividendOverview ? <div className="app-shell__game-panel-overview-main">{dividendOverview}</div> : null}
+          <div
+            className="app-shell__game-panel-overview"
+            data-has-actions={hasSelectedVideoActions}
+            data-has-dividend={hasDividendOverview}
+          >
             <div className="app-shell__game-panel-overview-side">
               <section className="app-shell__game-wallet" aria-label="지갑 현황">
                 <div className="app-shell__game-wallet-copy">
@@ -574,8 +579,17 @@ export function RankingGamePanelShell({
                 {statusMessage ? <p className="app-shell__game-panel-status">{statusMessage}</p> : null}
               </section>
             </div>
+            {selectedVideoActions ? (
+              <div className="app-shell__game-panel-overview-main app-shell__game-panel-overview-main--actions">
+                {selectedVideoActions}
+              </div>
+            ) : null}
+            {dividendOverview ? (
+              <div className="app-shell__game-panel-overview-main app-shell__game-panel-overview-main--dividend">
+                {dividendOverview}
+              </div>
+            ) : null}
           </div>
-          {selectedVideoActions}
           <div aria-label="게임 패널 탭" className="app-shell__game-tabs" role="tablist">
             <button
               aria-selected={activeGameTab === 'positions'}
@@ -635,6 +649,7 @@ export function RankingGameCoinOverview({
       aria-label="시즌 코인 미리보기"
       data-current-tier={coinTierProgress?.currentTier.tierCode}
     >
+      <GameCoinTierSummary progress={coinTierProgress} showLadder={false} surfaceVariant="season-coin" title="현재 티어" />
       <div className="app-shell__game-dividend-header">
         <div className="app-shell__game-dividend-copy">
           <p className="app-shell__game-dividend-eyebrow">Season Coin</p>
@@ -686,7 +701,6 @@ export function RankingGameCoinOverview({
           </span>
         </div>
       ) : null}
-      <GameCoinTierSummary progress={coinTierProgress} showLadder={false} surfaceVariant="season-coin" title="현재 티어" />
     </section>
   );
 }

@@ -9,7 +9,6 @@ interface PlayerStageProps {
   canNavigateVideos: boolean;
   chartContent?: ReactNode;
   cinematicToggleLabel: string;
-  favoriteToggleHelperText: string;
   favoriteToggleLabel: string;
   filterContent?: ReactNode;
   isChartLoading: boolean;
@@ -36,13 +35,9 @@ interface PlayerStageProps {
   selectedCountryName: string;
   selectedVideoChannelTitle?: string;
   selectedVideoId?: string;
-  selectedVideoPriceLabel?: string;
-  selectedVideoRankLabel?: string;
-  selectedVideoRankTrendLabel?: string;
-  selectedVideoRankTrendTone?: 'up' | 'down' | 'steady' | 'new';
-  selectedVideoStatLabel?: string;
   selectedVideoTitle?: string;
   stageActionContent?: ReactNode;
+  stageMetadataContent?: ReactNode;
   supplementalContent?: ReactNode;
   toggleFavoriteStreamerPending: boolean;
 }
@@ -52,7 +47,6 @@ function PlayerStage({
   canNavigateVideos,
   chartContent,
   cinematicToggleLabel,
-  favoriteToggleHelperText,
   favoriteToggleLabel,
   filterContent,
   isChartLoading,
@@ -79,13 +73,9 @@ function PlayerStage({
   selectedCountryName,
   selectedVideoChannelTitle,
   selectedVideoId,
-  selectedVideoPriceLabel,
-  selectedVideoRankLabel,
-  selectedVideoRankTrendLabel,
-  selectedVideoRankTrendTone,
-  selectedVideoStatLabel,
   selectedVideoTitle,
   stageActionContent,
+  stageMetadataContent,
   supplementalContent,
   toggleFavoriteStreamerPending,
 }: PlayerStageProps) {
@@ -143,94 +133,59 @@ function PlayerStage({
                 <div className="app-shell__stage-headline">
                   <h3 className="app-shell__stage-title">{selectedVideoTitle}</h3>
                 </div>
-                <p className="app-shell__stage-channel">{selectedVideoChannelTitle}</p>
-                <p className="app-shell__stage-helper">{favoriteToggleHelperText}</p>
-              </div>
-              <div className="app-shell__stage-side">
-                <div className="app-shell__stage-actions">
-                  {stageActionContent}
-                  <button
-                    aria-label={manualPlaybackSaveButtonLabel}
-                    className="app-shell__stage-action-button"
-                    disabled={isManualPlaybackSaveDisabled}
-                    onClick={onManualPlaybackSave}
-                    title={manualPlaybackSaveButtonLabel}
-                    type="button"
-                  >
-                    <span className="app-shell__stage-action-icon" aria-hidden="true">
-                      {manualPlaybackSaveButtonLabel === '스크랩 중...' ? (
-                        '⋯'
-                      ) : (
-                        <svg viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M7.25 4.75h9.5a1.5 1.5 0 0 1 1.5 1.5v11.5a1.5 1.5 0 0 1-1.5 1.5h-9.5a1.5 1.5 0 0 1-1.5-1.5V6.25a1.5 1.5 0 0 1 1.5-1.5Z"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="1.7"
-                          />
-                          <path
-                            d="M9 9.25h6M9 12.25h6M9 15.25h4"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="1.7"
-                          />
-                        </svg>
-                      )}
-                    </span>
-                  </button>
+                <div className="app-shell__stage-channel-row">
+                  <p className="app-shell__stage-channel">{selectedVideoChannelTitle}</p>
                   <button
                     aria-label={favoriteToggleLabel}
-                    className="app-shell__stage-action-button app-shell__stage-action-button--favorite"
+                    className="app-shell__stage-channel-favorite"
                     data-active={isSelectedChannelFavorited}
                     disabled={authStatus !== 'authenticated' || isFavoriteToggleDisabled}
                     onClick={onToggleFavoriteStreamer}
                     title={favoriteToggleLabel}
                     type="button"
                   >
-                    <span className="app-shell__stage-action-icon" aria-hidden="true">
-                      {toggleFavoriteStreamerPending ? (
-                        '⋯'
-                      ) : (
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill={isSelectedChannelFavorited ? 'currentColor' : 'none'}
-                        >
-                          <path
-                            d="m12 3.75 2.55 5.17 5.7.83-4.13 4.03.97 5.68L12 16.78l-5.09 2.68.97-5.68-4.13-4.03 5.7-.83L12 3.75Z"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="1.7"
-                          />
-                        </svg>
-                      )}
-                    </span>
+                    {toggleFavoriteStreamerPending ? '...' : isSelectedChannelFavorited ? '★' : '☆'}
                   </button>
-                  {selectedVideoRankLabel || selectedVideoStatLabel || selectedVideoPriceLabel ? (
-                    <div className="app-shell__stage-stats">
-                      {selectedVideoPriceLabel ? (
-                        <span className="app-shell__stage-stat">{selectedVideoPriceLabel}</span>
-                      ) : null}
-                      {selectedVideoStatLabel ? (
-                        <span className="app-shell__stage-stat">{selectedVideoStatLabel}</span>
-                      ) : null}
-                      {selectedVideoRankLabel ? (
-                        <span className="app-shell__stage-stat">
-                          <span>{selectedVideoRankLabel}</span>
-                          {selectedVideoRankTrendLabel ? (
-                            <span
-                              className="app-shell__stage-rank-trend"
-                              data-tone={selectedVideoRankTrendTone}
-                            >
-                              {selectedVideoRankTrendLabel}
-                            </span>
-                          ) : null}
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : null}
+                </div>
+                {stageMetadataContent ? <div className="app-shell__stage-summary">{stageMetadataContent}</div> : null}
+              </div>
+              <div className="app-shell__stage-side">
+                <div className="app-shell__stage-actions">
+                  {stageActionContent}
+                  <div className="app-shell__stage-action-item">
+                    <button
+                      aria-label={manualPlaybackSaveButtonLabel}
+                      className="app-shell__stage-action-button"
+                      disabled={isManualPlaybackSaveDisabled}
+                      onClick={onManualPlaybackSave}
+                      title={manualPlaybackSaveButtonLabel}
+                      type="button"
+                    >
+                      <span className="app-shell__stage-action-icon" aria-hidden="true">
+                        {manualPlaybackSaveButtonLabel === '저장 중...' ? (
+                          '⋯'
+                        ) : (
+                          <svg viewBox="0 0 24 24" fill="none">
+                            <path
+                              d="M7.25 4.75h9.5a1.5 1.5 0 0 1 1.5 1.5v11.5a1.5 1.5 0 0 1-1.5 1.5h-9.5a1.5 1.5 0 0 1-1.5-1.5V6.25a1.5 1.5 0 0 1 1.5-1.5Z"
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="1.7"
+                            />
+                            <path
+                              d="M9 9.25h6M9 12.25h6M9 15.25h4"
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="1.7"
+                            />
+                          </svg>
+                        )}
+                      </span>
+                    </button>
+                    <span className="app-shell__stage-action-caption">저장</span>
+                  </div>
                 </div>
                 <p
                   aria-hidden={!manualPlaybackSaveStatus}

@@ -271,9 +271,9 @@ export default function useSelectedVideoGameState({
   const favoriteToggleHelperText =
     authStatus === 'authenticated'
       ? isSelectedChannelFavorited
-        ? '이 채널은 내 즐겨찾기에 저장되어 있습니다.'
-        : '지금 보는 채널을 즐겨찾기로 저장할 수 있습니다.'
-      : '즐겨찾기는 로그인 후 사용할 수 있습니다.';
+        ? '즐겨찾는 채널입니다.'
+        : '이 채널을 즐겨찾기에 추가할 수 있습니다.'
+      : '로그인 후 즐겨찾기를 사용할 수 있습니다.';
   const favoriteToggleLabel =
     isFavoriteTogglePending
       ? '즐겨찾기 처리 중'

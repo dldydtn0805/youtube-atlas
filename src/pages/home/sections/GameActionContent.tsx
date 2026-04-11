@@ -162,13 +162,20 @@ export function GameSelectedVideoPriceSummary({
       <div className="app-shell__game-selected-summary" aria-label="선택한 영상 가격 정보">
         <p className="app-shell__game-selected-summary-line">
           <span className="app-shell__game-selected-summary-label">순위</span>{' '}
-          {formatRank(selectedVideoCurrentChartRank, {
-            chartOut: selectedVideoIsChartOut,
-          })}
+          <span className="app-shell__game-selected-summary-value">
+            {formatRank(selectedVideoCurrentChartRank, {
+              chartOut: selectedVideoIsChartOut,
+            })}
+          </span>
           {' · '}<span className="app-shell__game-selected-summary-label">금액</span>{' '}
-          {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
+          <span className="app-shell__game-selected-summary-value">
+            {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
+          </span>
           {' · '}<span className="app-shell__game-selected-summary-label">손익률</span>{' '}
-          <span data-tone={selectedVideoIsChartOut ? undefined : getPointTone(selectedVideoOpenPositionSummary.profitPoints)}>
+          <span
+            className="app-shell__game-selected-summary-value"
+            data-tone={selectedVideoIsChartOut ? undefined : getPointTone(selectedVideoOpenPositionSummary.profitPoints)}
+          >
             {formatSignedProfitRate(
               selectedVideoOpenPositionSummary.profitPoints,
               selectedVideoOpenPositionSummary.stakePoints,
@@ -179,7 +186,8 @@ export function GameSelectedVideoPriceSummary({
           </span>
           {positionCoinYield > 0 ? (
             <>
-              {' · '}<span className="app-shell__game-selected-summary-label">채굴량</span> {formatCoins(positionCoinYield)}
+              {' · '}<span className="app-shell__game-selected-summary-label">채굴량</span>{' '}
+              <span className="app-shell__game-selected-summary-value">{formatCoins(positionCoinYield)}</span>
             </>
           ) : null}
         </p>
@@ -218,10 +226,15 @@ export function GameSelectedVideoPriceSummary({
     <div className="app-shell__game-selected-summary" aria-label="선택한 영상 현재 가격">
       <p className="app-shell__game-selected-summary-line">
         <span className="app-shell__game-selected-summary-label">순위</span>{' '}
-        {formatRank(selectedVideoMarketEntry.currentRank)}
+        <span className="app-shell__game-selected-summary-value">
+          {formatRank(selectedVideoMarketEntry.currentRank)}
+        </span>
         {' · '}<span className="app-shell__game-selected-summary-label">금액</span>{' '}
-        {formatPoints(selectedVideoMarketEntry.currentPricePoints)}
-        {' · '}<span className="app-shell__game-selected-summary-label">채굴량</span> {formatCoins(selectedVideoCoinYield)}
+        <span className="app-shell__game-selected-summary-value">
+          {formatPoints(selectedVideoMarketEntry.currentPricePoints)}
+        </span>
+        {' · '}<span className="app-shell__game-selected-summary-label">채굴량</span>{' '}
+        <span className="app-shell__game-selected-summary-value">{formatCoins(selectedVideoCoinYield)}</span>
       </p>
     </div>
   );
@@ -245,73 +258,31 @@ export function GameStageActions({
 
   return (
     <>
-      <button
-        aria-label="선택한 영상 차트"
-        className="app-shell__stage-action-button app-shell__stage-action-button--game"
-        data-variant="chart"
-        disabled={!canShowGameActions}
-        onClick={onOpenRankHistory}
-        title={
-          !canShowGameActions
-            ? '전체 카테고리에서만 차트를 볼 수 있습니다.'
-            : '선택한 영상의 랭킹 차트를 엽니다.'
-        }
-        type="button"
-      >
-        <span className="app-shell__stage-action-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M5.75 17.25 10 12.5l2.75 2.75 5.5-6"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.8"
-            />
-            <path
-              d="M15.5 9.25H18.5v3"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.8"
-            />
-          </svg>
-        </span>
-      </button>
-      <button
-        aria-label="선택한 영상 매수"
-        className="app-shell__stage-action-button app-shell__stage-action-button--game"
-        data-variant="buy"
-        disabled={!canShowGameActions || isSelectedVideoBuyDisabled}
-        onClick={onOpenBuyTradeModal}
-        title={!canShowGameActions ? '전체 카테고리에서만 매수할 수 있습니다.' : buyActionTitle}
-        type="button"
-      >
-        <span className="app-shell__stage-action-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 18V6M12 6l-4 4M12 6l4 4"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.8"
-            />
-          </svg>
-        </span>
-      </button>
-      {selectedVideoOpenPositionCount > 0 ? (
+      <div className="app-shell__stage-action-item">
         <button
-          aria-label="선택한 영상 매도"
+          aria-label="선택한 영상 차트"
           className="app-shell__stage-action-button app-shell__stage-action-button--game"
-          data-variant="sell"
-          disabled={isSelectedVideoSellDisabled}
-          onClick={onOpenSellTradeModal}
-          title={sellActionTitle}
+          data-variant="chart"
+          disabled={!canShowGameActions}
+          onClick={onOpenRankHistory}
+          title={
+            !canShowGameActions
+              ? '전체 카테고리에서만 차트를 볼 수 있습니다.'
+              : '선택한 영상의 랭킹 차트를 엽니다.'
+          }
           type="button"
         >
           <span className="app-shell__stage-action-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
               <path
-                d="M12 6v12M12 18l-4-4M12 18l4-4"
+                d="M5.75 17.25 10 12.5l2.75 2.75 5.5-6"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+              />
+              <path
+                d="M15.5 9.25H18.5v3"
                 stroke="currentColor"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -320,6 +291,57 @@ export function GameStageActions({
             </svg>
           </span>
         </button>
+        <span className="app-shell__stage-action-caption">차트</span>
+      </div>
+      <div className="app-shell__stage-action-item">
+        <button
+          aria-label="선택한 영상 매수"
+          className="app-shell__stage-action-button app-shell__stage-action-button--game"
+          data-variant="buy"
+          disabled={!canShowGameActions || isSelectedVideoBuyDisabled}
+          onClick={onOpenBuyTradeModal}
+          title={!canShowGameActions ? '전체 카테고리에서만 매수할 수 있습니다.' : buyActionTitle}
+          type="button"
+        >
+          <span className="app-shell__stage-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 18V6M12 6l-4 4M12 6l4 4"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+              />
+            </svg>
+          </span>
+        </button>
+        <span className="app-shell__stage-action-caption">매수</span>
+      </div>
+      {selectedVideoOpenPositionCount > 0 ? (
+        <div className="app-shell__stage-action-item">
+          <button
+            aria-label="선택한 영상 매도"
+            className="app-shell__stage-action-button app-shell__stage-action-button--game"
+            data-variant="sell"
+            disabled={isSelectedVideoSellDisabled}
+            onClick={onOpenSellTradeModal}
+            title={sellActionTitle}
+            type="button"
+          >
+            <span className="app-shell__stage-action-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 6v12M12 18l-4-4M12 18l4-4"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.8"
+                />
+              </svg>
+            </span>
+          </button>
+          <span className="app-shell__stage-action-caption">매도</span>
+        </div>
       ) : null}
     </>
   );

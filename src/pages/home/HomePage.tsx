@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
 import AppHeader from './sections/AppHeader';
-import { SelectedVideoGameActionsBundle } from './sections/GameActionContent';
+import { GameSelectedVideoPriceSummary, SelectedVideoGameActionsBundle } from './sections/GameActionContent';
 import GameCoinModal from './sections/GameDividendModal';
 import { RegionFilterModal } from './sections/FilterPanels';
 import GamePanelSection from './sections/GamePanelSection';
@@ -711,7 +711,6 @@ function HomePage() {
     buyActionTitle,
     buyModalHelperText,
     currentVideoGameHelperText,
-    favoriteToggleHelperText,
     favoriteToggleLabel,
     gameSeasonRegionMismatch,
     isChartActionDisabled,
@@ -732,11 +731,7 @@ function HomePage() {
     selectedVideoMarketEntry,
     selectedVideoOpenPositionCount,
     selectedVideoOpenPositionSummary,
-    selectedVideoPriceLabel,
-    selectedVideoRankLabel,
-    selectedVideoRankTrendIndicator,
     selectedVideoSellSummary,
-    selectedVideoStatLabel,
     selectedVideoTradeThumbnailUrl,
     selectedVideoTrendBadges,
     selectedVideoUnitPricePoints,
@@ -962,7 +957,7 @@ function HomePage() {
       ? '아직 보유 중인 영상이 없어요. 지금 보는 영상에서 바로 시작할 수 있습니다.'
       : '새 포지션 매수와 기존 포지션 매도는 전체 카테고리에서만 가능합니다.'
     : null;
-  const selectedVideoActionsContent = (
+  const renderSelectedVideoActionsContent = () => (
     <SelectedVideoGameActionsBundle
       buyActionTitle={buyActionTitle}
       canShowGameActions={canShowGameActions}
@@ -1013,6 +1008,18 @@ function HomePage() {
       sellActionTitle={sellActionTitle}
     />
   );
+  const stageMetadataContent = (
+    <GameSelectedVideoPriceSummary
+      gameCoinOverview={liveGameCoinOverview}
+      selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
+      selectedVideoId={selectedVideoId}
+      selectedVideoIsChartOut={selectedVideoIsChartOut}
+      selectedVideoMarketEntry={selectedVideoMarketEntry}
+      selectedVideoOpenPositionCount={selectedVideoOpenPositionCount}
+      selectedVideoOpenPositionSummary={selectedVideoOpenPositionSummary}
+      selectedVideoTrendBadges={selectedVideoTrendBadges}
+    />
+  );
   const portfolioContent = (
     <GamePanelSection
       activeGameTab={activeGameTab}
@@ -1059,7 +1066,7 @@ function HomePage() {
       selectedLeaderboardPositionsError={selectedLeaderboardPositionsError}
       selectedLeaderboardUserId={selectedLeaderboardUserId}
       selectedPlaybackSection={selectedPlaybackSection}
-      selectedVideoActions={selectedVideoActionsContent}
+      selectedVideoActions={null}
       selectedPositionId={selectedOpenPositionId}
       selectedVideoId={selectedVideoId}
       setSelectedLeaderboardUserId={setSelectedLeaderboardUserId}
@@ -1157,7 +1164,6 @@ function HomePage() {
             authStatus,
             canNavigateVideos: canPlayNextVideo,
             cinematicToggleLabel,
-            favoriteToggleHelperText,
             favoriteToggleLabel,
             isChartLoading,
             isCinematicModeActive,
@@ -1166,7 +1172,7 @@ function HomePage() {
               authStatus !== 'authenticated' || !selectedVideoId || isManualPlaybackSavePending,
             isMobileLayout,
             isSelectedChannelFavorited,
-            manualPlaybackSaveButtonLabel: isManualPlaybackSavePending ? '스크랩 중...' : '스크랩',
+            manualPlaybackSaveButtonLabel: isManualPlaybackSavePending ? '저장 중...' : '저장',
             manualPlaybackSaveStatus: manualPlaybackSaveStatus ?? undefined,
             onManualPlaybackSave: () => void handleManualPlaybackSave(),
             onNextVideo: handlePlayNextVideo,
@@ -1184,16 +1190,13 @@ function HomePage() {
             selectedCountryName,
             selectedVideoChannelTitle: resolvedSelectedVideo?.snippet.channelTitle,
             selectedVideoId,
-            selectedVideoPriceLabel,
-            selectedVideoRankLabel,
-            selectedVideoRankTrendLabel: selectedVideoRankTrendIndicator?.label,
-            selectedVideoRankTrendTone: selectedVideoRankTrendIndicator?.tone,
-            selectedVideoStatLabel,
             selectedVideoTitle: resolvedSelectedVideo?.snippet.title,
             stageActionContent: gameActionContent,
+            stageMetadataContent,
             supplementalContent: portfolioContent,
             toggleFavoriteStreamerPending: toggleFavoriteStreamerMutation.isPending,
           }}
+          stickySelectedVideoContent={renderSelectedVideoActionsContent()}
         />
       </main>
       <GameRankHistoryModal

@@ -1,13 +1,15 @@
-import type { ComponentProps } from 'react';
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 import { ChartPanel, CommunityPanel } from './ContentPanels';
 import { FilterBar } from './FilterPanels';
 import PlayerStage from './PlayerStage';
+import './HomePlaybackSection.css';
 
 interface HomePlaybackSectionProps {
   chartPanelProps: ComponentProps<typeof ChartPanel>;
   communityPanelProps: ComponentProps<typeof CommunityPanel>;
   filterBarProps: ComponentProps<typeof FilterBar>;
   playerStageProps: Omit<ComponentProps<typeof PlayerStage>, 'chartContent' | 'filterContent'>;
+  stickySelectedVideoContent?: ReactNode;
 }
 
 function getCinematicChartClassName(className?: string) {
@@ -19,7 +21,63 @@ export default function HomePlaybackSection({
   communityPanelProps,
   filterBarProps,
   playerStageProps,
+  stickySelectedVideoContent,
 }: HomePlaybackSectionProps) {
+  const [isStickySelectedVideoVisible, setIsStickySelectedVideoVisible] = useState(false);
+
+  useEffect(() => {
+    const playerViewport = playerStageProps.playerViewportRef.current;
+
+    if (
+      typeof window === 'undefined' ||
+      !playerViewport ||
+      !stickySelectedVideoContent ||
+      playerStageProps.isCinematicModeActive
+    ) {
+      setIsStickySelectedVideoVisible(false);
+      return;
+    }
+
+    const applyStickyVisibility = (nextIsVisible: boolean) => {
+      setIsStickySelectedVideoVisible((currentValue) =>
+        currentValue === nextIsVisible ? currentValue : nextIsVisible,
+      );
+    };
+
+    const updateStickyVisibility = () => {
+      const nextIsVisible = playerViewport.getBoundingClientRect().bottom <= 12;
+
+      applyStickyVisibility(nextIsVisible);
+    };
+
+    updateStickyVisibility();
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const nextIsVisible = !entry.isIntersecting && entry.boundingClientRect.bottom <= 12;
+
+        applyStickyVisibility(nextIsVisible);
+      },
+      {
+        threshold: 0,
+      },
+    );
+
+    observer.observe(playerViewport);
+    window.addEventListener('resize', updateStickyVisibility);
+    window.addEventListener('scroll', updateStickyVisibility, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateStickyVisibility);
+      window.removeEventListener('scroll', updateStickyVisibility);
+    };
+  }, [
+    playerStageProps.isCinematicModeActive,
+    playerStageProps.playerViewportRef,
+    stickySelectedVideoContent,
+  ]);
+
   const renderFilterBar = () => <FilterBar {...filterBarProps} />;
   const renderChartPanel = (isCinematic = false) => (
     <ChartPanel
@@ -30,6 +88,13 @@ export default function HomePlaybackSection({
 
   return (
     <>
+      {stickySelectedVideoContent && !playerStageProps.isCinematicModeActive && isStickySelectedVideoVisible ? (
+        <div className="app-shell__sticky-selected-video-slot">
+          <div className="app-shell__sticky-selected-video-frame">
+            {stickySelectedVideoContent}
+          </div>
+        </div>
+      ) : null}
       <PlayerStage
         {...playerStageProps}
         chartContent={renderChartPanel(true)}

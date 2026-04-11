@@ -128,7 +128,7 @@
 .app-shell__stage-copy {
   display: grid;
   flex: 1;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
   width: auto;
 }
@@ -155,21 +155,31 @@
 }
 
 .app-shell__stage-actions {
-  align-items: center;
+  align-items: flex-start;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   justify-content: flex-end;
   min-width: 0;
   width: 100%;
 }
 
-.app-shell__stage-stats {
-  display: inline-flex;
-  flex: 0 0 auto;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
+.app-shell__stage-action-item {
+  align-items: center;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  min-width: 0;
+}
+
+.app-shell__stage-action-caption {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+  max-width: 64px;
+  text-align: center;
 }
 
 .app-shell__stage-title {
@@ -184,13 +194,98 @@
   white-space: nowrap;
 }
 
+.app-shell__stage-channel-row {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
 .app-shell__stage-channel {
   color: var(--text-muted);
+  flex: 0 1 auto;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
   line-height: 1.5;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.app-shell__stage-channel-favorite {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: rgba(180, 83, 9, 0.78);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  height: auto;
+  justify-content: center;
+  line-height: 1;
+  min-width: 0;
+  padding: 0;
+  transition:
+    color 0.22s ease,
+    transform 0.22s ease;
+}
+
+.app-shell__stage-channel-favorite:hover,
+.app-shell__stage-channel-favorite:focus-visible {
+  color: rgba(180, 83, 9, 0.92);
+  outline: none;
+  transform: translateY(-0.5px);
+}
+
+@media (max-width: 768px) {
+  .app-shell__stage-channel {
+    font-size: 0.8rem;
+  }
+}
+
+.app-shell__stage-channel-favorite[data-active='true'] {
+  color: #b45309;
+}
+
+.app-shell__stage-channel-favorite:disabled {
+  cursor: default;
+  opacity: 0.55;
+  transform: none;
+}
+
+.app-shell__stage-summary {
+  display: grid;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.app-shell__stage-summary .app-shell__game-selected-summary {
+  gap: 8px;
+}
+
+.app-shell__stage-summary .app-shell__game-selected-summary-line {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.app-shell__stage-summary .app-shell__game-selected-summary-badges {
+  gap: 8px;
+}
+
+.app-shell__stage-summary .app-shell__game-trend-badge,
+.app-shell__stage-summary .app-shell__game-selected-status-badge {
+  background: var(--surface-chip-muted);
+  border-color: var(--border);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  min-height: 30px;
+  padding: 0 12px;
 }
 
 .app-shell__stage-helper {
@@ -453,6 +548,19 @@
   color: #fde68a;
 }
 
+:root[data-theme='dark'] .app-shell__stage-channel-favorite {
+  color: rgba(253, 230, 138, 0.78);
+}
+
+:root[data-theme='dark'] .app-shell__stage-channel-favorite:hover,
+:root[data-theme='dark'] .app-shell__stage-channel-favorite:focus-visible {
+  color: rgba(253, 230, 138, 0.92);
+}
+
+:root[data-theme='dark'] .app-shell__stage-channel-favorite[data-active='true'] {
+  color: #fde68a;
+}
+
 .app-shell__panel--player[data-cinematic='true'] .app-shell__stage-meta {
   padding-top: 18px;
 }
@@ -528,13 +636,35 @@
     width: 100%;
   }
 
+  .app-shell__stage-action-item {
+    gap: 4px;
+  }
+
+  .app-shell__stage-action-caption {
+    font-size: 0.64rem;
+    max-width: 56px;
+  }
+
   .app-shell__stage-copy {
     gap: 2px;
   }
 
-  .app-shell__stage-channel,
-  .app-shell__stage-helper {
+  .app-shell__stage-channel-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .app-shell__stage-channel-favorite {
+    font-size: 0.68rem;
+  }
+
+  .app-shell__stage-channel {
     line-height: 1.35;
+  }
+
+  .app-shell__stage-summary .app-shell__game-selected-summary-line {
+    font-size: 0.82rem;
   }
 
   .app-shell__stage-helper {
@@ -567,10 +697,6 @@
   .app-shell__stage-action-icon {
     height: 14px;
     width: 14px;
-  }
-
-  .app-shell__stage-stats {
-    gap: 8px;
   }
 
   .app-shell__stage-action-button--history {

@@ -6,7 +6,7 @@
 .app-shell__game-selected-summary-line {
   color: var(--text-muted);
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.45;
   margin: 0;
 }
@@ -14,6 +14,25 @@
 .app-shell__game-selected-summary-label {
   color: var(--text);
   font-weight: 800;
+}
+
+.app-shell__game-selected-summary-value {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.app-shell__game-selected-summary-value[data-tone='gain'] {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.app-shell__game-selected-summary-value[data-tone='loss'] {
+  color: #2563eb;
+  font-weight: 800;
+}
+
+.app-shell__game-selected-summary-value[data-tone='flat'] {
+  color: var(--text-muted);
 }
 
 .app-shell__game-selected-summary-badges {

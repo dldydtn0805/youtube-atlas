@@ -352,14 +352,14 @@ export default function useHomePlaybackState({
 
   const handleManualPlaybackSave = useCallback(async () => {
     if (authStatus !== 'authenticated' || !selectedVideoId) {
-      setManualPlaybackSaveStatus('로그인 후 스크랩할 수 있습니다.');
+      setManualPlaybackSaveStatus('로그인 후 저장할 수 있습니다.');
       return;
     }
 
     const snapshot = videoPlayerRef.current?.readPlaybackSnapshot();
 
     if (!snapshot) {
-      setManualPlaybackSaveStatus('플레이어 준비 후 다시 스크랩해 주세요.');
+      setManualPlaybackSaveStatus('플레이어 준비 후 다시 저장해 주세요.');
       return;
     }
 
@@ -372,16 +372,16 @@ export default function useHomePlaybackState({
       });
 
       if (savedPositionSeconds === null) {
-        setManualPlaybackSaveStatus('스크랩할 재생 위치를 찾지 못했습니다.');
+        setManualPlaybackSaveStatus('저장할 재생 위치를 찾지 못했습니다.');
         return;
       }
 
       setManualPlaybackSaveStatus(
-        `${formatPlaybackSaveTimestamp(savedPositionSeconds)} 지점까지 스크랩했습니다.`,
+        `${formatPlaybackSaveTimestamp(savedPositionSeconds)} 지점까지 저장했습니다.`,
       );
     } catch (error) {
       setManualPlaybackSaveStatus(
-        error instanceof Error ? error.message : '스크랩에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        error instanceof Error ? error.message : '저장에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       );
     } finally {
       setIsManualPlaybackSavePending(false);
