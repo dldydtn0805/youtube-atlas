@@ -598,7 +598,7 @@
   background:
     linear-gradient(180deg, rgba(252, 253, 255, 0.72), rgba(248, 250, 252, 0.68)),
     rgba(255, 255, 255, 0.68);
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 14px;
   display: grid;
   gap: 3px;
@@ -607,7 +607,9 @@
   padding: 10px 11px;
   position: relative;
   box-shadow:
-    0 6px 14px rgba(148, 163, 184, 0.05);
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(var(--game-tier-step-rgb), 0.05),
+    0 10px 18px rgba(15, 23, 42, 0.06);
 }
 
 .app-shell__game-tier-step::before,
@@ -635,7 +637,7 @@
 }
 
 .app-shell__game-tier-step::after {
-  background: radial-gradient(circle at top right, rgba(var(--game-tier-step-rgb), 0.12), transparent 48%);
+  background: radial-gradient(circle at top right, rgba(148, 163, 184, 0.1), transparent 48%);
   inset: 0;
 }
 
@@ -688,15 +690,13 @@
 
 .app-shell__game-tier-step[data-reached='true']:not([data-current='true']) {
   background:
-    radial-gradient(circle at top left, rgba(var(--game-tier-step-rgb), 0.14), transparent 42%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.84)),
-    color-mix(in srgb, var(--game-tier-step-accent) 18%, rgba(255, 255, 255, 0.96));
-  border-color: rgba(148, 163, 184, 0.14);
+    radial-gradient(circle at top left, rgba(var(--game-tier-step-rgb), 0.12), transparent 38%),
+    color-mix(in srgb, rgb(var(--game-tier-step-rgb)) 10%, rgba(247, 249, 251, 0.97));
+  border-color: rgba(148, 163, 184, 0.18);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 -1px 0 rgba(148, 163, 184, 0.06),
-    0 12px 22px rgba(15, 23, 42, 0.06),
-    0 4px 10px rgba(15, 23, 42, 0.05);
+    inset 0 1px 0 rgba(255, 255, 255, 0.84),
+    inset 0 -1px 0 rgba(var(--game-tier-step-rgb), 0.06),
+    0 10px 18px rgba(15, 23, 42, 0.06);
 }
 
 .app-shell__game-tier-step[data-reached='true']:not([data-current='true'])::before {
@@ -709,14 +709,13 @@
 
 .app-shell__game-tier-step[data-current='true'] {
   background:
-    radial-gradient(circle at top left, rgba(var(--game-tier-step-rgb), 0.1), transparent 44%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.84)),
-    color-mix(in srgb, var(--game-tier-step-accent) 14%, rgba(255, 255, 255, 0.96));
-  border-color: rgba(148, 163, 184, 0.22);
+    radial-gradient(circle at top left, rgba(var(--game-tier-step-rgb), 0.15), transparent 42%),
+    color-mix(in srgb, rgb(var(--game-tier-step-rgb)) 13%, rgba(247, 249, 251, 0.97));
+  border-color: rgba(148, 163, 184, 0.2);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 -1px 0 rgba(148, 163, 184, 0.08),
-    0 12px 24px rgba(15, 23, 42, 0.07);
+    inset 0 1px 0 rgba(255, 255, 255, 0.84),
+    inset 0 -1px 0 rgba(var(--game-tier-step-rgb), 0.06),
+    0 10px 18px rgba(15, 23, 42, 0.06);
 }
 
 .app-shell__game-tier-step[data-current='true']::before {
@@ -1033,10 +1032,12 @@
   background:
     linear-gradient(180deg, rgba(28, 28, 28, 0.84), rgba(18, 18, 18, 0.8)),
     rgba(18, 18, 18, 0.82);
-  border-color: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.08);
   box-shadow:
-    inset 0 -1px 0 rgba(0, 0, 0, 0.14),
-    0 8px 16px rgba(2, 6, 23, 0.16);
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 14px 26px rgba(2, 6, 23, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
 :root[data-theme='dark'] .app-shell__game-tier-step::before {
@@ -1055,46 +1056,32 @@
 
 :root[data-theme='dark'] .app-shell__game-tier-step::after {
   background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.05), transparent 46%),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.04), transparent 46%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 22%);
 }
 
 :root[data-theme='dark'] .app-shell__game-tier-step[data-current='true'] {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 20%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, rgb(var(--game-tier-step-rgb)) 8%, rgba(22, 22, 22, 0.92)),
-      rgba(28, 28, 28, 0.9)
-    ),
-    rgba(22, 22, 22, 0.88);
+    radial-gradient(circle at top left, rgba(var(--game-tier-step-rgb), 0.15), transparent 42%),
+    color-mix(in srgb, rgb(var(--game-tier-step-rgb)) 13%, rgba(12, 12, 12, 0.94));
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
-    0 0 0 1px rgba(255, 255, 255, 0.02),
-    0 12px 24px rgba(2, 6, 23, 0.18),
-    0 4px 14px rgba(255, 255, 255, 0.05);
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    inset 0 -1px 0 rgba(var(--game-tier-step-rgb), 0.07),
+    0 18px 34px rgba(2, 6, 23, 0.24),
+    0 0 0 1px rgba(255, 255, 255, 0.035);
 }
 
 :root[data-theme='dark'] .app-shell__game-tier-step[data-reached='true']:not([data-current='true']) {
   background:
-    radial-gradient(circle at top left, rgba(var(--game-tier-step-rgb), 0.14), transparent 42%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 20%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, rgb(var(--game-tier-step-rgb)) 12%, rgba(22, 22, 22, 0.9)),
-      rgba(24, 24, 24, 0.88)
-    ),
-    rgba(20, 20, 20, 0.86);
-  border-color: rgba(255, 255, 255, 0.06);
+    radial-gradient(circle at top left, rgba(var(--game-tier-step-rgb), 0.13), transparent 42%),
+    color-mix(in srgb, rgb(var(--game-tier-step-rgb)) 12%, rgba(12, 12, 12, 0.94));
+  border-color: rgba(255, 255, 255, 0.09);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.015),
-    0 0 0 1px rgba(255, 255, 255, 0.015),
-    0 14px 24px rgba(2, 6, 23, 0.18),
-    0 4px 12px rgba(0, 0, 0, 0.1),
-    0 4px 12px rgba(255, 255, 255, 0.045);
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    inset 0 -1px 0 rgba(var(--game-tier-step-rgb), 0.06),
+    0 16px 28px rgba(2, 6, 23, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.028);
 }
 
 :root[data-theme='dark'] .app-shell__game-tier-name,
