@@ -1080,12 +1080,12 @@ export function RankingGamePositionsTab({
                 <div className="app-shell__game-position-body">
                   <p className="app-shell__game-position-meta">
                     <span className="app-shell__game-position-meta-label">순위</span>{' '}
-                    <span className="app-shell__game-position-rank">
+                    <span className="app-shell__game-position-rank" data-chart-out={holding.chartOut || undefined}>
                       {formatRank(holding.currentRank, {
                         chartOut: holding.chartOut,
                       })}
                     </span>
-                    {' · '}<span className="app-shell__game-position-meta-label">금액</span> {formatMaybePoints(holding.currentPricePoints)}
+                    {' · '}<span className="app-shell__game-position-meta-label">평가 금액</span> {formatMaybePoints(holding.currentPricePoints)}
                     {' · '}<span className="app-shell__game-position-meta-label">손익률</span>{' '}
                     <span data-tone={holding.chartOut ? undefined : getPointTone(holding.profitPoints)}>
                       {formatSignedProfitRate(holding.profitPoints, holding.stakePoints, {

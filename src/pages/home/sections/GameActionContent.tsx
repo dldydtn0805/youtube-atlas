@@ -169,12 +169,15 @@ export function GameSelectedVideoPriceSummary({
       <div className="app-shell__game-selected-summary" aria-label="선택한 영상 가격 정보">
         <p className="app-shell__game-selected-summary-line">
           <span className="app-shell__game-selected-summary-label">순위</span>{' '}
-          <span className="app-shell__game-selected-summary-value">
+          <span
+            className="app-shell__game-selected-summary-value"
+            data-chart-out={selectedVideoIsChartOut || undefined}
+          >
             {formatRank(selectedVideoCurrentChartRank, {
               chartOut: selectedVideoIsChartOut,
             })}
           </span>
-          {' · '}<span className="app-shell__game-selected-summary-label">금액</span>{' '}
+          {' · '}<span className="app-shell__game-selected-summary-label">평가 금액</span>{' '}
           <span className="app-shell__game-selected-summary-value">
             {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
           </span>
@@ -250,11 +253,11 @@ export function GameSelectedVideoPriceSummary({
         <span className="app-shell__game-selected-summary-value">
           {formatRank(selectedVideoMarketEntry.currentRank)}
         </span>
-        {' · '}<span className="app-shell__game-selected-summary-label">금액</span>{' '}
+        {' · '}<span className="app-shell__game-selected-summary-label">현재 단가</span>{' '}
         <span className="app-shell__game-selected-summary-value">
           {formatPoints(selectedVideoMarketEntry.currentPricePoints)}
         </span>
-        {' · '}<span className="app-shell__game-selected-summary-label">채굴량</span>{' '}
+        {' · '}<span className="app-shell__game-selected-summary-label">개당 채굴량</span>{' '}
         <span className="app-shell__game-selected-summary-value">{formatCoins(selectedVideoCoinYield)}</span>
       </p>
       {selectedVideoFormattedTrendBadges.length > 0 || selectedVideoMiningBadge ? (

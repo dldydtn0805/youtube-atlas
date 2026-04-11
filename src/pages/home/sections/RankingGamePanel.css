@@ -862,9 +862,28 @@
   font-weight: 800;
 }
 
+.app-shell__game-position-meta [data-tone='gain'] {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.app-shell__game-position-meta [data-tone='loss'] {
+  color: #2563eb;
+  font-weight: 800;
+}
+
+.app-shell__game-position-meta [data-tone='flat'] {
+  color: var(--text-muted);
+}
+
 .app-shell__game-position-rank {
   color: inherit;
   font-weight: inherit;
+}
+
+.app-shell__game-position-rank[data-chart-out='true'] {
+  color: #92400e;
+  font-weight: 800;
 }
 
 .app-shell__game-position-trends {
@@ -1737,16 +1756,18 @@
   }
 
   .app-shell__game-panel-actions-main {
-    align-items: start;
-    display: block;
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
     min-height: 0;
     position: static;
   }
 
   .app-shell__game-panel-actions-content {
     align-items: center;
+    display: flex;
     gap: 10px;
-    grid-template-columns: minmax(0, 1fr) auto;
+    justify-content: space-between;
     min-height: 0;
     order: 1;
     position: static;
