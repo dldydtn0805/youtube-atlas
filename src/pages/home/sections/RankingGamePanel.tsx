@@ -20,6 +20,7 @@ import {
   formatMiningStatusLabel,
   formatMaybePoints,
   formatPercent,
+  formatPercentValue,
   formatPoints,
   formatRank,
   formatSeasonDateTime,
@@ -1125,10 +1126,10 @@ export function RankingGamePositionsTab({
                           {hasCoinBoostBadge ? (
                             <span
                               className="app-shell__coin-boost-badge"
-                              title={`최대 보유 부스트 ${formatPercent(maxHoldBoostPercent)}`}
+                              title={`채굴 부스트 ${formatPercent(maxHoldBoostPercent)}`}
                             >
-                              <span className="app-shell__coin-boost-badge-label">부스트</span>
-                              <span className="app-shell__coin-boost-badge-rate">+{formatPercent(maxHoldBoostPercent)}</span>
+                              <span className="app-shell__coin-boost-badge-label">채굴 부스트</span>
+                              <span className="app-shell__coin-boost-badge-rate">{formatPercentValue(maxHoldBoostPercent)}</span>
                             </span>
                           ) : null}
                         </span>

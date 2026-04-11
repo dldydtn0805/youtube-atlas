@@ -194,6 +194,14 @@ export function formatPercent(value?: number | null) {
   return `${percentFormatter.format(value)}%`;
 }
 
+export function formatPercentValue(value?: number | null) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return '집계 중';
+  }
+
+  return percentFormatter.format(value);
+}
+
 export function formatCoinBoostMultiplier(holdBoostPercent?: number | null) {
   if (typeof holdBoostPercent !== 'number' || !Number.isFinite(holdBoostPercent) || holdBoostPercent <= 0) {
     return null;

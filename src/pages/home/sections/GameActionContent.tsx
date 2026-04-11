@@ -7,6 +7,7 @@ import {
   formatGameQuantity,
   formatMiningStatusLabel,
   formatPercent,
+  formatPercentValue,
   formatPoints,
   formatRank,
   getPointTone,
@@ -255,7 +256,7 @@ export function GameSelectedVideoPriceSummary({
             {statusBadge ? <span className="app-shell__game-selected-status-badge">{statusBadge}</span> : null}
             {hasBoostBadge ? (
               <span className="app-shell__game-selected-status-badge">
-                부스트 +{formatPercent(maxHoldBoostPercent)}
+                채굴 부스트 {formatPercentValue(maxHoldBoostPercent)}
               </span>
             ) : null}
           </p>

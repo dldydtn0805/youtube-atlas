@@ -1,6 +1,15 @@
 .app-shell__modal--trade {
+  --game-trade-accent-rgb: 37, 99, 235;
+  --game-trade-accent: #2563eb;
+  --game-trade-accent-strong: #93c5fd;
   max-width: 560px;
   width: min(560px, 100%);
+}
+
+.app-shell__modal--trade[data-trade-mode='buy'] {
+  --game-trade-accent-rgb: 239, 68, 68;
+  --game-trade-accent: #ef4444;
+  --game-trade-accent-strong: #fca5a5;
 }
 
 .app-shell__modal--trade .app-shell__modal-header {
@@ -75,9 +84,14 @@
 
 .app-shell__game-panel-quantity {
   align-items: center;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background:
+    radial-gradient(circle at top left, rgba(var(--game-trade-accent-rgb), 0.08), transparent 48%),
+    rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(var(--game-trade-accent-rgb), 0.2);
   border-radius: 999px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(var(--game-trade-accent-rgb), 0.08);
   display: inline-flex;
   overflow: hidden;
 }
@@ -147,15 +161,15 @@
 .app-shell__game-trade-modal-quick-action:hover,
 .app-shell__game-trade-modal-quick-action:focus-visible {
   background: rgba(15, 23, 42, 0.09);
-  border-color: rgba(37, 99, 235, 0.32);
+  border-color: rgba(var(--game-trade-accent-rgb), 0.32);
   outline: none;
   transform: translateY(-1px);
 }
 
 .app-shell__game-trade-modal-quick-action[data-active='true'] {
-  background: rgba(37, 99, 235, 0.12);
-  border-color: rgba(37, 99, 235, 0.48);
-  color: #1d4ed8;
+  background: rgba(var(--game-trade-accent-rgb), 0.12);
+  border-color: rgba(var(--game-trade-accent-rgb), 0.48);
+  color: var(--game-trade-accent);
 }
 
 .app-shell__game-trade-modal-quick-action:disabled {
@@ -172,9 +186,14 @@
 }
 
 .app-shell__game-trade-modal-summary-item {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background:
+    radial-gradient(circle at top left, rgba(var(--game-trade-accent-rgb), 0.08), transparent 44%),
+    rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(var(--game-trade-accent-rgb), 0.18);
   border-radius: 20px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(var(--game-trade-accent-rgb), 0.06);
   display: grid;
   gap: 6px;
   margin: 0;
@@ -187,7 +206,7 @@
 }
 
 .app-shell__game-trade-modal-summary-label {
-  color: var(--text-muted);
+  color: color-mix(in srgb, var(--text-muted) 80%, var(--game-trade-accent) 20%);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -239,20 +258,30 @@
 
 :root[data-theme='dark'] .app-shell__game-trade-modal-summary-item {
   background:
-    linear-gradient(180deg, rgba(18, 31, 52, 0.96), rgba(10, 18, 32, 0.88)),
-    rgba(10, 18, 32, 0.9);
-  border-color: rgba(148, 163, 184, 0.22);
+    radial-gradient(circle at top left, rgba(var(--game-trade-accent-rgb), 0.14), transparent 44%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, rgb(var(--game-trade-accent-rgb)) 13%, rgba(18, 24, 32, 0.96)),
+      color-mix(in srgb, rgb(var(--game-trade-accent-rgb)) 9%, rgba(10, 14, 20, 0.9))
+    ),
+    rgba(10, 14, 20, 0.9);
+  border-color: rgba(var(--game-trade-accent-rgb), 0.24);
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-quantity {
   background:
-    linear-gradient(180deg, rgba(18, 31, 52, 0.96), rgba(10, 18, 32, 0.88)),
-    rgba(10, 18, 32, 0.9);
-  border-color: rgba(148, 163, 184, 0.22);
+    radial-gradient(circle at top left, rgba(var(--game-trade-accent-rgb), 0.16), transparent 48%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, rgb(var(--game-trade-accent-rgb)) 13%, rgba(18, 24, 32, 0.96)),
+      color-mix(in srgb, rgb(var(--game-trade-accent-rgb)) 9%, rgba(10, 14, 20, 0.9))
+    ),
+    rgba(10, 14, 20, 0.9);
+  border-color: rgba(var(--game-trade-accent-rgb), 0.24);
 }
 
 :root[data-theme='dark'] .app-shell__game-trade-modal-summary-label {
-  color: rgba(191, 219, 254, 0.76);
+  color: color-mix(in srgb, rgba(241, 245, 249, 0.72) 72%, var(--game-trade-accent-strong) 28%);
 }
 
 :root[data-theme='dark'] .app-shell__game-trade-modal-summary-value {

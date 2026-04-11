@@ -94,6 +94,7 @@ export default function GameTradeModal({
         aria-labelledby={modalTitleId}
         aria-modal="true"
         className="app-shell__modal app-shell__modal--trade"
+        data-trade-mode={mode}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >

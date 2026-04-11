@@ -1,11 +1,12 @@
 import { createPortal } from 'react-dom';
-import type { GameCoinOverview, GameCoinTierProgress } from '../../../features/game/types';
+import type { GameCoinOverview, GameCoinPosition, GameCoinTierProgress } from '../../../features/game/types';
 import {
   formatCoins,
   formatGameQuantity,
   formatHoldCountdown,
   formatMaybePoints,
   formatPercent,
+  formatPercentValue,
   formatRank,
 } from '../gameHelpers';
 import { getFullscreenElement } from '../utils';
@@ -29,6 +30,39 @@ function buildCoinRateExamples(overview: GameCoinOverview) {
   return uniqueRanks
     .map((rank) => overview.ranks.find((entry) => entry.rank === rank))
     .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+}
+
+function getCoinPositionStatus(position: GameCoinPosition) {
+  if (position.productionActive) {
+    return typeof position.nextPayoutInSeconds === 'number'
+      ? `채굴 진행 중 · ${formatHoldCountdown(position.nextPayoutInSeconds)}`
+      : '채굴 진행 중';
+  }
+
+  if (!position.rankEligible && position.currentRank === null) {
+    return '차트 아웃';
+  }
+
+  if (!position.rankEligible) {
+    return '채굴 대상 밖';
+  }
+
+  if (position.nextProductionInSeconds !== null) {
+    return `채굴 대기 · ${formatHoldCountdown(position.nextProductionInSeconds)}`;
+  }
+
+  return '코인 채굴 대상';
+}
+
+function formatCoinRateExpression(position: GameCoinPosition) {
+  const baseRate = formatPercent(position.coinRatePercent);
+  const finalRate = formatPercent(position.effectiveCoinRatePercent);
+
+  if (position.holdBoostPercent > 0) {
+    return `${baseRate} x (100 + ${formatPercentValue(position.holdBoostPercent)}) / 100 = ${finalRate}`;
+  }
+
+  return `${baseRate} x 100 / 100 = ${finalRate}`;
 }
 
 export default function GameDividendModal({ isOpen, onClose, overview, tierProgress }: GameDividendModalProps) {
@@ -164,40 +198,49 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
                         <div className="app-shell__game-dividend-position-copy">
                           <div className="app-shell__game-dividend-position-heading">
                             <p className="app-shell__game-dividend-position-title">{position.title}</p>
-                            {!(!position.rankEligible && position.currentRank === null) ? (
-                              <span className="app-shell__coin-boost-badge" title={`보유 시간 부스트 ${formatPercent(position.holdBoostPercent)}`}>
-                                <span className="app-shell__coin-boost-badge-label">부스트</span>
-                                <span className="app-shell__coin-boost-badge-rate">+{formatPercent(position.holdBoostPercent)}</span>
-                              </span>
-                            ) : null}
                           </div>
                           <p className="app-shell__game-dividend-position-meta">
-                            현재{' '}
-                            <span className="app-shell__game-rank-emphasis">
+                            <span className="app-shell__game-dividend-position-meta-label">현재</span>{' '}
+                            <span
+                              className="app-shell__game-dividend-position-rank"
+                              data-chart-out={!position.rankEligible && position.currentRank === null ? 'true' : undefined}
+                            >
                               {formatRank(position.currentRank, {
                                 chartOut: !position.rankEligible && position.currentRank === null,
                               })}
-                            </span>{' '}
-                            ·
-                            평가 {formatMaybePoints(position.currentValuePoints)} · 수량 {formatGameQuantity(position.quantity)}
+                            </span>
+                            {' · '}<span className="app-shell__game-dividend-position-meta-label">평가</span>{' '}
+                            {formatMaybePoints(position.currentValuePoints)}
+                            {' · '}<span className="app-shell__game-dividend-position-meta-label">수량</span>{' '}
+                            {formatGameQuantity(position.quantity)}
                           </p>
                           <p className="app-shell__game-dividend-position-meta">
-                            {position.productionActive
-                              ? typeof position.nextPayoutInSeconds === 'number'
-                                ? `${formatHoldCountdown(position.nextPayoutInSeconds)} 뒤 채굴량 ${formatCoins(position.estimatedCoinYield)}`
-                                : `이번 집계 채굴량 ${formatCoins(position.estimatedCoinYield)}`
-                              : !position.rankEligible && position.currentRank === null
-                                ? '차트 아웃 상태라 코인 채굴이 중지되었습니다.'
-                                : !position.rankEligible
-                                  ? '현재 채굴 대상 순위 밖입니다.'
-                              : position.nextProductionInSeconds !== null
-                                ? `${formatHoldCountdown(position.nextProductionInSeconds)} 뒤 채굴 시작`
-                                : '코인 채굴 대상'}
-                            {' · '}기본 {formatPercent(position.coinRatePercent)}
-                            {position.holdBoostPercent > 0
-                              ? ` + 보유 부스트 ${formatPercent(position.holdBoostPercent)} = 최종 ${formatPercent(position.effectiveCoinRatePercent)}`
-                              : ` = 현재 ${formatPercent(position.effectiveCoinRatePercent)}`}
+                            <span className="app-shell__game-dividend-position-meta-label">채굴량</span>{' '}
+                            {formatCoins(position.estimatedCoinYield)}
+                            {' · '}<span className="app-shell__game-dividend-position-meta-label">채굴률</span>{' '}
+                            {formatCoinRateExpression(position)}
                           </p>
+                          <div className="app-shell__game-dividend-position-badges">
+                            <span
+                              className="app-shell__game-dividend-position-badge"
+                              data-status={
+                                position.productionActive
+                                  ? 'active'
+                                  : !position.rankEligible && position.currentRank === null
+                                    ? 'out'
+                                    : !position.rankEligible
+                                      ? 'inactive'
+                                      : position.nextProductionInSeconds !== null
+                                        ? 'waiting'
+                                        : 'steady'
+                              }
+                            >
+                              {getCoinPositionStatus(position)}
+                            </span>
+                            <span className="app-shell__game-dividend-position-badge" data-status="steady">
+                              채굴 부스트 {formatPercentValue(position.holdBoostPercent)}
+                            </span>
+                          </div>
                         </div>
                       </li>
                     ))}
