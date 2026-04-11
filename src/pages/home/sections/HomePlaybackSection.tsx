@@ -1,8 +1,11 @@
-import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { ChartPanel, CommunityPanel } from './ContentPanels';
 import { FilterBar } from './FilterPanels';
 import PlayerStage from './PlayerStage';
 import './HomePlaybackSection.css';
+
+const STICKY_SELECTED_VIDEO_TOP_OFFSET = 12;
+const STICKY_SELECTED_VIDEO_RELEASE_GAP = 16;
 
 interface HomePlaybackSectionProps {
   chartPanelProps: ComponentProps<typeof ChartPanel>;
@@ -24,6 +27,7 @@ export default function HomePlaybackSection({
   stickySelectedVideoContent,
 }: HomePlaybackSectionProps) {
   const [isStickySelectedVideoVisible, setIsStickySelectedVideoVisible] = useState(false);
+  const stickySelectedVideoSlotRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const playerViewport = playerStageProps.playerViewportRef.current;
@@ -38,25 +42,39 @@ export default function HomePlaybackSection({
       return;
     }
 
-    const applyStickyVisibility = (nextIsVisible: boolean) => {
-      setIsStickySelectedVideoVisible((currentValue) =>
-        currentValue === nextIsVisible ? currentValue : nextIsVisible,
-      );
+    let animationFrameId: number | null = null;
+
+    const syncStickyVisibility = (playerViewportBottom: number) => {
+      setIsStickySelectedVideoVisible((currentValue) => {
+        const releaseThreshold =
+          STICKY_SELECTED_VIDEO_TOP_OFFSET +
+          (currentValue
+            ? (stickySelectedVideoSlotRef.current?.offsetHeight ?? 0) + STICKY_SELECTED_VIDEO_RELEASE_GAP
+            : 0);
+        const nextIsVisible = playerViewportBottom <= releaseThreshold;
+
+        return currentValue === nextIsVisible ? currentValue : nextIsVisible;
+      });
     };
 
     const updateStickyVisibility = () => {
-      const nextIsVisible = playerViewport.getBoundingClientRect().bottom <= 12;
-
-      applyStickyVisibility(nextIsVisible);
+      animationFrameId = null;
+      syncStickyVisibility(playerViewport.getBoundingClientRect().bottom);
     };
 
-    updateStickyVisibility();
+    const scheduleStickyVisibilityUpdate = () => {
+      if (animationFrameId !== null) {
+        return;
+      }
+
+      animationFrameId = window.requestAnimationFrame(updateStickyVisibility);
+    };
+
+    scheduleStickyVisibilityUpdate();
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const nextIsVisible = !entry.isIntersecting && entry.boundingClientRect.bottom <= 12;
-
-        applyStickyVisibility(nextIsVisible);
+        syncStickyVisibility(entry.boundingClientRect.bottom);
       },
       {
         threshold: 0,
@@ -64,13 +82,16 @@ export default function HomePlaybackSection({
     );
 
     observer.observe(playerViewport);
-    window.addEventListener('resize', updateStickyVisibility);
-    window.addEventListener('scroll', updateStickyVisibility, { passive: true });
+    window.addEventListener('resize', scheduleStickyVisibilityUpdate);
+    window.addEventListener('scroll', scheduleStickyVisibilityUpdate, { passive: true });
 
     return () => {
       observer.disconnect();
-      window.removeEventListener('resize', updateStickyVisibility);
-      window.removeEventListener('scroll', updateStickyVisibility);
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+      window.removeEventListener('resize', scheduleStickyVisibilityUpdate);
+      window.removeEventListener('scroll', scheduleStickyVisibilityUpdate);
     };
   }, [
     playerStageProps.isCinematicModeActive,
@@ -89,7 +110,7 @@ export default function HomePlaybackSection({
   return (
     <>
       {stickySelectedVideoContent && !playerStageProps.isCinematicModeActive && isStickySelectedVideoVisible ? (
-        <div className="app-shell__sticky-selected-video-slot">
+        <div ref={stickySelectedVideoSlotRef} className="app-shell__sticky-selected-video-slot">
           <div className="app-shell__sticky-selected-video-frame">
             {stickySelectedVideoContent}
           </div>

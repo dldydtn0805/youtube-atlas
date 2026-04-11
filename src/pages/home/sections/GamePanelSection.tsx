@@ -218,6 +218,7 @@ export default function GamePanelSection({
   return (
     <RankingGamePanelShell
       activeGameTab={activeGameTab}
+      coinTierProgress={coinTierProgress}
       dividendOverview={
         <RankingGameCoinOverview
           coinTierProgress={coinTierProgress}

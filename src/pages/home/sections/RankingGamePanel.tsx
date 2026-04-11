@@ -39,6 +39,7 @@ function inferGrossSellPointsFromSettled(settledPoints?: number | null) {
 
 interface RankingGamePanelShellProps {
   activeGameTab: GameTab;
+  coinTierProgress?: GameCoinTierProgress;
   dividendOverview?: ReactNode;
   helperText: string;
   isCollapsed: boolean;
@@ -441,6 +442,7 @@ function LeaderboardRow({
 
 export function RankingGamePanelShell({
   activeGameTab,
+  coinTierProgress,
   dividendOverview,
   helperText,
   isCollapsed,
@@ -497,7 +499,11 @@ export function RankingGamePanelShell({
             data-has-dividend={hasDividendOverview}
           >
             <div className="app-shell__game-panel-overview-side">
-              <section className="app-shell__game-wallet" aria-label="지갑 현황">
+              <section
+                className="app-shell__game-wallet"
+                aria-label="지갑 현황"
+                data-current-tier={coinTierProgress?.currentTier.tierCode}
+              >
                 <div className="app-shell__game-wallet-copy">
                   <p className="app-shell__game-wallet-eyebrow">Wallet</p>
                   <h4 className="app-shell__game-wallet-title">지갑</h4>

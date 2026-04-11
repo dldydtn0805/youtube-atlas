@@ -68,17 +68,99 @@
 }
 
 .app-shell__game-wallet {
+  --game-wallet-accent-rgb: 194, 104, 50;
+  --game-wallet-accent: #c26832;
+  --game-wallet-accent-strong: #f2a66d;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(248, 250, 252, 0.36)),
-    rgba(255, 255, 255, 0.28);
-  border: 1px solid rgba(203, 213, 225, 0.32);
+    radial-gradient(circle at top left, rgba(var(--game-wallet-accent-rgb), 0.08), transparent 42%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, rgb(var(--game-wallet-accent-rgb)) 7%, rgba(255, 255, 255, 0.98)),
+      rgba(255, 255, 255, 0.92)
+    ),
+    rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(var(--game-wallet-accent-rgb), 0.18);
   border-radius: 18px;
   display: grid;
   gap: 10px;
   grid-template-rows: auto 1fr auto auto;
   height: 100%;
+  isolation: isolate;
   min-width: 0;
+  overflow: hidden;
   padding: 14px 16px;
+  position: relative;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 -1px 0 rgba(var(--game-wallet-accent-rgb), 0.05),
+    0 12px 24px rgba(15, 23, 42, 0.05);
+}
+
+.app-shell__game-wallet::before {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.42) 18%,
+    rgba(255, 255, 255, 0.88) 50%,
+    rgba(255, 255, 255, 0.34) 82%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.36),
+    0 1px 0 rgba(15, 23, 42, 0.04);
+  content: '';
+  height: 1px;
+  inset: 0 0 auto;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
+.app-shell__game-wallet > * {
+  position: relative;
+  z-index: 1;
+}
+
+.app-shell__game-wallet[data-current-tier='BRONZE'] {
+  --game-wallet-accent-rgb: 194, 104, 50;
+  --game-wallet-accent: #c26832;
+  --game-wallet-accent-strong: #f2a66d;
+}
+
+.app-shell__game-wallet[data-current-tier='SILVER'] {
+  --game-wallet-accent-rgb: 148, 163, 184;
+  --game-wallet-accent: #94a3b8;
+  --game-wallet-accent-strong: #cbd5e1;
+}
+
+.app-shell__game-wallet[data-current-tier='GOLD'] {
+  --game-wallet-accent-rgb: 234, 179, 8;
+  --game-wallet-accent: #eab308;
+  --game-wallet-accent-strong: #facc15;
+}
+
+.app-shell__game-wallet[data-current-tier='PLATINUM'] {
+  --game-wallet-accent-rgb: 20, 184, 166;
+  --game-wallet-accent: #14b8a6;
+  --game-wallet-accent-strong: #5eead4;
+}
+
+.app-shell__game-wallet[data-current-tier='DIAMOND'] {
+  --game-wallet-accent-rgb: 96, 165, 250;
+  --game-wallet-accent: #60a5fa;
+  --game-wallet-accent-strong: #93c5fd;
+}
+
+.app-shell__game-wallet[data-current-tier='MASTER'] {
+  --game-wallet-accent-rgb: 168, 85, 247;
+  --game-wallet-accent: #a855f7;
+  --game-wallet-accent-strong: #d8b4fe;
+}
+
+.app-shell__game-wallet[data-current-tier='LEGEND'] {
+  --game-wallet-accent-rgb: 244, 63, 94;
+  --game-wallet-accent: #f43f5e;
+  --game-wallet-accent-strong: #fda4af;
 }
 
 .app-shell__game-wallet-copy {
@@ -92,7 +174,7 @@
 }
 
 .app-shell__game-wallet-eyebrow {
-  color: var(--text-muted);
+  color: color-mix(in srgb, var(--text-muted) 64%, var(--game-wallet-accent) 36%);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -100,10 +182,39 @@
 }
 
 .app-shell__game-wallet-title {
-  color: var(--text);
+  color: color-mix(in srgb, var(--text) 88%, var(--game-wallet-accent) 12%);
   font-size: 0.9rem;
   font-weight: 800;
   line-height: 1.2;
+}
+
+.app-shell__game-wallet .app-shell__game-panel-metric + .app-shell__game-panel-metric {
+  border-top-color: rgba(var(--game-wallet-accent-rgb), 0.12);
+}
+
+.app-shell__game-wallet .app-shell__game-panel-metric-label {
+  color: color-mix(in srgb, var(--text-muted) 74%, var(--game-wallet-accent) 26%);
+}
+
+.app-shell__game-wallet .app-shell__game-panel-metric-meter {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.38), transparent 50%),
+    linear-gradient(180deg, rgba(var(--game-wallet-accent-rgb), 0.08), rgba(148, 163, 184, 0.12));
+  box-shadow:
+    inset 0 1px 2px rgba(148, 163, 184, 0.12),
+    0 0 0 1px rgba(var(--game-wallet-accent-rgb), 0.08);
+}
+
+.app-shell__game-wallet .app-shell__game-panel-metric-meter span {
+  background: linear-gradient(90deg, var(--game-wallet-accent), var(--game-wallet-accent-strong));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 6px 14px rgba(var(--game-wallet-accent-rgb), 0.18);
+}
+
+.app-shell__game-wallet .app-shell__game-panel-helper,
+.app-shell__game-wallet .app-shell__game-panel-status {
+  color: color-mix(in srgb, var(--text-muted) 86%, var(--game-wallet-accent) 14%);
 }
 
 @media (min-width: 769px) {
@@ -1172,9 +1283,56 @@
 
 :root[data-theme='dark'] .app-shell__game-wallet {
   background:
-    linear-gradient(180deg, rgba(16, 28, 47, 0.64), rgba(9, 16, 30, 0.54)),
-    rgba(10, 18, 32, 0.38);
-  border-color: rgba(148, 163, 184, 0.18);
+    radial-gradient(circle at top left, rgba(var(--game-wallet-accent-rgb), 0.16), transparent 44%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, rgb(var(--game-wallet-accent-rgb)) 12%, rgba(16, 28, 47, 0.92)),
+      rgba(9, 16, 30, 0.82)
+    ),
+    rgba(10, 18, 32, 0.42);
+  border-color: rgba(var(--game-wallet-accent-rgb), 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(var(--game-wallet-accent-rgb), 0.08),
+    0 18px 34px rgba(2, 6, 23, 0.28);
+}
+
+:root[data-theme='dark'] .app-shell__game-wallet::before {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 0 rgba(2, 6, 23, 0.18);
+}
+
+:root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-metric + .app-shell__game-panel-metric {
+  border-top-color: rgba(var(--game-wallet-accent-rgb), 0.16);
+}
+
+:root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-metric-label {
+  color: color-mix(in srgb, rgba(226, 232, 240, 0.72) 72%, var(--game-wallet-accent-strong) 28%);
+}
+
+:root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-metric-meter {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 55%),
+    linear-gradient(180deg, rgba(var(--game-wallet-accent-rgb), 0.16), rgba(51, 65, 85, 0.6));
+  box-shadow:
+    inset 0 1px 2px rgba(2, 6, 23, 0.28),
+    0 0 0 1px rgba(var(--game-wallet-accent-rgb), 0.16);
+}
+
+:root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-metric-meter span {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 8px 18px rgba(var(--game-wallet-accent-rgb), 0.28);
+}
+
+:root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-helper,
+:root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-status {
+  color: color-mix(in srgb, rgba(226, 232, 240, 0.72) 86%, var(--game-wallet-accent-strong) 14%);
+}
+
+:root[data-theme='dark'] .app-shell__game-wallet .app-shell__game-panel-status {
+  color: color-mix(in srgb, rgba(248, 250, 252, 0.92) 90%, var(--game-wallet-accent-strong) 10%);
 }
 
 :root[data-theme='dark'] .app-shell__game-panel-metric {
