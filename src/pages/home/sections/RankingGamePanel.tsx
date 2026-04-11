@@ -288,10 +288,8 @@ function LeaderboardPositionList({
                     {formatRank(position.currentRank, { chartOut: position.chartOut })}
                   </span>{' '}
                   · 손익률{' '}
-                  <span data-tone={position.chartOut ? undefined : getPointTone(position.profitPoints)}>
-                    {formatSignedProfitRate(position.profitPoints, position.stakePoints, {
-                      unavailableText: position.chartOut ? '-' : undefined,
-                    })}
+                  <span data-tone={getPointTone(position.profitPoints)}>
+                    {formatSignedProfitRate(position.profitPoints, position.stakePoints)}
                   </span>
                 </p>
               </div>
@@ -1093,10 +1091,8 @@ export function RankingGamePositionsTab({
                     {' · '}<span className="app-shell__game-position-meta-label">평가 금액</span> {formatMaybePoints(holding.currentPricePoints)}
                     {' · '}<span className="app-shell__game-position-meta-label">현재 단가</span> {formatMaybePoints(currentUnitPricePoints)}
                     {' · '}<span className="app-shell__game-position-meta-label">손익률</span>{' '}
-                    <span data-tone={holding.chartOut ? undefined : getPointTone(holding.profitPoints)}>
-                      {formatSignedProfitRate(holding.profitPoints, holding.stakePoints, {
-                        unavailableText: holding.chartOut ? '-' : undefined,
-                      })}
+                    <span data-tone={getPointTone(holding.profitPoints)}>
+                      {formatSignedProfitRate(holding.profitPoints, holding.stakePoints)}
                     </span>
                   {activeCoinYieldText ? (
                     <>
@@ -1228,14 +1224,12 @@ function RankingGameHistoryTabComponent({
                       {' · '}<span className="app-shell__game-history-meta-label">정산금</span>{' '}
                       {formatMaybePoints(position.currentPricePoints)}
                       {' · '}<span className="app-shell__game-history-meta-label">손익금</span>{' '}
-                      <span data-tone={position.chartOut ? undefined : getPointTone(position.profitPoints)}>
+                      <span data-tone={getPointTone(position.profitPoints)}>
                         {formatSignedPoints(position.profitPoints)}
                       </span>
                       {' · '}<span className="app-shell__game-history-meta-label">손익률</span>{' '}
-                      <span data-tone={position.chartOut ? undefined : getPointTone(position.profitPoints)}>
-                        {formatSignedProfitRate(position.profitPoints, position.stakePoints, {
-                          unavailableText: position.chartOut ? '-' : undefined,
-                        })}
+                      <span data-tone={getPointTone(position.profitPoints)}>
+                        {formatSignedProfitRate(position.profitPoints, position.stakePoints)}
                       </span>
                       {' · '}<span className="app-shell__game-history-meta-label">수수료</span>{' '}
                       {sellFeePoints !== null ? formatPoints(sellFeePoints) : '집계 중'}

@@ -55,6 +55,7 @@ describe('HomePlaybackSection', () => {
   beforeEach(() => {
     animationFrameCallbacks = new Map<number, FrameRequestCallback>();
     nextAnimationFrameId = 1;
+    window.localStorage.clear();
 
     vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
@@ -91,7 +92,7 @@ describe('HomePlaybackSection', () => {
     vi.unstubAllGlobals();
   });
 
-  it('keeps the sticky selected video visible through its own layout shift near the threshold', async () => {
+  it('keeps the sticky selected video always visible in default mode', async () => {
     render(
       <HomePlaybackSection
         chartPanelProps={{} as never}
@@ -109,50 +110,14 @@ describe('HomePlaybackSection', () => {
       />,
     );
 
-    const playerViewport = screen.getByTestId('player-viewport');
-    let viewportBottom = 48;
-
-    vi.spyOn(playerViewport, 'getBoundingClientRect').mockImplementation(
-      () =>
-        ({
-          bottom: viewportBottom,
-          height: 0,
-          left: 0,
-          right: 0,
-          top: 0,
-          width: 0,
-          x: 0,
-          y: 0,
-          toJSON: () => ({}),
-        }) as DOMRect,
-    );
-
-    flushAnimationFrames();
-    expect(screen.queryByText('Selected video actions')).not.toBeInTheDocument();
-
-    viewportBottom = 0;
-    window.dispatchEvent(new Event('scroll'));
-    flushAnimationFrames();
-
     await waitFor(() => {
       expect(screen.getByText('Selected video actions')).toBeInTheDocument();
     });
 
-    viewportBottom = 140;
     window.dispatchEvent(new Event('scroll'));
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
-    });
-
-    viewportBottom = 200;
-    window.dispatchEvent(new Event('scroll'));
-    flushAnimationFrames();
-
-    await waitFor(() => {
-      expect(screen.queryByText('Selected video actions')).not.toBeInTheDocument();
-    });
+    expect(screen.getByText('Selected video actions')).toBeInTheDocument();
   });
 
   it('can collapse and expand the sticky selected video panel', async () => {

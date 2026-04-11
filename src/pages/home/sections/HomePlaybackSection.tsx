@@ -50,6 +50,11 @@ export default function HomePlaybackSection({
   const stickySelectedVideoSlotRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (!playerStageProps.isCinematicModeActive) {
+      setIsStickySelectedVideoVisible(Boolean(stickySelectedVideoContent));
+      return;
+    }
+
     const playerViewport = playerStageProps.playerViewportRef.current;
 
     if (
@@ -113,6 +118,7 @@ export default function HomePlaybackSection({
       window.removeEventListener('scroll', scheduleStickyVisibilityUpdate);
     };
   }, [
+    playerStageProps.isCinematicModeActive,
     playerStageProps.playerViewportRef,
     stickySelectedVideoContent,
   ]);
@@ -160,7 +166,11 @@ export default function HomePlaybackSection({
       : stickySelectedVideoContent;
   const stickySelectedVideoSlot =
     stickySelectedVideoContent && isStickySelectedVideoVisible ? (
-      <div ref={stickySelectedVideoSlotRef} className="app-shell__sticky-selected-video-slot">
+      <div
+        ref={stickySelectedVideoSlotRef}
+        className="app-shell__sticky-selected-video-slot"
+        data-cinematic={playerStageProps.isCinematicModeActive}
+      >
         <div className="app-shell__sticky-selected-video-frame">
           {isStickySelectedVideoCollapsed ? (
             <div className="app-shell__game-panel-actions app-shell__game-panel-actions--collapsed">

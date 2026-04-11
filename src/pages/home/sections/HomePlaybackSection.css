@@ -1,7 +1,7 @@
 .app-shell__sticky-selected-video-slot {
+  bottom: max(12px, env(safe-area-inset-bottom));
   left: 50%;
   position: fixed;
-  top: 12px;
   transform: translateX(-50%);
   width: min(calc(100% - 24px), var(--app-content-max-width));
   z-index: 14;
@@ -12,6 +12,8 @@
 }
 
 .app-shell__stage-stack[data-cinematic='true'] .app-shell__sticky-selected-video-slot {
+  bottom: auto;
+  top: 12px;
   width: min(calc(100% - 24px), var(--app-cinematic-max-width));
 }
 
@@ -32,6 +34,24 @@
     0 0 0 1px rgba(255, 255, 255, 0.75) inset;
 }
 
+.app-shell__sticky-selected-video-slot[data-cinematic='false'] .app-shell__game-panel-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell__sticky-selected-video-slot[data-cinematic='false'] .app-shell__game-panel-actions-header {
+  border-bottom: 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  margin-top: 2px;
+  order: 2;
+  padding-bottom: 0;
+  padding-top: 10px;
+}
+
+.app-shell__sticky-selected-video-slot[data-cinematic='false'] .app-shell__game-panel-actions-content {
+  order: 1;
+}
+
 .app-shell__sticky-selected-video-frame .app-shell__game-panel-actions--collapsed {
   gap: 0;
 }
@@ -48,7 +68,6 @@
 @media (max-width: 768px) {
   .app-shell__sticky-selected-video-slot {
     bottom: max(8px, env(safe-area-inset-bottom));
-    top: auto;
     width: calc(100% - 16px);
   }
 

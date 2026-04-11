@@ -124,6 +124,46 @@ export function GameSelectedVideoPriceSummary({
   selectedVideoOpenPositionSummary,
   selectedVideoTrendBadges,
 }: GameSelectedVideoPriceSummaryProps) {
+  if (selectedVideoOpenPositionCount > 0 && preferMarketSummary && selectedVideoIsChartOut) {
+    return (
+      <div className="app-shell__game-selected-summary" aria-label="선택한 포지션 현재 상태">
+        <p className="app-shell__game-selected-summary-line">
+          <span className="app-shell__game-selected-summary-label">순위</span>{' '}
+          <span
+            className="app-shell__game-selected-summary-value"
+            data-chart-out="true"
+          >
+            {formatRank(selectedVideoCurrentChartRank, {
+              chartOut: true,
+            })}
+          </span>
+          {!hideEvaluationPoints ? (
+            <>
+              {' · '}<span className="app-shell__game-selected-summary-label">평가 금액</span>{' '}
+              <span className="app-shell__game-selected-summary-value">
+                {formatPoints(selectedVideoOpenPositionSummary.evaluationPoints)}
+              </span>
+            </>
+          ) : null}
+          {' · '}<span className="app-shell__game-selected-summary-label">손익률</span>{' '}
+          <span
+            className="app-shell__game-selected-summary-value"
+            data-tone={getPointTone(selectedVideoOpenPositionSummary.profitPoints)}
+          >
+            {formatSignedProfitRate(
+              selectedVideoOpenPositionSummary.profitPoints,
+              selectedVideoOpenPositionSummary.stakePoints,
+            )}
+          </span>
+        </p>
+        <p className="app-shell__game-selected-summary-badges">
+          <span className="app-shell__game-selected-status-badge">채굴 불가</span>
+          <span className="app-shell__game-selected-status-badge">차트 아웃</span>
+        </p>
+      </div>
+    );
+  }
+
   if (selectedVideoOpenPositionCount > 0 && !preferMarketSummary) {
     const selectedPositionTrendBadges = selectedVideoTrendBadges.map((badge) => ({
       ...badge,
@@ -192,14 +232,11 @@ export function GameSelectedVideoPriceSummary({
           {' · '}<span className="app-shell__game-selected-summary-label">손익률</span>{' '}
           <span
             className="app-shell__game-selected-summary-value"
-            data-tone={selectedVideoIsChartOut ? undefined : getPointTone(selectedVideoOpenPositionSummary.profitPoints)}
+            data-tone={getPointTone(selectedVideoOpenPositionSummary.profitPoints)}
           >
             {formatSignedProfitRate(
               selectedVideoOpenPositionSummary.profitPoints,
               selectedVideoOpenPositionSummary.stakePoints,
-              {
-                unavailableText: selectedVideoIsChartOut ? '-' : undefined,
-              },
             )}
           </span>
           {positionCoinYield > 0 ? (
