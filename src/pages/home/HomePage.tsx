@@ -209,6 +209,7 @@ function HomePage() {
     data: currentGameSeason,
     error: currentGameSeasonError,
     isLoading: isCurrentGameSeasonLoading,
+    dataUpdatedAt: currentGameSeasonUpdatedAt,
   } = useCurrentGameSeason(accessToken, selectedRegionCode, shouldLoadGame);
   const {
     data: gameMarket = [],
@@ -1047,6 +1048,7 @@ function HomePage() {
       coinTierProgress={gameCoinTierProgress}
       computedWalletTotalAssetPoints={computedWalletTotalAssetPoints}
       currentGameSeason={currentGameSeason}
+      currentGameSeasonUpdatedAt={currentGameSeasonUpdatedAt}
       favoriteStreamerVideoSection={favoriteStreamerVideoSection}
       favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
       gameHistoryPositions={gameHistoryPositions}

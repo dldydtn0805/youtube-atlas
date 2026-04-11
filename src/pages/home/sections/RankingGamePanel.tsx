@@ -32,6 +32,12 @@ import GameCoinTierSummary from './GameCoinTierSummary';
 
 type GameTab = 'positions' | 'history' | 'leaderboard';
 
+const walletRefreshTimeFormatter = new Intl.DateTimeFormat('ko-KR', {
+  hour: 'numeric',
+  hour12: false,
+  minute: '2-digit',
+});
+
 function inferGrossSellPointsFromSettled(settledPoints?: number | null) {
   if (typeof settledPoints !== 'number' || !Number.isFinite(settledPoints) || settledPoints < 0) {
     return null;
@@ -57,6 +63,7 @@ interface RankingGamePanelShellProps {
     openPositionsProfitPoints: number;
   };
   tabContent?: ReactNode;
+  walletUpdatedAt?: number;
 }
 
 interface RankingGameSelectedVideoActionsProps {
@@ -172,6 +179,14 @@ function formatSignedPercent(value?: number | null) {
   }
 
   return '0%';
+}
+
+function formatWalletUpdatedLabel(updatedAt?: number) {
+  if (typeof updatedAt !== 'number' || !Number.isFinite(updatedAt) || updatedAt <= 0) {
+    return null;
+  }
+
+  return `${walletRefreshTimeFormatter.format(new Date(updatedAt))} 갱신`;
 }
 
 function getHoldingRankDiffBadge(holding: Pick<OpenGameHolding, 'buyRank' | 'currentRank' | 'chartOut'>) {
@@ -450,6 +465,7 @@ export function RankingGamePanelShell({
   selectedVideoActions,
   summary,
   tabContent,
+  walletUpdatedAt,
 }: RankingGamePanelShellProps) {
   const maxOpenPositions = season?.maxOpenPositions ?? null;
   const hasDividendOverview = Boolean(dividendOverview);
@@ -461,6 +477,7 @@ export function RankingGamePanelShell({
       ? Math.min((summary.openDistinctVideoCount / maxOpenPositions) * 100, 100)
       : 0;
   const profitPointsTone = getPointTone(summary.openPositionsProfitPoints);
+  const walletUpdatedLabel = season ? formatWalletUpdatedLabel(walletUpdatedAt) : null;
 
   return (
     <div className="app-shell__game-panel">
@@ -501,8 +518,15 @@ export function RankingGamePanelShell({
                 data-current-tier={coinTierProgress?.currentTier.tierCode}
               >
                 <div className="app-shell__game-wallet-copy">
-                  <p className="app-shell__game-wallet-eyebrow">Wallet</p>
-                  <h4 className="app-shell__game-wallet-title">지갑</h4>
+                  <div className="app-shell__game-wallet-copy-main">
+                    <p className="app-shell__game-wallet-eyebrow">Wallet</p>
+                    <h4 className="app-shell__game-wallet-title">지갑</h4>
+                  </div>
+                  {walletUpdatedLabel ? (
+                    <p className="app-shell__game-wallet-status" aria-label={`최근 갱신 시각 ${walletUpdatedLabel}`}>
+                      {walletUpdatedLabel}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="app-shell__game-panel-metrics">
                   <span className="app-shell__game-panel-metric app-shell__game-panel-metric--hero">

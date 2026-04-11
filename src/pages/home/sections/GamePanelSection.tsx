@@ -29,6 +29,7 @@ interface GamePanelSectionProps {
   coinTierProgress?: GameCoinTierProgress;
   computedWalletTotalAssetPoints: number | null;
   currentGameSeason?: GameCurrentSeason;
+  currentGameSeasonUpdatedAt: number;
   favoriteStreamerVideoSection?: YouTubeCategorySection;
   favoriteTrendSignalsByVideoId: Record<string, VideoTrendSignal>;
   gameHistoryPositions: GamePosition[];
@@ -78,6 +79,7 @@ export default function GamePanelSection({
   coinTierProgress,
   computedWalletTotalAssetPoints,
   currentGameSeason,
+  currentGameSeasonUpdatedAt,
   favoriteStreamerVideoSection,
   favoriteTrendSignalsByVideoId,
   gameHistoryPositions,
@@ -225,6 +227,7 @@ export default function GamePanelSection({
       onSelectTab={onSelectTab}
       onToggleCollapse={onToggleCollapse}
       season={currentGameSeason}
+      walletUpdatedAt={currentGameSeasonUpdatedAt}
       selectedVideoActions={selectedVideoActions}
       summary={{
         computedWalletTotalAssetPoints,
