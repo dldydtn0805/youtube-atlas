@@ -353,7 +353,7 @@ export function GameStageActions({
                 stroke="currentColor"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth="1.8"
+                strokeWidth="2.15"
               />
             </svg>
           </span>
@@ -377,7 +377,7 @@ export function GameStageActions({
                 stroke="currentColor"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth="1.8"
+                strokeWidth="2.15"
               />
             </svg>
           </span>
