@@ -1,6 +1,6 @@
 import type { ReactNode, RefObject } from 'react';
 import type { VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
-import type { GameCoinOverview, GameMarketVideo } from '../../../features/game/types';
+import type { GameCoinOverview, GameMarketVideo, GamePosition } from '../../../features/game/types';
 import type { VideoTrendBadge } from '../../../features/trending/presentation';
 import {
   calculateEstimatedCoinYield,
@@ -24,6 +24,7 @@ interface GameSelectedVideoPriceSummaryProps {
   maxSellQuantity?: number;
   preferMarketSummary?: boolean;
   selectedVideoCurrentChartRank: number | null | undefined;
+  selectedVideoHistoricalPosition?: GamePosition | null;
   selectedVideoId?: string;
   selectedVideoIsChartOut: boolean;
   selectedVideoMarketEntry?: GameMarketVideo;
@@ -67,6 +68,7 @@ interface SelectedVideoGameActionsBundleProps {
   selectedGameActionChannelTitle?: string;
   selectedGameActionTitle?: string;
   selectedVideoCurrentChartRank: number | null | undefined;
+  selectedVideoHistoricalPosition?: GamePosition | null;
   selectedVideoId?: string;
   selectedVideoIsChartOut: boolean;
   selectedVideoMarketEntry?: GameMarketVideo;
@@ -121,6 +123,7 @@ export function GameSelectedVideoPriceSummary({
   maxSellQuantity = 0,
   preferMarketSummary = false,
   selectedVideoCurrentChartRank,
+  selectedVideoHistoricalPosition,
   selectedVideoId,
   selectedVideoIsChartOut,
   selectedVideoMarketEntry,
@@ -128,6 +131,89 @@ export function GameSelectedVideoPriceSummary({
   selectedVideoOpenPositionSummary,
   selectedVideoTrendBadges,
 }: GameSelectedVideoPriceSummaryProps) {
+  if (!preferMarketSummary && selectedVideoOpenPositionCount <= 0 && selectedVideoHistoricalPosition) {
+    const historicalStatusLabel =
+      selectedVideoHistoricalPosition.status === 'AUTO_CLOSED' ? '자동 청산' : '매도 완료';
+
+    return (
+      <div className="app-shell__game-selected-summary" aria-label="선택한 거래 영상 정보">
+        <p className="app-shell__game-selected-summary-line">
+          <span className="app-shell__game-selected-summary-label">순위</span>{' '}
+          <span
+            className="app-shell__game-selected-summary-value"
+            data-chart-out={selectedVideoHistoricalPosition.chartOut || undefined}
+          >
+            {formatRank(selectedVideoCurrentChartRank, {
+              chartOut: selectedVideoHistoricalPosition.chartOut,
+              unavailableAsChartOut: true,
+            })}
+          </span>
+          {' · '}<span className="app-shell__game-selected-summary-label">정산금</span>{' '}
+          <span className="app-shell__game-selected-summary-value">
+            {typeof selectedVideoHistoricalPosition.currentPricePoints === 'number'
+              ? formatPoints(selectedVideoHistoricalPosition.currentPricePoints)
+              : '집계 중'}
+          </span>
+          {' · '}<span className="app-shell__game-selected-summary-label">손익률</span>{' '}
+          <span
+            className="app-shell__game-selected-summary-value"
+            data-tone={getPointTone(selectedVideoHistoricalPosition.profitPoints)}
+          >
+            {formatSignedProfitRate(
+              selectedVideoHistoricalPosition.profitPoints,
+              selectedVideoHistoricalPosition.stakePoints,
+            )}
+          </span>
+        </p>
+        <p className="app-shell__game-selected-summary-badges">
+          <span className="app-shell__game-selected-status-badge">{historicalStatusLabel}</span>
+          {selectedVideoHistoricalPosition.chartOut ? (
+            <span className="app-shell__game-selected-status-badge">차트 아웃</span>
+          ) : null}
+        </p>
+      </div>
+    );
+  }
+
+  if (preferMarketSummary && selectedVideoIsChartOut && selectedVideoOpenPositionCount <= 0 && selectedVideoHistoricalPosition) {
+    const historicalStatusLabel =
+      selectedVideoHistoricalPosition.status === 'AUTO_CLOSED' ? '자동 청산' : '매도 완료';
+
+    return (
+      <div className="app-shell__game-selected-summary" aria-label="선택한 거래 영상 정산 정보">
+        <p className="app-shell__game-selected-summary-line">
+          <span className="app-shell__game-selected-summary-label">순위</span>{' '}
+          <span className="app-shell__game-selected-summary-value" data-chart-out="true">
+            {formatRank(selectedVideoCurrentChartRank, {
+              chartOut: true,
+              unavailableAsChartOut: true,
+            })}
+          </span>
+          {' · '}<span className="app-shell__game-selected-summary-label">정산금</span>{' '}
+          <span className="app-shell__game-selected-summary-value">
+            {typeof selectedVideoHistoricalPosition.currentPricePoints === 'number'
+              ? formatPoints(selectedVideoHistoricalPosition.currentPricePoints)
+              : '집계 중'}
+          </span>
+          {' · '}<span className="app-shell__game-selected-summary-label">손익률</span>{' '}
+          <span
+            className="app-shell__game-selected-summary-value"
+            data-tone={getPointTone(selectedVideoHistoricalPosition.profitPoints)}
+          >
+            {formatSignedProfitRate(
+              selectedVideoHistoricalPosition.profitPoints,
+              selectedVideoHistoricalPosition.stakePoints,
+            )}
+          </span>
+        </p>
+        <p className="app-shell__game-selected-summary-badges">
+          <span className="app-shell__game-selected-status-badge">{historicalStatusLabel}</span>
+          <span className="app-shell__game-selected-status-badge">차트 아웃</span>
+        </p>
+      </div>
+    );
+  }
+
   if (selectedVideoOpenPositionCount > 0 && preferMarketSummary && selectedVideoIsChartOut) {
     return (
       <div className="app-shell__game-selected-summary" aria-label="선택한 포지션 현재 상태">
@@ -139,6 +225,7 @@ export function GameSelectedVideoPriceSummary({
           >
             {formatRank(selectedVideoCurrentChartRank, {
               chartOut: true,
+              unavailableAsChartOut: true,
             })}
           </span>
           {!hideEvaluationPoints ? (
@@ -223,6 +310,7 @@ export function GameSelectedVideoPriceSummary({
           >
             {formatRank(selectedVideoCurrentChartRank, {
               chartOut: selectedVideoIsChartOut,
+              unavailableAsChartOut: selectedVideoIsChartOut,
             })}
           </span>
           {!hideEvaluationPoints ? (
@@ -448,6 +536,7 @@ export function SelectedVideoGameActionsBundle({
   selectedGameActionChannelTitle,
   selectedGameActionTitle,
   selectedVideoCurrentChartRank,
+  selectedVideoHistoricalPosition,
   selectedVideoId,
   selectedVideoIsChartOut,
   selectedVideoMarketEntry,
@@ -462,6 +551,7 @@ export function SelectedVideoGameActionsBundle({
       gameCoinOverview={gameCoinOverview}
       maxSellQuantity={maxSellQuantity}
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
+      selectedVideoHistoricalPosition={selectedVideoHistoricalPosition}
       selectedVideoId={selectedVideoId}
       selectedVideoIsChartOut={selectedVideoIsChartOut}
       selectedVideoMarketEntry={selectedVideoMarketEntry}

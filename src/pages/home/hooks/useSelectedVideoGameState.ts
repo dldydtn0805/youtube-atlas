@@ -76,6 +76,7 @@ interface UseSelectedVideoGameStateResult {
   selectedGameActionTitle: string;
   selectedVideoCurrentChartRank: number | null | undefined;
   selectedVideoHistoryTargetPosition: GamePosition | null;
+  selectedVideoHistoricalPosition: GamePosition | null;
   selectedVideoIsChartOut: boolean;
   selectedVideoMarketEntry?: GameMarketVideo;
   selectedVideoOpenPosition?: GamePosition;
@@ -193,9 +194,18 @@ export default function useSelectedVideoGameState({
   const selectedVideoTrendSignal = selectedVideoId
     ? selectedVideoRankSignalById[selectedVideoId] ?? favoriteTrendSignalsByVideoId[selectedVideoId]
     : undefined;
-  const selectedHistoricalPosition = selectedVideoId
-    ? gameHistoryPositions.find((position) => position.videoId === selectedVideoId)
-    : undefined;
+  const selectedHistoricalPosition = useMemo(() => {
+    const matchedPosition =
+      selectedOpenPositionId != null
+        ? gameHistoryPositions.find((position) => position.id === selectedOpenPositionId)
+        : undefined;
+
+    if (matchedPosition && (!selectedVideoId || matchedPosition.videoId === selectedVideoId)) {
+      return matchedPosition;
+    }
+
+    return selectedVideoId ? gameHistoryPositions.find((position) => position.videoId === selectedVideoId) : undefined;
+  }, [gameHistoryPositions, selectedOpenPositionId, selectedVideoId]);
   const selectedVideoHistoryTargetPosition = useMemo(() => {
     const candidatePositions = [...selectedVideoOpenPositions];
 
@@ -442,6 +452,7 @@ export default function useSelectedVideoGameState({
     selectedGameActionTitle,
     selectedVideoCurrentChartRank,
     selectedVideoHistoryTargetPosition,
+    selectedVideoHistoricalPosition: selectedHistoricalPosition ?? null,
     selectedVideoIsChartOut,
     selectedVideoMarketEntry,
     selectedVideoOpenPosition,

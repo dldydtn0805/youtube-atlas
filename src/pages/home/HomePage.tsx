@@ -1,5 +1,5 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
 import AppHeader from './sections/AppHeader';
@@ -56,6 +56,7 @@ import {
 import { useAuth } from '../../features/auth/useAuth';
 import {
   invalidateGameQueries,
+  gameQueryKeys,
   useBuyGamePosition,
   useCurrentGameSeason,
   useGameCoinOverview,
@@ -68,14 +69,15 @@ import {
   useSellGamePositions,
 } from '../../features/game/queries';
 import { useGameRealtimeInvalidation } from '../../features/game/realtime';
-import type { GamePosition } from '../../features/game/types';
+import type { GamePosition, GamePositionRankHistory } from '../../features/game/types';
+import { fetchGamePositionRankHistory } from '../../features/game/api';
 import {
   useFavoriteStreamerVideos,
   useFavoriteStreamers,
   useToggleFavoriteStreamer,
 } from '../../features/favorites/queries';
 import { useVideoRankHistory } from '../../features/trending/queries';
-import type { VideoTrendSignal } from '../../features/trending/types';
+import type { VideoRankHistory, VideoTrendSignal } from '../../features/trending/types';
 import { fetchVideoById } from '../../features/youtube/api';
 import { usePopularVideosByCategory, useVideoCategories } from '../../features/youtube/queries';
 import type { YouTubeVideoItem } from '../../features/youtube/types';
@@ -84,6 +86,112 @@ import '../../styles/app.css';
 
 const COLLAPSED_HOME_SECTIONS_STORAGE_KEY = 'youtube-atlas-collapsed-home-sections';
 const RANKING_GAME_SECTION_ID = 'ranking-game';
+
+function mergeRankHistories(
+  positionHistory?: GamePositionRankHistory,
+  videoHistory?: VideoRankHistory,
+): GamePositionRankHistory | VideoRankHistory | undefined {
+  if (!positionHistory) {
+    return videoHistory;
+  }
+
+  if (!videoHistory || videoHistory.videoId !== positionHistory.videoId) {
+    return positionHistory;
+  }
+
+  const latestPositionCapturedAt = positionHistory.points.at(-1)?.capturedAt ?? positionHistory.latestCapturedAt;
+  const trailingVideoPoints = videoHistory.points
+    .filter((point) => !latestPositionCapturedAt || new Date(point.capturedAt).getTime() > new Date(latestPositionCapturedAt).getTime())
+    .map((point) => ({
+      ...point,
+      buyPoint: false,
+      sellPoint: false,
+    }));
+
+  if (trailingVideoPoints.length === 0) {
+    return positionHistory;
+  }
+
+  return {
+    ...positionHistory,
+    latestCapturedAt: videoHistory.latestCapturedAt,
+    latestChartOut: videoHistory.latestChartOut,
+    latestRank: videoHistory.latestRank,
+    points: [...positionHistory.points, ...trailingVideoPoints],
+  };
+}
+
+function mergeMultiplePositionHistories(
+  positionHistories: GamePositionRankHistory[],
+  videoHistory?: VideoRankHistory,
+): GamePositionRankHistory | VideoRankHistory | undefined {
+  if (positionHistories.length === 0) {
+    return videoHistory;
+  }
+
+  const sortedHistories = [...positionHistories].sort(
+    (left, right) => new Date(left.buyCapturedAt).getTime() - new Date(right.buyCapturedAt).getTime(),
+  );
+  const dedupeMergedPoints = (
+    points: GamePositionRankHistory['points'],
+  ): GamePositionRankHistory['points'] => {
+    const uniquePoints = new Map<string, GamePositionRankHistory['points'][number]>();
+
+    for (const point of points) {
+      const key = `${point.runId}:${point.capturedAt}:${point.buyPoint ? 'b' : 'n'}:${point.sellPoint ? 's' : 'n'}`;
+      uniquePoints.set(key, point);
+    }
+
+    return Array.from(uniquePoints.values()).sort(
+      (left, right) => new Date(left.capturedAt).getTime() - new Date(right.capturedAt).getTime(),
+    );
+  };
+  const [firstHistory, ...restHistories] = sortedHistories;
+  let mergedHistory = firstHistory;
+
+  for (const nextHistory of restHistories) {
+    const latestCapturedAt = mergedHistory.points.at(-1)?.capturedAt ?? mergedHistory.latestCapturedAt;
+    const nextBuyCapturedAt = nextHistory.buyCapturedAt;
+    const gapVideoPoints =
+      videoHistory?.points
+        .filter((point) => {
+          const capturedAt = new Date(point.capturedAt).getTime();
+          const latestCapturedTime = latestCapturedAt ? new Date(latestCapturedAt).getTime() : null;
+          const nextBuyCapturedTime = nextBuyCapturedAt ? new Date(nextBuyCapturedAt).getTime() : null;
+
+          return (
+            (latestCapturedTime === null || capturedAt > latestCapturedTime) &&
+            (nextBuyCapturedTime === null || capturedAt < nextBuyCapturedTime)
+          );
+        })
+        .map((point) => ({
+          ...point,
+          buyPoint: false,
+          sellPoint: false,
+        })) ?? [];
+    const trailingPoints = nextHistory.points.filter(
+      (point) => !latestCapturedAt || new Date(point.capturedAt).getTime() > new Date(latestCapturedAt).getTime(),
+    );
+
+    mergedHistory = {
+      ...mergedHistory,
+      closedAt: nextHistory.closedAt,
+      latestCapturedAt: nextHistory.latestCapturedAt,
+      latestChartOut: nextHistory.latestChartOut,
+      latestRank: nextHistory.latestRank,
+      positionId: nextHistory.positionId,
+      sellRank: nextHistory.sellRank,
+      status: nextHistory.status,
+      points: dedupeMergedPoints(
+        gapVideoPoints.length > 0 || trailingPoints.length > 0
+          ? [...mergedHistory.points, ...gapVideoPoints, ...trailingPoints]
+          : mergedHistory.points,
+      ),
+    };
+  }
+
+  return mergeRankHistories(mergedHistory, videoHistory);
+}
 
 function getInitialCollapsedHomeSectionIds() {
   if (typeof window === 'undefined') {
@@ -307,7 +415,7 @@ function HomePage() {
     data: gameHistoryPositions = [],
     error: gameHistoryPositionsError,
     isLoading: isGameHistoryLoading,
-  } = useMyGamePositions(accessToken, selectedRegionCode, '', shouldLoadGame && activeGameTab === 'history', 30);
+  } = useMyGamePositions(accessToken, selectedRegionCode, '', shouldLoadGame, 30);
   const {
     evaluationPoints: openPositionsEvaluationPoints,
     profitPoints: openPositionsProfitPoints,
@@ -675,14 +783,31 @@ function HomePage() {
     selectedRankHistoryPosition?.id ?? null,
     shouldLoadGame && Boolean(selectedRankHistoryPosition),
   );
+  const relatedRankHistoryPositions = useMemo(
+    () =>
+      selectedRankHistoryPosition?.videoId
+        ? gameHistoryPositions
+            .filter((position) => position.videoId === selectedRankHistoryPosition.videoId)
+            .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime())
+        : [],
+    [gameHistoryPositions, selectedRankHistoryPosition],
+  );
+  const relatedPositionRankHistoryQueries = useQueries({
+    queries: relatedRankHistoryPositions.map((position) => ({
+      enabled: shouldLoadGame && Boolean(accessToken) && Boolean(selectedRankHistoryPosition) && position.id !== selectedRankHistoryPosition?.id,
+      queryKey: gameQueryKeys.positionRankHistory(accessToken, position.id),
+      queryFn: () => fetchGamePositionRankHistory(accessToken as string, position.id),
+      staleTime: 1000 * 15,
+    })),
+  });
   const {
     data: selectedVideoRankHistory,
     error: selectedVideoRankHistoryError,
     isLoading: isVideoRankHistoryLoading,
   } = useVideoRankHistory(
     currentGameSeason?.regionCode ?? VIDEO_GAME_REGION_CODE,
-    selectedVideoRankHistoryVideoId ?? undefined,
-    isApiConfigured && Boolean(selectedVideoRankHistoryVideoId),
+    selectedRankHistoryPosition?.videoId ?? selectedVideoRankHistoryVideoId ?? undefined,
+    isApiConfigured && Boolean(selectedRankHistoryPosition?.videoId ?? selectedVideoRankHistoryVideoId),
   );
 
   useLogoutOnUnauthorized(favoriteStreamersError, logout);
@@ -762,6 +887,7 @@ function HomePage() {
     selectedGameActionChannelTitle,
     selectedGameActionTitle,
     selectedVideoCurrentChartRank,
+    selectedVideoHistoricalPosition,
     selectedVideoHistoryTargetPosition,
     selectedVideoIsChartOut,
     selectedVideoMarketEntry,
@@ -959,8 +1085,16 @@ function HomePage() {
     });
   }, []);
   const handleOpenSelectedVideoRankHistory = useCallback(() => {
-    openRankHistoryModal(selectedVideoId, selectedVideoHistoryTargetPosition);
-  }, [openRankHistoryModal, selectedVideoHistoryTargetPosition, selectedVideoId]);
+    openRankHistoryModal(
+      selectedVideoId,
+      selectedVideoOpenPositionCount > 0 ? selectedVideoHistoryTargetPosition : null,
+    );
+  }, [
+    openRankHistoryModal,
+    selectedVideoHistoryTargetPosition,
+    selectedVideoId,
+    selectedVideoOpenPositionCount,
+  ]);
   const positionsEmptyMessage = currentGameSeason
     ? canShowGameActions
       ? '아직 보유 중인 영상이 없어요. 지금 보는 영상에서 바로 시작할 수 있습니다.'
@@ -993,6 +1127,7 @@ function HomePage() {
       selectedGameActionChannelTitle={selectedGameActionChannelTitle}
       selectedGameActionTitle={selectedGameActionTitle}
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
+      selectedVideoHistoricalPosition={selectedVideoHistoricalPosition}
       selectedVideoId={selectedVideoId}
       selectedVideoIsChartOut={selectedVideoIsChartOut}
       selectedVideoMarketEntry={selectedVideoMarketEntry}
@@ -1018,6 +1153,7 @@ function HomePage() {
       onOpenSellTradeModal={openSellTradeModal}
       selectedGameActionChannelTitle={selectedGameActionChannelTitle}
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
+      selectedVideoHistoricalPosition={selectedVideoHistoricalPosition}
       selectedVideoId={selectedVideoId}
       selectedVideoIsChartOut={selectedVideoIsChartOut}
       selectedVideoMarketEntry={selectedVideoMarketEntry}
@@ -1033,6 +1169,7 @@ function HomePage() {
       maxSellQuantity={maxSellQuantity}
       preferMarketSummary
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
+      selectedVideoHistoricalPosition={selectedVideoHistoricalPosition}
       selectedVideoId={selectedVideoId}
       selectedVideoIsChartOut={selectedVideoIsChartOut}
       selectedVideoMarketEntry={selectedVideoMarketEntry}
@@ -1093,6 +1230,25 @@ function HomePage() {
     />
   );
   const isRankHistoryModalOpen = Boolean(selectedRankHistoryPosition || selectedVideoRankHistoryVideoId);
+  const relatedPositionRankHistories = useMemo(
+    () =>
+      relatedPositionRankHistoryQueries
+        .map((query) => query.data)
+        .filter((history): history is GamePositionRankHistory => Boolean(history)),
+    [relatedPositionRankHistoryQueries],
+  );
+  const relatedPositionRankHistoryError = relatedPositionRankHistoryQueries.find((query) => query.error)?.error;
+  const isRelatedPositionRankHistoryLoading = relatedPositionRankHistoryQueries.some((query) => query.isLoading);
+  const mergedRankHistory = useMemo(
+    () =>
+      mergeMultiplePositionHistories(
+        selectedPositionRankHistory
+          ? [selectedPositionRankHistory, ...relatedPositionRankHistories]
+          : relatedPositionRankHistories,
+        selectedVideoRankHistory,
+      ),
+    [relatedPositionRankHistories, selectedPositionRankHistory, selectedVideoRankHistory],
+  );
   const isBuyTradeModalOpen =
     activeTradeModal === 'buy' && Boolean(selectedVideoId) && Boolean(selectedVideoMarketEntry);
   const isSellTradeModalOpen =
@@ -1263,12 +1419,14 @@ function HomePage() {
         error={
           selectedPositionRankHistoryError instanceof Error
             ? selectedPositionRankHistoryError
+            : relatedPositionRankHistoryError instanceof Error
+              ? relatedPositionRankHistoryError
             : selectedVideoRankHistoryError instanceof Error
               ? selectedVideoRankHistoryError
               : null
         }
-        history={selectedPositionRankHistory ?? selectedVideoRankHistory}
-        isLoading={isPositionRankHistoryLoading || isVideoRankHistoryLoading}
+        history={mergedRankHistory}
+        isLoading={isPositionRankHistoryLoading || isRelatedPositionRankHistoryLoading || isVideoRankHistoryLoading}
         isOpen={isRankHistoryModalOpen}
         onClose={closeRankHistoryModal}
         position={selectedRankHistoryPosition}

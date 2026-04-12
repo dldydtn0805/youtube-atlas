@@ -86,6 +86,31 @@ function isPreBuyPoint(
   return 'buyPoint' in point && buyPointIndex > 0 && index < buyPointIndex;
 }
 
+function isInactiveGapPoint(
+  points: Array<GamePositionRankHistoryPoint | VideoRankHistory['points'][number]>,
+  index: number,
+) {
+  let isHolding = false;
+
+  for (let currentIndex = 0; currentIndex <= index; currentIndex += 1) {
+    const point = points[currentIndex];
+
+    if ('buyPoint' in point && point.buyPoint) {
+      isHolding = true;
+    }
+
+    if (currentIndex === index) {
+      return !isHolding && !('buyPoint' in point && point.buyPoint) && !('sellPoint' in point && point.sellPoint);
+    }
+
+    if ('sellPoint' in point && point.sellPoint) {
+      isHolding = false;
+    }
+  }
+
+  return false;
+}
+
 function getEventLabel(point: GamePositionRankHistoryPoint | VideoRankHistory['points'][number]) {
   if ('buyPoint' in point && point.buyPoint) {
     return 'B';
@@ -124,6 +149,7 @@ function createChartGeometry(points: Array<GamePositionRankHistoryPoint | VideoR
       markers: points.map((point, index) => ({
         chartOut: point.chartOut,
         eventLabel: getEventLabel(point),
+        isInactive: isInactiveGapPoint(points, index),
         isPreBuy: isPreBuyPoint(point, index, buyPointIndex),
         rank: point.rank,
         x: xForIndex(index),
@@ -154,23 +180,34 @@ function createChartGeometry(points: Array<GamePositionRankHistoryPoint | VideoR
     return {
       chartOut: point.chartOut,
       eventLabel: getEventLabel(point),
+      isInactive: isInactiveGapPoint(points, index),
       isPreBuy: isPreBuyPoint(point, index, buyPointIndex),
       rank: point.rank,
       x,
       y,
     };
   });
-  const preBuyMarkers = buyPointIndex > 0 ? markers.slice(0, buyPointIndex + 1) : [];
-  const postBuyMarkers = buyPointIndex >= 0 ? markers.slice(Math.max(buyPointIndex, 0)) : markers;
+  const fadedMarkers = markers.map((marker) => ({
+    ...marker,
+    isFaded: marker.isPreBuy || marker.isInactive,
+  }));
+  const buildSegmentPath = (targetFaded: boolean) =>
+    buildLinePath(
+      fadedMarkers.map((marker) => ({
+        rank: marker.isFaded === targetFaded || marker.eventLabel ? marker.rank : null,
+        x: marker.x,
+        y: marker.y,
+      })),
+    );
 
   return {
     baselineY,
     hasRankedPoints: true,
     height,
-    markers,
+    markers: fadedMarkers,
     plotTopY: padding.top,
-    postBuyPath: buildLinePath(postBuyMarkers),
-    preBuyPath: buildLinePath(preBuyMarkers),
+    postBuyPath: buildSegmentPath(false),
+    preBuyPath: buildSegmentPath(true),
     width,
     xLabels: [
       { label: formatTimestamp(points[0]?.capturedAt), x: padding.left },
@@ -323,12 +360,16 @@ export default function GameRankHistoryModal({
                       ) : null}
                     </>
                   ) : null}
-                  {chart.markers.map((point, index) => (
-                    <g data-pre-buy={point.isPreBuy ? 'true' : 'false'} key={`${point.x}-${index}`}>
+              {chart.markers.map((point, index) => (
+                    <g
+                      data-inactive={point.isInactive ? 'true' : 'false'}
+                      data-pre-buy={point.isPreBuy ? 'true' : 'false'}
+                      key={`${point.x}-${index}`}
+                    >
                       {point.chartOut ? (
                         <circle
                           className={`app-shell__game-rank-history-chartout${
-                            point.isPreBuy ? ' app-shell__game-rank-history-chartout--prebuy' : ''
+                            point.isPreBuy || point.isInactive ? ' app-shell__game-rank-history-chartout--prebuy' : ''
                           }`}
                           cx={point.x}
                           cy={point.y}
@@ -337,7 +378,7 @@ export default function GameRankHistoryModal({
                       ) : typeof point.rank === 'number' ? (
                         <circle
                           className={`app-shell__game-rank-history-point${
-                            point.isPreBuy ? ' app-shell__game-rank-history-point--prebuy' : ''
+                            point.isPreBuy || point.isInactive ? ' app-shell__game-rank-history-point--prebuy' : ''
                           }`}
                           cx={point.x}
                           cy={point.y}
@@ -415,7 +456,7 @@ export default function GameRankHistoryModal({
                   <li
                     key={`${point.runId}-${point.capturedAt}`}
                     className="app-shell__game-rank-history-sample"
-                    data-pre-buy={isPreBuyPoint(point, index, buyPointIndex) ? 'true' : 'false'}
+                    data-pre-buy={chart.markers[index]?.isPreBuy || chart.markers[index]?.isInactive ? 'true' : 'false'}
                   >
                     <div>
                       <p className="app-shell__game-rank-history-sample-rank">
@@ -426,8 +467,10 @@ export default function GameRankHistoryModal({
                       </p>
                     </div>
                     <div className="app-shell__game-rank-history-sample-side">
-                      {isPreBuyPoint(point, index, buyPointIndex) ? (
+                      {chart.markers[index]?.isPreBuy ? (
                         <span className="app-shell__game-history-status">매수 전</span>
+                      ) : chart.markers[index]?.isInactive ? (
+                        <span className="app-shell__game-history-status">비보유 구간</span>
                       ) : null}
                       {'buyPoint' in point && point.buyPoint ? (
                         <span className="app-shell__game-history-status">매수</span>

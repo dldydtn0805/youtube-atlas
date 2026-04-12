@@ -1418,6 +1418,7 @@ function RankingGameHistoryTabComponent({
                       <span className="app-shell__game-history-rank">
                         {formatRank(position.currentRank, {
                           chartOut: position.chartOut,
+                          unavailableAsChartOut: isClosedPosition,
                         })}
                       </span>
                       {' · '}<span className="app-shell__game-history-meta-label">정산금</span>{' '}

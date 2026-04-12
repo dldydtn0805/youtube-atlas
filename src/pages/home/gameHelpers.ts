@@ -305,8 +305,8 @@ export function getPointTone(points?: number | null) {
   return 'flat';
 }
 
-export function formatRank(rank?: number | null, options?: { chartOut?: boolean }) {
-  if (options?.chartOut) {
+export function formatRank(rank?: number | null, options?: { chartOut?: boolean; unavailableAsChartOut?: boolean }) {
+  if (options?.chartOut || (options?.unavailableAsChartOut && typeof rank !== 'number')) {
     return '차트 아웃';
   }
 
