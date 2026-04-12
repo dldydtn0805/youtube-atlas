@@ -31,7 +31,7 @@
   position: fixed;
   touch-action: none;
   width: auto;
-  z-index: 20;
+  z-index: 1199;
   cursor: nwse-resize;
 }
 

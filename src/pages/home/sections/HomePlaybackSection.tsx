@@ -220,6 +220,7 @@ export default function HomePlaybackSection({
   );
   const desktopPlayerDockSlotRef = useRef<HTMLDivElement | null>(null);
   const stickySelectedVideoFrameRef = useRef<HTMLDivElement | null>(null);
+  const lastAnchoredMobilePreviewVideoIdRef = useRef<string | null>(null);
   const [desktopDockStyle, setDesktopDockStyle] = useState<{
     dockHeight: number;
     height: number;
@@ -380,9 +381,14 @@ export default function HomePlaybackSection({
       typeof window === 'undefined' ||
       playerStageProps.isCinematicModeActive ||
       !playerStageProps.isMobileLayout ||
+      !mobilePlayerPreviewVideoId ||
       !stickySelectedVideoContent ||
       !isStickySelectedVideoVisible
     ) {
+      return;
+    }
+
+    if (lastAnchoredMobilePreviewVideoIdRef.current === mobilePlayerPreviewVideoId) {
       return;
     }
 
@@ -401,6 +407,7 @@ export default function HomePlaybackSection({
     )
       ? currentLayout
       : nextLayout);
+    lastAnchoredMobilePreviewVideoIdRef.current = mobilePlayerPreviewVideoId;
   }, [
     isStickySelectedVideoVisible,
     mobilePlayerPreviewVideoId,
