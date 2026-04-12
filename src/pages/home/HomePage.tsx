@@ -1108,7 +1108,7 @@ function HomePage() {
       buyActionTitle={buyActionTitle}
       canShowGameActions={canShowGameActions}
       gameCoinOverview={liveGameCoinOverview}
-      isDesktopMiniPlayerEnabled={!isMobileLayout}
+      isDesktopMiniPlayerEnabled={!isMobileLayout && isCinematicModeActive}
       isBuySubmitting={isBuySubmitting}
       isChartDisabled={isChartActionDisabled}
       isSelectedVideoBuyDisabled={isSelectedVideoBuyDisabled}
