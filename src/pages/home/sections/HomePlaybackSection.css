@@ -5,7 +5,7 @@
   position: fixed;
   transform: translateX(-50%);
   width: min(calc(100% - (var(--app-shell-inline-padding, 20px) * 2)), var(--app-content-max-width));
-  z-index: 14;
+  z-index: 1200;
 }
 
 .app-shell__sticky-selected-video-frame {
@@ -119,18 +119,21 @@
   width: 28px;
 }
 
-.app-shell__stage-stack[data-cinematic='true'] .app-shell__sticky-selected-video-slot {
-  bottom: auto;
-  justify-self: stretch;
-  left: auto;
-  position: sticky;
-  top: 12px;
-  transform: none;
-  width: 100%;
-  z-index: 6;
+:root {
+  --app-sticky-selected-cinematic-top: 12px;
 }
 
-.app-shell__stage-stack[data-cinematic='true'] .app-shell__sticky-selected-video-frame {
+.app-shell__sticky-selected-video-slot[data-cinematic='true'] {
+  bottom: auto;
+  left: 50%;
+  position: fixed;
+  top: var(--app-sticky-selected-cinematic-top);
+  transform: translateX(-50%);
+  width: min(calc(100% - (var(--app-shell-inline-padding, 20px) * 2)), var(--app-cinematic-max-width));
+  z-index: 1200;
+}
+
+.app-shell__sticky-selected-video-slot[data-cinematic='true'] .app-shell__sticky-selected-video-frame {
   width: 100%;
 }
 

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type CSSProperties, type ComponentProps, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ComponentProps, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { ChartPanel, CommunityPanel } from './ContentPanels';
 import { FilterBar } from './FilterPanels';
 import MiniVideoPreview from './MiniVideoPreview';
@@ -7,7 +8,6 @@ import { getFullscreenElement } from '../utils';
 import './HomePlaybackSection.css';
 
 const STICKY_SELECTED_VIDEO_TOP_OFFSET = 12;
-const STICKY_SELECTED_VIDEO_RELEASE_GAP = 72;
 const STICKY_SELECTED_VIDEO_COLLAPSED_STORAGE_KEY = 'youtube-atlas-sticky-selected-video-collapsed';
 const MOBILE_PLAYER_PREVIEW_ENABLED_STORAGE_KEY = 'youtube-atlas-mobile-player-preview-enabled';
 const MOBILE_PLAYER_PREVIEW_LAYOUT_STORAGE_KEY = 'youtube-atlas-mobile-player-preview-layout';
@@ -36,6 +36,9 @@ type MobilePlayerPreviewResizeDirection =
   | 'bottom-right';
 
 interface StickySelectedVideoControls {
+  isDesktopPlayerDockActive: boolean;
+  desktopPlayerDockSlotRef?: RefObject<HTMLDivElement | null>;
+  isDesktopPlayerDockEnabled: boolean;
   isMobilePlayerPreviewEnabled: boolean;
   onScrollToTop: () => void;
   onToggleMobilePlayerPreviewEnabled: () => void;
@@ -224,6 +227,14 @@ export default function HomePlaybackSection({
   const [mobilePlayerPreviewLayout, setMobilePlayerPreviewLayout] = useState(
     getInitialMobilePlayerPreviewLayout,
   );
+  const desktopPlayerDockSlotRef = useRef<HTMLDivElement | null>(null);
+  const [desktopDockStyle, setDesktopDockStyle] = useState<{
+    dockHeight: number;
+    height: number;
+    left: number;
+    top: number;
+    width: number;
+  } | null>(null);
   const dragStateRef = useRef<
     | {
         mode: 'drag' | 'resize';
@@ -265,16 +276,23 @@ export default function HomePlaybackSection({
     }
 
     let animationFrameId: number | null = null;
-    const scrollTarget: HTMLElement | Window = playerStageProps.isCinematicModeActive ? (playerStage ?? window) : window;
+    const fullscreenElement = getFullscreenElement();
+    const scrollTargets: Array<HTMLElement | Window> = [];
+
+    scrollTargets.push(window);
+
+    if (playerStage instanceof HTMLElement && !scrollTargets.includes(playerStage)) {
+      scrollTargets.push(playerStage);
+    }
+
+    if (fullscreenElement instanceof HTMLElement && !scrollTargets.includes(fullscreenElement)) {
+      scrollTargets.push(fullscreenElement);
+    }
 
     const syncStickyVisibility = () => {
       setIsStickySelectedVideoVisible((currentValue) => {
-        const rootTop = playerStage ? playerStage.getBoundingClientRect().top : 0;
-        const playerViewportBottom = playerViewport.getBoundingClientRect().bottom - rootTop;
-        const releaseThreshold = currentValue
-          ? STICKY_SELECTED_VIDEO_TOP_OFFSET + STICKY_SELECTED_VIDEO_RELEASE_GAP
-          : STICKY_SELECTED_VIDEO_TOP_OFFSET;
-        const nextIsVisible = playerViewportBottom <= releaseThreshold;
+        const playerViewportRect = playerViewport.getBoundingClientRect();
+        const nextIsVisible = playerViewportRect.bottom <= STICKY_SELECTED_VIDEO_TOP_OFFSET;
 
         return currentValue === nextIsVisible ? currentValue : nextIsVisible;
       });
@@ -295,14 +313,18 @@ export default function HomePlaybackSection({
 
     scheduleStickyVisibilityUpdate();
     window.addEventListener('resize', scheduleStickyVisibilityUpdate);
-    scrollTarget.addEventListener('scroll', scheduleStickyVisibilityUpdate, { passive: true });
+    scrollTargets.forEach((target) => {
+      target.addEventListener('scroll', scheduleStickyVisibilityUpdate, { passive: true });
+    });
 
     return () => {
       if (animationFrameId !== null) {
         window.cancelAnimationFrame(animationFrameId);
       }
       window.removeEventListener('resize', scheduleStickyVisibilityUpdate);
-      scrollTarget.removeEventListener('scroll', scheduleStickyVisibilityUpdate);
+      scrollTargets.forEach((target) => {
+        target.removeEventListener('scroll', scheduleStickyVisibilityUpdate);
+      });
     };
   }, [
     playerStageProps.isCinematicModeActive,
@@ -440,6 +462,99 @@ export default function HomePlaybackSection({
     playerStageProps.selectedVideoId,
   ]);
 
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      !playerStageProps.isCinematicModeActive ||
+      playerStageProps.isMobileLayout ||
+      !playerStageProps.selectedVideoId ||
+      !isStickySelectedVideoVisible
+    ) {
+      setDesktopDockStyle(null);
+      return;
+    }
+
+    let animationFrameId: number | null = null;
+    const playerViewport = playerStageProps.playerViewportRef.current;
+    const fullscreenElement = getFullscreenElement();
+    const scrollTarget: HTMLElement | Window =
+      fullscreenElement instanceof HTMLElement ? fullscreenElement : window;
+
+    if (!playerViewport) {
+      setDesktopDockStyle(null);
+      return;
+    }
+
+    const syncDesktopDockStyle = () => {
+      const dockSlot = desktopPlayerDockSlotRef.current;
+
+      if (!dockSlot) {
+        setDesktopDockStyle(null);
+        return;
+      }
+
+      const dockRect = dockSlot.getBoundingClientRect();
+      const viewportRect = playerViewport.getBoundingClientRect();
+
+      if (dockRect.width <= 0 || dockRect.height <= 0 || viewportRect.height <= 0) {
+        setDesktopDockStyle(null);
+        return;
+      }
+
+      setDesktopDockStyle((currentStyle) => {
+        const nextStyle = {
+          dockHeight: dockRect.height,
+          height: viewportRect.height,
+          left: dockRect.left,
+          top: dockRect.top,
+          width: dockRect.width,
+        };
+
+        return currentStyle &&
+          currentStyle.dockHeight === nextStyle.dockHeight &&
+          currentStyle.height === nextStyle.height &&
+          currentStyle.left === nextStyle.left &&
+          currentStyle.top === nextStyle.top &&
+          currentStyle.width === nextStyle.width
+          ? currentStyle
+          : nextStyle;
+      });
+    };
+
+    const updateDesktopDockStyle = () => {
+      animationFrameId = null;
+      syncDesktopDockStyle();
+    };
+
+    const scheduleDesktopDockStyleUpdate = () => {
+      if (animationFrameId !== null) {
+        return;
+      }
+
+      animationFrameId = window.requestAnimationFrame(updateDesktopDockStyle);
+    };
+
+    scheduleDesktopDockStyleUpdate();
+    window.addEventListener('resize', scheduleDesktopDockStyleUpdate);
+    scrollTarget.addEventListener('scroll', scheduleDesktopDockStyleUpdate, { passive: true });
+
+    return () => {
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+
+      window.removeEventListener('resize', scheduleDesktopDockStyleUpdate);
+      scrollTarget.removeEventListener('scroll', scheduleDesktopDockStyleUpdate);
+    };
+  }, [
+    isStickySelectedVideoVisible,
+    playerStageProps.isCinematicModeActive,
+    playerStageProps.isMobileLayout,
+    playerStageProps.playerStageRef,
+    playerStageProps.playerViewportRef,
+    playerStageProps.selectedVideoId,
+  ]);
+
   const handleScrollToTop = () => {
     if (typeof window === 'undefined') {
       return;
@@ -475,6 +590,12 @@ export default function HomePlaybackSection({
   const renderedStickySelectedVideoContent =
     typeof stickySelectedVideoContent === 'function'
       ? stickySelectedVideoContent({
+          isDesktopPlayerDockActive: Boolean(desktopDockStyle),
+          desktopPlayerDockSlotRef,
+          isDesktopPlayerDockEnabled:
+            !playerStageProps.isMobileLayout &&
+            playerStageProps.isCinematicModeActive &&
+            isStickySelectedVideoVisible,
           isMobilePlayerPreviewEnabled,
           onScrollToTop: handleScrollToTop,
           onToggleMobilePlayerPreviewEnabled: () => {
@@ -772,16 +893,34 @@ export default function HomePlaybackSection({
       className={isCinematic ? getCinematicChartClassName(chartPanelProps.className) : chartPanelProps.className}
     />
   );
+  const fullscreenElement = typeof document === 'undefined' ? null : getFullscreenElement();
+  const renderedStickySelectedVideoSlot =
+    playerStageProps.isCinematicModeActive &&
+    stickySelectedVideoSlot &&
+    fullscreenElement instanceof HTMLElement
+      ? createPortal(stickySelectedVideoSlot, fullscreenElement)
+      : stickySelectedVideoSlot;
 
   return (
     <>
       {stickyPlayerPreview}
-      {!playerStageProps.isCinematicModeActive ? stickySelectedVideoSlot : null}
+      {renderedStickySelectedVideoSlot}
       <PlayerStage
         {...playerStageProps}
         chartContent={renderChartPanel(true)}
         filterContent={renderFilterBar()}
-        topContent={playerStageProps.isCinematicModeActive ? stickySelectedVideoSlot : null}
+        isVideoPlayerDocked={Boolean(desktopDockStyle)}
+        playerViewportStyle={desktopDockStyle ? { height: `${desktopDockStyle.height}px` } : undefined}
+        videoPlayerDockStyle={
+          desktopDockStyle
+            ? {
+                height: `${desktopDockStyle.dockHeight}px`,
+                left: `${desktopDockStyle.left}px`,
+                top: `${desktopDockStyle.top}px`,
+                width: `${desktopDockStyle.width}px`,
+              }
+            : undefined
+        }
       />
       {!playerStageProps.isCinematicModeActive ? renderFilterBar() : null}
       {!playerStageProps.isCinematicModeActive ? renderChartPanel() : null}

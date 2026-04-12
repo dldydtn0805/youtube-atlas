@@ -1,5 +1,6 @@
 import './RankingGamePanel.css';
-import { memo, useMemo, type ReactNode } from 'react';
+import { memo, useMemo, type ReactNode, type RefObject } from 'react';
+import type { VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
 import type {
   GameCoinOverview,
   GameCoinPosition,
@@ -72,6 +73,8 @@ interface RankingGameSelectedVideoActionsProps {
   canShowGameActions: boolean;
   currentVideoGamePriceSummary: ReactNode;
   isDesktopMiniPlayerEnabled?: boolean;
+  desktopPlayerDockSlotRef?: RefObject<HTMLDivElement | null>;
+  mainPlayerRef?: RefObject<VideoPlayerHandle | null>;
   isBuyDisabled: boolean;
   isBuySubmitting: boolean;
   isChartDisabled: boolean;
@@ -743,7 +746,9 @@ export function RankingGameSelectedVideoActions({
   buyActionTitle,
   canShowGameActions,
   currentVideoGamePriceSummary,
+  desktopPlayerDockSlotRef,
   isDesktopMiniPlayerEnabled = false,
+  mainPlayerRef,
   isBuyDisabled,
   isBuySubmitting,
   isChartDisabled,
@@ -814,10 +819,17 @@ export function RankingGameSelectedVideoActions({
         tabIndex={onContentClick ? 0 : undefined}
       >
         <div className="app-shell__game-panel-actions-main">
-          {isDesktopMiniPlayerEnabled && selectedVideoId ? (
+          {desktopPlayerDockSlotRef ? (
+            <div
+              ref={desktopPlayerDockSlotRef}
+              aria-hidden="true"
+              className="app-shell__game-panel-actions-thumb app-shell__game-panel-actions-thumb-player app-shell__game-panel-actions-thumb-slot"
+            />
+          ) : isDesktopMiniPlayerEnabled && selectedVideoId ? (
             <MiniVideoPreview
               containerClassName="app-shell__game-panel-actions-thumb app-shell__game-panel-actions-thumb-player"
               frameClassName="app-shell__game-panel-actions-thumb-frame"
+              mainPlayerRef={mainPlayerRef}
               selectedVideoId={selectedVideoId}
             />
           ) : selectedVideoTradeThumbnailUrl ? (

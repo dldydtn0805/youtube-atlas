@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, type CSSProperties } from 'react';
 import './VideoPlayer.css';
 
 let youtubeIframeApiPromise: Promise<void> | undefined;
@@ -40,8 +40,10 @@ function loadYouTubeIframeApi() {
 
 interface VideoPlayerProps {
   selectedVideoId?: string;
+  dockStyle?: CSSProperties;
   isLoading?: boolean;
   isCinematic?: boolean;
+  isDocked?: boolean;
   showOverlayNavigation?: boolean;
   onVideoEnd?: () => void;
   canNavigateVideos?: boolean;
@@ -64,8 +66,10 @@ export interface VideoPlayerHandle {
 
 const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(function VideoPlayer({
   selectedVideoId,
+  dockStyle,
   isLoading = false,
   isCinematic = false,
+  isDocked = false,
   showOverlayNavigation = false,
   onVideoEnd,
   canNavigateVideos = false,
@@ -278,7 +282,12 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(function Vid
   }, []);
 
   return (
-    <section className="video-player" data-cinematic={isCinematic}>
+    <section
+      className="video-player"
+      data-cinematic={isCinematic}
+      data-docked={isDocked ? 'true' : 'false'}
+      style={dockStyle}
+    >
       <div className="video-player__frame">
         <div
           ref={playerHostRef}

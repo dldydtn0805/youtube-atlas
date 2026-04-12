@@ -1,4 +1,4 @@
-import type { ReactNode, RefObject } from 'react';
+import type { CSSProperties, ReactNode, RefObject } from 'react';
 import VideoPlayer, { type VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
 import type { AuthStatus } from '../../../features/auth/types';
 import type { PendingPlaybackRestore } from '../utils';
@@ -31,11 +31,14 @@ interface PlayerStageProps {
   playerSectionRef: RefObject<HTMLElement | null>;
   playerStageRef: RefObject<HTMLDivElement | null>;
   playerViewportRef: RefObject<HTMLDivElement | null>;
+  playerViewportStyle?: CSSProperties;
   selectedCategoryLabel?: string;
   selectedCountryName: string;
   selectedVideoChannelTitle?: string;
   selectedVideoId?: string;
   selectedVideoTitle?: string;
+  videoPlayerDockStyle?: CSSProperties;
+  isVideoPlayerDocked?: boolean;
   stageActionContent?: ReactNode;
   stageMetadataContent?: ReactNode;
   supplementalContent?: ReactNode;
@@ -70,11 +73,14 @@ function PlayerStage({
   playerSectionRef,
   playerStageRef,
   playerViewportRef,
+  playerViewportStyle,
   selectedCategoryLabel,
   selectedCountryName,
   selectedVideoChannelTitle,
   selectedVideoId,
   selectedVideoTitle,
+  videoPlayerDockStyle,
+  isVideoPlayerDocked = false,
   stageActionContent,
   stageMetadataContent,
   supplementalContent,
@@ -91,6 +97,7 @@ function PlayerStage({
           ref={playerSectionRef}
           className="app-shell__panel app-shell__panel--player"
           data-cinematic={isCinematicModeActive}
+          data-player-docked={isVideoPlayerDocked}
         >
           <div className="app-shell__section-heading app-shell__section-heading--player">
             <div className="app-shell__section-heading-copy">
@@ -117,10 +124,17 @@ function PlayerStage({
               </div>
             ) : null}
           </div>
-          <div ref={playerViewportRef} className="app-shell__player-viewport">
+          <div
+            ref={playerViewportRef}
+            className="app-shell__player-viewport"
+            data-docked={isVideoPlayerDocked ? 'true' : 'false'}
+            style={playerViewportStyle}
+          >
             <VideoPlayer
               canNavigateVideos={canNavigateVideos}
+              dockStyle={videoPlayerDockStyle}
               isCinematic={isCinematicModeActive}
+              isDocked={isVideoPlayerDocked}
               isLoading={isChartLoading}
               onNextVideo={onNextVideo}
               onPlaybackRestoreApplied={onPlaybackRestoreApplied}

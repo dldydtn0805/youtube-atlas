@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
+import type { VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
 import type { GameCoinOverview, GameMarketVideo, GamePosition } from '../../../features/game/types';
 import type { VideoTrendBadge } from '../../../features/trending/presentation';
 import {
@@ -48,8 +49,10 @@ interface GameStageActionsProps {
 interface SelectedVideoGameActionsBundleProps {
   buyActionTitle: string;
   canShowGameActions: boolean;
+  desktopPlayerDockSlotRef?: RefObject<HTMLDivElement | null>;
   gameCoinOverview?: GameCoinOverview;
   isDesktopMiniPlayerEnabled?: boolean;
+  mainPlayerRef?: RefObject<VideoPlayerHandle | null>;
   isBuySubmitting?: boolean;
   isChartDisabled?: boolean;
   isSelectedVideoBuyDisabled: boolean;
@@ -515,8 +518,10 @@ export function GameStageActions({
 export function SelectedVideoGameActionsBundle({
   buyActionTitle,
   canShowGameActions,
+  desktopPlayerDockSlotRef,
   gameCoinOverview,
   isDesktopMiniPlayerEnabled = false,
+  mainPlayerRef,
   isBuySubmitting = false,
   isChartDisabled = false,
   isSelectedVideoBuyDisabled,
@@ -584,7 +589,9 @@ export function SelectedVideoGameActionsBundle({
       buyActionTitle={buyActionTitle}
       canShowGameActions={canShowGameActions}
       currentVideoGamePriceSummary={currentVideoGamePriceSummary}
+      desktopPlayerDockSlotRef={desktopPlayerDockSlotRef}
       isDesktopMiniPlayerEnabled={isDesktopMiniPlayerEnabled}
+      mainPlayerRef={mainPlayerRef}
       isBuyDisabled={isSelectedVideoBuyDisabled}
       isBuySubmitting={isBuySubmitting}
       isChartDisabled={isChartDisabled}

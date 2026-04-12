@@ -3,6 +3,12 @@
   scroll-margin-top: 16px;
 }
 
+.app-shell__panel--player[data-player-docked='true'] {
+  backdrop-filter: none;
+  isolation: auto;
+  overflow: visible;
+}
+
 .app-shell__player-viewport {
   scroll-margin-top: 12px;
   width: 100%;

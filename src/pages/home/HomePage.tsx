@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
@@ -1151,17 +1151,23 @@ function HomePage() {
     panelControls?: ReactNode,
     onHeaderClick?: () => void,
     onContentClick?: () => void,
+    options?: {
+      desktopPlayerDockSlotRef?: RefObject<HTMLDivElement | null>;
+      isDesktopMiniPlayerEnabled?: boolean;
+    },
   ) => (
     <SelectedVideoGameActionsBundle
       buyActionTitle={buyActionTitle}
       canShowGameActions={canShowGameActions}
+      desktopPlayerDockSlotRef={options?.desktopPlayerDockSlotRef}
       gameCoinOverview={liveGameCoinOverview}
-      isDesktopMiniPlayerEnabled={false}
+      isDesktopMiniPlayerEnabled={options?.isDesktopMiniPlayerEnabled ?? false}
       isBuySubmitting={isBuySubmitting}
       isChartDisabled={isChartActionDisabled}
       isSelectedVideoBuyDisabled={isSelectedVideoBuyDisabled}
       isSelectedVideoSellDisabled={isSelectedVideoSellDisabled}
       isSellSubmitting={isSellSubmitting}
+      mainPlayerRef={videoPlayerRef}
       maxSellQuantity={maxSellQuantity}
       onContentClick={onContentClick}
       mode="panel"
@@ -1419,6 +1425,8 @@ function HomePage() {
           }}
           stickySelectedVideoLabel={selectedVideoOpenPositionCount > 0 ? 'Selected Positions' : 'Selected Video'}
           stickySelectedVideoContent={({
+            desktopPlayerDockSlotRef,
+            isDesktopPlayerDockEnabled,
             onScrollToTop,
             onToggleCollapse,
           }) =>
@@ -1461,6 +1469,10 @@ function HomePage() {
               </>,
               onToggleCollapse,
               onScrollToTop,
+              {
+                desktopPlayerDockSlotRef: isDesktopPlayerDockEnabled ? desktopPlayerDockSlotRef : undefined,
+                isDesktopMiniPlayerEnabled: false,
+              },
             )
           }
         />
