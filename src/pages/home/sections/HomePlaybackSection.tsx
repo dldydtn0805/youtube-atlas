@@ -13,16 +13,27 @@ const MOBILE_PLAYER_PREVIEW_ENABLED_STORAGE_KEY = 'youtube-atlas-mobile-player-p
 const MOBILE_PLAYER_PREVIEW_LAYOUT_STORAGE_KEY = 'youtube-atlas-mobile-player-preview-layout';
 const MOBILE_PLAYER_PREVIEW_TRIGGER_OFFSET = 8;
 const MOBILE_PLAYER_PREVIEW_MIN_WIDTH = 96;
-const MOBILE_PLAYER_PREVIEW_MAX_WIDTH = 220;
+const MOBILE_PLAYER_PREVIEW_MAX_WIDTH = 360;
 const MOBILE_PLAYER_PREVIEW_DEFAULT_WIDTH = 120;
 const MOBILE_PLAYER_PREVIEW_ASPECT_RATIO = 16 / 9;
 const MOBILE_PLAYER_PREVIEW_MARGIN = 12;
+const MOBILE_PLAYER_PREVIEW_RESIZE_EDGE = 18;
 
 interface MobilePlayerPreviewLayout {
   width: number;
   x: number;
   y: number;
 }
+
+type MobilePlayerPreviewResizeDirection =
+  | 'top'
+  | 'right'
+  | 'bottom'
+  | 'left'
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right';
 
 interface StickySelectedVideoControls {
   isMobilePlayerPreviewEnabled: boolean;
@@ -36,6 +47,7 @@ interface HomePlaybackSectionProps {
   communityPanelProps: ComponentProps<typeof CommunityPanel>;
   filterBarProps: ComponentProps<typeof FilterBar>;
   playerStageProps: Omit<ComponentProps<typeof PlayerStage>, 'chartContent' | 'filterContent'>;
+  preferredPreviewVideoId?: string;
   stickySelectedVideoContent?: ReactNode | ((controls: StickySelectedVideoControls) => ReactNode);
   stickySelectedVideoLabel?: string;
 }
@@ -66,6 +78,52 @@ function clampValue(value: number, min: number, max: number) {
 
 function getPreviewHeight(width: number) {
   return Math.round(width / MOBILE_PLAYER_PREVIEW_ASPECT_RATIO);
+}
+
+function getResizeDirection(
+  offsetX: number,
+  offsetY: number,
+  width: number,
+  height: number,
+): MobilePlayerPreviewResizeDirection | null {
+  const isLeft = offsetX <= MOBILE_PLAYER_PREVIEW_RESIZE_EDGE;
+  const isRight = offsetX >= width - MOBILE_PLAYER_PREVIEW_RESIZE_EDGE;
+  const isTop = offsetY <= MOBILE_PLAYER_PREVIEW_RESIZE_EDGE;
+  const isBottom = offsetY >= height - MOBILE_PLAYER_PREVIEW_RESIZE_EDGE;
+
+  if (isTop && isLeft) {
+    return 'top-left';
+  }
+
+  if (isTop && isRight) {
+    return 'top-right';
+  }
+
+  if (isBottom && isLeft) {
+    return 'bottom-left';
+  }
+
+  if (isBottom && isRight) {
+    return 'bottom-right';
+  }
+
+  if (isTop) {
+    return 'top';
+  }
+
+  if (isRight) {
+    return 'right';
+  }
+
+  if (isBottom) {
+    return 'bottom';
+  }
+
+  if (isLeft) {
+    return 'left';
+  }
+
+  return null;
 }
 
 function clampMobilePlayerPreviewLayout(layout: MobilePlayerPreviewLayout) {
@@ -149,6 +207,7 @@ export default function HomePlaybackSection({
   communityPanelProps,
   filterBarProps,
   playerStageProps,
+  preferredPreviewVideoId,
   stickySelectedVideoContent,
   stickySelectedVideoLabel = 'Selected Video',
 }: HomePlaybackSectionProps) {
@@ -161,12 +220,17 @@ export default function HomePlaybackSection({
   );
   const [isMobilePlayerPreviewVisible, setIsMobilePlayerPreviewVisible] = useState(false);
   const [isMobilePlayerPreviewCollapsed, setIsMobilePlayerPreviewCollapsed] = useState(false);
+  const [mobilePlayerPreviewVideoId, setMobilePlayerPreviewVideoId] = useState<string | undefined>(
+    preferredPreviewVideoId ?? playerStageProps.selectedVideoId,
+  );
   const [mobilePlayerPreviewLayout, setMobilePlayerPreviewLayout] = useState(
     getInitialMobilePlayerPreviewLayout,
   );
   const dragStateRef = useRef<
     | {
         mode: 'drag' | 'resize';
+        resizeDirection?: MobilePlayerPreviewResizeDirection;
+        originHeight: number;
         originPointerX: number;
         originPointerY: number;
         originX: number;
@@ -177,6 +241,16 @@ export default function HomePlaybackSection({
     | null
   >(null);
   const suppressPreviewClickRef = useRef(false);
+
+  useEffect(() => {
+    setMobilePlayerPreviewVideoId(preferredPreviewVideoId ?? playerStageProps.selectedVideoId);
+  }, [playerStageProps.selectedVideoId, preferredPreviewVideoId]);
+
+  useEffect(() => {
+    setIsMobilePlayerPreviewVisible(false);
+    setIsMobilePlayerPreviewCollapsed(true);
+    setIsMobilePlayerPreviewEnabled(false);
+  }, [mobilePlayerPreviewVideoId]);
 
   useEffect(() => {
     if (!playerStageProps.isCinematicModeActive) {
@@ -309,7 +383,6 @@ export default function HomePlaybackSection({
       typeof window === 'undefined' ||
       playerStageProps.isCinematicModeActive ||
       !playerStageProps.isMobileLayout ||
-      !isMobilePlayerPreviewEnabled ||
       !playerStageProps.selectedVideoId ||
       !playerViewport
     ) {
@@ -326,6 +399,10 @@ export default function HomePlaybackSection({
       const nextIsVisible =
         playerViewportRect.top < 0 &&
         playerViewportRect.bottom <= MOBILE_PLAYER_PREVIEW_TRIGGER_OFFSET;
+
+      if (nextIsVisible && !isMobilePlayerPreviewEnabled) {
+        setIsMobilePlayerPreviewEnabled(true);
+      }
 
       if (!nextIsVisible) {
         setIsMobilePlayerPreviewCollapsed(false);
@@ -416,15 +493,19 @@ export default function HomePlaybackSection({
           },
         })
       : stickySelectedVideoContent;
-  const stickyPlayerPreview =
+  const shouldMountStickyPlayerPreview =
     !playerStageProps.isCinematicModeActive &&
     playerStageProps.isMobileLayout &&
+    Boolean(mobilePlayerPreviewVideoId);
+  const shouldShowStickyPlayerPreview =
+    shouldMountStickyPlayerPreview &&
     isMobilePlayerPreviewEnabled &&
-    isMobilePlayerPreviewVisible &&
-    !isMobilePlayerPreviewCollapsed &&
-    playerStageProps.selectedVideoId ? (
+    !isMobilePlayerPreviewCollapsed;
+  const stickyPlayerPreview =
+    shouldMountStickyPlayerPreview && mobilePlayerPreviewVideoId ? (
       <div
         className="app-shell__sticky-player-preview-shell"
+        data-visible={shouldShowStickyPlayerPreview && isMobilePlayerPreviewVisible ? 'true' : 'false'}
         style={
           {
             '--sticky-player-preview-height': `${getPreviewHeight(mobilePlayerPreviewLayout.width)}px`,
@@ -434,10 +515,27 @@ export default function HomePlaybackSection({
           } as CSSProperties
         }
         onPointerDown={(event: ReactPointerEvent<HTMLDivElement>) => {
-          const resizeHandle = (event.target as HTMLElement).closest('.app-shell__sticky-player-preview-resize');
+          const eventTarget = event.target as HTMLElement;
+          const dragLayer = eventTarget.closest('.app-shell__sticky-player-preview-drag-layer');
+          const previewShell = event.currentTarget;
+          const previewRect = previewShell.getBoundingClientRect();
+          const offsetX = event.clientX - previewRect.left;
+          const offsetY = event.clientY - previewRect.top;
+          const resizeDirection = getResizeDirection(
+            offsetX,
+            offsetY,
+            previewRect.width,
+            previewRect.height,
+          );
+
+          if (!dragLayer && !resizeDirection) {
+            return;
+          }
 
           dragStateRef.current = {
-            mode: resizeHandle ? 'resize' : 'drag',
+            mode: resizeDirection ? 'resize' : 'drag',
+            resizeDirection: resizeDirection ?? undefined,
+            originHeight: getPreviewHeight(mobilePlayerPreviewLayout.width),
             originPointerX: event.clientX,
             originPointerY: event.clientY,
             originWidth: mobilePlayerPreviewLayout.width,
@@ -474,11 +572,87 @@ export default function HomePlaybackSection({
             return;
           }
 
-          setMobilePlayerPreviewLayout((currentLayout) =>
+          const originRight = dragState.originX + dragState.originWidth;
+          const originBottom = dragState.originY + dragState.originHeight;
+          const widthFromHeightDelta = (nextHeightDelta: number) =>
+            dragState.originWidth + (nextHeightDelta * MOBILE_PLAYER_PREVIEW_ASPECT_RATIO);
+          const resizeDirection = dragState.resizeDirection;
+
+          if (!resizeDirection) {
+            return;
+          }
+
+          let nextWidth = dragState.originWidth;
+          let nextX = dragState.originX;
+          let nextY = dragState.originY;
+
+          switch (resizeDirection) {
+            case 'right':
+              nextWidth = dragState.originWidth + deltaX;
+              break;
+            case 'left':
+              nextWidth = dragState.originWidth - deltaX;
+              break;
+            case 'bottom':
+              nextWidth = widthFromHeightDelta(deltaY);
+              break;
+            case 'top':
+              nextWidth = widthFromHeightDelta(-deltaY);
+              break;
+            case 'top-left': {
+              const widthByX = dragState.originWidth - deltaX;
+              const widthByY = widthFromHeightDelta(-deltaY);
+              nextWidth = Math.abs(widthByX - dragState.originWidth) >= Math.abs(widthByY - dragState.originWidth)
+                ? widthByX
+                : widthByY;
+              break;
+            }
+            case 'top-right': {
+              const widthByX = dragState.originWidth + deltaX;
+              const widthByY = widthFromHeightDelta(-deltaY);
+              nextWidth = Math.abs(widthByX - dragState.originWidth) >= Math.abs(widthByY - dragState.originWidth)
+                ? widthByX
+                : widthByY;
+              break;
+            }
+            case 'bottom-left': {
+              const widthByX = dragState.originWidth - deltaX;
+              const widthByY = widthFromHeightDelta(deltaY);
+              nextWidth = Math.abs(widthByX - dragState.originWidth) >= Math.abs(widthByY - dragState.originWidth)
+                ? widthByX
+                : widthByY;
+              break;
+            }
+            case 'bottom-right': {
+              const widthByX = dragState.originWidth + deltaX;
+              const widthByY = widthFromHeightDelta(deltaY);
+              nextWidth = Math.abs(widthByX - dragState.originWidth) >= Math.abs(widthByY - dragState.originWidth)
+                ? widthByX
+                : widthByY;
+              break;
+            }
+          }
+
+          const clampedLayout = clampMobilePlayerPreviewLayout({
+            width: nextWidth,
+            x: dragState.originX,
+            y: dragState.originY,
+          });
+          const nextHeight = getPreviewHeight(clampedLayout.width);
+
+          if (resizeDirection.includes('left')) {
+            nextX = originRight - clampedLayout.width;
+          }
+
+          if (resizeDirection.includes('top')) {
+            nextY = originBottom - nextHeight;
+          }
+
+          setMobilePlayerPreviewLayout(
             clampMobilePlayerPreviewLayout({
-              width: dragState.originWidth + deltaX,
-              x: currentLayout.x,
-              y: currentLayout.y,
+              width: clampedLayout.width,
+              x: nextX,
+              y: nextY,
             }),
           );
         }}
@@ -513,13 +687,15 @@ export default function HomePlaybackSection({
             containerClassName="app-shell__sticky-player-preview-thumb app-shell__sticky-player-preview-thumb--player"
             frameClassName="app-shell__sticky-player-preview-frame"
             mainPlayerRef={playerStageProps.playerRef}
-            selectedVideoId={playerStageProps.selectedVideoId}
+            selectedVideoId={mobilePlayerPreviewVideoId}
           />
         </button>
         <span
           aria-hidden="true"
-          className="app-shell__sticky-player-preview-resize"
-        />
+          className="app-shell__sticky-player-preview-drag-layer"
+        >
+          <span className="app-shell__sticky-player-preview-drag-grip" />
+        </span>
       </div>
     ) : null;
   const stickySelectedVideoSlot =

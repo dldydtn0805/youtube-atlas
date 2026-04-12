@@ -363,7 +363,7 @@ describe('HomePlaybackSection', () => {
     );
 
     flushAnimationFrames();
-    expect(document.querySelector('.app-shell__sticky-player-preview')).toBeNull();
+    expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('false');
 
     getBoundingClientRectMock.mockImplementation(
       () =>
@@ -386,9 +386,11 @@ describe('HomePlaybackSection', () => {
     await waitFor(() => {
       expect(document.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
     });
+    expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('true');
 
     const stickyFrame = document.querySelector('.app-shell__sticky-selected-video-frame');
-    expect(stickyFrame?.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
+    expect(stickyFrame?.querySelector('.app-shell__sticky-player-preview')).toBeNull();
+    expect(document.querySelector('.app-shell__sticky-player-preview-shell')).not.toBeNull();
     expect(screen.queryByText('Now Playing')).not.toBeInTheDocument();
     expect(screen.getByText('Selected video actions')).toBeInTheDocument();
   });

@@ -1,6 +1,5 @@
 import './RankingGamePanel.css';
-import { memo, useMemo, type ReactNode, type RefObject } from 'react';
-import type { VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
+import { memo, useMemo, type ReactNode } from 'react';
 import type {
   GameCoinOverview,
   GameCoinPosition,
@@ -73,7 +72,6 @@ interface RankingGameSelectedVideoActionsProps {
   canShowGameActions: boolean;
   currentVideoGamePriceSummary: ReactNode;
   isDesktopMiniPlayerEnabled?: boolean;
-  mainPlayerRef?: RefObject<VideoPlayerHandle | null>;
   isBuyDisabled: boolean;
   isBuySubmitting: boolean;
   isChartDisabled: boolean;
@@ -746,7 +744,6 @@ export function RankingGameSelectedVideoActions({
   canShowGameActions,
   currentVideoGamePriceSummary,
   isDesktopMiniPlayerEnabled = false,
-  mainPlayerRef,
   isBuyDisabled,
   isBuySubmitting,
   isChartDisabled,
@@ -821,7 +818,6 @@ export function RankingGameSelectedVideoActions({
             <MiniVideoPreview
               containerClassName="app-shell__game-panel-actions-thumb app-shell__game-panel-actions-thumb-player"
               frameClassName="app-shell__game-panel-actions-thumb-frame"
-              mainPlayerRef={mainPlayerRef}
               selectedVideoId={selectedVideoId}
             />
           ) : selectedVideoTradeThumbnailUrl ? (

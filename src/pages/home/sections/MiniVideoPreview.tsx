@@ -1,13 +1,7 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import type { VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
 
 let miniVideoPreviewApiPromise: Promise<void> | undefined;
-let miniVideoPreviewHostElement: HTMLDivElement | null = null;
-let miniVideoPreviewMountElement: HTMLDivElement | null = null;
-let miniVideoPreviewPlayer: YT.Player | null = null;
-let miniVideoPreviewRequestedVideoId: string | null = null;
-let miniVideoPreviewIsReady = false;
-let miniVideoPreviewOwnerElement: HTMLDivElement | null = null;
 const MINI_VIDEO_PREVIEW_LOWEST_QUALITY = 'small';
 
 function loadMiniVideoPreviewApi() {
@@ -45,141 +39,8 @@ function loadMiniVideoPreviewApi() {
   return miniVideoPreviewApiPromise;
 }
 
-function getMiniVideoPreviewHostElement(frameClassName: string) {
-  if (!miniVideoPreviewHostElement) {
-    miniVideoPreviewHostElement = document.createElement('div');
-    miniVideoPreviewMountElement = document.createElement('div');
-    miniVideoPreviewHostElement.append(miniVideoPreviewMountElement);
-  }
-
-  miniVideoPreviewHostElement.className = frameClassName;
-
-  return miniVideoPreviewHostElement;
-}
-
-function attachMiniVideoPreviewHost(container: HTMLDivElement, frameClassName: string) {
-  const hostElement = getMiniVideoPreviewHostElement(frameClassName);
-
-  if (hostElement.parentElement !== container) {
-    container.replaceChildren(hostElement);
-  }
-
-  miniVideoPreviewOwnerElement = container;
-}
-
-function detachMiniVideoPreviewHost(container: HTMLDivElement) {
-  if (miniVideoPreviewHostElement?.parentElement === container) {
-    container.removeChild(miniVideoPreviewHostElement);
-  }
-
-  if (miniVideoPreviewOwnerElement === container) {
-    miniVideoPreviewOwnerElement = null;
-  }
-}
-
-function readMiniVideoPreviewCurrentVideoId() {
-  if (
-    !miniVideoPreviewPlayer ||
-    !miniVideoPreviewIsReady ||
-    typeof miniVideoPreviewPlayer.getVideoData !== 'function'
-  ) {
-    return null;
-  }
-
-  const currentVideoId = miniVideoPreviewPlayer.getVideoData()?.video_id?.trim();
-
-  return currentVideoId || null;
-}
-
-function applyMiniVideoPreviewQuality() {
-  if (
-    !miniVideoPreviewPlayer ||
-    !miniVideoPreviewIsReady ||
-    typeof miniVideoPreviewPlayer.setPlaybackQuality !== 'function'
-  ) {
-    return;
-  }
-
-  miniVideoPreviewPlayer.setPlaybackQuality(MINI_VIDEO_PREVIEW_LOWEST_QUALITY);
-}
-
-function applyMiniVideoPreviewVideoSelection() {
-  if (
-    !miniVideoPreviewPlayer ||
-    !miniVideoPreviewIsReady ||
-    !miniVideoPreviewRequestedVideoId ||
-    typeof miniVideoPreviewPlayer.loadVideoById !== 'function'
-  ) {
-    return;
-  }
-
-  if (readMiniVideoPreviewCurrentVideoId() === miniVideoPreviewRequestedVideoId) {
-    return;
-  }
-
-  miniVideoPreviewPlayer.loadVideoById({
-    startSeconds: 0,
-    videoId: miniVideoPreviewRequestedVideoId,
-  });
-  (miniVideoPreviewPlayer as YT.Player & { mute?: () => void }).mute?.();
-  applyMiniVideoPreviewQuality();
-}
-
-async function ensureMiniVideoPreviewPlayer(selectedVideoId: string, frameClassName: string) {
-  miniVideoPreviewRequestedVideoId = selectedVideoId;
-
-  await loadMiniVideoPreviewApi();
-
-  if (!window.YT?.Player) {
-    return;
-  }
-
-  getMiniVideoPreviewHostElement(frameClassName);
-
-  if (miniVideoPreviewPlayer || !miniVideoPreviewMountElement) {
-    applyMiniVideoPreviewVideoSelection();
-    return;
-  }
-
-  miniVideoPreviewIsReady = false;
-  miniVideoPreviewPlayer = new window.YT.Player(miniVideoPreviewMountElement, {
-    height: '100%',
-    width: '100%',
-    videoId: selectedVideoId,
-    playerVars: {
-      autoplay: 1,
-      controls: 0,
-      disablekb: 1,
-      fs: 0,
-      loop: 1,
-      modestbranding: 1,
-      mute: 1,
-      playsinline: 1,
-      playlist: selectedVideoId,
-      rel: 0,
-    },
-    events: {
-      onReady: (event) => {
-        miniVideoPreviewIsReady = true;
-        const readyPlayer = event.target as YT.Player & { mute?: () => void };
-        readyPlayer.mute?.();
-        applyMiniVideoPreviewQuality();
-        applyMiniVideoPreviewVideoSelection();
-      },
-    },
-  });
-}
-
 export function resetMiniVideoPreviewSingletonForTests() {
-  miniVideoPreviewPlayer?.destroy();
-  miniVideoPreviewHostElement?.remove();
   miniVideoPreviewApiPromise = undefined;
-  miniVideoPreviewHostElement = null;
-  miniVideoPreviewMountElement = null;
-  miniVideoPreviewPlayer = null;
-  miniVideoPreviewRequestedVideoId = null;
-  miniVideoPreviewIsReady = false;
-  miniVideoPreviewOwnerElement = null;
 }
 
 interface MiniVideoPreviewProps {
@@ -195,76 +56,139 @@ export default function MiniVideoPreview({
   mainPlayerRef,
   selectedVideoId,
 }: MiniVideoPreviewProps) {
-  const previewContainerRef = useRef<HTMLDivElement | null>(null);
+  const previewSlotRefs = useRef<[HTMLDivElement | null, HTMLDivElement | null]>([null, null]);
+  const previewPlayersRef = useRef<[YT.Player | null, YT.Player | null]>([null, null]);
+  const slotVideoIdsRef = useRef<[string | null, string | null]>([null, null]);
+  const latestSelectedVideoIdRef = useRef(selectedVideoId);
+  const [activeSlotIndex, setActiveSlotIndex] = useState(0);
+
+  useEffect(() => {
+    latestSelectedVideoIdRef.current = selectedVideoId;
+  }, [selectedVideoId]);
 
   useEffect(() => {
     let isCancelled = false;
-    const previewContainer = previewContainerRef.current;
 
-    async function initializePlayer() {
-      if (isCancelled || !selectedVideoId || !previewContainer) {
+    async function preparePlayer() {
+      if (!selectedVideoId) {
         return;
       }
 
-      attachMiniVideoPreviewHost(previewContainer, frameClassName);
-      await ensureMiniVideoPreviewPlayer(selectedVideoId, frameClassName);
+      const existingSlotIndex = slotVideoIdsRef.current.findIndex((videoId) => videoId === selectedVideoId);
 
-      if (isCancelled) {
+      if (existingSlotIndex >= 0) {
+        setActiveSlotIndex(existingSlotIndex);
         return;
       }
 
-      attachMiniVideoPreviewHost(previewContainer, frameClassName);
-      applyMiniVideoPreviewVideoSelection();
+      const inactiveSlotIndex =
+        slotVideoIdsRef.current[0] === null ? 0 : slotVideoIdsRef.current[1] === null ? 1 : (activeSlotIndex === 0 ? 1 : 0);
+      const previewSlot = previewSlotRefs.current[inactiveSlotIndex];
+
+      if (!previewSlot) {
+        return;
+      }
+
+      await loadMiniVideoPreviewApi();
+
+      if (isCancelled || !window.YT?.Player) {
+        return;
+      }
+
+      previewSlot.replaceChildren();
+
+      const mountElement = document.createElement('div');
+      mountElement.className = frameClassName;
+      previewSlot.append(mountElement);
+
+      previewPlayersRef.current[inactiveSlotIndex]?.destroy();
+      previewPlayersRef.current[inactiveSlotIndex] = new window.YT.Player(mountElement, {
+        height: '100%',
+        width: '100%',
+        videoId: selectedVideoId,
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          disablekb: 1,
+          fs: 0,
+          loop: 1,
+          modestbranding: 1,
+          mute: 1,
+          playsinline: 1,
+          playlist: selectedVideoId,
+          rel: 0,
+        },
+        events: {
+          onReady: (event) => {
+            if (isCancelled) {
+              return;
+            }
+
+            const player = event.target as YT.Player & {
+              mute?: () => void;
+              seekTo?: (seconds: number, allowSeekAhead?: boolean) => void;
+              setPlaybackQuality?: (quality: string) => void;
+            };
+
+            player.mute?.();
+            player.setPlaybackQuality?.(MINI_VIDEO_PREVIEW_LOWEST_QUALITY);
+
+            slotVideoIdsRef.current[inactiveSlotIndex] = selectedVideoId;
+            const playbackSnapshot = mainPlayerRef?.current?.readPlaybackSnapshot();
+
+            if (
+              playbackSnapshot &&
+              playbackSnapshot.videoId === selectedVideoId &&
+              playbackSnapshot.positionSeconds > 0
+            ) {
+              player.seekTo?.(playbackSnapshot.positionSeconds, true);
+            }
+
+            if (latestSelectedVideoIdRef.current === selectedVideoId) {
+              setActiveSlotIndex(inactiveSlotIndex);
+            }
+          },
+        },
+      });
     }
 
-    void initializePlayer();
+    void preparePlayer();
 
     return () => {
       isCancelled = true;
-      if (previewContainer) {
-        detachMiniVideoPreviewHost(previewContainer);
-      }
     };
-  }, [frameClassName, selectedVideoId]);
+  }, [activeSlotIndex, frameClassName, mainPlayerRef, selectedVideoId]);
 
   useEffect(() => {
-    if (!selectedVideoId || !mainPlayerRef?.current) {
-      return;
-    }
-
-    const syncPlayback = () => {
-      const previewPlayer = miniVideoPreviewPlayer;
-      const snapshot = mainPlayerRef.current?.readPlaybackSnapshot();
-
-      if (
-        !previewPlayer ||
-        !miniVideoPreviewIsReady ||
-        !snapshot ||
-        snapshot.videoId !== selectedVideoId ||
-        readMiniVideoPreviewCurrentVideoId() !== selectedVideoId ||
-        typeof previewPlayer.getCurrentTime !== 'function' ||
-        typeof previewPlayer.seekTo !== 'function'
-      ) {
-        return;
-      }
-
-      const previewPosition = previewPlayer.getCurrentTime();
-      const positionDelta = Math.abs(snapshot.positionSeconds - previewPosition);
-
-      if (positionDelta >= 1.5) {
-        previewPlayer.seekTo(Math.max(0, snapshot.positionSeconds), true);
-      }
-    };
-
-    syncPlayback();
-    const intervalId = window.setInterval(syncPlayback, 1000);
-
     return () => {
-      window.clearInterval(intervalId);
+      previewPlayersRef.current.forEach((player, index) => {
+        player?.destroy();
+        previewPlayersRef.current[index] = null;
+        slotVideoIdsRef.current[index] = null;
+        previewSlotRefs.current[index]?.replaceChildren();
+      });
     };
-  }, [mainPlayerRef, selectedVideoId]);
+  }, []);
 
   return (
-    <div ref={previewContainerRef} className={containerClassName} />
+    <div className={containerClassName} style={{ overflow: 'hidden', position: 'relative' }}>
+      {[0, 1].map((slotIndex) => (
+        <div
+          key={slotIndex}
+          ref={(node) => {
+            previewSlotRefs.current[slotIndex as 0 | 1] = node;
+          }}
+          aria-hidden={activeSlotIndex !== slotIndex}
+          className={frameClassName}
+          style={{
+            inset: 0,
+            opacity: activeSlotIndex === slotIndex ? 1 : 0,
+            pointerEvents: 'none',
+            position: 'absolute',
+            transition: 'opacity 140ms ease',
+          }}
+        />
+      ))}
+    </div>
   );
 }

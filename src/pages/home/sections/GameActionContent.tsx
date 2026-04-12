@@ -1,5 +1,4 @@
-import type { ReactNode, RefObject } from 'react';
-import type { VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
+import type { ReactNode } from 'react';
 import type { GameCoinOverview, GameMarketVideo, GamePosition } from '../../../features/game/types';
 import type { VideoTrendBadge } from '../../../features/trending/presentation';
 import {
@@ -56,7 +55,6 @@ interface SelectedVideoGameActionsBundleProps {
   isSelectedVideoBuyDisabled: boolean;
   isSelectedVideoSellDisabled: boolean;
   isSellSubmitting?: boolean;
-  mainPlayerRef?: RefObject<VideoPlayerHandle | null>;
   maxSellQuantity?: number;
   onContentClick?: () => void;
   mode: 'panel' | 'stage';
@@ -524,7 +522,6 @@ export function SelectedVideoGameActionsBundle({
   isSelectedVideoBuyDisabled,
   isSelectedVideoSellDisabled,
   isSellSubmitting = false,
-  mainPlayerRef,
   maxSellQuantity = 0,
   onContentClick,
   mode,
@@ -588,7 +585,6 @@ export function SelectedVideoGameActionsBundle({
       canShowGameActions={canShowGameActions}
       currentVideoGamePriceSummary={currentVideoGamePriceSummary}
       isDesktopMiniPlayerEnabled={isDesktopMiniPlayerEnabled}
-      mainPlayerRef={mainPlayerRef}
       isBuyDisabled={isSelectedVideoBuyDisabled}
       isBuySubmitting={isBuySubmitting}
       isChartDisabled={isChartDisabled}

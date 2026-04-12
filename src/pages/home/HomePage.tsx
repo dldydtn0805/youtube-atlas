@@ -740,6 +740,7 @@ function HomePage() {
     user,
     videoPlayerRef,
   });
+  const [previewVideoId, setPreviewVideoId] = useState<string | undefined>();
   const {
     activeTradeModal,
     buyQuantity,
@@ -1009,13 +1010,60 @@ function HomePage() {
     }
   }
 
+  useEffect(() => {
+    setPreviewVideoId(selectedVideoId);
+  }, [selectedVideoId]);
+
+  const handleSelectVideoWithPreview = useCallback(
+    (videoId: string, playbackQueueId: string) => {
+      if (!videoId) {
+        return;
+      }
+
+      const nextPreviewVideoId = videoId;
+      setPreviewVideoId(nextPreviewVideoId);
+      handleSelectVideo(nextPreviewVideoId, playbackQueueId);
+    },
+    [handleSelectVideo],
+  );
+
+  const handlePlayNextVideoWithPreview = useCallback(() => {
+    const playbackItems = selectedPlaybackSection?.items ?? [];
+    const currentIndex = playbackItems.findIndex((item) => item.id === selectedVideoId);
+    const nextVideoId =
+      currentIndex >= 0 && currentIndex < playbackItems.length - 1
+        ? playbackItems[currentIndex + 1]?.id
+        : undefined;
+
+    if (nextVideoId) {
+      setPreviewVideoId(nextVideoId);
+    }
+
+    handlePlayNextVideo();
+  }, [handlePlayNextVideo, selectedPlaybackSection, selectedVideoId]);
+
+  const handlePlayPreviousVideoWithPreview = useCallback(() => {
+    const playbackItems = selectedPlaybackSection?.items ?? [];
+    const currentIndex = playbackItems.findIndex((item) => item.id === selectedVideoId);
+    const previousVideoId =
+      currentIndex > 0
+        ? playbackItems[currentIndex - 1]?.id
+        : undefined;
+
+    if (previousVideoId) {
+      setPreviewVideoId(previousVideoId);
+    }
+
+    handlePlayPreviousVideo();
+  }, [handlePlayPreviousVideo, selectedPlaybackSection, selectedVideoId]);
+
   const handleSelectGamePositionVideo = useCallback(
     (position: GamePosition) => {
       setSelectedOpenPositionId(position.id);
       scrollToPlayerStage();
-      handleSelectVideo(position.videoId, gamePortfolioSection.categoryId);
+      handleSelectVideoWithPreview(position.videoId, gamePortfolioSection.categoryId);
     },
-    [gamePortfolioSection.categoryId, handleSelectVideo, scrollToPlayerStage],
+    [gamePortfolioSection.categoryId, handleSelectVideoWithPreview, scrollToPlayerStage],
   );
   const handleSelectGameHistoryVideo = useCallback(
     async (position: GamePosition, playbackQueueId?: string) => {
@@ -1024,7 +1072,7 @@ function HomePage() {
       if (playbackQueueId) {
         setGameActionStatus(null);
         setSelectedOpenPositionId(position.id);
-        handleSelectVideo(position.videoId, playbackQueueId);
+        handleSelectVideoWithPreview(position.videoId, playbackQueueId);
         return;
       }
 
@@ -1035,7 +1083,7 @@ function HomePage() {
         setHistoryPlaybackVideo(video);
         setGameActionStatus(null);
         setSelectedOpenPositionId(position.id);
-        handleSelectVideo(video.id, HISTORY_PLAYBACK_QUEUE_ID);
+        handleSelectVideoWithPreview(video.id, HISTORY_PLAYBACK_QUEUE_ID);
       } catch (error) {
         setGameActionStatus(
           error instanceof Error
@@ -1046,7 +1094,7 @@ function HomePage() {
         setHistoryPlaybackLoadingVideoId(null);
       }
     },
-    [handleSelectVideo, scrollToPlayerStage, setGameActionStatus],
+    [handleSelectVideoWithPreview, scrollToPlayerStage, setGameActionStatus],
   );
   const handleSelectLeaderboardPositionVideo = useCallback(
     async (position: GamePosition, playbackQueueId?: string) => {
@@ -1055,7 +1103,7 @@ function HomePage() {
       if (playbackQueueId) {
         setGameActionStatus(null);
         setSelectedOpenPositionId(position.id);
-        handleSelectVideo(position.videoId, playbackQueueId);
+        handleSelectVideoWithPreview(position.videoId, playbackQueueId);
         return;
       }
 
@@ -1066,7 +1114,7 @@ function HomePage() {
         setHistoryPlaybackVideo(video);
         setGameActionStatus(null);
         setSelectedOpenPositionId(position.id);
-        handleSelectVideo(video.id, HISTORY_PLAYBACK_QUEUE_ID);
+        handleSelectVideoWithPreview(video.id, HISTORY_PLAYBACK_QUEUE_ID);
       } catch (error) {
         setGameActionStatus(
           error instanceof Error
@@ -1077,7 +1125,7 @@ function HomePage() {
         setHistoryPlaybackLoadingVideoId(null);
       }
     },
-    [handleSelectVideo, scrollToPlayerStage, setGameActionStatus],
+    [handleSelectVideoWithPreview, scrollToPlayerStage, setGameActionStatus],
   );
   const handleSelectGameTab = useCallback((tab: 'positions' | 'history' | 'leaderboard') => {
     startTransition(() => {
@@ -1114,7 +1162,6 @@ function HomePage() {
       isSelectedVideoBuyDisabled={isSelectedVideoBuyDisabled}
       isSelectedVideoSellDisabled={isSelectedVideoSellDisabled}
       isSellSubmitting={isSellSubmitting}
-      mainPlayerRef={videoPlayerRef}
       maxSellQuantity={maxSellQuantity}
       onContentClick={onContentClick}
       mode="panel"
@@ -1296,6 +1343,7 @@ function HomePage() {
       />
       <main className="app-shell__main">
         <HomePlaybackSection
+          preferredPreviewVideoId={previewVideoId}
           chartPanelProps={{
             buyableVideoSearchStatus: activeChartBuyableVideoSearchStatus,
             chartErrorMessage: activeChartErrorMessage,
@@ -1311,7 +1359,7 @@ function HomePage() {
             isFetchingNextPage: activeChartIsFetchingNextPage,
             mainSectionCollapseKey: activeChartMainSectionCollapseKey,
             onLoadMore: activeChartOnLoadMore,
-            onSelectVideo: handleSelectVideo,
+            onSelectVideo: handleSelectVideoWithPreview,
             onToggleBuyableOnlyFilter: () => setIsBuyableOnlyFilterActive((current) => !current),
             onToggleFeaturedSectionCollapse: toggleCollapsedSection,
             primarySectionEyebrow: activeChartSectionEyebrow,
@@ -1348,10 +1396,10 @@ function HomePage() {
             manualPlaybackSaveButtonLabel: isManualPlaybackSavePending ? '저장 중...' : '저장',
             manualPlaybackSaveStatus: manualPlaybackSaveStatus ?? undefined,
             onManualPlaybackSave: () => void handleManualPlaybackSave(),
-            onNextVideo: handlePlayNextVideo,
+            onNextVideo: handlePlayNextVideoWithPreview,
             onOpenRegionModal: () => setIsRegionModalOpen(true),
             onPlaybackRestoreApplied: handlePlaybackRestoreApplied,
-            onPreviousVideo: handlePlayPreviousVideo,
+            onPreviousVideo: handlePlayPreviousVideoWithPreview,
             onToggleCinematicMode: () => void handleToggleCinematicMode(),
             onToggleFavoriteStreamer: () => void handleToggleFavoriteStreamer(),
             playbackRestore: pendingPlaybackRestore,
@@ -1371,39 +1419,11 @@ function HomePage() {
           }}
           stickySelectedVideoLabel={selectedVideoOpenPositionCount > 0 ? 'Selected Positions' : 'Selected Video'}
           stickySelectedVideoContent={({
-            isMobilePlayerPreviewEnabled,
             onScrollToTop,
             onToggleCollapse,
-            onToggleMobilePlayerPreviewEnabled,
           }) =>
             renderSelectedVideoActionsContent(
               <>
-                {isMobileLayout ? (
-                  <button
-                    aria-label={
-                      isMobilePlayerPreviewEnabled
-                        ? '모바일 now playing 끄기'
-                        : '모바일 now playing 켜기'
-                    }
-                    className="app-shell__game-panel-action-utility app-shell__game-panel-action-utility--now-playing"
-                    data-active={isMobilePlayerPreviewEnabled ? 'true' : 'false'}
-                    onClick={onToggleMobilePlayerPreviewEnabled}
-                    title={
-                      isMobilePlayerPreviewEnabled
-                        ? '모바일 now playing 끄기'
-                        : '모바일 now playing 켜기'
-                    }
-                    type="button"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path
-                          d="M9 7.5v9l7-4.5-7-4.5Z"
-                          fill="currentColor"
-                          fillOpacity={isMobilePlayerPreviewEnabled ? '1' : '0.5'}
-                        />
-                    </svg>
-                  </button>
-                ) : null}
                 <button
                   aria-label="선택한 영상 패널 접기"
                   className="app-shell__game-panel-action-utility"
