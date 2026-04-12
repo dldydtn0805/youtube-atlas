@@ -50,6 +50,7 @@ export default function HomePlaybackSection({
     getInitialStickySelectedVideoCollapsed,
   );
   const [isMobilePlayerPreviewVisible, setIsMobilePlayerPreviewVisible] = useState(false);
+  const [isMobilePlayerPreviewCollapsed, setIsMobilePlayerPreviewCollapsed] = useState(false);
 
   useEffect(() => {
     if (!playerStageProps.isCinematicModeActive) {
@@ -150,6 +151,10 @@ export default function HomePlaybackSection({
         playerViewportRect.top < 0 &&
         playerViewportRect.bottom <= MOBILE_PLAYER_PREVIEW_TRIGGER_OFFSET;
 
+      if (!nextIsVisible) {
+        setIsMobilePlayerPreviewCollapsed(false);
+      }
+
       setIsMobilePlayerPreviewVisible((currentValue) =>
         currentValue === nextIsVisible ? currentValue : nextIsVisible,
       );
@@ -214,32 +219,52 @@ export default function HomePlaybackSection({
     typeof stickySelectedVideoContent === 'function'
       ? stickySelectedVideoContent({
           onScrollToTop: handleScrollToTop,
-          onToggleCollapse: () => setIsStickySelectedVideoCollapsed(true),
+          onToggleCollapse: () => {
+            setIsStickySelectedVideoCollapsed(true);
+            setIsMobilePlayerPreviewCollapsed(true);
+          },
         })
       : stickySelectedVideoContent;
   const stickyPlayerPreview =
     !playerStageProps.isCinematicModeActive &&
     playerStageProps.isMobileLayout &&
     isMobilePlayerPreviewVisible &&
+    !isStickySelectedVideoCollapsed &&
+    !isMobilePlayerPreviewCollapsed &&
     playerStageProps.selectedVideoId ? (
-      <button
-        className="app-shell__sticky-player-preview"
-        onClick={handleScrollToTop}
-        type="button"
-      >
-        <MiniVideoPreview
-          containerClassName="app-shell__sticky-player-preview-thumb app-shell__sticky-player-preview-thumb--player"
-          frameClassName="app-shell__sticky-player-preview-frame"
-          mainPlayerRef={playerStageProps.playerRef}
-          selectedVideoId={playerStageProps.selectedVideoId}
-        />
-      </button>
+      <div className="app-shell__sticky-player-preview-shell">
+        <button
+          aria-label="상단 미니 플레이어로 이동"
+          className="app-shell__sticky-player-preview"
+          onClick={handleScrollToTop}
+          type="button"
+        >
+          <MiniVideoPreview
+            containerClassName="app-shell__sticky-player-preview-thumb app-shell__sticky-player-preview-thumb--player"
+            frameClassName="app-shell__sticky-player-preview-frame"
+            mainPlayerRef={playerStageProps.playerRef}
+            selectedVideoId={playerStageProps.selectedVideoId}
+          />
+        </button>
+        <button
+          aria-label="상단 미니 플레이어 접기"
+          className="app-shell__sticky-player-preview-collapse"
+          onClick={() => setIsMobilePlayerPreviewCollapsed(true)}
+          title="접기"
+          type="button"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M6 12h12"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.8"
+            />
+          </svg>
+        </button>
+      </div>
     ) : null;
-  const mobilePlayerPreviewSlot = stickyPlayerPreview ? (
-    <div className="app-shell__mobile-player-preview-slot">
-      {stickyPlayerPreview}
-    </div>
-  ) : null;
   const stickySelectedVideoSlot =
     stickySelectedVideoContent && isStickySelectedVideoVisible ? (
       <div
@@ -247,6 +272,7 @@ export default function HomePlaybackSection({
         data-cinematic={playerStageProps.isCinematicModeActive}
       >
         <div className="app-shell__sticky-selected-video-frame">
+          {stickyPlayerPreview}
           {isStickySelectedVideoCollapsed ? (
             <div className="app-shell__game-panel-actions app-shell__game-panel-actions--collapsed">
               <div
@@ -324,7 +350,6 @@ export default function HomePlaybackSection({
 
   return (
     <>
-      {mobilePlayerPreviewSlot}
       {!playerStageProps.isCinematicModeActive ? stickySelectedVideoSlot : null}
       <PlayerStage
         {...playerStageProps}
