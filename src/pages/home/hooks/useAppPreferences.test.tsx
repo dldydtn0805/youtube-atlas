@@ -116,4 +116,26 @@ describe('useAppPreferences', () => {
       block: 'start',
     });
   });
+
+  it('toggles and persists dark mode on mobile layout', async () => {
+    const playerSectionRef = createRef<HTMLElement>();
+    const playerStageRef = createRef<HTMLDivElement>();
+
+    const { result } = renderHook(() => useAppPreferences({ playerSectionRef, playerStageRef }));
+
+    expect(result.current.isMobileLayout).toBe(true);
+    expect(result.current.isDarkMode).toBe(false);
+
+    act(() => {
+      result.current.handleToggleThemeMode();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isDarkMode).toBe(true);
+      expect(document.documentElement.dataset.theme).toBe('dark');
+      expect(document.documentElement.style.colorScheme).toBe('dark');
+    });
+
+    expect(window.localStorage.getItem('youtube-atlas-theme-mode')).toBe('dark');
+  });
 });

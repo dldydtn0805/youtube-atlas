@@ -164,12 +164,11 @@ function getDefaultMobilePlayerPreviewLayout() {
     MOBILE_PLAYER_PREVIEW_MIN_WIDTH,
     Math.min(MOBILE_PLAYER_PREVIEW_MAX_WIDTH, window.innerWidth - (MOBILE_PLAYER_PREVIEW_MARGIN * 2)),
   );
-  const height = getPreviewHeight(width);
 
   return clampMobilePlayerPreviewLayout({
     width,
     x: MOBILE_PLAYER_PREVIEW_MARGIN,
-    y: window.innerHeight - height - 116,
+    y: MOBILE_PLAYER_PREVIEW_MARGIN,
   });
 }
 
@@ -178,31 +177,9 @@ function getInitialMobilePlayerPreviewLayout() {
     return getDefaultMobilePlayerPreviewLayout();
   }
 
-  const rawLayout = window.localStorage.getItem(MOBILE_PLAYER_PREVIEW_LAYOUT_STORAGE_KEY);
+  window.localStorage.removeItem(MOBILE_PLAYER_PREVIEW_LAYOUT_STORAGE_KEY);
 
-  if (!rawLayout) {
-    return getDefaultMobilePlayerPreviewLayout();
-  }
-
-  try {
-    const parsedLayout = JSON.parse(rawLayout) as Partial<MobilePlayerPreviewLayout>;
-
-    if (
-      typeof parsedLayout.width !== 'number' ||
-      typeof parsedLayout.x !== 'number' ||
-      typeof parsedLayout.y !== 'number'
-    ) {
-      return getDefaultMobilePlayerPreviewLayout();
-    }
-
-    return clampMobilePlayerPreviewLayout({
-      width: parsedLayout.width,
-      x: parsedLayout.x,
-      y: parsedLayout.y,
-    });
-  } catch {
-    return getDefaultMobilePlayerPreviewLayout();
-  }
+  return getDefaultMobilePlayerPreviewLayout();
 }
 
 export default function HomePlaybackSection({
@@ -250,10 +227,13 @@ export default function HomePlaybackSection({
     | null
   >(null);
   const suppressPreviewClickRef = useRef(false);
+  const hasAutoEnabledMobilePlayerPreviewRef = useRef(false);
 
   useEffect(() => {
+    hasAutoEnabledMobilePlayerPreviewRef.current = false;
     setIsMobilePlayerPreviewVisible(false);
-    setIsMobilePlayerPreviewCollapsed(false);
+    setIsMobilePlayerPreviewCollapsed(true);
+    setIsMobilePlayerPreviewEnabled(false);
   }, [mobilePlayerPreviewVideoId]);
 
   useEffect(() => {
@@ -359,17 +339,6 @@ export default function HomePlaybackSection({
       return;
     }
 
-    window.localStorage.setItem(
-      MOBILE_PLAYER_PREVIEW_LAYOUT_STORAGE_KEY,
-      JSON.stringify(mobilePlayerPreviewLayout),
-    );
-  }, [mobilePlayerPreviewLayout]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
     const syncPreviewLayout = () => {
       setMobilePlayerPreviewLayout((currentLayout) => {
         const nextLayout = clampMobilePlayerPreviewLayout(currentLayout);
@@ -415,7 +384,17 @@ export default function HomePlaybackSection({
         playerViewportRect.top < 0 &&
         playerViewportRect.bottom <= MOBILE_PLAYER_PREVIEW_TRIGGER_OFFSET;
 
+      if (
+        nextIsVisible &&
+        !isMobilePlayerPreviewEnabled &&
+        !hasAutoEnabledMobilePlayerPreviewRef.current
+      ) {
+        hasAutoEnabledMobilePlayerPreviewRef.current = true;
+        setIsMobilePlayerPreviewEnabled(true);
+      }
+
       if (!nextIsVisible) {
+        hasAutoEnabledMobilePlayerPreviewRef.current = false;
         setIsMobilePlayerPreviewCollapsed(false);
       }
 
@@ -450,6 +429,7 @@ export default function HomePlaybackSection({
       scrollTarget.removeEventListener('scroll', schedulePreviewVisibilityUpdate);
     };
   }, [
+    isMobilePlayerPreviewEnabled,
     playerStageProps.isCinematicModeActive,
     playerStageProps.isMobileLayout,
     playerStageProps.playerViewportRef,

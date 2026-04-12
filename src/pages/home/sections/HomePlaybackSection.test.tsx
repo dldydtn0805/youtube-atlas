@@ -409,6 +409,44 @@ describe('HomePlaybackSection', () => {
     expect(screen.getByText('Selected video actions')).toBeInTheDocument();
   });
 
+  it('resets the mobile player preview position on mount', async () => {
+    window.localStorage.setItem(
+      'youtube-atlas-mobile-player-preview-layout',
+      JSON.stringify({
+        width: 120,
+        x: 12,
+        y: 12,
+      }),
+    );
+
+    render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={
+          {
+            isCinematicModeActive: false,
+            isMobileLayout: true,
+            playerSectionRef: createRef<HTMLElement>(),
+            playerStageRef: createRef<HTMLDivElement>(),
+            playerViewportRef: createRef<HTMLDivElement>(),
+            selectedVideoChannelTitle: 'Preview Channel',
+            selectedVideoId: 'preview-video',
+            selectedVideoTitle: 'Preview Title',
+          } as never
+        }
+        stickySelectedVideoContent={<div>Selected video actions</div>}
+      />,
+    );
+
+    const previewShell = document.querySelector<HTMLElement>('.app-shell__sticky-player-preview-shell');
+
+    expect(previewShell?.style.left).toBe('12px');
+    expect(previewShell?.style.top).toBe('12px');
+    expect(window.localStorage.getItem('youtube-atlas-mobile-player-preview-layout')).toBeNull();
+  });
+
   it('can disable the mobile player preview and remember the preference', async () => {
     const playerStageProps = {
       isCinematicModeActive: false,
@@ -461,6 +499,20 @@ describe('HomePlaybackSection', () => {
     await waitFor(() => {
       expect(document.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
     });
+
+    fireEvent.click(screen.getByRole('button', { name: 'now playing 끄기' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('false');
+    });
+    expect(window.localStorage.getItem('youtube-atlas-mobile-player-preview-enabled')).toBe('false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'now playing 켜기' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('true');
+    });
+    expect(window.localStorage.getItem('youtube-atlas-mobile-player-preview-enabled')).toBe('true');
 
     fireEvent.click(screen.getByRole('button', { name: 'now playing 끄기' }));
 
