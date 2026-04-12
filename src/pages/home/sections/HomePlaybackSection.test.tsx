@@ -363,7 +363,7 @@ describe('HomePlaybackSection', () => {
     );
 
     flushAnimationFrames();
-    expect(screen.queryByText('Preview Title')).not.toBeInTheDocument();
+    expect(document.querySelector('.app-shell__mobile-player-preview-slot')).toBeNull();
 
     getBoundingClientRectMock.mockImplementation(
       () =>
@@ -384,10 +384,10 @@ describe('HomePlaybackSection', () => {
     flushAnimationFrames();
 
     await waitFor(() => {
-      expect(screen.getByText('Preview Title')).toBeInTheDocument();
+      expect(document.querySelector('.app-shell__mobile-player-preview-slot')).not.toBeNull();
     });
 
-    expect(screen.getByText('Preview Channel')).toBeInTheDocument();
+    expect(document.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
     expect(screen.getByText('Selected video actions')).toBeInTheDocument();
   });
 

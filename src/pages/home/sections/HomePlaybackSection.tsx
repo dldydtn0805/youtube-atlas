@@ -233,17 +233,6 @@ export default function HomePlaybackSection({
           mainPlayerRef={playerStageProps.playerRef}
           selectedVideoId={playerStageProps.selectedVideoId}
         />
-        <div className="app-shell__sticky-player-preview-copy">
-          <p className="app-shell__sticky-player-preview-eyebrow">Now Playing</p>
-          <p className="app-shell__sticky-player-preview-title">
-            {playerStageProps.selectedVideoTitle ?? '재생 중인 영상'}
-          </p>
-          {playerStageProps.selectedVideoChannelTitle ? (
-            <p className="app-shell__sticky-player-preview-channel">
-              {playerStageProps.selectedVideoChannelTitle}
-            </p>
-          ) : null}
-        </div>
       </button>
     ) : null;
   const mobilePlayerPreviewSlot = stickyPlayerPreview ? (
