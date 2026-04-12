@@ -65,6 +65,11 @@
   z-index: 1;
 }
 
+.app-shell__sticky-player-preview-collapse svg {
+  height: 12px;
+  width: 12px;
+}
+
 .app-shell__sticky-player-preview-thumb {
   border-radius: 10px;
   display: block;
@@ -239,6 +244,18 @@
     gap: 8px;
     margin-bottom: 8px;
     padding: 5px 9px 5px 5px;
+  }
+
+  .app-shell__sticky-player-preview-collapse {
+    height: 22px;
+    right: 7px;
+    top: 7px;
+    width: 22px;
+  }
+
+  .app-shell__sticky-player-preview-collapse svg {
+    height: 10px;
+    width: 10px;
   }
 
   .app-shell__sticky-player-preview-thumb {

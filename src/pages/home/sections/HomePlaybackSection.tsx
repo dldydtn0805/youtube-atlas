@@ -266,7 +266,14 @@ export default function HomePlaybackSection({
         >
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
-              d="M6 12h12"
+              d="M8 8l8 8"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.8"
+            />
+            <path
+              d="M16 8l-8 8"
               stroke="currentColor"
               strokeLinecap="round"
               strokeLinejoin="round"
