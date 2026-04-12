@@ -420,7 +420,7 @@ describe('HomePlaybackSection', () => {
     );
 
     const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function mockGetBoundingClientRect() {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function mockGetBoundingClientRect(this: HTMLElement) {
       if ((this as HTMLElement).classList.contains('app-shell__sticky-selected-video-frame')) {
         return {
           bottom: 720,
