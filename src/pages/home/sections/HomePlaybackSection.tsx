@@ -829,7 +829,16 @@ export default function HomePlaybackSection({
                 tabIndex={0}
               >
                 <div className="app-shell__sticky-selected-video-collapsed-copy">
-                  <p className="app-shell__game-panel-actions-eyebrow">{stickySelectedVideoLabel}</p>
+                  <button
+                    className="app-shell__sticky-selected-video-collapsed-label"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleScrollToTop();
+                    }}
+                    type="button"
+                  >
+                    <span className="app-shell__game-panel-actions-eyebrow">{stickySelectedVideoLabel}</span>
+                  </button>
                   {playerStageProps.selectedVideoTitle ? (
                     <p
                       className="app-shell__sticky-selected-video-collapsed-title"

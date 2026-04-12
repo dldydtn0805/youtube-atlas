@@ -197,9 +197,73 @@ describe('HomePlaybackSection', () => {
     expect(screen.getByText('A very long selected video title for collapsed header')).toBeInTheDocument();
     expect(screen.queryByText('선택한 영상 패널을 잠시 접어두었습니다.')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /Now Playing/ }));
+    fireEvent.click(screen.getByText('A very long selected video title for collapsed header'));
 
     expect(screen.getByText('Selected video actions')).toBeInTheDocument();
+  });
+
+  it('scrolls to the top when the collapsed now playing label is clicked', async () => {
+    const scrollTo = vi.fn();
+
+    vi.stubGlobal('scrollTo', scrollTo);
+
+    const playerStageProps = {
+      isCinematicModeActive: false,
+      isMobileLayout: false,
+      playerSectionRef: createRef<HTMLElement>(),
+      playerStageRef: createRef<HTMLDivElement>(),
+      playerViewportRef: createRef<HTMLDivElement>(),
+    } as never;
+
+    render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={playerStageProps}
+        stickySelectedVideoContent={({ onToggleCollapse }) => (
+          <div>
+            <button onClick={onToggleCollapse} type="button">
+              접기
+            </button>
+            <div>Selected video actions</div>
+          </div>
+        )}
+      />,
+    );
+
+    const playerViewport = screen.getByTestId('player-viewport');
+
+    vi.spyOn(playerViewport, 'getBoundingClientRect').mockImplementation(
+      () =>
+        ({
+          bottom: 0,
+          height: 0,
+          left: 0,
+          right: 0,
+          top: -20,
+          width: 0,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        }) as DOMRect,
+    );
+
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '접기' }));
+    fireEvent.click(screen.getByText('Now Playing'));
+
+    expect(scrollTo).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      top: 0,
+    });
+    expect(screen.queryByText('Selected video actions')).not.toBeInTheDocument();
+    expect(screen.getByText('Now Playing')).toBeInTheDocument();
   });
 
   it('remembers the sticky selected video collapsed state', async () => {
@@ -731,7 +795,7 @@ describe('HomePlaybackSection', () => {
       expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('false');
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Now Playing/ }));
+    fireEvent.click(screen.getByText('Preview Title'));
     flushAnimationFrames();
 
     await waitFor(() => {

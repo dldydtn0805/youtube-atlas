@@ -184,6 +184,17 @@
   min-width: 0;
 }
 
+.app-shell__sticky-selected-video-collapsed-label {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+}
+
 .app-shell__sticky-selected-video-collapsed-copy .app-shell__game-panel-actions-eyebrow {
   flex: 0 0 auto;
 }
