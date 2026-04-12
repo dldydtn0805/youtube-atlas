@@ -28,7 +28,6 @@
   margin-bottom: 10px;
   max-width: 100%;
   padding: 6px 10px 6px 6px;
-  position: relative;
   width: 100%;
 }
 
@@ -45,29 +44,6 @@
   overflow: hidden;
   padding: 0;
   width: auto;
-}
-
-.app-shell__sticky-player-preview-collapse {
-  align-items: center;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 999px;
-  color: #0f172a;
-  cursor: pointer;
-  display: inline-flex;
-  height: 24px;
-  justify-content: center;
-  padding: 0;
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  width: 24px;
-  z-index: 1;
-}
-
-.app-shell__sticky-player-preview-collapse svg {
-  height: 12px;
-  width: 12px;
 }
 
 .app-shell__sticky-player-preview-thumb {
@@ -100,7 +76,6 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  padding-right: 30px;
 }
 
 .app-shell__sticky-player-preview-eyebrow,
@@ -244,18 +219,6 @@
     gap: 8px;
     margin-bottom: 8px;
     padding: 5px 9px 5px 5px;
-  }
-
-  .app-shell__sticky-player-preview-collapse {
-    height: 22px;
-    right: 7px;
-    top: 7px;
-    width: 22px;
-  }
-
-  .app-shell__sticky-player-preview-collapse svg {
-    height: 10px;
-    width: 10px;
   }
 
   .app-shell__sticky-player-preview-thumb {

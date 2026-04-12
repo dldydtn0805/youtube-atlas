@@ -1370,9 +1370,40 @@ function HomePage() {
             toggleFavoriteStreamerPending: toggleFavoriteStreamerMutation.isPending,
           }}
           stickySelectedVideoLabel={selectedVideoOpenPositionCount > 0 ? 'Selected Positions' : 'Selected Video'}
-          stickySelectedVideoContent={({ onScrollToTop, onToggleCollapse }) =>
+          stickySelectedVideoContent={({
+            isMobilePlayerPreviewEnabled,
+            onScrollToTop,
+            onToggleCollapse,
+            onToggleMobilePlayerPreviewEnabled,
+          }) =>
             renderSelectedVideoActionsContent(
               <>
+                {isMobileLayout ? (
+                  <button
+                    aria-label={
+                      isMobilePlayerPreviewEnabled
+                        ? '모바일 now playing 끄기'
+                        : '모바일 now playing 켜기'
+                    }
+                    className="app-shell__game-panel-action-utility app-shell__game-panel-action-utility--now-playing"
+                    data-active={isMobilePlayerPreviewEnabled ? 'true' : 'false'}
+                    onClick={onToggleMobilePlayerPreviewEnabled}
+                    title={
+                      isMobilePlayerPreviewEnabled
+                        ? '모바일 now playing 끄기'
+                        : '모바일 now playing 켜기'
+                    }
+                    type="button"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M9 7.5v9l7-4.5-7-4.5Z"
+                          fill="currentColor"
+                          fillOpacity={isMobilePlayerPreviewEnabled ? '1' : '0.5'}
+                        />
+                    </svg>
+                  </button>
+                ) : null}
                 <button
                   aria-label="선택한 영상 패널 접기"
                   className="app-shell__game-panel-action-utility"

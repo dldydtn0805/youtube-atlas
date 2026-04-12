@@ -392,6 +392,157 @@ describe('HomePlaybackSection', () => {
     expect(screen.getByText('Selected video actions')).toBeInTheDocument();
   });
 
+  it('can disable the mobile player preview and remember the preference', async () => {
+    const playerStageProps = {
+      isCinematicModeActive: false,
+      isMobileLayout: true,
+      playerSectionRef: createRef<HTMLElement>(),
+      playerStageRef: createRef<HTMLDivElement>(),
+      playerViewportRef: createRef<HTMLDivElement>(),
+      selectedVideoChannelTitle: 'Preview Channel',
+      selectedVideoId: 'preview-video',
+      selectedVideoTitle: 'Preview Title',
+    } as never;
+
+    const { unmount } = render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={playerStageProps}
+        stickySelectedVideoContent={({ isMobilePlayerPreviewEnabled, onToggleMobilePlayerPreviewEnabled }) => (
+          <div>
+            <button onClick={onToggleMobilePlayerPreviewEnabled} type="button">
+              {isMobilePlayerPreviewEnabled ? 'now playing 끄기' : 'now playing 켜기'}
+            </button>
+            <div>Selected video actions</div>
+          </div>
+        )}
+      />,
+    );
+
+    const playerViewport = screen.getByTestId('player-viewport');
+    const getBoundingClientRectMock = vi.spyOn(playerViewport, 'getBoundingClientRect');
+
+    getBoundingClientRectMock.mockImplementation(
+      () =>
+        ({
+          bottom: 0,
+          height: 180,
+          left: 0,
+          right: 0,
+          top: -180,
+          width: 320,
+          x: 0,
+          y: -180,
+          toJSON: () => ({}),
+        }) as DOMRect,
+    );
+
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'now playing 끄기' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-player-preview')).toBeNull();
+    });
+    expect(window.localStorage.getItem('youtube-atlas-mobile-player-preview-enabled')).toBe('false');
+
+    unmount();
+
+    render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={playerStageProps}
+        stickySelectedVideoContent={({ isMobilePlayerPreviewEnabled }) => (
+          <div>
+            <div>{isMobilePlayerPreviewEnabled ? 'now playing 켜짐' : 'now playing 꺼짐'}</div>
+            <div>Selected video actions</div>
+          </div>
+        )}
+      />,
+    );
+
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(screen.getByText('now playing 꺼짐')).toBeInTheDocument();
+    });
+    expect(document.querySelector('.app-shell__sticky-player-preview')).toBeNull();
+  });
+
+  it('restores the mobile player preview after expanding the collapsed panel', async () => {
+    render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={
+          {
+            isCinematicModeActive: false,
+            isMobileLayout: true,
+            playerSectionRef: createRef<HTMLElement>(),
+            playerStageRef: createRef<HTMLDivElement>(),
+            playerViewportRef: createRef<HTMLDivElement>(),
+            selectedVideoChannelTitle: 'Preview Channel',
+            selectedVideoId: 'preview-video',
+            selectedVideoTitle: 'Preview Title',
+          } as never
+        }
+        stickySelectedVideoContent={({ onToggleCollapse }) => (
+          <div>
+            <button onClick={onToggleCollapse} type="button">
+              접기
+            </button>
+            <div>Selected video actions</div>
+          </div>
+        )}
+      />,
+    );
+
+    const playerViewport = screen.getByTestId('player-viewport');
+
+    vi.spyOn(playerViewport, 'getBoundingClientRect').mockImplementation(
+      () =>
+        ({
+          bottom: 0,
+          height: 180,
+          left: 0,
+          right: 0,
+          top: -180,
+          width: 320,
+          x: 0,
+          y: -180,
+          toJSON: () => ({}),
+        }) as DOMRect,
+    );
+
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '접기' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-player-preview')).toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '선택한 영상 패널 펼치기' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
+    });
+    expect(screen.getByText('Selected video actions')).toBeInTheDocument();
+  });
+
   it('scrolls to the player stage when the top button is pressed', async () => {
     const scrollTo = vi.fn();
 

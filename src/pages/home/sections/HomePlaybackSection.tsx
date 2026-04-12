@@ -9,10 +9,13 @@ import './HomePlaybackSection.css';
 const STICKY_SELECTED_VIDEO_TOP_OFFSET = 12;
 const STICKY_SELECTED_VIDEO_RELEASE_GAP = 72;
 const STICKY_SELECTED_VIDEO_COLLAPSED_STORAGE_KEY = 'youtube-atlas-sticky-selected-video-collapsed';
+const MOBILE_PLAYER_PREVIEW_ENABLED_STORAGE_KEY = 'youtube-atlas-mobile-player-preview-enabled';
 const MOBILE_PLAYER_PREVIEW_TRIGGER_OFFSET = 8;
 
 interface StickySelectedVideoControls {
+  isMobilePlayerPreviewEnabled: boolean;
   onScrollToTop: () => void;
+  onToggleMobilePlayerPreviewEnabled: () => void;
   onToggleCollapse: () => void;
 }
 
@@ -37,6 +40,14 @@ function getInitialStickySelectedVideoCollapsed() {
   return window.localStorage.getItem(STICKY_SELECTED_VIDEO_COLLAPSED_STORAGE_KEY) === 'true';
 }
 
+function getInitialMobilePlayerPreviewEnabled() {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+
+  return window.localStorage.getItem(MOBILE_PLAYER_PREVIEW_ENABLED_STORAGE_KEY) !== 'false';
+}
+
 export default function HomePlaybackSection({
   chartPanelProps,
   communityPanelProps,
@@ -48,6 +59,9 @@ export default function HomePlaybackSection({
   const [isStickySelectedVideoVisible, setIsStickySelectedVideoVisible] = useState(false);
   const [isStickySelectedVideoCollapsed, setIsStickySelectedVideoCollapsed] = useState(
     getInitialStickySelectedVideoCollapsed,
+  );
+  const [isMobilePlayerPreviewEnabled, setIsMobilePlayerPreviewEnabled] = useState(
+    getInitialMobilePlayerPreviewEnabled,
   );
   const [isMobilePlayerPreviewVisible, setIsMobilePlayerPreviewVisible] = useState(false);
   const [isMobilePlayerPreviewCollapsed, setIsMobilePlayerPreviewCollapsed] = useState(false);
@@ -129,16 +143,29 @@ export default function HomePlaybackSection({
   }, [isStickySelectedVideoCollapsed]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem(
+      MOBILE_PLAYER_PREVIEW_ENABLED_STORAGE_KEY,
+      isMobilePlayerPreviewEnabled ? 'true' : 'false',
+    );
+  }, [isMobilePlayerPreviewEnabled]);
+
+  useEffect(() => {
     const playerViewport = playerStageProps.playerViewportRef.current;
 
     if (
       typeof window === 'undefined' ||
       playerStageProps.isCinematicModeActive ||
       !playerStageProps.isMobileLayout ||
+      !isMobilePlayerPreviewEnabled ||
       !playerStageProps.selectedVideoId ||
       !playerViewport
     ) {
       setIsMobilePlayerPreviewVisible(false);
+      setIsMobilePlayerPreviewCollapsed(false);
       return;
     }
 
@@ -186,6 +213,7 @@ export default function HomePlaybackSection({
       scrollTarget.removeEventListener('scroll', schedulePreviewVisibilityUpdate);
     };
   }, [
+    isMobilePlayerPreviewEnabled,
     playerStageProps.isCinematicModeActive,
     playerStageProps.isMobileLayout,
     playerStageProps.playerViewportRef,
@@ -215,10 +243,24 @@ export default function HomePlaybackSection({
       top: 0,
     });
   };
+
+  const handleExpandStickySelectedVideo = () => {
+    setIsStickySelectedVideoCollapsed(false);
+
+    if (isMobilePlayerPreviewEnabled) {
+      setIsMobilePlayerPreviewCollapsed(false);
+    }
+  };
+
   const renderedStickySelectedVideoContent =
     typeof stickySelectedVideoContent === 'function'
       ? stickySelectedVideoContent({
+          isMobilePlayerPreviewEnabled,
           onScrollToTop: handleScrollToTop,
+          onToggleMobilePlayerPreviewEnabled: () => {
+            setIsMobilePlayerPreviewEnabled((currentValue) => !currentValue);
+            setIsMobilePlayerPreviewCollapsed(false);
+          },
           onToggleCollapse: () => {
             setIsStickySelectedVideoCollapsed(true);
             setIsMobilePlayerPreviewCollapsed(true);
@@ -228,6 +270,7 @@ export default function HomePlaybackSection({
   const stickyPlayerPreview =
     !playerStageProps.isCinematicModeActive &&
     playerStageProps.isMobileLayout &&
+    isMobilePlayerPreviewEnabled &&
     isMobilePlayerPreviewVisible &&
     !isStickySelectedVideoCollapsed &&
     !isMobilePlayerPreviewCollapsed &&
@@ -257,30 +300,6 @@ export default function HomePlaybackSection({
             </p>
           ) : null}
         </div>
-        <button
-          aria-label="상단 미니 플레이어 접기"
-          className="app-shell__sticky-player-preview-collapse"
-          onClick={() => setIsMobilePlayerPreviewCollapsed(true)}
-          title="접기"
-          type="button"
-        >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M8 8l8 8"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.8"
-            />
-            <path
-              d="M16 8l-8 8"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.8"
-            />
-          </svg>
-        </button>
       </div>
     ) : null;
   const stickySelectedVideoSlot =
@@ -297,11 +316,11 @@ export default function HomePlaybackSection({
                 aria-expanded="false"
                 className="app-shell__game-panel-actions-header"
                 data-clickable="true"
-                onClick={() => setIsStickySelectedVideoCollapsed(false)}
+                onClick={handleExpandStickySelectedVideo}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
-                    setIsStickySelectedVideoCollapsed(false);
+                    handleExpandStickySelectedVideo();
                   }
                 }}
                 role="button"
@@ -317,7 +336,7 @@ export default function HomePlaybackSection({
                     aria-expanded="false"
                     aria-label="선택한 영상 패널 펼치기"
                     className="app-shell__game-panel-action-utility"
-                    onClick={() => setIsStickySelectedVideoCollapsed(false)}
+                    onClick={handleExpandStickySelectedVideo}
                     title="펼치기"
                     type="button"
                   >
