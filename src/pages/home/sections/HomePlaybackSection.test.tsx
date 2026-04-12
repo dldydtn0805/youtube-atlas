@@ -409,7 +409,7 @@ describe('HomePlaybackSection', () => {
     expect(screen.getByText('Selected video actions')).toBeInTheDocument();
   });
 
-  it('can disable the mobile player preview and restores it on the next mount', async () => {
+  it('can disable the mobile player preview and remember the preference', async () => {
     const playerStageProps = {
       isCinematicModeActive: false,
       isMobileLayout: true,
@@ -489,9 +489,9 @@ describe('HomePlaybackSection', () => {
     flushAnimationFrames();
 
     await waitFor(() => {
-      expect(screen.getByText('now playing 켜짐')).toBeInTheDocument();
+      expect(screen.getByText('now playing 꺼짐')).toBeInTheDocument();
     });
-    expect(window.localStorage.getItem('youtube-atlas-mobile-player-preview-enabled')).toBe('true');
+    expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('false');
   });
 
   it('restores the mobile player preview after expanding the collapsed panel', async () => {

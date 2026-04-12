@@ -254,7 +254,6 @@ export default function HomePlaybackSection({
   useEffect(() => {
     setIsMobilePlayerPreviewVisible(false);
     setIsMobilePlayerPreviewCollapsed(false);
-    setIsMobilePlayerPreviewEnabled(true);
   }, [mobilePlayerPreviewVideoId]);
 
   useEffect(() => {

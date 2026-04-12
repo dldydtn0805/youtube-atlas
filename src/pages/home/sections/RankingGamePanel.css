@@ -1639,12 +1639,6 @@
   color: #eff6ff;
 }
 
-:root[data-theme='dark'] .app-shell__game-panel-action-utility--preview-toggle[data-active='true'] {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: var(--text);
-}
-
 :root[data-theme='dark'] .app-shell__game-panel-action[data-variant='chart'] {
   background: linear-gradient(180deg, rgba(250, 204, 21, 0.34), rgba(234, 179, 8, 0.2));
   border-color: transparent;

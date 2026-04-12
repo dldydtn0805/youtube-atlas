@@ -1444,7 +1444,7 @@ function HomePage() {
                     className="app-shell__game-panel-action-utility app-shell__game-panel-action-utility--preview-toggle"
                     data-active={isMobilePlayerPreviewEnabled ? 'true' : 'false'}
                     onClick={onToggleMobilePlayerPreviewEnabled}
-                    title={isMobilePlayerPreviewEnabled ? '위치 프리뷰 끄기' : '위치 프리뷰 켜기'}
+                    title={isMobilePlayerPreviewEnabled ? '프리뷰 끄기' : '프리뷰 켜기'}
                     type="button"
                   >
                     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
