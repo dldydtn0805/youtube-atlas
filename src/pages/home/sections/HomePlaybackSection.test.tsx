@@ -387,6 +387,8 @@ describe('HomePlaybackSection', () => {
       expect(document.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
     });
 
+    const stickyFrame = document.querySelector('.app-shell__sticky-selected-video-frame');
+    expect(stickyFrame?.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
     expect(screen.getByText('Selected video actions')).toBeInTheDocument();
   });
 
