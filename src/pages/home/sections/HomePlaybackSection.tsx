@@ -155,6 +155,38 @@ function getDefaultMobilePlayerPreviewLayout() {
   return getAnchoredMobilePlayerPreviewLayout();
 }
 
+function getStoredMobilePlayerPreviewLayout() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const storedLayout = window.localStorage.getItem(MOBILE_PLAYER_PREVIEW_LAYOUT_STORAGE_KEY);
+
+  if (!storedLayout) {
+    return null;
+  }
+
+  try {
+    const parsedLayout = JSON.parse(storedLayout) as Partial<MobilePlayerPreviewLayout>;
+
+    if (
+      typeof parsedLayout.width !== 'number' ||
+      typeof parsedLayout.x !== 'number' ||
+      typeof parsedLayout.y !== 'number'
+    ) {
+      return null;
+    }
+
+    return clampMobilePlayerPreviewLayout({
+      width: parsedLayout.width,
+      x: parsedLayout.x,
+      y: parsedLayout.y,
+    });
+  } catch {
+    return null;
+  }
+}
+
 function getAnchoredMobilePlayerPreviewLayout(anchorRect?: DOMRect | null) {
   if (typeof window === 'undefined') {
     return {
@@ -191,9 +223,7 @@ function getInitialMobilePlayerPreviewLayout() {
     return getDefaultMobilePlayerPreviewLayout();
   }
 
-  window.localStorage.removeItem(MOBILE_PLAYER_PREVIEW_LAYOUT_STORAGE_KEY);
-
-  return getDefaultMobilePlayerPreviewLayout();
+  return getStoredMobilePlayerPreviewLayout() ?? getDefaultMobilePlayerPreviewLayout();
 }
 
 export default function HomePlaybackSection({
@@ -220,7 +250,11 @@ export default function HomePlaybackSection({
   );
   const desktopPlayerDockSlotRef = useRef<HTMLDivElement | null>(null);
   const stickySelectedVideoFrameRef = useRef<HTMLDivElement | null>(null);
+  const initialMobilePlayerPreviewLayoutRef = useRef<MobilePlayerPreviewLayout | null>(null);
   const lastAnchoredMobilePreviewVideoIdRef = useRef<string | null>(null);
+  const hasRestoredMobilePlayerPreviewLayoutRef = useRef(Boolean(getStoredMobilePlayerPreviewLayout()));
+  const pendingMobilePlayerPreviewResetRef = useRef(false);
+  const queuedMobilePlayerPreviewResetLayoutRef = useRef<MobilePlayerPreviewLayout | null>(null);
   const [desktopDockStyle, setDesktopDockStyle] = useState<{
     dockHeight: number;
     height: number;
@@ -355,6 +389,17 @@ export default function HomePlaybackSection({
       return;
     }
 
+    window.localStorage.setItem(
+      MOBILE_PLAYER_PREVIEW_LAYOUT_STORAGE_KEY,
+      JSON.stringify(mobilePlayerPreviewLayout),
+    );
+  }, [mobilePlayerPreviewLayout]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     const syncPreviewLayout = () => {
       setMobilePlayerPreviewLayout((currentLayout) => {
         const nextLayout = clampMobilePlayerPreviewLayout(currentLayout);
@@ -388,17 +433,47 @@ export default function HomePlaybackSection({
       return;
     }
 
-    if (lastAnchoredMobilePreviewVideoIdRef.current === mobilePlayerPreviewVideoId) {
-      return;
-    }
-
     const stickySelectedVideoFrame = stickySelectedVideoFrameRef.current;
 
     if (!stickySelectedVideoFrame) {
       return;
     }
 
-    const nextLayout = getAnchoredMobilePlayerPreviewLayout(stickySelectedVideoFrame.getBoundingClientRect());
+    initialMobilePlayerPreviewLayoutRef.current = getAnchoredMobilePlayerPreviewLayout(
+      stickySelectedVideoFrame.getBoundingClientRect(),
+    );
+  }, [
+    isStickySelectedVideoVisible,
+    mobilePlayerPreviewVideoId,
+    playerStageProps.isCinematicModeActive,
+    playerStageProps.isMobileLayout,
+    stickySelectedVideoContent,
+  ]);
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      playerStageProps.isCinematicModeActive ||
+      !playerStageProps.isMobileLayout ||
+      !mobilePlayerPreviewVideoId ||
+      !stickySelectedVideoContent ||
+      !isStickySelectedVideoVisible
+    ) {
+      return;
+    }
+
+    if (
+      lastAnchoredMobilePreviewVideoIdRef.current === mobilePlayerPreviewVideoId ||
+      hasRestoredMobilePlayerPreviewLayoutRef.current
+    ) {
+      return;
+    }
+
+    const nextLayout = initialMobilePlayerPreviewLayoutRef.current;
+
+    if (!nextLayout) {
+      return;
+    }
 
     setMobilePlayerPreviewLayout((currentLayout) => (
       currentLayout.width === nextLayout.width &&
@@ -415,6 +490,40 @@ export default function HomePlaybackSection({
     playerStageProps.isMobileLayout,
     stickySelectedVideoContent,
   ]);
+
+  const resetMobilePlayerPreviewLayout = () => {
+    const stickySelectedVideoFrame =
+      stickySelectedVideoFrameRef.current ??
+      document.querySelector<HTMLElement>('.app-shell__sticky-selected-video-frame');
+    const nextLayout =
+      initialMobilePlayerPreviewLayoutRef.current ??
+      getAnchoredMobilePlayerPreviewLayout(stickySelectedVideoFrame?.getBoundingClientRect() ?? null);
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(MOBILE_PLAYER_PREVIEW_LAYOUT_STORAGE_KEY);
+    }
+
+    hasRestoredMobilePlayerPreviewLayoutRef.current = false;
+    lastAnchoredMobilePreviewVideoIdRef.current = mobilePlayerPreviewVideoId ?? null;
+    setMobilePlayerPreviewLayout(nextLayout);
+  };
+
+  const queueMobilePlayerPreviewLayoutReset = () => {
+    const stickySelectedVideoFrame =
+      stickySelectedVideoFrameRef.current ??
+      document.querySelector<HTMLElement>('.app-shell__sticky-selected-video-frame');
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(MOBILE_PLAYER_PREVIEW_LAYOUT_STORAGE_KEY);
+    }
+
+    hasRestoredMobilePlayerPreviewLayoutRef.current = false;
+    lastAnchoredMobilePreviewVideoIdRef.current = null;
+    pendingMobilePlayerPreviewResetRef.current = true;
+    queuedMobilePlayerPreviewResetLayoutRef.current =
+      initialMobilePlayerPreviewLayoutRef.current ??
+      getAnchoredMobilePlayerPreviewLayout(stickySelectedVideoFrame?.getBoundingClientRect() ?? null);
+  };
 
   useEffect(() => {
     const playerViewport = playerStageProps.playerViewportRef.current;
@@ -612,6 +721,21 @@ export default function HomePlaybackSection({
   const handleExpandStickySelectedVideo = () => {
     setIsStickySelectedVideoCollapsed(false);
 
+    if (pendingMobilePlayerPreviewResetRef.current && typeof window !== 'undefined') {
+      pendingMobilePlayerPreviewResetRef.current = false;
+      const queuedLayout = queuedMobilePlayerPreviewResetLayoutRef.current;
+      queuedMobilePlayerPreviewResetLayoutRef.current = null;
+      window.requestAnimationFrame(() => {
+        if (queuedLayout) {
+          lastAnchoredMobilePreviewVideoIdRef.current = mobilePlayerPreviewVideoId ?? null;
+          setMobilePlayerPreviewLayout(queuedLayout);
+          return;
+        }
+
+        resetMobilePlayerPreviewLayout();
+      });
+    }
+
     if (isMobilePlayerPreviewEnabled) {
       setIsMobilePlayerPreviewCollapsed(false);
     }
@@ -635,6 +759,7 @@ export default function HomePlaybackSection({
           onToggleCollapse: () => {
             setIsStickySelectedVideoCollapsed(true);
             setIsMobilePlayerPreviewCollapsed(true);
+            queueMobilePlayerPreviewLayoutReset();
           },
         })
       : stickySelectedVideoContent;

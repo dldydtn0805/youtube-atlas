@@ -409,7 +409,7 @@ describe('HomePlaybackSection', () => {
     expect(screen.getByText('Selected video actions')).toBeInTheDocument();
   });
 
-  it('resets the mobile player preview position on mount', async () => {
+  it('restores the saved mobile player preview position on mount', async () => {
     window.localStorage.setItem(
       'youtube-atlas-mobile-player-preview-layout',
       JSON.stringify({
@@ -462,10 +462,16 @@ describe('HomePlaybackSection', () => {
     const previewShell = document.querySelector<HTMLElement>('.app-shell__sticky-player-preview-shell');
 
     await waitFor(() => {
-      expect(previewShell?.style.left).toBe('24px');
-      expect(previewShell?.style.top).toBe('504px');
+      expect(previewShell?.style.left).toBe('12px');
+      expect(previewShell?.style.top).toBe('12px');
     });
-    expect(window.localStorage.getItem('youtube-atlas-mobile-player-preview-layout')).toBeNull();
+    expect(window.localStorage.getItem('youtube-atlas-mobile-player-preview-layout')).toBe(
+      JSON.stringify({
+        width: 120,
+        x: 12,
+        y: 12,
+      }),
+    );
   });
 
   it('can disable the mobile player preview and remember the preference', async () => {
@@ -568,6 +574,34 @@ describe('HomePlaybackSection', () => {
   });
 
   it('restores the mobile player preview after expanding the collapsed panel', async () => {
+    window.localStorage.setItem(
+      'youtube-atlas-mobile-player-preview-layout',
+      JSON.stringify({
+        width: 120,
+        x: 12,
+        y: 12,
+      }),
+    );
+
+    const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function mockGetBoundingClientRect(this: HTMLElement) {
+      if (this.classList.contains('app-shell__sticky-selected-video-frame')) {
+        return {
+          bottom: 720,
+          height: 140,
+          left: 24,
+          right: 344,
+          top: 580,
+          width: 320,
+          x: 24,
+          y: 580,
+          toJSON: () => ({}),
+        } as DOMRect;
+      }
+
+      return originalGetBoundingClientRect.call(this);
+    });
+
     render(
       <HomePlaybackSection
         chartPanelProps={{} as never}
@@ -618,6 +652,8 @@ describe('HomePlaybackSection', () => {
     await waitFor(() => {
       expect(document.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
     });
+    expect(document.querySelector<HTMLElement>('.app-shell__sticky-player-preview-shell')?.style.left).toBe('12px');
+    expect(document.querySelector<HTMLElement>('.app-shell__sticky-player-preview-shell')?.style.top).toBe('12px');
 
     fireEvent.click(screen.getByRole('button', { name: '접기' }));
 
@@ -626,10 +662,20 @@ describe('HomePlaybackSection', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Selected Video' }));
+    flushAnimationFrames();
 
     await waitFor(() => {
       expect(document.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
     });
+    expect(document.querySelector<HTMLElement>('.app-shell__sticky-player-preview-shell')?.style.left).toBe('24px');
+    expect(document.querySelector<HTMLElement>('.app-shell__sticky-player-preview-shell')?.style.top).toBe('504px');
+    expect(window.localStorage.getItem('youtube-atlas-mobile-player-preview-layout')).toBe(
+      JSON.stringify({
+        width: 120,
+        x: 24,
+        y: 504,
+      }),
+    );
     expect(screen.getByText('Selected video actions')).toBeInTheDocument();
   });
 
