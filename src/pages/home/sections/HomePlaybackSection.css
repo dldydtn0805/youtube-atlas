@@ -172,6 +172,10 @@
   order: 1;
 }
 
+.app-shell__sticky-selected-video-slot[data-cinematic='false'] .app-shell__game-panel-actions:not(.app-shell__game-panel-actions--collapsed) .app-shell__game-panel-actions-eyebrow {
+  transform: translateY(2px);
+}
+
 .app-shell__sticky-selected-video-frame .app-shell__game-panel-actions--collapsed {
   gap: 0;
 }
