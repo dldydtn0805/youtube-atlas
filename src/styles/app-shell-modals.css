@@ -9,7 +9,7 @@
   overflow-y: auto;
   padding: 24px;
   position: fixed;
-  z-index: 1400;
+  z-index: var(--layer-modal-backdrop);
 }
 
 .app-shell__modal {
