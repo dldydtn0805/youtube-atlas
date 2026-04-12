@@ -41,6 +41,7 @@ declare namespace YT {
       video_id?: string;
     };
     loadVideoById: (videoId: string | VideoByIdSettings) => void;
+    setPlaybackQuality?: (suggestedQuality: string) => void;
     seekTo: (seconds: number, allowSeekAhead?: boolean) => void;
     stopVideo: () => void;
   }

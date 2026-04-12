@@ -8,6 +8,7 @@ let miniVideoPreviewPlayer: YT.Player | null = null;
 let miniVideoPreviewRequestedVideoId: string | null = null;
 let miniVideoPreviewIsReady = false;
 let miniVideoPreviewOwnerElement: HTMLDivElement | null = null;
+const MINI_VIDEO_PREVIEW_LOWEST_QUALITY = 'small';
 
 function loadMiniVideoPreviewApi() {
   if (typeof window === 'undefined') {
@@ -90,6 +91,18 @@ function readMiniVideoPreviewCurrentVideoId() {
   return currentVideoId || null;
 }
 
+function applyMiniVideoPreviewQuality() {
+  if (
+    !miniVideoPreviewPlayer ||
+    !miniVideoPreviewIsReady ||
+    typeof miniVideoPreviewPlayer.setPlaybackQuality !== 'function'
+  ) {
+    return;
+  }
+
+  miniVideoPreviewPlayer.setPlaybackQuality(MINI_VIDEO_PREVIEW_LOWEST_QUALITY);
+}
+
 function applyMiniVideoPreviewVideoSelection() {
   if (
     !miniVideoPreviewPlayer ||
@@ -109,6 +122,7 @@ function applyMiniVideoPreviewVideoSelection() {
     videoId: miniVideoPreviewRequestedVideoId,
   });
   (miniVideoPreviewPlayer as YT.Player & { mute?: () => void }).mute?.();
+  applyMiniVideoPreviewQuality();
 }
 
 async function ensureMiniVideoPreviewPlayer(selectedVideoId: string, frameClassName: string) {
@@ -149,6 +163,7 @@ async function ensureMiniVideoPreviewPlayer(selectedVideoId: string, frameClassN
         miniVideoPreviewIsReady = true;
         const readyPlayer = event.target as YT.Player & { mute?: () => void };
         readyPlayer.mute?.();
+        applyMiniVideoPreviewQuality();
         applyMiniVideoPreviewVideoSelection();
       },
     },
