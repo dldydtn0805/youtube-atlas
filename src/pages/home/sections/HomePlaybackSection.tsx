@@ -835,6 +835,7 @@ export default function HomePlaybackSection({
     shouldMountStickyPlayerPreview && mobilePlayerPreviewVideoId ? (
       <div
         className="app-shell__sticky-player-preview-shell"
+        data-current-tier={chartPanelProps.currentTierCode}
         data-visible={shouldShowStickyPlayerPreview ? 'true' : 'false'}
         style={
           {
