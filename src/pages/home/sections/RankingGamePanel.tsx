@@ -487,7 +487,7 @@ export function RankingGamePanelShell({
   const walletUpdatedLabel = season ? formatWalletUpdatedLabel(walletUpdatedAt) : null;
 
   return (
-    <div className="app-shell__game-panel">
+    <div className="app-shell__game-panel" data-current-tier={coinTierProgress?.currentTier.tierCode}>
       <div className="app-shell__game-panel-header">
         <div className="app-shell__game-panel-copy">
           <p className="app-shell__game-panel-eyebrow">Ranking Game</p>

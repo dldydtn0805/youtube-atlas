@@ -176,9 +176,6 @@ function VideoList({
                   <div className="video-card__meta-row">
                     <div className="video-card__meta-main">
                       <span className="video-card__rank">{rankLabel}</span>
-                      {isSelected ? (
-                        <span className="video-card__playing-badge">재생 중</span>
-                      ) : null}
                     </div>
                     {trendBadges.length > 0 ? (
                       <span className="video-card__trend-group" aria-label="급상승 신호">
