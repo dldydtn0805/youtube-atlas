@@ -124,6 +124,49 @@ function mergeRankHistories(
   };
 }
 
+function mapMusicTrendSignalsByVideoId(
+  section: {
+    categoryId: string;
+    items: YouTubeVideoItem[];
+    label: string;
+  } | undefined,
+  regionCode: string,
+): Record<string, VideoTrendSignal> {
+  if (!section) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    section.items.flatMap((item) => {
+      if (!item.trend || typeof item.trend.currentRank !== 'number') {
+        return [];
+      }
+
+      return [[
+        item.id,
+        {
+          categoryId: section.categoryId,
+          categoryLabel: item.trend.categoryLabel ?? section.label,
+          capturedAt: item.trend.capturedAt ?? '',
+          currentRank: item.trend.currentRank,
+          currentViewCount: item.trend.currentViewCount ?? null,
+          isNew: item.trend.isNew ?? false,
+          previousRank: item.trend.previousRank ?? null,
+          previousViewCount: item.trend.previousViewCount ?? null,
+          rankChange: item.trend.rankChange ?? null,
+          regionCode,
+          title: item.snippet.title,
+          channelTitle: item.snippet.channelTitle,
+          channelId: item.snippet.channelId,
+          thumbnailUrl: item.snippet.thumbnails.high.url,
+          videoId: item.id,
+          viewCountDelta: item.trend.viewCountDelta ?? null,
+        } satisfies VideoTrendSignal,
+      ]];
+    }),
+  );
+}
+
 function mergeMultiplePositionHistories(
   positionHistories: GamePositionRankHistory[],
   videoHistory?: VideoRankHistory,
@@ -561,6 +604,10 @@ function HomePage() {
         : musicPlaybackSection,
     [buyableVideoIdSet, isBuyableOnlyFilterActive, musicPlaybackSection],
   );
+  const musicTrendSignalsByVideoId = useMemo(
+    () => mapMusicTrendSignalsByVideoId(musicPlaybackSection, selectedRegionCode),
+    [musicPlaybackSection, selectedRegionCode],
+  );
   const extraPlaybackSections = useMemo(
     () => (musicPlaybackSection ? [musicPlaybackSection] : []),
     [musicPlaybackSection],
@@ -697,6 +744,13 @@ function HomePage() {
     selectedRegionCode,
     shouldLoadFavorites,
   });
+  const selectedVideoRankSignalsById = useMemo(
+    () => ({
+      ...chartTrendSignalsByVideoId,
+      ...musicTrendSignalsByVideoId,
+    }),
+    [chartTrendSignalsByVideoId, musicTrendSignalsByVideoId],
+  );
   const shouldShowTop200Label = isAllCategorySelected && isTrendRegionSelected;
   const loadedMusicVideoCount = musicPlaybackSection?.items.length ?? 0;
   const shouldAutoPrefetchBuyableMusicVideos = shouldPrefetchBuyableVideos({
@@ -787,6 +841,7 @@ function HomePage() {
     hasNextMusicChartPage,
     musicBuyableVideoSearchStatus: buyableMusicVideoSearchStatus,
     musicChartSection: filteredMusicChartSection,
+    musicTrendSignalsByVideoId,
     onLoadMoreMusicChart: fetchNextMusicChartPage,
     selectedChartView,
     setCollapsedHomeSectionIds,
@@ -1062,7 +1117,7 @@ function HomePage() {
     selectedCountryName,
     selectedRegionCode,
     selectedVideoId,
-    selectedVideoRankSignalById: chartTrendSignalsByVideoId,
+    selectedVideoRankSignalById: selectedVideoRankSignalsById,
     sellQuantity,
   });
 

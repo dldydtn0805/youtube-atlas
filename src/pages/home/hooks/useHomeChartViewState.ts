@@ -49,6 +49,7 @@ interface UseHomeChartViewStateOptions {
   isTrendRegionSelected: boolean;
   hasNextMusicChartPage: boolean;
   musicChartSection?: YouTubeCategorySection;
+  musicTrendSignalsByVideoId: Record<string, VideoTrendSignal>;
   musicBuyableVideoSearchStatus?: string;
   onLoadMoreMusicChart: () => Promise<unknown>;
   selectedChartView: ChartViewMode;
@@ -117,6 +118,7 @@ export default function useHomeChartViewState({
   isTrendRegionSelected,
   hasNextMusicChartPage,
   musicChartSection,
+  musicTrendSignalsByVideoId,
   musicBuyableVideoSearchStatus,
   onLoadMoreMusicChart,
   selectedChartView,
@@ -364,7 +366,7 @@ export default function useHomeChartViewState({
     effectiveChartView === 'favorites'
       ? favoriteTrendSignalsByVideoId
       : effectiveChartView === 'music'
-        ? {}
+        ? musicTrendSignalsByVideoId
         : chartTrendSignalsByVideoId;
   const activeChartOnLoadMore = useCallback(() => {
     if (effectiveChartView === 'favorites') {
