@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ALL_VIDEO_CATEGORY_ID } from '../../../constants/videoCategories';
 import { getCategoryPlaybackQueueId, getPlaybackQueueItems } from '../utils';
 import type { VideoCategory } from '../../../constants/videoCategories';
-import type { YouTubeCategorySection } from '../../../features/youtube/types';
+import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features/youtube/types';
 
 interface UsePlaybackQueueOptions {
   favoriteStreamerVideoSection?: YouTubeCategorySection;
@@ -11,6 +11,7 @@ interface UsePlaybackQueueOptions {
   isMobileLayout: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
   realtimeSurgingSection?: YouTubeCategorySection;
+  restoredPlaybackVideo?: YouTubeVideoItem;
   scrollToPlayerTop: () => void;
   selectedCategoryId: string;
   selectedSection?: YouTubeCategorySection;
@@ -25,6 +26,7 @@ function usePlaybackQueue({
   isMobileLayout,
   newChartEntriesSection,
   realtimeSurgingSection,
+  restoredPlaybackVideo,
   scrollToPlayerTop,
   selectedCategoryId,
   selectedSection,
@@ -48,6 +50,7 @@ function usePlaybackQueue({
     historyPlaybackSection,
     newChartEntriesSection,
     realtimeSurgingSection,
+    restoredPlaybackVideo,
     selectedSection: matchedSelectedSection,
   });
   const canPlayNextVideo = activePlaybackItems.length > 1;
@@ -120,6 +123,7 @@ function usePlaybackQueue({
       historyPlaybackSection,
       newChartEntriesSection,
       realtimeSurgingSection,
+      restoredPlaybackVideo,
       selectedSection: matchedSelectedSection,
     });
 
@@ -161,6 +165,7 @@ function usePlaybackQueue({
       historyPlaybackSection,
       newChartEntriesSection,
       realtimeSurgingSection,
+      restoredPlaybackVideo,
       selectedSection: matchedSelectedSection,
     });
     const fallbackQueueId = isWaitingForSelectedCategoryQueue
@@ -180,6 +185,7 @@ function usePlaybackQueue({
             historyPlaybackSection,
             newChartEntriesSection,
             realtimeSurgingSection,
+            restoredPlaybackVideo,
             selectedSection: matchedSelectedSection,
           });
     const hasSelectedVideoInQueue = queueItems.some((item) => item.id === selectedVideoId);
@@ -214,6 +220,7 @@ function usePlaybackQueue({
     newChartEntriesSection,
     matchedSelectedSection,
     realtimeSurgingSection,
+    restoredPlaybackVideo,
     selectedCategoryQueueId,
     selectedVideoId,
   ]);
