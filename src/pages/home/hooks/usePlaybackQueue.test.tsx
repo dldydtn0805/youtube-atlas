@@ -40,7 +40,7 @@ describe('usePlaybackQueue', () => {
     { id: '10', label: 'Music', description: 'Music videos', sourceIds: [] },
   ];
 
-  it('does not auto-select the top chart video on initial load', () => {
+  it('does not auto-select the top chart video on initial load by default', () => {
     const setSelectedCategoryId = vi.fn();
     const { result } = renderHook(() =>
       usePlaybackQueue({
@@ -57,6 +57,28 @@ describe('usePlaybackQueue', () => {
     );
 
     expect(result.current.selectedVideoId).toBeUndefined();
+  });
+
+  it('auto-selects the first chart video when configured to do so', async () => {
+    const setSelectedCategoryId = vi.fn();
+    const { result } = renderHook(() =>
+      usePlaybackQueue({
+        autoSelectFirstVideoWhenEmpty: true,
+        favoriteStreamerVideoSection: undefined,
+        isMobileLayout: false,
+        realtimeSurgingSection: undefined,
+        restoredPlaybackVideo: undefined,
+        scrollToPlayerTop: vi.fn(),
+        selectedCategoryId: '0',
+        selectedSection: createSection(getCategoryPlaybackQueueId('0'), ['video-top']),
+        setSelectedCategoryId,
+        sortedVideoCategories,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.selectedVideoId).toBe('video-top');
+    });
   });
 
   it('auto-selects the first video after a user changes category', async () => {

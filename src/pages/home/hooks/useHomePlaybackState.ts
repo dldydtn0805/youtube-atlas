@@ -143,6 +143,7 @@ export default function useHomePlaybackState({
     selectedVideoId,
     updateActivePlaybackQueueId,
   } = usePlaybackQueue({
+    autoSelectFirstVideoWhenEmpty: authStatus === 'anonymous',
     favoriteStreamerVideoSection,
     gamePortfolioSection,
     historyPlaybackSection,

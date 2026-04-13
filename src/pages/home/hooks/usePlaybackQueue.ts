@@ -5,6 +5,7 @@ import type { VideoCategory } from '../../../constants/videoCategories';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features/youtube/types';
 
 interface UsePlaybackQueueOptions {
+  autoSelectFirstVideoWhenEmpty?: boolean;
   favoriteStreamerVideoSection?: YouTubeCategorySection;
   gamePortfolioSection?: YouTubeCategorySection;
   historyPlaybackSection?: YouTubeCategorySection;
@@ -20,6 +21,7 @@ interface UsePlaybackQueueOptions {
 }
 
 function usePlaybackQueue({
+  autoSelectFirstVideoWhenEmpty = false,
   favoriteStreamerVideoSection,
   gamePortfolioSection,
   historyPlaybackSection,
@@ -201,7 +203,9 @@ function usePlaybackQueue({
 
     if (!hasSelectedVideoInQueue) {
       const shouldAutoSelectFallback =
-        Boolean(selectedVideoId) || shouldAutoSelectNextAvailableRef.current;
+        Boolean(selectedVideoId) ||
+        shouldAutoSelectNextAvailableRef.current ||
+        autoSelectFirstVideoWhenEmpty;
 
       if (queueItems.length === 0 && fallbackQueueId && activePlaybackQueueId !== fallbackQueueId) {
         setActivePlaybackQueueId(fallbackQueueId);
@@ -214,6 +218,7 @@ function usePlaybackQueue({
     }
   }, [
     activePlaybackQueueId,
+    autoSelectFirstVideoWhenEmpty,
     autoPlayableFavoriteStreamerSection,
     gamePortfolioSection,
     historyPlaybackSection,
