@@ -1162,6 +1162,7 @@ function HomePage() {
     options?: {
       desktopPlayerDockSlotRef?: RefObject<HTMLDivElement | null>;
       isDesktopMiniPlayerEnabled?: boolean;
+      onEyebrowClick?: () => void;
     },
   ) => (
     <SelectedVideoGameActionsBundle
@@ -1178,6 +1179,7 @@ function HomePage() {
       mainPlayerRef={videoPlayerRef}
       maxSellQuantity={maxSellQuantity}
       onContentClick={onContentClick}
+      onEyebrowClick={options?.onEyebrowClick}
       mode="panel"
       onHeaderClick={onHeaderClick}
       onOpenBuyTradeModal={openBuyTradeModal}
@@ -1534,11 +1536,12 @@ function HomePage() {
                   </>
                 ) : null}
               </>,
-              onToggleCollapse,
-              onScrollToTop,
+              isMobileLayout ? undefined : onToggleCollapse,
+              isMobileLayout ? onToggleCollapse : onScrollToTop,
               {
                 desktopPlayerDockSlotRef: isDesktopPlayerDockEnabled ? desktopPlayerDockSlotRef : undefined,
                 isDesktopMiniPlayerEnabled: false,
+                onEyebrowClick: isMobileLayout ? onToggleMobilePlayerPreviewEnabled : undefined,
               },
             )
           }

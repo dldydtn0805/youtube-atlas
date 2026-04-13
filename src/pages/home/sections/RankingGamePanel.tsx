@@ -81,6 +81,7 @@ interface RankingGameSelectedVideoActionsProps {
   isSellDisabled: boolean;
   isSellSubmitting: boolean;
   onContentClick?: () => void;
+  onEyebrowClick?: () => void;
   onHeaderClick?: () => void;
   onOpenBuyTradeModal: () => void;
   onOpenRankHistory: () => void;
@@ -755,6 +756,7 @@ export function RankingGameSelectedVideoActions({
   isSellDisabled,
   isSellSubmitting,
   onContentClick,
+  onEyebrowClick,
   onHeaderClick,
   onOpenBuyTradeModal,
   onOpenRankHistory,
@@ -787,7 +789,23 @@ export function RankingGameSelectedVideoActions({
         role={onHeaderClick ? 'button' : undefined}
         tabIndex={onHeaderClick ? 0 : undefined}
       >
-        <p className="app-shell__game-panel-actions-eyebrow">Now Playing</p>
+        {onEyebrowClick ? (
+          <button
+            className="app-shell__game-panel-actions-eyebrow app-shell__game-panel-actions-eyebrow-button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onEyebrowClick();
+            }}
+            onKeyDown={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+            type="button"
+          >
+            Now Playing
+          </button>
+        ) : (
+          <p className="app-shell__game-panel-actions-eyebrow">Now Playing</p>
+        )}
         {panelControls ? (
           <div
             className="app-shell__game-panel-actions-utility"
@@ -1027,12 +1045,9 @@ export function RankingGamePositionsTab({
   canShowGameActions,
   coinOverview,
   emptyMessage,
-  favoriteTrendSignalsByVideoId: _favoriteTrendSignalsByVideoId,
-  gameMarketSignalsByVideoId: _gameMarketSignalsByVideoId,
   holdings,
   onSelectPosition,
   selectedPositionId,
-  trendSignalsByVideoId: _trendSignalsByVideoId,
 }: RankingGamePositionsTabProps) {
   const coinPositionsByPositionId = useMemo(() => {
     const groupedPositions = new Map<number, GameCoinPosition[]>();

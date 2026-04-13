@@ -39,6 +39,7 @@ interface StickySelectedVideoControls {
   desktopPlayerDockSlotRef?: RefObject<HTMLDivElement | null>;
   isDesktopPlayerDockEnabled: boolean;
   isMobilePlayerPreviewEnabled: boolean;
+  onShowMobilePlayerPreview: () => void;
   onScrollToTop: () => void;
   onToggleMobilePlayerPreviewEnabled: () => void;
   onToggleCollapse: () => void;
@@ -513,15 +514,31 @@ export default function HomePlaybackSection({
     }
   };
 
+  const handleShowMobilePlayerPreview = () => {
+    setIsMobilePlayerPreviewEnabled(true);
+    setIsMobilePlayerPreviewCollapsed(false);
+  };
+
+  const handleToggleMobilePlayerPreview = () => {
+    setIsMobilePlayerPreviewEnabled((currentValue) => !currentValue);
+    setIsMobilePlayerPreviewCollapsed(false);
+  };
+
+  const handleCollapsedLabelClick = () => {
+    if (playerStageProps.isMobileLayout) {
+      handleToggleMobilePlayerPreview();
+      return;
+    }
+
+    handleScrollToTop();
+  };
+
   const mobilePreviewToggleButton = playerStageProps.isMobileLayout ? (
     <button
       aria-label={isMobilePlayerPreviewEnabled ? '미니 플레이어 숨기기' : '미니 플레이어 보기'}
       className="app-shell__game-panel-action-utility app-shell__game-panel-action-utility--preview-toggle"
       data-active={isMobilePlayerPreviewEnabled}
-      onClick={() => {
-        setIsMobilePlayerPreviewEnabled((currentValue) => !currentValue);
-        setIsMobilePlayerPreviewCollapsed(false);
-      }}
+      onClick={handleToggleMobilePlayerPreview}
       title={isMobilePlayerPreviewEnabled ? '미니 플레이어 숨기기' : '미니 플레이어 보기'}
       type="button"
     >
@@ -580,11 +597,9 @@ export default function HomePlaybackSection({
             playerStageProps.isCinematicModeActive &&
             isStickySelectedVideoVisible,
           isMobilePlayerPreviewEnabled,
+          onShowMobilePlayerPreview: handleShowMobilePlayerPreview,
           onScrollToTop: handleScrollToTop,
-          onToggleMobilePlayerPreviewEnabled: () => {
-            setIsMobilePlayerPreviewEnabled((currentValue) => !currentValue);
-            setIsMobilePlayerPreviewCollapsed(false);
-          },
+          onToggleMobilePlayerPreviewEnabled: handleToggleMobilePlayerPreview,
           onToggleCollapse: () => {
             setIsStickySelectedVideoCollapsed(true);
 
@@ -827,7 +842,7 @@ export default function HomePlaybackSection({
                     className="app-shell__sticky-selected-video-collapsed-label"
                     onClick={(event) => {
                       event.stopPropagation();
-                      handleScrollToTop();
+                      handleCollapsedLabelClick();
                     }}
                     type="button"
                   >

@@ -444,6 +444,16 @@
   cursor: pointer;
 }
 
+.app-shell__game-panel-actions-eyebrow-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+}
+
 .app-shell__game-panel-actions-header[data-clickable='true']:hover,
 .app-shell__game-panel-actions-header[data-clickable='true']:focus-visible {
   border-bottom-color: rgba(148, 163, 184, 0.28);

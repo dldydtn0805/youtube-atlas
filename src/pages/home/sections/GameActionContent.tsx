@@ -61,6 +61,7 @@ interface SelectedVideoGameActionsBundleProps {
   maxSellQuantity?: number;
   onContentClick?: () => void;
   mode: 'panel' | 'stage';
+  onEyebrowClick?: () => void;
   onHeaderClick?: () => void;
   onOpenBuyTradeModal: () => void;
   onOpenRankHistory: () => void;
@@ -530,6 +531,7 @@ export function SelectedVideoGameActionsBundle({
   maxSellQuantity = 0,
   onContentClick,
   mode,
+  onEyebrowClick,
   onHeaderClick,
   onOpenBuyTradeModal,
   onOpenRankHistory,
@@ -598,6 +600,7 @@ export function SelectedVideoGameActionsBundle({
       isSellDisabled={isSelectedVideoSellDisabled}
       isSellSubmitting={isSellSubmitting}
       onContentClick={onContentClick}
+      onEyebrowClick={onEyebrowClick}
       onHeaderClick={onHeaderClick}
       onOpenBuyTradeModal={onOpenBuyTradeModal}
       onOpenRankHistory={onOpenRankHistory}

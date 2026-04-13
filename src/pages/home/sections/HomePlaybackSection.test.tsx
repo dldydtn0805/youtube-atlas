@@ -863,15 +863,27 @@ describe('HomePlaybackSection', () => {
       expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('false');
     });
 
+    fireEvent.click(screen.getByText('Now Playing'));
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('true');
+    });
+
+    fireEvent.click(screen.getByText('Now Playing'));
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('false');
+    });
+
     fireEvent.click(screen.getByText('Preview Title'));
     flushAnimationFrames();
 
     await waitFor(() => {
-      expect(document.querySelector('.app-shell__sticky-player-preview')).not.toBeNull();
+      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
     });
     expect(document.querySelector<HTMLElement>('.app-shell__sticky-player-preview-shell')?.style.left).toBe('12px');
     expect(document.querySelector<HTMLElement>('.app-shell__sticky-player-preview-shell')?.style.top).toBe('12px');
-    expect(screen.getByText('Selected video actions')).toBeInTheDocument();
+    expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('false');
   });
 
   it('scrolls to the player stage when the top button is pressed', async () => {
