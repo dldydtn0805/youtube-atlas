@@ -785,7 +785,7 @@ describe('HomePlaybackSection', () => {
     await waitFor(() => {
       expect(previewShell?.style.left).toBe('12px');
       expect(previewShell?.style.top).toBe('12px');
-      expect(previewShell?.style.getPropertyValue('--sticky-player-preview-width')).toBe('360px');
+      expect(previewShell?.style.getPropertyValue('--sticky-player-preview-width')).toBe(`${window.innerWidth - 24}px`);
     });
 
     expect(document.querySelector('.app-shell__sticky-player-preview-resize-handle--top-left')).not.toBeNull();

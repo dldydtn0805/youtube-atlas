@@ -11,7 +11,6 @@ const STICKY_SELECTED_VIDEO_COLLAPSED_STORAGE_KEY = 'youtube-atlas-sticky-select
 export const MOBILE_PLAYER_PREVIEW_ENABLED_STORAGE_KEY = 'youtube-atlas-mobile-player-preview-enabled';
 const MOBILE_PLAYER_PREVIEW_LAYOUT_STORAGE_KEY = 'youtube-atlas-mobile-player-preview-layout';
 const MOBILE_PLAYER_PREVIEW_MIN_WIDTH = 96;
-const MOBILE_PLAYER_PREVIEW_MAX_WIDTH = 360;
 const MOBILE_PLAYER_PREVIEW_DEFAULT_WIDTH = 360;
 const MOBILE_PLAYER_PREVIEW_ASPECT_RATIO = 16 / 9;
 const MOBILE_PLAYER_PREVIEW_MARGIN = 12;
@@ -102,10 +101,11 @@ function clampMobilePlayerPreviewLayout(layout: MobilePlayerPreviewLayout) {
     return layout;
   }
 
+  const maxWidth = Math.max(MOBILE_PLAYER_PREVIEW_MIN_WIDTH, window.innerWidth - (MOBILE_PLAYER_PREVIEW_MARGIN * 2));
   const width = clampValue(
     layout.width,
     MOBILE_PLAYER_PREVIEW_MIN_WIDTH,
-    Math.min(MOBILE_PLAYER_PREVIEW_MAX_WIDTH, window.innerWidth - (MOBILE_PLAYER_PREVIEW_MARGIN * 2)),
+    maxWidth,
   );
   const height = getPreviewHeight(width);
   const maxX = Math.max(MOBILE_PLAYER_PREVIEW_MARGIN, window.innerWidth - width - MOBILE_PLAYER_PREVIEW_MARGIN);
@@ -130,7 +130,7 @@ function getDefaultMobilePlayerPreviewLayout() {
   const width = clampValue(
     MOBILE_PLAYER_PREVIEW_DEFAULT_WIDTH,
     MOBILE_PLAYER_PREVIEW_MIN_WIDTH,
-    Math.min(MOBILE_PLAYER_PREVIEW_MAX_WIDTH, window.innerWidth - (MOBILE_PLAYER_PREVIEW_MARGIN * 2)),
+    Math.max(MOBILE_PLAYER_PREVIEW_MIN_WIDTH, window.innerWidth - (MOBILE_PLAYER_PREVIEW_MARGIN * 2)),
   );
 
   return clampMobilePlayerPreviewLayout({
