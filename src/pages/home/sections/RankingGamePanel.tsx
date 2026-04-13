@@ -28,7 +28,12 @@ import {
   getPointTone,
   type OpenGameHolding,
 } from '../gameHelpers';
-import { calculateSellFeePoints, formatSignedProfitRate } from '../utils';
+import {
+  calculateSellFeePoints,
+  formatSignedProfitRate,
+  GAME_PORTFOLIO_QUEUE_ID,
+  HISTORY_PLAYBACK_QUEUE_ID,
+} from '../utils';
 import GameCoinTierSummary from './GameCoinTierSummary';
 import MiniVideoPreview from './MiniVideoPreview';
 
@@ -114,6 +119,7 @@ interface RankingGameLeaderboardTabProps {
 }
 
 interface RankingGamePositionsTabProps {
+  activePlaybackQueueId?: string;
   canShowGameActions: boolean;
   coinOverview?: GameCoinOverview;
   emptyMessage?: string | null;
@@ -126,6 +132,7 @@ interface RankingGamePositionsTabProps {
 }
 
 interface RankingGameHistoryTabProps {
+  activePlaybackQueueId?: string;
   emptyMessage?: string | null;
   historyPlaybackLoadingVideoId: string | null;
   isLoading: boolean;
@@ -147,6 +154,7 @@ function areRankingGameHistoryTabPropsEqual(
   nextProps: RankingGameHistoryTabProps,
 ) {
   return (
+    prevProps.activePlaybackQueueId === nextProps.activePlaybackQueueId &&
     prevProps.emptyMessage === nextProps.emptyMessage &&
     prevProps.historyPlaybackLoadingVideoId === nextProps.historyPlaybackLoadingVideoId &&
     prevProps.isLoading === nextProps.isLoading &&
@@ -1042,6 +1050,7 @@ export function RankingGameLeaderboardTab({
 }
 
 export function RankingGamePositionsTab({
+  activePlaybackQueueId,
   canShowGameActions,
   coinOverview,
   emptyMessage,
@@ -1072,7 +1081,8 @@ export function RankingGamePositionsTab({
   return (
     <ul className="app-shell__game-positions">
       {holdings.map((holding) => {
-        const isSelectedPosition = holding.positionId === selectedPositionId;
+        const isSelectedPosition =
+          activePlaybackQueueId === GAME_PORTFOLIO_QUEUE_ID && holding.positionId === selectedPositionId;
         const holdingRankTrendBadge = getHoldingRankDiffBadge(holding);
         const coinPositions = coinPositionsByPositionId.get(holding.positionId) ?? [];
         const coinSummary = getCoinProductionSummary(coinPositions);
@@ -1227,6 +1237,7 @@ export function RankingGamePositionsTab({
 }
 
 function RankingGameHistoryTabComponent({
+  activePlaybackQueueId,
   emptyMessage,
   historyPlaybackLoadingVideoId,
   isLoading,
@@ -1248,7 +1259,8 @@ function RankingGameHistoryTabComponent({
       {positions.map((position) => {
         const playbackQueueId = resolvePlaybackQueueId(position.videoId);
         const isSelectable = Boolean(playbackQueueId);
-        const isSelectedPosition = position.videoId === selectedVideoId;
+        const isSelectedPosition =
+          activePlaybackQueueId === HISTORY_PLAYBACK_QUEUE_ID && position.videoId === selectedVideoId;
         const isLoadingHistoryPlayback = historyPlaybackLoadingVideoId === position.videoId;
         const isClosedPosition = position.status !== 'OPEN';
         const historyStatusTone =

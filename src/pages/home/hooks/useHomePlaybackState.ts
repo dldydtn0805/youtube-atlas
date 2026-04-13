@@ -37,6 +37,7 @@ interface UseHomePlaybackStateOptions {
 }
 
 interface UseHomePlaybackStateResult {
+  activePlaybackQueueId: string;
   canPlayNextVideo: boolean;
   handleManualPlaybackSave: () => Promise<void>;
   handlePlaybackRestoreApplied: (restoreId: number) => void;
@@ -387,6 +388,7 @@ export default function useHomePlaybackState({
   }, [authStatus, persistPlaybackProgress, selectedVideoId, videoPlayerRef]);
 
   return {
+    activePlaybackQueueId,
     canPlayNextVideo,
     handleManualPlaybackSave,
     handlePlaybackRestoreApplied,

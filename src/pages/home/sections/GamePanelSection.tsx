@@ -23,6 +23,7 @@ type GameTab = 'positions' | 'history' | 'leaderboard';
 
 interface GamePanelSectionProps {
   activeGameTab: GameTab;
+  activePlaybackQueueId?: string;
   authStatus: AuthStatus;
   canShowGameActions: boolean;
   coinOverview?: GameCoinOverview;
@@ -73,6 +74,7 @@ interface GamePanelSectionProps {
 
 export default function GamePanelSection({
   activeGameTab,
+  activePlaybackQueueId,
   authStatus,
   canShowGameActions,
   coinOverview,
@@ -178,6 +180,7 @@ export default function GamePanelSection({
 
   const positionsContent = (
     <RankingGamePositionsTab
+      activePlaybackQueueId={activePlaybackQueueId}
       canShowGameActions={canShowGameActions}
       coinOverview={coinOverview}
       emptyMessage={positionsEmptyMessage}
@@ -192,6 +195,7 @@ export default function GamePanelSection({
 
   const historyContent = (
     <RankingGameHistoryTab
+      activePlaybackQueueId={activePlaybackQueueId}
       emptyMessage={historyEmptyMessage}
       historyPlaybackLoadingVideoId={historyPlaybackLoadingVideoId}
       isLoading={isGameHistoryLoading}

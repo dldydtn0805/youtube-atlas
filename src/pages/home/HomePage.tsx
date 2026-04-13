@@ -718,6 +718,7 @@ function HomePage() {
     setSelectedChartView,
   });
   const {
+    activePlaybackQueueId,
     canPlayNextVideo,
     handleManualPlaybackSave,
     handlePlaybackRestoreApplied,
@@ -1076,13 +1077,16 @@ function HomePage() {
     [gamePortfolioSection.categoryId, handleSelectVideoWithPreview, scrollToPlayerStage],
   );
   const handleSelectGameHistoryVideo = useCallback(
-    async (position: GamePosition, playbackQueueId?: string) => {
+    async (position: GamePosition, _playbackQueueId?: string) => {
       scrollToPlayerStage();
 
-      if (playbackQueueId) {
+      const historyVideo = mapGamePositionToVideoItem(position);
+
+      if (historyVideo.id) {
+        setHistoryPlaybackVideo(historyVideo);
         setGameActionStatus(null);
         setSelectedOpenPositionId(position.id);
-        handleSelectVideoWithPreview(position.videoId, playbackQueueId);
+        handleSelectVideoWithPreview(historyVideo.id, HISTORY_PLAYBACK_QUEUE_ID);
         return;
       }
 
@@ -1251,6 +1255,7 @@ function HomePage() {
   const portfolioContent = (
     <GamePanelSection
       activeGameTab={activeGameTab}
+      activePlaybackQueueId={activePlaybackQueueId}
       authStatus={authStatus}
       canShowGameActions={canShowGameActions}
       coinOverview={liveGameCoinOverview}
@@ -1392,6 +1397,7 @@ function HomePage() {
             sectionEmptyMessage: activeChartEmptyMessage,
             selectedCategoryLabel: selectedChartViewOption.label,
             selectedCountryName,
+            activePlaybackQueueId,
             selectedVideoId,
             trendSignalsByVideoId: activeChartTrendSignalsByVideoId,
           }}

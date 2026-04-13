@@ -7,6 +7,7 @@ import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features
 import './ContentPanels.css';
 
 interface ChartPanelProps {
+  activePlaybackQueueId?: string;
   buyableVideoSearchStatus?: string;
   chartErrorMessage?: string;
   className?: string;
@@ -40,6 +41,7 @@ interface ChartPanelProps {
 }
 
 interface FavoriteVideosPanelProps {
+  activePlaybackQueueId?: string;
   authStatus: AuthStatus;
   favoriteStreamerCount: number;
   favoriteStreamerVideoErrorMessage: string;
@@ -73,6 +75,7 @@ interface CommunityPanelProps {
 }
 
 export function ChartPanel({
+  activePlaybackQueueId,
   buyableVideoSearchStatus,
   chartErrorMessage,
   className,
@@ -134,6 +137,7 @@ export function ChartPanel({
         </div>
       </div>
       <VideoList
+        activePlaybackQueueId={activePlaybackQueueId}
         collapsedSectionIds={collapsedFeaturedSectionIds}
         currentTierCode={currentTierCode}
         errorMessage={chartErrorMessage}
@@ -164,6 +168,7 @@ export function ChartPanel({
 }
 
 export function FavoriteVideosPanel({
+  activePlaybackQueueId,
   authStatus,
   favoriteStreamerCount,
   favoriteStreamerVideoErrorMessage,
@@ -230,6 +235,7 @@ export function FavoriteVideosPanel({
         </p>
       ) : (
         <VideoList
+          activePlaybackQueueId={activePlaybackQueueId}
           errorMessage={favoriteStreamerVideoErrorMessage}
           getRankLabel={(item) => {
             const signal = favoriteTrendSignalsByVideoId[item.id];

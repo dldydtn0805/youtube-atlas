@@ -11,6 +11,7 @@ export interface FeaturedVideoSection {
 }
 
 interface VideoListProps {
+  activePlaybackQueueId?: string;
   currentTierCode?: string;
   isLoading: boolean;
   isError: boolean;
@@ -52,6 +53,7 @@ function formatViewCount(viewCount?: string) {
 }
 
 function VideoList({
+  activePlaybackQueueId,
   currentTierCode,
   isLoading,
   isError,
@@ -154,7 +156,8 @@ function VideoList({
         {!isCollapsed && currentSection.items.length > 0 ? (
           <div className="video-list__grid">
             {currentSection.items.map((item, index) => {
-              const isSelected = selectedVideoId === item.id;
+              const isSelected =
+                selectedVideoId === item.id && activePlaybackQueueId === currentSection.categoryId;
               const trendSignal = trendSignalsByVideoId?.[item.id];
               const trendBadges =
                 trendSignal
