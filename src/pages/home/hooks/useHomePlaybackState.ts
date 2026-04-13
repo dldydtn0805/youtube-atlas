@@ -52,6 +52,7 @@ interface UseHomePlaybackStateResult {
     playbackQueueId: string,
     triggerElement?: HTMLButtonElement,
   ) => void;
+  isRestoredPlaybackActive: boolean;
   isManualPlaybackSavePending: boolean;
   manualPlaybackSaveStatus: string | null;
   pendingPlaybackRestore: PendingPlaybackRestore | null;
@@ -102,6 +103,7 @@ export default function useHomePlaybackState({
   videoPlayerRef,
 }: UseHomePlaybackStateOptions): UseHomePlaybackStateResult {
   const [pendingPlaybackRestore, setPendingPlaybackRestore] = useState<PendingPlaybackRestore | null>(null);
+  const [isRestoredPlaybackActive, setIsRestoredPlaybackActive] = useState(false);
   const [isManualPlaybackSavePending, setIsManualPlaybackSavePending] = useState(false);
   const [manualPlaybackSaveStatus, setManualPlaybackSaveStatus] = useState<string | null>(null);
   const nextPlaybackRestoreIdRef = useRef(0);
@@ -185,6 +187,7 @@ export default function useHomePlaybackState({
       return;
     }
 
+    setIsRestoredPlaybackActive(false);
     handledPlaybackRestoreSignatureRef.current = null;
     lastPersistedPlaybackSecondsRef.current = {};
     setPendingPlaybackRestore(null);
@@ -234,6 +237,7 @@ export default function useHomePlaybackState({
       restoreId: nextPlaybackRestoreIdRef.current,
       videoId: playbackProgress.videoId,
     });
+    setIsRestoredPlaybackActive(true);
     restorePlaybackSelection(
       playbackProgress.videoId,
       getPlaybackQueueIdForVideo(playbackProgress.videoId, {
@@ -291,6 +295,32 @@ export default function useHomePlaybackState({
       currentRestore?.restoreId === restoreId ? null : currentRestore,
     );
   }, []);
+
+  const handleSelectCategoryWithRestoreReset = useCallback(
+    (categoryId: string, triggerElement?: HTMLButtonElement) => {
+      setIsRestoredPlaybackActive(false);
+      handleSelectCategory(categoryId, triggerElement);
+    },
+    [handleSelectCategory],
+  );
+
+  const handleSelectVideoWithRestoreReset = useCallback(
+    (videoId: string, playbackQueueId: string, triggerElement?: HTMLButtonElement) => {
+      setIsRestoredPlaybackActive(false);
+      handleSelectVideo(videoId, playbackQueueId, triggerElement);
+    },
+    [handleSelectVideo],
+  );
+
+  const handlePlayNextVideoWithRestoreReset = useCallback(() => {
+    setIsRestoredPlaybackActive(false);
+    handlePlayNextVideo();
+  }, [handlePlayNextVideo]);
+
+  const handlePlayPreviousVideoWithRestoreReset = useCallback(() => {
+    setIsRestoredPlaybackActive(false);
+    handlePlayPreviousVideo();
+  }, [handlePlayPreviousVideo]);
 
   const persistPlaybackProgress = useCallback(
     async (
@@ -392,10 +422,11 @@ export default function useHomePlaybackState({
     canPlayNextVideo,
     handleManualPlaybackSave,
     handlePlaybackRestoreApplied,
-    handlePlayNextVideo,
-    handlePlayPreviousVideo,
-    handleSelectCategory,
-    handleSelectVideo,
+    handlePlayNextVideo: handlePlayNextVideoWithRestoreReset,
+    handlePlayPreviousVideo: handlePlayPreviousVideoWithRestoreReset,
+    handleSelectCategory: handleSelectCategoryWithRestoreReset,
+    handleSelectVideo: handleSelectVideoWithRestoreReset,
+    isRestoredPlaybackActive,
     isManualPlaybackSavePending,
     manualPlaybackSaveStatus,
     pendingPlaybackRestore,

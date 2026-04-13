@@ -214,4 +214,40 @@ describe('usePlaybackQueue', () => {
       expect(result.current.selectedVideoId).toBe('video-history');
     });
   });
+
+  it('plays the next history video when the history playback queue has multiple items', async () => {
+    const setSelectedCategoryId = vi.fn();
+
+    const { result } = renderHook(() =>
+      usePlaybackQueue({
+        favoriteStreamerVideoSection: undefined,
+        historyPlaybackSection: createSection(HISTORY_PLAYBACK_QUEUE_ID, ['video-history-1', 'video-history-2']),
+        isMobileLayout: false,
+        realtimeSurgingSection: undefined,
+        restoredPlaybackVideo: undefined,
+        scrollToPlayerTop: vi.fn(),
+        selectedCategoryId: '0',
+        selectedSection: createSection(getCategoryPlaybackQueueId('0'), ['video-top']),
+        setSelectedCategoryId,
+        sortedVideoCategories,
+      }),
+    );
+
+    act(() => {
+      result.current.handleSelectVideo('video-history-1', HISTORY_PLAYBACK_QUEUE_ID);
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedVideoId).toBe('video-history-1');
+    });
+
+    act(() => {
+      result.current.handlePlayNextVideo();
+    });
+
+    await waitFor(() => {
+      expect(result.current.activePlaybackQueueId).toBe(HISTORY_PLAYBACK_QUEUE_ID);
+      expect(result.current.selectedVideoId).toBe('video-history-2');
+    });
+  });
 });

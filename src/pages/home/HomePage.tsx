@@ -39,6 +39,7 @@ import {
   getFullscreenElement,
   getVideoThumbnailUrl,
   mapGamePositionToVideoItem,
+  mergeUniqueVideoItems,
   mergeSections,
   relabelVideoSection,
   sortedCountryCodes,
@@ -599,16 +600,24 @@ function HomePage() {
     [openGamePositions],
   );
   const historyPlaybackSection = useMemo(
-    () =>
-      historyPlaybackVideo
-        ? {
-            categoryId: HISTORY_PLAYBACK_QUEUE_ID,
-            description: '거래내역에서 다시 연 영상입니다.',
-            items: [historyPlaybackVideo],
-            label: '거래내역 다시 보기',
-          }
-        : undefined,
-    [historyPlaybackVideo],
+    () => {
+      const historyPlaybackItems = mergeUniqueVideoItems(
+        historyPlaybackVideo ? [historyPlaybackVideo] : undefined,
+        gameHistoryPositions.map(mapGamePositionToVideoItem),
+      );
+
+      if (historyPlaybackItems.length === 0) {
+        return undefined;
+      }
+
+      return {
+        categoryId: HISTORY_PLAYBACK_QUEUE_ID,
+        description: '거래내역에서 다시 연 영상을 순서대로 이어서 볼 수 있습니다.',
+        items: historyPlaybackItems,
+        label: '거래내역 다시 보기',
+      };
+    },
+    [gameHistoryPositions, historyPlaybackVideo],
   );
   const {
     buyableVideoSearchStatus,
@@ -725,6 +734,7 @@ function HomePage() {
     handlePlayNextVideo,
     handlePlayPreviousVideo,
     handleSelectVideo,
+    isRestoredPlaybackActive,
     isManualPlaybackSavePending,
     manualPlaybackSaveStatus,
     pendingPlaybackRestore,
@@ -852,6 +862,48 @@ function HomePage() {
       setSelectedOpenPositionId(null);
     }
   }, [openGamePositions, selectedOpenPositionId]);
+
+  useEffect(() => {
+    if (!selectedVideoId) {
+      return;
+    }
+
+    if (activePlaybackQueueId === GAME_PORTFOLIO_QUEUE_ID) {
+      const currentOpenPosition = openGamePositions.find((position) => position.id === selectedOpenPositionId);
+
+      if (currentOpenPosition?.videoId === selectedVideoId) {
+        return;
+      }
+
+      const nextOpenPosition = openGamePositions.find((position) => position.videoId === selectedVideoId);
+
+      if ((nextOpenPosition?.id ?? null) !== selectedOpenPositionId) {
+        setSelectedOpenPositionId(nextOpenPosition?.id ?? null);
+      }
+
+      return;
+    }
+
+    if (activePlaybackQueueId === HISTORY_PLAYBACK_QUEUE_ID) {
+      const currentHistoryPosition = gameHistoryPositions.find((position) => position.id === selectedOpenPositionId);
+
+      if (currentHistoryPosition?.videoId === selectedVideoId) {
+        return;
+      }
+
+      const nextHistoryPosition = gameHistoryPositions.find((position) => position.videoId === selectedVideoId);
+
+      if ((nextHistoryPosition?.id ?? null) !== selectedOpenPositionId) {
+        setSelectedOpenPositionId(nextHistoryPosition?.id ?? null);
+      }
+    }
+  }, [
+    activePlaybackQueueId,
+    gameHistoryPositions,
+    openGamePositions,
+    selectedOpenPositionId,
+    selectedVideoId,
+  ]);
 
   useEffect(() => {
     if (isBuyableOnlyFilterAvailable) {
@@ -1039,6 +1091,18 @@ function HomePage() {
   );
 
   const handlePlayNextVideoWithPreview = useCallback(() => {
+    if (isRestoredPlaybackActive) {
+      const topChartVideoId = selectedPlaybackSection?.items[0]?.id;
+      const topChartQueueId = selectedPlaybackSection?.categoryId;
+
+      if (topChartVideoId && topChartQueueId) {
+        setSelectedOpenPositionId(null);
+        setPreviewVideoId(topChartVideoId);
+        handleSelectVideo(topChartVideoId, topChartQueueId);
+        return;
+      }
+    }
+
     const playbackItems = selectedPlaybackSection?.items ?? [];
     const currentIndex = playbackItems.findIndex((item) => item.id === selectedVideoId);
     const nextVideoId =
@@ -1051,7 +1115,13 @@ function HomePage() {
     }
 
     handlePlayNextVideo();
-  }, [handlePlayNextVideo, selectedPlaybackSection, selectedVideoId]);
+  }, [
+    handlePlayNextVideo,
+    handleSelectVideo,
+    isRestoredPlaybackActive,
+    selectedPlaybackSection,
+    selectedVideoId,
+  ]);
 
   const handlePlayPreviousVideoWithPreview = useCallback(() => {
     const playbackItems = selectedPlaybackSection?.items ?? [];
