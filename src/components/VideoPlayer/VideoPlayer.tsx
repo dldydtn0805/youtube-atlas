@@ -4,6 +4,7 @@ import './VideoPlayer.css';
 let youtubeIframeApiPromise: Promise<void> | undefined;
 
 type YouTubePlayerWithPlaybackControls = YT.Player & {
+  pauseVideo?: () => void;
   playVideo?: () => void;
 };
 
@@ -59,9 +60,12 @@ interface VideoPlayerProps {
     positionSeconds: number;
   } | null;
   onPlaybackRestoreApplied?: (restoreId: number) => void;
+  onPlaybackStateChange?: (state: 'paused' | 'playing') => void;
 }
 
 export interface VideoPlayerHandle {
+  pausePlayback: () => void;
+  resumePlayback: () => void;
   readPlaybackSnapshot: () => {
     videoId: string;
     positionSeconds: number;
@@ -81,6 +85,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(function Vid
   onNextVideo,
   playbackRestore,
   onPlaybackRestoreApplied,
+  onPlaybackStateChange,
 }, ref) {
   const videoId = selectedVideoId;
   const playerFrameRef = useRef<HTMLDivElement | null>(null);
@@ -90,6 +95,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(function Vid
   const currentVideoIdRef = useRef(videoId);
   const onVideoEndRef = useRef(onVideoEnd);
   const onPlaybackRestoreAppliedRef = useRef(onPlaybackRestoreApplied);
+  const onPlaybackStateChangeRef = useRef(onPlaybackStateChange);
   const playbackRestoreRef = useRef(playbackRestore);
   const lastAppliedRestoreIdRef = useRef<number | null>(null);
   const isPlayerReadyRef = useRef(false);
@@ -120,6 +126,10 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(function Vid
     onPlaybackRestoreAppliedRef.current = onPlaybackRestoreApplied;
   }, [onPlaybackRestoreApplied]);
 
+  useEffect(() => {
+    onPlaybackStateChangeRef.current = onPlaybackStateChange;
+  }, [onPlaybackStateChange]);
+
   const clearAutoplayRetry = useCallback(() => {
     autoplayRetryCleanupRef.current?.();
     autoplayRetryCleanupRef.current = null;
@@ -134,6 +144,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(function Vid
       const playVideo = player.playVideo.bind(player);
 
       playVideo();
+      onPlaybackStateChangeRef.current?.('playing');
 
       if (!options?.scheduleRetry || typeof document === 'undefined') {
         return;
@@ -195,6 +206,19 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(function Vid
   useImperativeHandle(
     ref,
     () => ({
+      pausePlayback() {
+        const player = playerRef.current;
+
+        if (!player || !isPlayerReadyRef.current || typeof player.pauseVideo !== 'function') {
+          return;
+        }
+
+        player.pauseVideo();
+        onPlaybackStateChangeRef.current?.('paused');
+      },
+      resumePlayback() {
+        attemptPlaybackStart(playerRef.current);
+      },
       readPlaybackSnapshot() {
         const snapshotVideoId = readCurrentPlaybackVideoId() ?? currentVideoIdRef.current;
         const positionSeconds = readCurrentPlaybackPositionSeconds();
@@ -209,7 +233,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(function Vid
         };
       },
     }),
-    [readCurrentPlaybackPositionSeconds, readCurrentPlaybackVideoId],
+    [attemptPlaybackStart, readCurrentPlaybackPositionSeconds, readCurrentPlaybackVideoId],
   );
 
   function markPlaybackRestoreApplied(restoreId?: number) {
@@ -271,7 +295,18 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(function Vid
           },
           onStateChange: (event) => {
             if (event.data === window.YT?.PlayerState.ENDED) {
+              onPlaybackStateChangeRef.current?.('paused');
               onVideoEndRef.current?.();
+              return;
+            }
+
+            if (event.data === window.YT?.PlayerState.PAUSED) {
+              onPlaybackStateChangeRef.current?.('paused');
+              return;
+            }
+
+            if (event.data === window.YT?.PlayerState.PLAYING) {
+              onPlaybackStateChangeRef.current?.('playing');
             }
           },
         },
@@ -294,6 +329,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(function Vid
 
     if (!videoId) {
       clearAutoplayRetry();
+      onPlaybackStateChangeRef.current?.('paused');
 
       if (typeof player.stopVideo === 'function') {
         player.stopVideo();

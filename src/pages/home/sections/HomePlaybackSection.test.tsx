@@ -353,6 +353,75 @@ describe('HomePlaybackSection', () => {
     expect(screen.queryByText('Selected video actions')).not.toBeInTheDocument();
   });
 
+  it('shows playback controls in the collapsed sticky header when callbacks are provided', async () => {
+    const onPauseStickySelectedVideo = vi.fn();
+    const onPlayNextStickySelectedVideo = vi.fn();
+    const onPlayPreviousStickySelectedVideo = vi.fn();
+
+    render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        onPauseStickySelectedVideo={onPauseStickySelectedVideo}
+        onPlayNextStickySelectedVideo={onPlayNextStickySelectedVideo}
+        onPlayPreviousStickySelectedVideo={onPlayPreviousStickySelectedVideo}
+        playerStageProps={
+          {
+            isCinematicModeActive: false,
+            isMobileLayout: false,
+            playerSectionRef: createRef<HTMLElement>(),
+            playerStageRef: createRef<HTMLDivElement>(),
+            playerViewportRef: createRef<HTMLDivElement>(),
+            selectedVideoId: 'video-1',
+            selectedVideoTitle: 'Collapsed video',
+          } as never
+        }
+        stickySelectedVideoContent={({ onToggleCollapse }) => (
+          <div>
+            <button onClick={onToggleCollapse} type="button">
+              접기
+            </button>
+            <div>Selected video actions</div>
+          </div>
+        )}
+      />,
+    );
+
+    const playerViewport = screen.getByTestId('player-viewport');
+
+    vi.spyOn(playerViewport, 'getBoundingClientRect').mockImplementation(
+      () =>
+        ({
+          bottom: 0,
+          height: 0,
+          left: 0,
+          right: 0,
+          top: -20,
+          width: 0,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        }) as DOMRect,
+    );
+
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '접기' }));
+
+    fireEvent.click(screen.getByRole('button', { name: '이전 영상' }));
+    fireEvent.click(screen.getByRole('button', { name: '일시 정지' }));
+    fireEvent.click(screen.getByRole('button', { name: '다음 영상' }));
+
+    expect(onPlayPreviousStickySelectedVideo).toHaveBeenCalledTimes(1);
+    expect(onPauseStickySelectedVideo).toHaveBeenCalledTimes(1);
+    expect(onPlayNextStickySelectedVideo).toHaveBeenCalledTimes(1);
+  });
+
   it('shows the sticky selected video panel in cinematic mode as well', async () => {
     render(
       <HomePlaybackSection

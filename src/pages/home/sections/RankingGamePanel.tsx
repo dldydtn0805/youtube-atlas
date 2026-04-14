@@ -36,6 +36,7 @@ import {
 } from '../utils';
 import GameCoinTierSummary from './GameCoinTierSummary';
 import MiniVideoPreview from './MiniVideoPreview';
+import StickySelectedVideoHeaderCopy from './StickySelectedVideoHeaderCopy';
 
 type GameTab = 'positions' | 'history' | 'leaderboard';
 
@@ -82,20 +83,17 @@ interface RankingGameSelectedVideoActionsProps {
   mainPlayerRef?: RefObject<VideoPlayerHandle | null>;
   isBuyDisabled: boolean;
   isBuySubmitting: boolean;
-  isChartDisabled: boolean;
   isSellDisabled: boolean;
   isSellSubmitting: boolean;
   onContentClick?: () => void;
   onEyebrowClick?: () => void;
   onHeaderClick?: () => void;
   onOpenBuyTradeModal: () => void;
-  onOpenRankHistory: () => void;
   onOpenSellTradeModal: () => void;
   panelControls?: ReactNode;
   selectedGameActionChannelTitle?: string;
   selectedGameActionTitle: string;
   selectedVideoId?: string;
-  selectedVideoOpenPositionCount: number;
   selectedVideoTradeThumbnailUrl?: string | null;
   sellActionTitle: string;
 }
@@ -760,19 +758,16 @@ export function RankingGameSelectedVideoActions({
   mainPlayerRef,
   isBuyDisabled,
   isBuySubmitting,
-  isChartDisabled,
   isSellDisabled,
   isSellSubmitting,
   onContentClick,
   onEyebrowClick,
   onHeaderClick,
   onOpenBuyTradeModal,
-  onOpenRankHistory,
   onOpenSellTradeModal,
   panelControls,
   selectedGameActionChannelTitle,
   selectedGameActionTitle,
-  selectedVideoOpenPositionCount,
   selectedVideoId,
   selectedVideoTradeThumbnailUrl,
   sellActionTitle,
@@ -797,23 +792,11 @@ export function RankingGameSelectedVideoActions({
         role={onHeaderClick ? 'button' : undefined}
         tabIndex={onHeaderClick ? 0 : undefined}
       >
-        {onEyebrowClick ? (
-          <button
-            className="app-shell__game-panel-actions-eyebrow app-shell__game-panel-actions-eyebrow-button"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onEyebrowClick();
-            }}
-            onKeyDown={(event) => event.stopPropagation()}
-            onPointerDown={(event) => event.stopPropagation()}
-            type="button"
-          >
-            Now Playing
-          </button>
-        ) : (
-          <p className="app-shell__game-panel-actions-eyebrow">Now Playing</p>
-        )}
+        <StickySelectedVideoHeaderCopy
+          label="Now Playing"
+          onLabelClick={onEyebrowClick}
+          title={selectedGameActionTitle}
+        />
         {panelControls ? (
           <div
             className="app-shell__game-panel-actions-utility"
@@ -877,43 +860,6 @@ export function RankingGameSelectedVideoActions({
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
-          {selectedVideoOpenPositionCount === 0 ? (
-            <div className="app-shell__game-panel-action-item">
-              <button
-                aria-label="선택한 영상 차트"
-                className="app-shell__game-panel-action"
-                data-variant="chart"
-                disabled={isChartDisabled}
-                onClick={onOpenRankHistory}
-                title={
-                  !canShowGameActions
-                    ? '전체 카테고리에서만 차트를 볼 수 있습니다.'
-                    : '선택한 영상의 랭킹 차트를 엽니다.'
-                }
-                type="button"
-              >
-                <span className="app-shell__game-panel-action-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M5.75 17.25 10 12.5l2.75 2.75 5.5-6"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.8"
-                    />
-                    <path
-                      d="M15.5 9.25H18.5v3"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.8"
-                    />
-                  </svg>
-                </span>
-              </button>
-              <span className="app-shell__game-panel-action-caption">차트</span>
-            </div>
-          ) : null}
           <div className="app-shell__game-panel-action-item">
             <button
               aria-label={isBuySubmitting ? '선택한 영상 매수 중' : '선택한 영상 매수'}
@@ -938,32 +884,30 @@ export function RankingGameSelectedVideoActions({
             </button>
             <span className="app-shell__game-panel-action-caption">{isBuySubmitting ? '매수 중' : '매수'}</span>
           </div>
-          {selectedVideoOpenPositionCount > 0 ? (
-            <div className="app-shell__game-panel-action-item">
-              <button
-                aria-label={isSellSubmitting ? '선택한 영상 매도 중' : '선택한 영상 매도'}
-                className="app-shell__game-panel-action"
-                data-variant="sell"
-                disabled={isSellDisabled}
-                onClick={onOpenSellTradeModal}
-                title={sellActionTitle}
-                type="button"
-              >
-                <span className="app-shell__game-panel-action-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12 6v12M12 18l-4-4M12 18l4-4"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.15"
-                    />
-                  </svg>
-                </span>
-              </button>
-              <span className="app-shell__game-panel-action-caption">{isSellSubmitting ? '매도 중' : '매도'}</span>
-            </div>
-          ) : null}
+          <div className="app-shell__game-panel-action-item">
+            <button
+              aria-label={isSellSubmitting ? '선택한 영상 매도 중' : '선택한 영상 매도'}
+              className="app-shell__game-panel-action"
+              data-variant="sell"
+              disabled={isSellDisabled}
+              onClick={onOpenSellTradeModal}
+              title={sellActionTitle}
+              type="button"
+            >
+              <span className="app-shell__game-panel-action-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 6v12M12 18l-4-4M12 18l4-4"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.15"
+                  />
+                </svg>
+              </span>
+            </button>
+            <span className="app-shell__game-panel-action-caption">{isSellSubmitting ? '매도 중' : '매도'}</span>
+          </div>
         </div>
       </div>
     </div>

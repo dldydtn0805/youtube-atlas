@@ -24,6 +24,7 @@ interface PlayerStageProps {
   onOpenRegionModal: () => void;
   onPreviousVideo: () => void;
   onPlaybackRestoreApplied?: (restoreId: number) => void;
+  onPlaybackStateChange?: (state: 'paused' | 'playing') => void;
   onToggleCinematicMode: () => void;
   onToggleFavoriteStreamer: () => void;
   playbackRestore?: PendingPlaybackRestore | null;
@@ -68,6 +69,7 @@ function PlayerStage({
   onOpenRegionModal,
   onPreviousVideo,
   onPlaybackRestoreApplied,
+  onPlaybackStateChange,
   onToggleCinematicMode,
   onToggleFavoriteStreamer,
   playbackRestore,
@@ -154,6 +156,7 @@ function PlayerStage({
               isLoading={isChartLoading}
               onNextVideo={onNextVideo}
               onPlaybackRestoreApplied={onPlaybackRestoreApplied}
+              onPlaybackStateChange={onPlaybackStateChange}
               onPreviousVideo={onPreviousVideo}
               onVideoEnd={onNextVideo}
               playbackRestore={playbackRestore}

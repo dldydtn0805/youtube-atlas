@@ -10,6 +10,7 @@ import GamePanelSection from './sections/GamePanelSection';
 import GameRankHistoryModal from './sections/GameRankHistoryModal';
 import GameTradeModal from './sections/GameTradeModal';
 import HomePlaybackSection, { MOBILE_PLAYER_PREVIEW_ENABLED_STORAGE_KEY } from './sections/HomePlaybackSection';
+import StickySelectedVideoControls from './sections/StickySelectedVideoControls';
 import {
   buildOpenGameHoldings,
   calculateEstimatedCoinYieldAfterBuy,
@@ -290,6 +291,7 @@ function HomePage() {
   const [historyPlaybackVideo, setHistoryPlaybackVideo] = useState<YouTubeVideoItem | null>(null);
   const [historyPlaybackLoadingVideoId, setHistoryPlaybackLoadingVideoId] = useState<string | null>(null);
   const [isRegionModalOpen, setIsRegionModalOpen] = useState(false);
+  const [isPlaybackPaused, setIsPlaybackPaused] = useState(false);
   const [selectedChartView, setSelectedChartView] = useState<ChartViewMode>('all');
   const [coinCountdownNow, setCoinCountdownNow] = useState(() => Date.now());
   const lastCoinAutoRefreshAtRef = useRef<number | null>(null);
@@ -1268,6 +1270,22 @@ function HomePage() {
     handlePlayPreviousVideo();
   }, [handlePlayPreviousVideo, selectedPlaybackSection, selectedVideoId]);
 
+  const handlePauseCurrentVideo = useCallback(() => {
+    videoPlayerRef.current?.pausePlayback();
+  }, []);
+
+  const handleResumeCurrentVideo = useCallback(() => {
+    videoPlayerRef.current?.resumePlayback();
+  }, []);
+
+  const handlePlaybackStateChange = useCallback((state: 'paused' | 'playing') => {
+    setIsPlaybackPaused(state === 'paused');
+  }, []);
+
+  useEffect(() => {
+    setIsPlaybackPaused(false);
+  }, [selectedVideoId]);
+
   const handleSelectGamePositionVideo = useCallback(
     (position: GamePosition) => {
       setSelectedOpenPositionId(position.id);
@@ -1573,6 +1591,11 @@ function HomePage() {
       <main className="app-shell__main">
         <HomePlaybackSection
           preferredPreviewVideoId={previewVideoId}
+          isStickySelectedVideoPlaybackPaused={isPlaybackPaused}
+          onPauseStickySelectedVideo={handlePauseCurrentVideo}
+          onPlayNextStickySelectedVideo={handlePlayNextVideoWithPreview}
+          onPlayPreviousStickySelectedVideo={handlePlayPreviousVideoWithPreview}
+          onResumeStickySelectedVideo={handleResumeCurrentVideo}
           chartPanelProps={{
             buyableVideoSearchStatus: activeChartBuyableVideoSearchStatus,
             chartErrorMessage: activeChartErrorMessage,
@@ -1630,6 +1653,7 @@ function HomePage() {
             onNextVideo: handlePlayNextVideoWithPreview,
             onOpenRegionModal: () => setIsRegionModalOpen(true),
             onPlaybackRestoreApplied: handlePlaybackRestoreApplied,
+            onPlaybackStateChange: handlePlaybackStateChange,
             onPreviousVideo: handlePlayPreviousVideoWithPreview,
             onToggleCinematicMode: () => void handleToggleCinematicMode(),
             onToggleFavoriteStreamer: () => void handleToggleFavoriteStreamer(),
@@ -1661,133 +1685,21 @@ function HomePage() {
             onToggleCollapse,
           }) =>
             renderSelectedVideoActionsContent(
-              <>
-                {isMobileLayout ? (
-                  <>
-                    <button
-                      aria-label="페이지 맨 위로 즉시 이동"
-                      className="app-shell__game-panel-action-utility"
-                      onClick={onJumpToTop}
-                      title="맨 위로"
-                      type="button"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path
-                          d="M7.5 13.5 12 9l4.5 4.5"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.8"
-                        />
-                        <path
-                          d="M12 9v10"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.8"
-                        />
-                        <path
-                          d="M7 5h10"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeWidth="1.8"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      aria-label={isMobilePlayerPreviewEnabled ? '미니 플레이어 숨기기' : '미니 플레이어 보기'}
-                      className="app-shell__game-panel-action-utility app-shell__game-panel-action-utility--preview-toggle"
-                      data-active={isMobilePlayerPreviewEnabled}
-                      onClick={onToggleMobilePlayerPreviewEnabled}
-                      title={isMobilePlayerPreviewEnabled ? '미니 플레이어 숨기기' : '미니 플레이어 보기'}
-                      type="button"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <rect
-                          x="3.5"
-                          y="5"
-                          width="17"
-                          height="11"
-                          rx="2.5"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                        />
-                        <path
-                          d="M9 19h6"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.8"
-                        />
-                        <path
-                          d="M12 16v3"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.8"
-                        />
-                        <path
-                          d="M8 3.5 12 5.8 16 3.5"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.8"
-                        />
-                        <rect
-                          x="6.75"
-                          y="8"
-                          width="10.5"
-                          height="5.5"
-                          rx="1.25"
-                          stroke="currentColor"
-                          strokeOpacity="0.35"
-                          strokeWidth="1.4"
-                        />
-                      </svg>
-                    </button>
-                  </>
-                ) : null}
-                {!isMobileLayout ? (
-                  <>
-                    <button
-                      aria-label="선택한 영상 패널 접기"
-                      className="app-shell__game-panel-action-utility"
-                      onClick={onToggleCollapse}
-                      title="접기"
-                      type="button"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path
-                          d="M6 12h12"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.8"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      aria-label="선택한 영상 패널을 맨 위로 이동"
-                      className="app-shell__game-panel-action-utility"
-                      onClick={onScrollToTop}
-                      title="맨 위로"
-                      type="button"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path
-                          d="M7.5 14.5 12 10l4.5 4.5"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.8"
-                        />
-                      </svg>
-                    </button>
-                  </>
-                ) : null}
-              </>,
-              isMobileLayout ? undefined : onToggleCollapse,
-              isMobileLayout ? onToggleCollapse : onScrollToTop,
+              <StickySelectedVideoControls
+                isMobileLayout={isMobileLayout}
+                isMobilePlayerPreviewEnabled={isMobilePlayerPreviewEnabled}
+                isPlaybackPaused={isPlaybackPaused}
+                onCollapsePanel={!isMobileLayout ? onToggleCollapse : undefined}
+                onJumpToTop={isMobileLayout ? onJumpToTop : undefined}
+                onNextVideo={handlePlayNextVideoWithPreview}
+                onPauseVideo={handlePauseCurrentVideo}
+                onPreviousVideo={handlePlayPreviousVideoWithPreview}
+                onResumeVideo={handleResumeCurrentVideo}
+                onScrollToTop={!isMobileLayout ? onScrollToTop : undefined}
+                onToggleMobilePlayerPreviewEnabled={isMobileLayout ? onToggleMobilePlayerPreviewEnabled : undefined}
+              />,
+              isMobileLayout ? onToggleCollapse : onToggleCollapse,
+              handleOpenSelectedVideoRankHistory,
               {
                 desktopPlayerDockSlotRef: isDesktopPlayerDockEnabled ? desktopPlayerDockSlotRef : undefined,
                 isDesktopMiniPlayerEnabled: false,

@@ -469,6 +469,14 @@
   padding-bottom: 10px;
 }
 
+.app-shell__game-panel-actions-header-copy {
+  align-items: baseline;
+  display: flex;
+  flex: 1 1 auto;
+  gap: 6px;
+  min-width: 0;
+}
+
 .app-shell__game-panel-actions-header[data-clickable='true'] {
   cursor: pointer;
 }
@@ -580,6 +588,21 @@
   letter-spacing: 0.08em;
   min-height: 30px;
   text-transform: uppercase;
+}
+
+.app-shell__game-panel-actions-header-title {
+  color: var(--text);
+  flex: 0 1 14rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin: 0;
+  max-width: min(14rem, 45vw);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-shell__game-panel-actions-title {
@@ -1945,6 +1968,11 @@
   .app-shell__game-panel-actions-eyebrow {
     font-size: 0.62rem;
     min-height: 0;
+  }
+
+  .app-shell__game-panel-actions-header-title {
+    font-size: 0.62rem;
+    max-width: min(5.5rem, 21vw);
   }
 
   .app-shell__game-panel-actions-title {

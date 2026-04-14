@@ -566,7 +566,6 @@ export function SelectedVideoGameActionsBundle({
   isDesktopMiniPlayerEnabled = false,
   mainPlayerRef,
   isBuySubmitting = false,
-  isChartDisabled = false,
   isSelectedVideoBuyDisabled,
   isSelectedVideoSellDisabled,
   isSellSubmitting = false,
@@ -640,20 +639,17 @@ export function SelectedVideoGameActionsBundle({
       mainPlayerRef={mainPlayerRef}
       isBuyDisabled={isSelectedVideoBuyDisabled}
       isBuySubmitting={isBuySubmitting}
-      isChartDisabled={isChartDisabled}
       isSellDisabled={isSelectedVideoSellDisabled}
       isSellSubmitting={isSellSubmitting}
       onContentClick={onContentClick}
       onEyebrowClick={onEyebrowClick}
       onHeaderClick={onHeaderClick}
       onOpenBuyTradeModal={onOpenBuyTradeModal}
-      onOpenRankHistory={onOpenRankHistory}
       onOpenSellTradeModal={onOpenSellTradeModal}
       panelControls={panelControls}
       selectedGameActionChannelTitle={selectedGameActionChannelTitle}
       selectedGameActionTitle={selectedGameActionTitle}
       selectedVideoId={selectedVideoId}
-      selectedVideoOpenPositionCount={selectedVideoOpenPositionCount}
       selectedVideoTradeThumbnailUrl={selectedVideoTradeThumbnailUrl}
       sellActionTitle={sellActionTitle}
     />

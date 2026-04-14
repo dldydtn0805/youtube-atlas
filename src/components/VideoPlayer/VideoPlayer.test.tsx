@@ -9,6 +9,7 @@ type MockPlayerApi = {
   getPlayerState: ReturnType<typeof vi.fn>;
   getVideoData: ReturnType<typeof vi.fn>;
   loadVideoById: ReturnType<typeof vi.fn>;
+  pauseVideo: ReturnType<typeof vi.fn>;
   playVideo: ReturnType<typeof vi.fn>;
   seekTo: ReturnType<typeof vi.fn>;
   stopVideo: ReturnType<typeof vi.fn>;
@@ -17,6 +18,7 @@ type MockPlayerApi = {
 describe('VideoPlayer', () => {
   let currentTimeSeconds = 0;
   let currentPlaybackVideoId = 'video-a';
+  let onStateChange: YT.PlayerEvents['onStateChange'];
   let onReady: YT.PlayerEvents['onReady'];
   let latestPlayerOptions: YT.PlayerOptions | undefined;
   let playerApi: MockPlayerApi;
@@ -24,11 +26,13 @@ describe('VideoPlayer', () => {
 
   beforeEach(() => {
     playerConstructorCallCount = 0;
+    onStateChange = undefined;
     onReady = undefined;
 
     function Player(this: MockPlayerApi, _element: HTMLElement, configuration: YT.PlayerOptions) {
       playerConstructorCallCount += 1;
       onReady = configuration.events?.onReady;
+      onStateChange = configuration.events?.onStateChange;
       latestPlayerOptions = configuration;
 
       this.destroy = vi.fn();
@@ -36,6 +40,7 @@ describe('VideoPlayer', () => {
       this.getPlayerState = vi.fn(() => 1);
       this.getVideoData = vi.fn(() => ({ video_id: currentPlaybackVideoId }));
       this.loadVideoById = vi.fn();
+      this.pauseVideo = vi.fn();
       this.playVideo = vi.fn();
       this.seekTo = vi.fn();
       this.stopVideo = vi.fn();
@@ -45,6 +50,7 @@ describe('VideoPlayer', () => {
         getPlayerState: this.getPlayerState,
         getVideoData: this.getVideoData,
         loadVideoById: this.loadVideoById,
+        pauseVideo: this.pauseVideo,
         playVideo: this.playVideo,
         seekTo: this.seekTo,
         stopVideo: this.stopVideo,
@@ -123,6 +129,52 @@ describe('VideoPlayer', () => {
       positionSeconds: 87,
       videoId: 'video-a',
     });
+  });
+
+  it('pauses playback from the forwarded ref', async () => {
+    const playerRef = createRef<VideoPlayerHandle>();
+
+    render(<VideoPlayer ref={playerRef} selectedVideoId="video-a" />);
+
+    await waitFor(() => expect(playerConstructorCallCount).toBe(1));
+
+    act(() => {
+      onReady?.({ target: playerApi as unknown as YT.Player });
+    });
+
+    playerRef.current?.pausePlayback();
+
+    expect(playerApi.pauseVideo).toHaveBeenCalled();
+  });
+
+  it('reports paused and playing state changes', async () => {
+    const onPlaybackStateChange = vi.fn();
+    const playerRef = createRef<VideoPlayerHandle>();
+
+    render(
+      <VideoPlayer
+        onPlaybackStateChange={onPlaybackStateChange}
+        ref={playerRef}
+        selectedVideoId="video-a"
+      />,
+    );
+
+    await waitFor(() => expect(playerConstructorCallCount).toBe(1));
+
+    act(() => {
+      onReady?.({ target: playerApi as unknown as YT.Player });
+    });
+
+    act(() => {
+      onStateChange?.({ data: window.YT!.PlayerState.PAUSED } as YT.OnStateChangeEvent);
+    });
+
+    act(() => {
+      playerRef.current?.resumePlayback();
+    });
+
+    expect(onPlaybackStateChange).toHaveBeenCalledWith('paused');
+    expect(onPlaybackStateChange).toHaveBeenCalledWith('playing');
   });
 
   it('docks the existing player frame slot without recreating the player', async () => {

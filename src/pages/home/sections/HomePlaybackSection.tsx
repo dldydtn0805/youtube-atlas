@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { ChartPanel, CommunityPanel } from './ContentPanels';
 import { FilterBar } from './FilterPanels';
 import PlayerStage from './PlayerStage';
+import StickySelectedVideoHeaderCopy from './StickySelectedVideoHeaderCopy';
+import StickySelectedVideoControls from './StickySelectedVideoControls';
 import { getFullscreenElement } from '../utils';
 import './HomePlaybackSection.css';
 
@@ -42,6 +44,11 @@ interface HomePlaybackSectionProps {
   chartPanelProps: ComponentProps<typeof ChartPanel>;
   communityPanelProps: ComponentProps<typeof CommunityPanel>;
   filterBarProps: ComponentProps<typeof FilterBar>;
+  isStickySelectedVideoPlaybackPaused?: boolean;
+  onPauseStickySelectedVideo?: () => void;
+  onPlayNextStickySelectedVideo?: () => void;
+  onPlayPreviousStickySelectedVideo?: () => void;
+  onResumeStickySelectedVideo?: () => void;
   playerStageProps: Omit<ComponentProps<typeof PlayerStage>, 'chartContent' | 'filterContent'>;
   preferredPreviewVideoId?: string;
   stickySelectedVideoContent?: ReactNode | ((controls: StickySelectedVideoControls) => ReactNode);
@@ -180,6 +187,11 @@ export default function HomePlaybackSection({
   chartPanelProps,
   communityPanelProps,
   filterBarProps,
+  isStickySelectedVideoPlaybackPaused = false,
+  onPauseStickySelectedVideo,
+  onPlayNextStickySelectedVideo,
+  onPlayPreviousStickySelectedVideo,
+  onResumeStickySelectedVideo,
   playerStageProps,
   preferredPreviewVideoId,
   stickySelectedVideoContent,
@@ -720,93 +732,6 @@ export default function HomePlaybackSection({
 
     handleScrollToTop();
   };
-
-  const mobilePreviewToggleButton = playerStageProps.isMobileLayout ? (
-    <button
-      aria-label={isMobilePlayerPreviewEnabled ? '미니 플레이어 숨기기' : '미니 플레이어 보기'}
-      className="app-shell__game-panel-action-utility app-shell__game-panel-action-utility--preview-toggle"
-      data-active={isMobilePlayerPreviewEnabled}
-      onClick={handleToggleMobilePlayerPreview}
-      title={isMobilePlayerPreviewEnabled ? '미니 플레이어 숨기기' : '미니 플레이어 보기'}
-      type="button"
-    >
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect
-          x="3.5"
-          y="5"
-          width="17"
-          height="11"
-          rx="2.5"
-          stroke="currentColor"
-          strokeWidth="1.8"
-        />
-        <path
-          d="M9 19h6"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.8"
-        />
-        <path
-          d="M12 16v3"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.8"
-        />
-        <path
-          d="M8 3.5 12 5.8 16 3.5"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.8"
-        />
-        <rect
-          x="6.75"
-          y="8"
-          width="10.5"
-          height="5.5"
-          rx="1.25"
-          stroke="currentColor"
-          strokeOpacity="0.35"
-          strokeWidth="1.4"
-        />
-      </svg>
-    </button>
-  ) : null;
-  const mobileJumpToTopButton = playerStageProps.isMobileLayout ? (
-    <button
-      aria-label="페이지 맨 위로 즉시 이동"
-      className="app-shell__game-panel-action-utility"
-      onClick={handleJumpToTop}
-      title="맨 위로"
-      type="button"
-    >
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M7.5 13.5 12 9l4.5 4.5"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.8"
-        />
-        <path
-          d="M12 9v10"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.8"
-        />
-        <path
-          d="M7 5h10"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeWidth="1.8"
-        />
-      </svg>
-    </button>
-  ) : null;
-
   const renderedStickySelectedVideoContent =
     typeof stickySelectedVideoContent === 'function'
       ? stickySelectedVideoContent({
@@ -1025,72 +950,29 @@ export default function HomePlaybackSection({
                 role="button"
                 tabIndex={0}
               >
-                <div className="app-shell__sticky-selected-video-collapsed-copy">
-                  <button
-                    className="app-shell__sticky-selected-video-collapsed-label"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleCollapsedLabelClick();
-                    }}
-                    type="button"
-                  >
-                    <span className="app-shell__game-panel-actions-eyebrow">{stickySelectedVideoLabel}</span>
-                  </button>
-                  {playerStageProps.selectedVideoTitle ? (
-                    <p
-                      className="app-shell__sticky-selected-video-collapsed-title"
-                      title={playerStageProps.selectedVideoTitle}
-                    >
-                      {playerStageProps.selectedVideoTitle}
-                    </p>
-                  ) : null}
-                </div>
+                <StickySelectedVideoHeaderCopy
+                  label={stickySelectedVideoLabel}
+                  onLabelClick={handleCollapsedLabelClick}
+                  title={playerStageProps.selectedVideoTitle}
+                />
                 <div
                   className="app-shell__game-panel-actions-utility"
                   onClick={(event) => event.stopPropagation()}
                   onKeyDown={(event) => event.stopPropagation()}
                 >
-                  {mobileJumpToTopButton}
-                  {mobilePreviewToggleButton}
-                  {!playerStageProps.isMobileLayout ? (
-                    <button
-                      aria-expanded="false"
-                      aria-label="선택한 영상 패널 펼치기"
-                      className="app-shell__game-panel-action-utility"
-                      onClick={handleExpandStickySelectedVideo}
-                      title="펼치기"
-                      type="button"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path
-                          d="M12 6v12M6 12h12"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.8"
-                        />
-                      </svg>
-                    </button>
-                  ) : null}
-                  {!playerStageProps.isMobileLayout ? (
-                    <button
-                      aria-label="선택한 영상 패널을 맨 위로 이동"
-                      className="app-shell__game-panel-action-utility"
-                      onClick={handleScrollToTop}
-                      title="맨 위로"
-                      type="button"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path
-                          d="M7.5 14.5 12 10l4.5 4.5"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.8"
-                        />
-                      </svg>
-                    </button>
-                  ) : null}
+                  <StickySelectedVideoControls
+                    isMobileLayout={playerStageProps.isMobileLayout}
+                    isMobilePlayerPreviewEnabled={isMobilePlayerPreviewEnabled}
+                    isPlaybackPaused={isStickySelectedVideoPlaybackPaused}
+                    onExpandPanel={handleExpandStickySelectedVideo}
+                    onJumpToTop={handleJumpToTop}
+                    onNextVideo={playerStageProps.selectedVideoId ? onPlayNextStickySelectedVideo : undefined}
+                    onPauseVideo={playerStageProps.selectedVideoId ? onPauseStickySelectedVideo : undefined}
+                    onPreviousVideo={playerStageProps.selectedVideoId ? onPlayPreviousStickySelectedVideo : undefined}
+                    onResumeVideo={playerStageProps.selectedVideoId ? onResumeStickySelectedVideo : undefined}
+                    onScrollToTop={handleScrollToTop}
+                    onToggleMobilePlayerPreviewEnabled={handleToggleMobilePlayerPreview}
+                  />
                 </div>
               </div>
             </div>

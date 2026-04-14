@@ -15,19 +15,16 @@ describe('RankingGameSelectedVideoActions', () => {
         currentVideoGamePriceSummary={<span>1위</span>}
         isBuyDisabled={false}
         isBuySubmitting={false}
-        isChartDisabled={false}
         isSellDisabled={false}
         isSellSubmitting={false}
         onContentClick={onContentClick}
         onEyebrowClick={onEyebrowClick}
         onHeaderClick={onHeaderClick}
         onOpenBuyTradeModal={vi.fn()}
-        onOpenRankHistory={vi.fn()}
         onOpenSellTradeModal={vi.fn()}
         selectedGameActionChannelTitle="Channel"
         selectedGameActionTitle="Video Title"
         selectedVideoId="video-1"
-        selectedVideoOpenPositionCount={0}
         sellActionTitle="매도"
       />,
     );
@@ -38,10 +35,64 @@ describe('RankingGameSelectedVideoActions', () => {
     expect(onHeaderClick).not.toHaveBeenCalled();
     expect(onContentClick).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByText('Video Title', { selector: 'p' }));
+    fireEvent.click(screen.getByText('Video Title', { selector: '.app-shell__game-panel-actions-title' }));
 
     expect(onContentClick).toHaveBeenCalledTimes(1);
     expect(onEyebrowClick).toHaveBeenCalledTimes(1);
     expect(onHeaderClick).not.toHaveBeenCalled();
+  });
+
+  it('uses the header title click for header actions', () => {
+    const onContentClick = vi.fn();
+    const onHeaderClick = vi.fn();
+
+    render(
+      <RankingGameSelectedVideoActions
+        buyActionTitle="매수"
+        canShowGameActions
+        currentVideoGamePriceSummary={<span>1위</span>}
+        isBuyDisabled={false}
+        isBuySubmitting={false}
+        isSellDisabled={false}
+        isSellSubmitting={false}
+        onContentClick={onContentClick}
+        onHeaderClick={onHeaderClick}
+        onOpenBuyTradeModal={vi.fn()}
+        onOpenSellTradeModal={vi.fn()}
+        selectedGameActionChannelTitle="Channel"
+        selectedGameActionTitle="Video Title"
+        selectedVideoId="video-1"
+        sellActionTitle="매도"
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Video Title', { selector: '.app-shell__game-panel-actions-header-title' }));
+
+    expect(onHeaderClick).toHaveBeenCalledTimes(1);
+    expect(onContentClick).not.toHaveBeenCalled();
+  });
+
+  it('shows buy and sell actions even when there is no open position', () => {
+    render(
+      <RankingGameSelectedVideoActions
+        buyActionTitle="매수"
+        canShowGameActions
+        currentVideoGamePriceSummary={<span>1위</span>}
+        isBuyDisabled={false}
+        isBuySubmitting={false}
+        isSellDisabled
+        isSellSubmitting={false}
+        onOpenBuyTradeModal={vi.fn()}
+        onOpenSellTradeModal={vi.fn()}
+        selectedGameActionChannelTitle="Channel"
+        selectedGameActionTitle="Video Title"
+        selectedVideoId="video-1"
+        sellActionTitle="매도"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: '선택한 영상 매수' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '선택한 영상 매도' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '선택한 영상 차트' })).not.toBeInTheDocument();
   });
 });
