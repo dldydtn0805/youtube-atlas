@@ -38,6 +38,7 @@ import {
   HISTORY_PLAYBACK_QUEUE_ID,
   filterVideoSection,
   getFullscreenElement,
+  getAdjacentGamePosition,
   getVideoThumbnailUrl,
   isBuyableVideoSearchActive,
   mapGamePositionToVideoItem,
@@ -857,6 +858,7 @@ function HomePage() {
     handlePlayNextVideo,
     handlePlayPreviousVideo,
     handleSelectVideo,
+    syncPlaybackSelection,
     isRestoredPlaybackActive,
     isManualPlaybackSavePending,
     manualPlaybackSaveStatus,
@@ -981,11 +983,18 @@ function HomePage() {
       return;
     }
 
-    const hasSelectedOpenPosition = openGamePositions.some((position) => position.id === selectedOpenPositionId);
-    if (!hasSelectedOpenPosition) {
+    const hasSelectedPosition =
+      activePlaybackQueueId === GAME_PORTFOLIO_QUEUE_ID
+        ? openGamePositions.some((position) => position.id === selectedOpenPositionId)
+        : activePlaybackQueueId === HISTORY_PLAYBACK_QUEUE_ID
+          ? gameHistoryPositions.some((position) => position.id === selectedOpenPositionId)
+          : openGamePositions.some((position) => position.id === selectedOpenPositionId) ||
+            gameHistoryPositions.some((position) => position.id === selectedOpenPositionId);
+
+    if (!hasSelectedPosition) {
       setSelectedOpenPositionId(null);
     }
-  }, [openGamePositions, selectedOpenPositionId]);
+  }, [activePlaybackQueueId, gameHistoryPositions, openGamePositions, selectedOpenPositionId]);
 
   useEffect(() => {
     if (!selectedVideoId) {
@@ -1122,6 +1131,14 @@ function HomePage() {
     selectedVideoRankSignalById: selectedVideoRankSignalsById,
     sellQuantity,
   });
+  const selectedSellPositionId = useMemo(
+    () =>
+      selectedOpenPositionId != null &&
+      openGamePositions.some((position) => position.id === selectedOpenPositionId)
+        ? selectedOpenPositionId
+        : null,
+    [openGamePositions, selectedOpenPositionId],
+  );
 
   const {
     handleBuyCurrentVideo,
@@ -1141,7 +1158,7 @@ function HomePage() {
     maxSellQuantity,
     mutateBuyGamePosition: buyGamePositionMutation.mutateAsync,
     mutateSellGamePositions: sellGamePositionsMutation.mutateAsync,
-    selectedOpenPositionId,
+    selectedOpenPositionId: selectedSellPositionId,
     selectedGameActionTitle,
     selectedVideoId,
     selectedVideoMarketEntry,
@@ -1235,6 +1252,38 @@ function HomePage() {
       }
     }
 
+    if (activePlaybackQueueId === GAME_PORTFOLIO_QUEUE_ID) {
+      const nextOpenPosition = getAdjacentGamePosition(openGamePositions, {
+        currentPositionId: selectedOpenPositionId,
+        currentVideoId: selectedVideoId,
+        skipSameVideoId: true,
+        step: 1,
+      });
+
+      if (nextOpenPosition) {
+        setSelectedOpenPositionId(nextOpenPosition.id);
+        setPreviewVideoId(nextOpenPosition.videoId);
+        syncPlaybackSelection(nextOpenPosition.videoId, GAME_PORTFOLIO_QUEUE_ID);
+        return;
+      }
+    }
+
+    if (activePlaybackQueueId === HISTORY_PLAYBACK_QUEUE_ID) {
+      const nextHistoryPosition = getAdjacentGamePosition(gameHistoryPositions, {
+        currentPositionId: selectedOpenPositionId,
+        currentVideoId: selectedVideoId,
+        skipSameVideoId: true,
+        step: 1,
+      });
+
+      if (nextHistoryPosition) {
+        setSelectedOpenPositionId(nextHistoryPosition.id);
+        setPreviewVideoId(nextHistoryPosition.videoId);
+        syncPlaybackSelection(nextHistoryPosition.videoId, HISTORY_PLAYBACK_QUEUE_ID);
+        return;
+      }
+    }
+
     const playbackItems = selectedPlaybackSection?.items ?? [];
     const currentIndex = playbackItems.findIndex((item) => item.id === selectedVideoId);
     const nextVideoId =
@@ -1248,14 +1297,51 @@ function HomePage() {
 
     handlePlayNextVideo();
   }, [
+    activePlaybackQueueId,
+    gameHistoryPositions,
     handlePlayNextVideo,
     handleSelectVideo,
+    syncPlaybackSelection,
     isRestoredPlaybackActive,
+    openGamePositions,
+    selectedOpenPositionId,
     selectedPlaybackSection,
     selectedVideoId,
   ]);
 
   const handlePlayPreviousVideoWithPreview = useCallback(() => {
+    if (activePlaybackQueueId === GAME_PORTFOLIO_QUEUE_ID) {
+      const previousOpenPosition = getAdjacentGamePosition(openGamePositions, {
+        currentPositionId: selectedOpenPositionId,
+        currentVideoId: selectedVideoId,
+        skipSameVideoId: true,
+        step: -1,
+      });
+
+      if (previousOpenPosition) {
+        setSelectedOpenPositionId(previousOpenPosition.id);
+        setPreviewVideoId(previousOpenPosition.videoId);
+        syncPlaybackSelection(previousOpenPosition.videoId, GAME_PORTFOLIO_QUEUE_ID);
+        return;
+      }
+    }
+
+    if (activePlaybackQueueId === HISTORY_PLAYBACK_QUEUE_ID) {
+      const previousHistoryPosition = getAdjacentGamePosition(gameHistoryPositions, {
+        currentPositionId: selectedOpenPositionId,
+        currentVideoId: selectedVideoId,
+        skipSameVideoId: true,
+        step: -1,
+      });
+
+      if (previousHistoryPosition) {
+        setSelectedOpenPositionId(previousHistoryPosition.id);
+        setPreviewVideoId(previousHistoryPosition.videoId);
+        syncPlaybackSelection(previousHistoryPosition.videoId, HISTORY_PLAYBACK_QUEUE_ID);
+        return;
+      }
+    }
+
     const playbackItems = selectedPlaybackSection?.items ?? [];
     const currentIndex = playbackItems.findIndex((item) => item.id === selectedVideoId);
     const previousVideoId =
@@ -1268,7 +1354,16 @@ function HomePage() {
     }
 
     handlePlayPreviousVideo();
-  }, [handlePlayPreviousVideo, selectedPlaybackSection, selectedVideoId]);
+  }, [
+    activePlaybackQueueId,
+    gameHistoryPositions,
+    handlePlayPreviousVideo,
+    syncPlaybackSelection,
+    openGamePositions,
+    selectedOpenPositionId,
+    selectedPlaybackSection,
+    selectedVideoId,
+  ]);
 
   const handlePauseCurrentVideo = useCallback(() => {
     videoPlayerRef.current?.pausePlayback();
@@ -1414,6 +1509,7 @@ function HomePage() {
       panelControls={panelControls}
       selectedGameActionChannelTitle={selectedGameActionChannelTitle}
       selectedGameActionTitle={selectedGameActionTitle}
+      selectedOpenPositionId={selectedOpenPositionId}
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
       selectedVideoHistoricalPosition={selectedVideoHistoricalPosition}
       selectedVideoId={selectedVideoId}
@@ -1442,6 +1538,7 @@ function HomePage() {
       onOpenRankHistory={handleOpenSelectedVideoRankHistory}
       onOpenSellTradeModal={openSellTradeModal}
       selectedGameActionChannelTitle={selectedGameActionChannelTitle}
+      selectedOpenPositionId={selectedOpenPositionId}
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
       selectedVideoHistoricalPosition={selectedVideoHistoricalPosition}
       selectedVideoId={selectedVideoId}
@@ -1460,6 +1557,7 @@ function HomePage() {
       gameCoinOverview={liveGameCoinOverview}
       maxSellQuantity={maxSellQuantity}
       preferMarketSummary
+      selectedOpenPositionId={selectedOpenPositionId}
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
       selectedVideoHistoricalPosition={selectedVideoHistoricalPosition}
       selectedVideoId={selectedVideoId}

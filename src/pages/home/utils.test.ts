@@ -9,6 +9,7 @@ import {
   formatSignedProfitRate,
   formatSelectedVideoRankLabel,
   formatTrendRankLabel,
+  getAdjacentGamePosition,
   isBuyableVideoSearchActive,
   NEW_CHART_ENTRIES_QUEUE_ID,
   REALTIME_SURGING_QUEUE_ID,
@@ -16,8 +17,88 @@ import {
   shouldRenderRealtimeSurgingSection,
   shouldPrefetchBuyableVideos,
 } from './utils';
+import type { GamePosition } from '../../features/game/types';
 
 describe('home utils', () => {
+  it('can skip adjacent positions that share the same video id', () => {
+    const positions: GamePosition[] = [
+      {
+        id: 1,
+        videoId: 'video-1',
+        title: '첫 포지션',
+        channelTitle: '채널',
+        thumbnailUrl: '',
+        buyRank: 1,
+        currentRank: 1,
+        rankDiff: 0,
+        quantity: 1,
+        stakePoints: 100,
+        currentPricePoints: 100,
+        profitPoints: 0,
+        chartOut: false,
+        status: 'OPEN',
+        buyCapturedAt: '2026-04-14T00:00:00.000Z',
+        createdAt: '2026-04-14T00:00:00.000Z',
+        closedAt: null,
+      },
+      {
+        id: 2,
+        videoId: 'video-1',
+        title: '둘째 포지션',
+        channelTitle: '채널',
+        thumbnailUrl: '',
+        buyRank: 2,
+        currentRank: 2,
+        rankDiff: 0,
+        quantity: 1,
+        stakePoints: 100,
+        currentPricePoints: 100,
+        profitPoints: 0,
+        chartOut: false,
+        status: 'OPEN',
+        buyCapturedAt: '2026-04-14T00:01:00.000Z',
+        createdAt: '2026-04-14T00:01:00.000Z',
+        closedAt: null,
+      },
+      {
+        id: 3,
+        videoId: 'video-2',
+        title: '셋째 포지션',
+        channelTitle: '채널',
+        thumbnailUrl: '',
+        buyRank: 3,
+        currentRank: 3,
+        rankDiff: 0,
+        quantity: 1,
+        stakePoints: 100,
+        currentPricePoints: 100,
+        profitPoints: 0,
+        chartOut: false,
+        status: 'OPEN',
+        buyCapturedAt: '2026-04-14T00:02:00.000Z',
+        createdAt: '2026-04-14T00:02:00.000Z',
+        closedAt: null,
+      },
+    ];
+
+    expect(
+      getAdjacentGamePosition(positions, {
+        currentPositionId: 1,
+        currentVideoId: 'video-1',
+        skipSameVideoId: true,
+        step: 1,
+      })?.id,
+    ).toBe(3);
+    expect(
+      getAdjacentGamePosition(positions, {
+        currentPositionId: 2,
+        currentVideoId: 'video-1',
+        skipSameVideoId: true,
+        step: -1,
+      })?.id,
+    ).toBe(3);
+  });
+
   it('renders realtime surging only when the all category is selected and supported', () => {
     expect(shouldRenderRealtimeSurgingSection(true, true)).toBe(true);
     expect(shouldRenderRealtimeSurgingSection(false, true)).toBe(false);

@@ -137,6 +137,7 @@ interface RankingGameHistoryTabProps {
   onSelectPosition: (position: GamePosition, playbackQueueId?: string) => void;
   positions: GamePosition[];
   resolvePlaybackQueueId: (videoId: string) => string | undefined;
+  selectedPositionId?: number | null;
   selectedVideoId?: string;
 }
 
@@ -158,6 +159,7 @@ function areRankingGameHistoryTabPropsEqual(
     prevProps.isLoading === nextProps.isLoading &&
     prevProps.positions === nextProps.positions &&
     prevProps.resolvePlaybackQueueId === nextProps.resolvePlaybackQueueId &&
+    prevProps.selectedPositionId === nextProps.selectedPositionId &&
     prevProps.selectedVideoId === nextProps.selectedVideoId
   );
 }
@@ -1188,6 +1190,7 @@ function RankingGameHistoryTabComponent({
   onSelectPosition,
   positions,
   resolvePlaybackQueueId,
+  selectedPositionId,
   selectedVideoId,
 }: RankingGameHistoryTabProps) {
   if (isLoading) {
@@ -1204,7 +1207,9 @@ function RankingGameHistoryTabComponent({
         const playbackQueueId = resolvePlaybackQueueId(position.videoId);
         const isSelectable = Boolean(playbackQueueId);
         const isSelectedPosition =
-          activePlaybackQueueId === HISTORY_PLAYBACK_QUEUE_ID && position.videoId === selectedVideoId;
+          activePlaybackQueueId === HISTORY_PLAYBACK_QUEUE_ID &&
+          position.id === selectedPositionId &&
+          position.videoId === selectedVideoId;
         const isLoadingHistoryPlayback = historyPlaybackLoadingVideoId === position.videoId;
         const isClosedPosition = position.status !== 'OPEN';
         const historyStatusTone =

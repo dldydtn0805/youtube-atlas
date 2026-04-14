@@ -24,6 +24,7 @@ interface GameSelectedVideoPriceSummaryProps {
   hideEvaluationPoints?: boolean;
   maxSellQuantity?: number;
   preferMarketSummary?: boolean;
+  selectedOpenPositionId?: number | null;
   selectedVideoCurrentChartRank: number | null | undefined;
   selectedVideoHistoricalPosition?: GamePosition | null;
   selectedVideoId?: string;
@@ -72,6 +73,7 @@ interface SelectedVideoGameActionsBundleProps {
   panelControls?: ReactNode;
   selectedGameActionChannelTitle?: string;
   selectedGameActionTitle?: string;
+  selectedOpenPositionId?: number | null;
   selectedVideoCurrentChartRank: number | null | undefined;
   selectedVideoHistoricalPosition?: GamePosition | null;
   selectedVideoId?: string;
@@ -129,6 +131,7 @@ export function GameSelectedVideoPriceSummary({
   hideEvaluationPoints = false,
   maxSellQuantity = 0,
   preferMarketSummary = false,
+  selectedOpenPositionId,
   selectedVideoCurrentChartRank,
   selectedVideoHistoricalPosition,
   selectedVideoId,
@@ -278,8 +281,12 @@ export function GameSelectedVideoPriceSummary({
       label: formatTrendBadgeLabel(badge),
     }));
     const selectedVideoCoinPositions =
-      selectedVideoId && gameCoinOverview
-        ? gameCoinOverview.positions.filter((position) => position.videoId === selectedVideoId)
+      gameCoinOverview
+        ? typeof selectedOpenPositionId === 'number'
+          ? gameCoinOverview.positions.filter((position) => position.positionId === selectedOpenPositionId)
+          : selectedVideoId
+            ? gameCoinOverview.positions.filter((position) => position.videoId === selectedVideoId)
+            : []
         : [];
     const matchingRank = gameCoinOverview?.ranks.find((rank) => rank.rank === selectedVideoCurrentChartRank);
     const activeVideoCoinPositions = selectedVideoCoinPositions.filter((position) => position.productionActive);
@@ -580,6 +587,7 @@ export function SelectedVideoGameActionsBundle({
   panelControls,
   selectedGameActionChannelTitle,
   selectedGameActionTitle,
+  selectedOpenPositionId,
   selectedVideoCurrentChartRank,
   selectedVideoHistoricalPosition,
   selectedVideoId,
@@ -597,6 +605,7 @@ export function SelectedVideoGameActionsBundle({
       fallbackViewCountLabel={fallbackViewCountLabel}
       gameCoinOverview={gameCoinOverview}
       maxSellQuantity={maxSellQuantity}
+      selectedOpenPositionId={selectedOpenPositionId}
       selectedVideoCurrentChartRank={selectedVideoCurrentChartRank}
       selectedVideoHistoricalPosition={selectedVideoHistoricalPosition}
       selectedVideoId={selectedVideoId}

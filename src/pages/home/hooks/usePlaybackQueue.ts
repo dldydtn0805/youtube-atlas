@@ -117,6 +117,12 @@ function usePlaybackQueue({
     setSelectedVideoId(videoId);
   }
 
+  function syncPlaybackSelection(videoId: string, playbackQueueId: string) {
+    shouldAutoSelectNextAvailableRef.current = false;
+    setActivePlaybackQueueId(playbackQueueId);
+    setSelectedVideoId(videoId);
+  }
+
   function updateActivePlaybackQueueId(queueId: string) {
     setActivePlaybackQueueId(queueId);
   }
@@ -270,6 +276,7 @@ function usePlaybackQueue({
     handleSelectVideo,
     resetForRegionChange,
     restorePlaybackSelection,
+    syncPlaybackSelection,
     selectedVideoId,
     updateActivePlaybackQueueId,
     activePlaybackQueueId,

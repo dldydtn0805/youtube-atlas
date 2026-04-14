@@ -53,6 +53,7 @@ interface UseHomePlaybackStateResult {
     playbackQueueId: string,
     triggerElement?: HTMLButtonElement,
   ) => void;
+  syncPlaybackSelection: (videoId: string, playbackQueueId: string) => void;
   isRestoredPlaybackActive: boolean;
   isManualPlaybackSavePending: boolean;
   manualPlaybackSaveStatus: string | null;
@@ -149,6 +150,7 @@ export default function useHomePlaybackState({
     handleSelectVideo,
     resetForRegionChange,
     restorePlaybackSelection,
+    syncPlaybackSelection,
     selectedVideoId,
     updateActivePlaybackQueueId,
   } = usePlaybackQueue({
@@ -333,6 +335,14 @@ export default function useHomePlaybackState({
     handlePlayPreviousVideo();
   }, [handlePlayPreviousVideo]);
 
+  const syncPlaybackSelectionWithRestoreReset = useCallback(
+    (videoId: string, playbackQueueId: string) => {
+      setIsRestoredPlaybackActive(false);
+      syncPlaybackSelection(videoId, playbackQueueId);
+    },
+    [syncPlaybackSelection],
+  );
+
   const persistPlaybackProgress = useCallback(
     async (
       videoId: string,
@@ -444,5 +454,6 @@ export default function useHomePlaybackState({
     resetForRegionChange,
     resolvedSelectedVideo,
     selectedVideoId,
+    syncPlaybackSelection: syncPlaybackSelectionWithRestoreReset,
   };
 }

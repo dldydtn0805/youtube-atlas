@@ -313,6 +313,48 @@ export function mapGamePositionToVideoItem(position: GamePosition): YouTubeVideo
   };
 }
 
+export function getAdjacentGamePosition(
+  positions: GamePosition[],
+  options: {
+    currentPositionId?: number | null;
+    currentVideoId?: string;
+    skipSameVideoId?: boolean;
+    step: 1 | -1;
+  },
+) {
+  if (positions.length === 0) {
+    return undefined;
+  }
+
+  const { currentPositionId, currentVideoId, skipSameVideoId = false, step } = options;
+  const currentIndex =
+    currentPositionId != null
+      ? positions.findIndex((position) => position.id === currentPositionId)
+      : currentVideoId
+        ? positions.findIndex((position) => position.videoId === currentVideoId)
+        : -1;
+  const fallbackIndex = step >= 0 ? 0 : positions.length - 1;
+  const startIndex = currentIndex >= 0 ? currentIndex : fallbackIndex - step;
+  const selectedVideoId = currentIndex >= 0 ? positions[currentIndex]?.videoId : currentVideoId;
+
+  for (let offset = 1; offset <= positions.length; offset += 1) {
+    const nextIndex = (startIndex + (step * offset) + positions.length) % positions.length;
+    const nextPosition = positions[nextIndex];
+
+    if (!nextPosition) {
+      continue;
+    }
+
+    if (skipSameVideoId && selectedVideoId && nextPosition.videoId === selectedVideoId) {
+      continue;
+    }
+
+    return nextPosition;
+  }
+
+  return undefined;
+}
+
 export function getVideoThumbnailUrl(video: YouTubeVideoItem) {
   return (
     video.snippet.thumbnails.maxres?.url ??

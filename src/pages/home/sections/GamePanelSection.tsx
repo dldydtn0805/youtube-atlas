@@ -204,6 +204,7 @@ export default function GamePanelSection({
       }}
       positions={gameHistoryPositions}
       resolvePlaybackQueueId={resolvePlaybackQueueId}
+      selectedPositionId={selectedPositionId}
       selectedVideoId={selectedVideoId}
     />
   );

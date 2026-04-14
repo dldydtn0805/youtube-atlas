@@ -1,6 +1,31 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { RankingGameSelectedVideoActions } from './RankingGamePanel';
+import type { GamePosition } from '../../../features/game/types';
+import { HISTORY_PLAYBACK_QUEUE_ID } from '../utils';
+import { RankingGameHistoryTab, RankingGameSelectedVideoActions } from './RankingGamePanel';
+
+function createGamePosition(overrides: Partial<GamePosition>): GamePosition {
+  return {
+    id: 1,
+    videoId: 'video-1',
+    title: 'Video Title',
+    channelTitle: 'Channel',
+    thumbnailUrl: '',
+    buyRank: 1,
+    currentRank: 1,
+    rankDiff: null,
+    quantity: 1,
+    stakePoints: 100,
+    currentPricePoints: 120,
+    profitPoints: 20,
+    chartOut: false,
+    status: 'OPEN',
+    buyCapturedAt: '2026-01-01T00:00:00.000Z',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    closedAt: null,
+    ...overrides,
+  };
+}
 
 describe('RankingGameSelectedVideoActions', () => {
   it('keeps the now playing label and selected title click targets separate', () => {
@@ -94,5 +119,38 @@ describe('RankingGameSelectedVideoActions', () => {
     expect(screen.getByRole('button', { name: '선택한 영상 매수' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '선택한 영상 매도' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '선택한 영상 차트' })).not.toBeInTheDocument();
+  });
+});
+
+describe('RankingGameHistoryTab', () => {
+  it('tracks the selected history row by position id when the same video appears twice', () => {
+    render(
+      <RankingGameHistoryTab
+        activePlaybackQueueId={HISTORY_PLAYBACK_QUEUE_ID}
+        emptyMessage={null}
+        historyPlaybackLoadingVideoId={null}
+        isLoading={false}
+        onSelectPosition={vi.fn()}
+        positions={[
+          createGamePosition({
+            id: 1,
+            title: 'First position',
+            videoId: 'same-video',
+          }),
+          createGamePosition({
+            id: 2,
+            title: 'Second position',
+            videoId: 'same-video',
+            createdAt: '2026-01-02T00:00:00.000Z',
+          }),
+        ]}
+        resolvePlaybackQueueId={() => HISTORY_PLAYBACK_QUEUE_ID}
+        selectedPositionId={2}
+        selectedVideoId="same-video"
+      />,
+    );
+
+    expect(screen.getByText('First position').closest('li')).toHaveAttribute('data-selected', 'false');
+    expect(screen.getByText('Second position').closest('li')).toHaveAttribute('data-selected', 'true');
   });
 });
