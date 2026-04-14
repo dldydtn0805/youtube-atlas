@@ -61,7 +61,7 @@
   background-clip: text;
   color: transparent;
   display: inline-flex;
-  font-family: 'Arial', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-body);
   font-size: 1.14rem;
   font-weight: 900;
   height: 18px;

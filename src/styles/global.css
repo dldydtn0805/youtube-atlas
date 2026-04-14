@@ -4,6 +4,22 @@
   padding: 0;
 }
 
+@font-face {
+  font-family: 'Mona12';
+  font-display: swap;
+  font-style: normal;
+  font-weight: 300 500;
+  src: url('/fonts/mona/Mona12.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Mona12';
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600 900;
+  src: url('/fonts/mona/Mona12-Bold.woff2') format('woff2');
+}
+
 :root {
   --bg: #fff;
   --surface: rgba(255, 255, 255, 0.78);
@@ -86,8 +102,8 @@
   --layer-loading-overlay: 1410;
   --focus-ring: 0 0 0 4px rgba(0, 113, 227, 0.1);
   --accent-border: rgba(0, 113, 227, 0.22);
-  --font-display: 'Neo둥근모', monospace;
-  --font-body: 'Arial', 'Helvetica Neue', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-display: 'Mona12', monospace;
+  --font-body: 'Mona12', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   color-scheme: light;
 }
 
