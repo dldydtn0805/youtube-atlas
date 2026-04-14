@@ -592,13 +592,13 @@
 
 .app-shell__game-panel-actions-header-title {
   color: var(--text);
-  flex: 0 1 14rem;
+  flex: 0 1 21rem;
   font-size: 0.66rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.2;
   margin: 0;
-  max-width: min(14rem, 45vw);
+  max-width: min(21rem, 67.5vw);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
