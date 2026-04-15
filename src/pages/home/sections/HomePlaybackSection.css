@@ -274,6 +274,8 @@
     isolation: isolate;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
     transform: translateZ(0);
     position: sticky;
     top: 0;
@@ -289,6 +291,14 @@
   .app-shell__mobile-player-stage-sticky-shell .video-player__frame-slot,
   .app-shell__mobile-player-stage-sticky-shell .video-player__frame {
     margin: 0;
+  }
+
+  .app-shell__mobile-player-stage-sticky-shell .video-player,
+  .app-shell__mobile-player-stage-sticky-shell .video-player__frame-slot,
+  .app-shell__mobile-player-stage-sticky-shell .video-player__frame,
+  .app-shell__mobile-player-stage-sticky-shell .video-player__embed-shell,
+  .app-shell__mobile-player-stage-sticky-shell .video-player__embed {
+    background: var(--page-bg);
   }
 
   .app-shell__sticky-selected-video-slot {
