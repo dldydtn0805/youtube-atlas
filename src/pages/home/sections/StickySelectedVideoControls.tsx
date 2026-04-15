@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 interface StickySelectedVideoControlsProps {
   isMobileLayout: boolean;
+  isMobilePlayerStageStickyEnabled?: boolean;
   isPlaybackPaused?: boolean;
   onCollapsePanel?: () => void;
   onExpandPanel?: () => void;
@@ -11,6 +12,7 @@ interface StickySelectedVideoControlsProps {
   onPreviousVideo?: () => void;
   onResumeVideo?: () => void;
   onScrollToTop?: () => void;
+  onToggleMobilePlayerStageStickyEnabled?: () => void;
 }
 
 function ControlButton({
@@ -42,6 +44,7 @@ function ControlButton({
 
 export default function StickySelectedVideoControls({
   isMobileLayout,
+  isMobilePlayerStageStickyEnabled: _isMobilePlayerStageStickyEnabled = true,
   isPlaybackPaused = false,
   onCollapsePanel,
   onExpandPanel,
@@ -51,6 +54,7 @@ export default function StickySelectedVideoControls({
   onPreviousVideo,
   onResumeVideo,
   onScrollToTop,
+  onToggleMobilePlayerStageStickyEnabled: _onToggleMobilePlayerStageStickyEnabled,
 }: StickySelectedVideoControlsProps) {
   const hasPlaybackControls = Boolean(onPreviousVideo && onNextVideo && ((isPlaybackPaused && onResumeVideo) || (!isPlaybackPaused && onPauseVideo)));
 
