@@ -276,30 +276,30 @@
 }
 
 @media (max-width: 768px) {
-  .video-player__frame {
+  :root[data-mobile-layout='true'] .video-player__frame {
     border-radius: 20px;
   }
 
-  .video-player__overlay-nav {
+  :root[data-mobile-layout='true'] .video-player__overlay-nav {
     inset: 0;
   }
 
-  .video-player[data-cinematic='true'] .video-player__frame {
+  :root[data-mobile-layout='true'] .video-player[data-cinematic='true'] .video-player__frame {
     padding: 0;
   }
 
-  .video-player__overlay-button {
+  :root[data-mobile-layout='true'] .video-player__overlay-button {
     height: 30px;
     width: 30px;
   }
 
-  .video-player__overlay-icon {
+  :root[data-mobile-layout='true'] .video-player__overlay-icon {
     font-size: 1.35rem;
   }
 }
 
 @media (max-width: 480px) {
-  .video-player__placeholder {
+  :root[data-mobile-layout='true'] .video-player__placeholder {
     font-size: 0.92rem;
     padding: 18px;
   }

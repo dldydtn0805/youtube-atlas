@@ -1,6 +1,7 @@
 import { useEffect, useState, type RefObject } from 'react';
 import {
   MOBILE_BREAKPOINT,
+  MOBILE_MIN_HEIGHT,
   exitElementFullscreen,
   getFullscreenElement,
   getInitialCinematicMode,
@@ -35,7 +36,9 @@ function useAppPreferences({ playerSectionRef, playerStageRef }: UseAppPreferenc
       return;
     }
 
-    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+    const mediaQuery = window.matchMedia(
+      `(max-width: ${MOBILE_BREAKPOINT}px) and (min-height: ${MOBILE_MIN_HEIGHT}px)`,
+    );
     const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
       setIsMobileLayout(event.matches);
     };
@@ -78,6 +81,10 @@ function useAppPreferences({ playerSectionRef, playerStageRef }: UseAppPreferenc
     document.documentElement.dataset.theme = themeMode;
     document.documentElement.style.colorScheme = themeMode;
   }, [themeMode]);
+
+  useEffect(() => {
+    document.documentElement.dataset.mobileLayout = isMobileLayout ? 'true' : 'false';
+  }, [isMobileLayout]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {

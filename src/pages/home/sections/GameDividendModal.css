@@ -343,25 +343,25 @@
 }
 
 @media (max-width: 768px) {
-  .app-shell__modal--dividend .app-shell__modal-body {
+  :root[data-mobile-layout='true'] .app-shell__modal--dividend .app-shell__modal-body {
     padding-right: 12px;
   }
 
-  .app-shell__modal--dividend .app-shell__modal-field--tier {
+  :root[data-mobile-layout='true'] .app-shell__modal--dividend .app-shell__modal-field--tier {
     padding: 0;
   }
 
-  .app-shell__game-dividend-rate-examples {
+  :root[data-mobile-layout='true'] .app-shell__game-dividend-rate-examples {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .app-shell__game-dividend-position {
+  :root[data-mobile-layout='true'] .app-shell__game-dividend-position {
     gap: 12px;
     grid-template-columns: 72px minmax(0, 1fr);
     padding: 14px;
   }
 
-  .app-shell__game-dividend-position-thumb {
+  :root[data-mobile-layout='true'] .app-shell__game-dividend-position-thumb {
     border-radius: 16px;
     width: 72px;
   }

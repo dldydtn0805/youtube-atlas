@@ -5,6 +5,7 @@ import useAppPreferences from './useAppPreferences';
 
 describe('useAppPreferences', () => {
   const originalInnerWidth = window.innerWidth;
+  const originalInnerHeight = window.innerHeight;
   const originalMatchMedia = window.matchMedia;
   const originalFullscreenElementDescriptor = Object.getOwnPropertyDescriptor(document, 'fullscreenElement');
 
@@ -20,6 +21,12 @@ describe('useAppPreferences', () => {
       writable: true,
     });
 
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      value: 900,
+      writable: true,
+    });
+
     Object.defineProperty(document, 'fullscreenElement', {
       configurable: true,
       get() {
@@ -29,7 +36,12 @@ describe('useAppPreferences', () => {
 
     window.matchMedia = vi.fn().mockImplementation((query: string) => {
       const maxWidthMatch = query.match(/max-width:\s*(\d+)px/);
-      const matches = maxWidthMatch ? window.innerWidth <= Number(maxWidthMatch[1]) : false;
+      const minHeightMatch = query.match(/min-height:\s*(\d+)px/);
+      const isViewportQuery = Boolean(maxWidthMatch || minHeightMatch);
+      const matches = isViewportQuery
+        ? (maxWidthMatch ? window.innerWidth <= Number(maxWidthMatch[1]) : true) &&
+          (minHeightMatch ? window.innerHeight >= Number(minHeightMatch[1]) : true)
+        : false;
 
       return {
         addEventListener: vi.fn(),
@@ -48,6 +60,12 @@ describe('useAppPreferences', () => {
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,
       value: originalInnerWidth,
+      writable: true,
+    });
+
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      value: originalInnerHeight,
       writable: true,
     });
 
@@ -137,5 +155,20 @@ describe('useAppPreferences', () => {
     });
 
     expect(window.localStorage.getItem('youtube-atlas-theme-mode')).toBe('dark');
+  });
+
+  it('does not enable mobile layout when the viewport height is too short', () => {
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      value: 420,
+      writable: true,
+    });
+
+    const playerSectionRef = createRef<HTMLElement>();
+    const playerStageRef = createRef<HTMLDivElement>();
+
+    const { result } = renderHook(() => useAppPreferences({ playerSectionRef, playerStageRef }));
+
+    expect(result.current.isMobileLayout).toBe(false);
   });
 });

@@ -14,6 +14,7 @@ export const DEFAULT_REGION_CODE = 'US';
 export const DEFAULT_CATEGORY_ID = ALL_VIDEO_CATEGORY_ID;
 export const GAME_PORTFOLIO_QUEUE_ID = 'game-portfolio';
 export const MOBILE_BREAKPOINT = 768;
+export const MOBILE_MIN_HEIGHT = 500;
 export const NEW_CHART_ENTRIES_QUEUE_ID = 'new-chart-entries';
 export const REALTIME_SURGING_QUEUE_ID = 'realtime-surging';
 export const RESTORED_PLAYBACK_QUEUE_ID = 'last-playback-progress';
@@ -104,7 +105,7 @@ export function getInitialIsMobileLayout() {
     return false;
   }
 
-  return window.innerWidth <= MOBILE_BREAKPOINT;
+  return window.innerWidth <= MOBILE_BREAKPOINT && window.innerHeight >= MOBILE_MIN_HEIGHT;
 }
 
 type FullscreenCapableElement = HTMLElement & {

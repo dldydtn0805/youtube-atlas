@@ -297,27 +297,27 @@
 }
 
 @media (max-width: 768px) {
-  .app-shell__modal--trade .app-shell__modal-header {
+  :root[data-mobile-layout='true'] .app-shell__modal--trade .app-shell__modal-header {
     display: block;
   }
 
-  .app-shell__modal--trade .app-shell__modal-footer {
+  :root[data-mobile-layout='true'] .app-shell__modal--trade .app-shell__modal-footer {
     justify-content: stretch;
   }
 
-  .app-shell__modal-footer--trade-actions {
+  :root[data-mobile-layout='true'] .app-shell__modal-footer--trade-actions {
     grid-template-columns: 1fr 1fr;
   }
 
-  .app-shell__game-trade-modal-head {
+  :root[data-mobile-layout='true'] .app-shell__game-trade-modal-head {
     grid-template-columns: 1fr;
   }
 
-  .app-shell__game-trade-modal-summary {
+  :root[data-mobile-layout='true'] .app-shell__game-trade-modal-summary {
     grid-template-columns: 1fr;
   }
 
-  .app-shell__game-trade-modal-controls .app-shell__game-panel-quantity {
+  :root[data-mobile-layout='true'] .app-shell__game-trade-modal-controls .app-shell__game-panel-quantity {
     justify-self: stretch;
     width: 100%;
   }

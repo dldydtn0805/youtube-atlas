@@ -202,11 +202,11 @@
 }
 
 @media (max-width: 768px) {
-  .app-shell__game-rank-history-sample {
+  :root[data-mobile-layout='true'] .app-shell__game-rank-history-sample {
     grid-template-columns: 1fr;
   }
 
-  .app-shell__game-rank-history-sample-side {
+  :root[data-mobile-layout='true'] .app-shell__game-rank-history-sample-side {
     justify-items: start;
   }
 }

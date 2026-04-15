@@ -65,7 +65,7 @@
 }
 
 @media (max-width: 768px) {
-  .search-bar__select {
+  :root[data-mobile-layout='true'] .search-bar__select {
     min-height: 54px;
     padding: 0 48px 0 16px;
   }

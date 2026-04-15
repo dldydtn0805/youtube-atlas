@@ -27,10 +27,10 @@
 }
 
 @media (max-width: 768px) {
-  .app-shell__panel.app-shell__panel--favorites,
-  .app-shell__panel.app-shell__panel--community,
-  .app-shell__panel.app-shell__panel--chart,
-  .app-shell__panel.app-shell__panel--chart-cinematic {
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--favorites,
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--community,
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--chart,
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--chart-cinematic {
     backdrop-filter: none;
     background: transparent;
     border: 0;
@@ -42,24 +42,24 @@
     width: 100vw;
   }
 
-  .app-shell__panel.app-shell__panel--favorites::before,
-  .app-shell__panel.app-shell__panel--community::before,
-  .app-shell__panel.app-shell__panel--chart::before,
-  .app-shell__panel.app-shell__panel--chart-cinematic::before {
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--favorites::before,
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--community::before,
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--chart::before,
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--chart-cinematic::before {
     display: none;
   }
 
-  .app-shell__panel--favorites > .app-shell__section-heading,
-  .app-shell__panel--community > .app-shell__section-heading,
-  .app-shell__panel--chart > .app-shell__section-heading,
-  .app-shell__panel--chart-cinematic > .app-shell__section-heading,
-  .app-shell__panel--favorites > .video-list,
-  .app-shell__panel--chart > .video-list,
-  .app-shell__panel--chart-cinematic > .video-list,
-  .app-shell__panel--favorites > .app-shell__favorites-status,
-  .app-shell__panel--community > .comment-section,
-  .app-shell__panel--chart > .video-list__status,
-  .app-shell__panel--chart-cinematic > .video-list__status {
+  :root[data-mobile-layout='true'] .app-shell__panel--favorites > .app-shell__section-heading,
+  :root[data-mobile-layout='true'] .app-shell__panel--community > .app-shell__section-heading,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart > .app-shell__section-heading,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .app-shell__section-heading,
+  :root[data-mobile-layout='true'] .app-shell__panel--favorites > .video-list,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart > .video-list,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .video-list,
+  :root[data-mobile-layout='true'] .app-shell__panel--favorites > .app-shell__favorites-status,
+  :root[data-mobile-layout='true'] .app-shell__panel--community > .comment-section,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart > .video-list__status,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .video-list__status {
     padding-left: 16px;
     padding-right: 16px;
   }
@@ -67,25 +67,25 @@
 }
 
 @media (max-width: 480px) {
-  .app-shell__panel.app-shell__panel--favorites,
-  .app-shell__panel.app-shell__panel--community,
-  .app-shell__panel.app-shell__panel--chart,
-  .app-shell__panel.app-shell__panel--chart-cinematic {
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--favorites,
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--community,
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--chart,
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--chart-cinematic {
     padding-bottom: 14px;
     padding-top: 14px;
   }
 
-  .app-shell__panel--favorites > .app-shell__section-heading,
-  .app-shell__panel--community > .app-shell__section-heading,
-  .app-shell__panel--chart > .app-shell__section-heading,
-  .app-shell__panel--chart-cinematic > .app-shell__section-heading,
-  .app-shell__panel--favorites > .video-list,
-  .app-shell__panel--chart > .video-list,
-  .app-shell__panel--chart-cinematic > .video-list,
-  .app-shell__panel--favorites > .app-shell__favorites-status,
-  .app-shell__panel--community > .comment-section,
-  .app-shell__panel--chart > .video-list__status,
-  .app-shell__panel--chart-cinematic > .video-list__status {
+  :root[data-mobile-layout='true'] .app-shell__panel--favorites > .app-shell__section-heading,
+  :root[data-mobile-layout='true'] .app-shell__panel--community > .app-shell__section-heading,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart > .app-shell__section-heading,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .app-shell__section-heading,
+  :root[data-mobile-layout='true'] .app-shell__panel--favorites > .video-list,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart > .video-list,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .video-list,
+  :root[data-mobile-layout='true'] .app-shell__panel--favorites > .app-shell__favorites-status,
+  :root[data-mobile-layout='true'] .app-shell__panel--community > .comment-section,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart > .video-list__status,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .video-list__status {
     padding-left: 14px;
     padding-right: 14px;
   }

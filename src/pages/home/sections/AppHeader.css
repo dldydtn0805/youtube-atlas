@@ -157,45 +157,45 @@
 }
 
 @media (max-width: 768px) {
-  .app-shell__header {
+  :root[data-mobile-layout='true'] .app-shell__header {
     padding: 14px 4px 12px;
   }
 
-  .app-shell__header-top {
+  :root[data-mobile-layout='true'] .app-shell__header-top {
     align-items: center;
     flex-wrap: nowrap;
   }
 
-  .app-shell__header-actions {
+  :root[data-mobile-layout='true'] .app-shell__header-actions {
     flex-wrap: nowrap;
     justify-content: flex-end;
     margin-left: auto;
     width: auto;
   }
 
-  .app-shell__header-actions,
-  .app-shell__auth-panel,
-  .app-shell__auth-session {
+  :root[data-mobile-layout='true'] .app-shell__header-actions,
+  :root[data-mobile-layout='true'] .app-shell__auth-panel,
+  :root[data-mobile-layout='true'] .app-shell__auth-session {
     flex-direction: row;
   }
 
-  .app-shell__title {
+  :root[data-mobile-layout='true'] .app-shell__title {
     flex: 1;
     min-width: 0;
   }
 
-  .app-shell__auth-panel,
-  .app-shell__auth-session {
+  :root[data-mobile-layout='true'] .app-shell__auth-panel,
+  :root[data-mobile-layout='true'] .app-shell__auth-session {
     width: auto;
   }
 
-  .app-shell__theme-toggle {
+  :root[data-mobile-layout='true'] .app-shell__theme-toggle {
     width: 40px;
   }
 }
 
 @media (max-width: 480px) {
-  .app-shell__title {
+  :root[data-mobile-layout='true'] .app-shell__title {
     font-size: 1.5rem;
   }
 }

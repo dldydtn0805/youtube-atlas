@@ -261,7 +261,7 @@
 }
 
 @media (max-width: 768px) {
-  .app-shell__stage-channel {
+  :root[data-mobile-layout='true'] .app-shell__stage-channel {
     font-size: 0.8rem;
   }
 }
@@ -649,7 +649,7 @@
 }
 
 @media (max-width: 768px) {
-  .app-shell__panel.app-shell__panel--player {
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--player {
     backdrop-filter: none;
     background: transparent;
     border: 1px solid var(--border);
@@ -662,28 +662,28 @@
     width: 100vw;
   }
 
-  .app-shell__panel.app-shell__panel--player::before {
+  :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--player::before {
     display: none;
   }
 
-  .app-shell__panel--player > .app-shell__section-heading--player,
-  .app-shell__panel--player > .app-shell__stage-meta,
-  .app-shell__panel--player > .app-shell__panel,
-  .app-shell__panel--player > .app-shell__game-panel,
-  .app-shell__panel--player > .app-shell__game-panel-section,
-  .app-shell__panel--player > .app-shell__supplemental-content {
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__section-heading--player,
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__stage-meta,
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__panel,
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__game-panel,
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__game-panel-section,
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__supplemental-content {
     padding-left: 16px;
     padding-right: 16px;
   }
 
-  .app-shell__player-viewport .video-player__frame {
+  :root[data-mobile-layout='true'] .app-shell__player-viewport .video-player__frame {
     background: transparent;
     border: 1px solid var(--border);
     border-radius: 0;
     box-shadow: none;
   }
 
-  .app-shell__section-heading.app-shell__section-heading--player {
+  :root[data-mobile-layout='true'] .app-shell__section-heading.app-shell__section-heading--player {
     align-items: flex-start;
     flex-direction: row;
     gap: 10px;
@@ -691,7 +691,7 @@
     margin-bottom: 14px;
   }
 
-  .app-shell__mode-toggle {
+  :root[data-mobile-layout='true'] .app-shell__mode-toggle {
     border-radius: 16px;
     font-size: 0.84rem;
     min-height: 42px;
@@ -699,14 +699,14 @@
     width: auto;
   }
 
-  .app-shell__player-actions {
+  :root[data-mobile-layout='true'] .app-shell__player-actions {
     display: inline-flex;
     gap: 8px;
     justify-content: flex-end;
     width: auto;
   }
 
-  .app-shell__stage-meta {
+  :root[data-mobile-layout='true'] .app-shell__stage-meta {
     align-items: start;
     display: grid;
     gap: 6px 12px;
@@ -720,7 +720,7 @@
     padding-top: 12px;
   }
 
-  .app-shell__stage-side {
+  :root[data-mobile-layout='true'] .app-shell__stage-side {
     align-items: start;
     display: grid;
     gap: 0;
@@ -732,27 +732,27 @@
     width: fit-content;
   }
 
-  .app-shell__stage-actions {
+  :root[data-mobile-layout='true'] .app-shell__stage-actions {
     flex-wrap: nowrap;
     gap: 8px;
     justify-content: flex-end;
     width: fit-content;
   }
 
-  .app-shell__stage-action-item {
+  :root[data-mobile-layout='true'] .app-shell__stage-action-item {
     gap: 4px;
   }
 
-  .app-shell__stage-action-caption {
+  :root[data-mobile-layout='true'] .app-shell__stage-action-caption {
     font-size: 0.64rem;
     max-width: 56px;
   }
 
-  .app-shell__stage-copy {
+  :root[data-mobile-layout='true'] .app-shell__stage-copy {
     display: contents;
   }
 
-  .app-shell__stage-channel-row {
+  :root[data-mobile-layout='true'] .app-shell__stage-channel-row {
     align-items: center;
     flex-wrap: nowrap;
     gap: 8px;
@@ -844,22 +844,22 @@
 }
 
 @media (max-width: 480px) {
-  .app-shell__panel--player {
+  :root[data-mobile-layout='true'] .app-shell__panel--player {
     padding-bottom: 14px;
     padding-top: 14px;
   }
 
-  .app-shell__panel--player > .app-shell__section-heading--player,
-  .app-shell__panel--player > .app-shell__stage-meta,
-  .app-shell__panel--player > .app-shell__panel,
-  .app-shell__panel--player > .app-shell__game-panel,
-  .app-shell__panel--player > .app-shell__game-panel-section,
-  .app-shell__panel--player > .app-shell__supplemental-content {
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__section-heading--player,
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__stage-meta,
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__panel,
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__game-panel,
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__game-panel-section,
+  :root[data-mobile-layout='true'] .app-shell__panel--player > .app-shell__supplemental-content {
     padding-left: 14px;
     padding-right: 14px;
   }
 
-  .app-shell__stage-title {
+  :root[data-mobile-layout='true'] .app-shell__stage-title {
     font-size: 1rem;
   }
 }
