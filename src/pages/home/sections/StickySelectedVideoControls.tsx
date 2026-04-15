@@ -148,20 +148,19 @@ export default function StickySelectedVideoControls({
         >
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
-              d="M8.75 5.75h6.5"
+              d="M5.75 6.75h12.5v8.5H5.75z"
               stroke="currentColor"
-              strokeLinecap="round"
-              strokeWidth="1.8"
-            />
-            <path
-              d="m9.5 10.25 2.5 8.25 2.5-8.25"
-              stroke="currentColor"
-              strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth="1.8"
             />
             <path
-              d="M8 10.25h8"
+              d="M10 18.25h4"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeWidth="1.8"
+            />
+            <path
+              d="M12 15.25v3"
               stroke="currentColor"
               strokeLinecap="round"
               strokeWidth="1.8"
