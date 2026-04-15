@@ -277,7 +277,9 @@
 
 @media (max-width: 768px) {
   :root[data-mobile-layout='true'] .video-player__frame {
+    border: 0;
     border-radius: 20px;
+    box-shadow: none;
   }
 
   :root[data-mobile-layout='true'] .video-player__overlay-nav {

@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 
 interface StickySelectedVideoControlsProps {
   isMobileLayout: boolean;
-  isMobilePlayerStageStickyEnabled?: boolean;
   isPlaybackPaused?: boolean;
   onCollapsePanel?: () => void;
   onExpandPanel?: () => void;
@@ -12,7 +11,6 @@ interface StickySelectedVideoControlsProps {
   onPreviousVideo?: () => void;
   onResumeVideo?: () => void;
   onScrollToTop?: () => void;
-  onToggleMobilePlayerStageStickyEnabled?: () => void;
 }
 
 function ControlButton({
@@ -44,7 +42,6 @@ function ControlButton({
 
 export default function StickySelectedVideoControls({
   isMobileLayout,
-  isMobilePlayerStageStickyEnabled = true,
   isPlaybackPaused = false,
   onCollapsePanel,
   onExpandPanel,
@@ -54,7 +51,6 @@ export default function StickySelectedVideoControls({
   onPreviousVideo,
   onResumeVideo,
   onScrollToTop,
-  onToggleMobilePlayerStageStickyEnabled,
 }: StickySelectedVideoControlsProps) {
   const hasPlaybackControls = Boolean(onPreviousVideo && onNextVideo && ((isPlaybackPaused && onResumeVideo) || (!isPlaybackPaused && onPauseVideo)));
 
@@ -132,35 +128,6 @@ export default function StickySelectedVideoControls({
             />
             <path
               d="M7 5h10"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeWidth="1.8"
-            />
-          </svg>
-        </ControlButton>
-      ) : null}
-      {isMobileLayout && onToggleMobilePlayerStageStickyEnabled ? (
-        <ControlButton
-          ariaLabel={isMobilePlayerStageStickyEnabled ? '상단 영상 스티키 끄기' : '상단 영상 스티키 켜기'}
-          isActive={isMobilePlayerStageStickyEnabled}
-          onClick={onToggleMobilePlayerStageStickyEnabled}
-          title={isMobilePlayerStageStickyEnabled ? '상단 영상 스티키 끄기' : '상단 영상 스티키 켜기'}
-        >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M5.75 6.75h12.5v8.5H5.75z"
-              stroke="currentColor"
-              strokeLinejoin="round"
-              strokeWidth="1.8"
-            />
-            <path
-              d="M10 18.25h4"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeWidth="1.8"
-            />
-            <path
-              d="M12 15.25v3"
               stroke="currentColor"
               strokeLinecap="round"
               strokeWidth="1.8"

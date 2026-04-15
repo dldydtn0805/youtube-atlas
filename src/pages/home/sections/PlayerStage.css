@@ -653,7 +653,7 @@
   :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--player {
     backdrop-filter: none;
     background: transparent;
-    border: 1px solid var(--border);
+    border: 0;
     border-radius: 0;
     box-shadow: none;
     margin-left: calc(50% - 50vw);
@@ -679,7 +679,7 @@
 
   :root[data-mobile-layout='true'] .app-shell__player-viewport .video-player__frame {
     background: transparent;
-    border: 1px solid var(--border);
+    border: 0;
     border-radius: 0;
     box-shadow: none;
   }

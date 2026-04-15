@@ -86,12 +86,12 @@ function getInitialMobilePlayerPreviewEnabled() {
 
 function getInitialMobilePlayerStageStickyEnabled() {
   if (typeof window === 'undefined') {
-    return true;
+    return false;
   }
 
   const storedValue = window.localStorage.getItem(MOBILE_PLAYER_STAGE_STICKY_ENABLED_STORAGE_KEY);
 
-  return storedValue !== 'false';
+  return storedValue === 'true';
 }
 
 function clampValue(value: number, min: number, max: number) {
