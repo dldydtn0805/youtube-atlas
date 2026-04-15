@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ComponentProps, t
 import { createPortal } from 'react-dom';
 import { ChartPanel, CommunityPanel } from './ContentPanels';
 import { FilterBar } from './FilterPanels';
-import PlayerStage from './PlayerStage';
+import PlayerStage, { PlayerStageHeader, PlayerViewportContent } from './PlayerStage';
 import StickySelectedVideoHeaderCopy from './StickySelectedVideoHeaderCopy';
 import StickySelectedVideoControls from './StickySelectedVideoControls';
 import { getFullscreenElement } from '../utils';
@@ -725,11 +725,6 @@ export default function HomePlaybackSection({
   };
 
   const handleCollapsedLabelClick = () => {
-    if (playerStageProps.isMobileLayout) {
-      handleToggleMobilePlayerPreview();
-      return;
-    }
-
     handleScrollToTop();
   };
   const renderedStickySelectedVideoContent =
@@ -952,7 +947,7 @@ export default function HomePlaybackSection({
               >
                 <StickySelectedVideoHeaderCopy
                   label={stickySelectedVideoLabel}
-                  onLabelClick={handleCollapsedLabelClick}
+                  onLabelClick={playerStageProps.isMobileLayout ? undefined : handleCollapsedLabelClick}
                   title={playerStageProps.selectedVideoTitle}
                 />
                 <div
@@ -962,7 +957,6 @@ export default function HomePlaybackSection({
                 >
                   <StickySelectedVideoControls
                     isMobileLayout={playerStageProps.isMobileLayout}
-                    isMobilePlayerPreviewEnabled={isMobilePlayerPreviewEnabled}
                     isPlaybackPaused={isStickySelectedVideoPlaybackPaused}
                     onExpandPanel={handleExpandStickySelectedVideo}
                     onJumpToTop={handleJumpToTop}
@@ -971,7 +965,6 @@ export default function HomePlaybackSection({
                     onPreviousVideo={playerStageProps.selectedVideoId ? onPlayPreviousStickySelectedVideo : undefined}
                     onResumeVideo={playerStageProps.selectedVideoId ? onResumeStickySelectedVideo : undefined}
                     onScrollToTop={handleScrollToTop}
-                    onToggleMobilePlayerPreviewEnabled={handleToggleMobilePlayerPreview}
                   />
                 </div>
               </div>
@@ -1022,17 +1015,53 @@ export default function HomePlaybackSection({
     : mobileDockStyle
       ? { height: `${mobileDockStyle.viewportHeight}px` }
       : undefined;
+  const shouldRenderDetachedMobileViewport =
+    playerStageProps.isMobileLayout && !playerStageProps.isCinematicModeActive;
 
   return (
     <>
       {renderedStickyPlayerPreview}
       {renderedStickySelectedVideoSlot}
+      {shouldRenderDetachedMobileViewport ? (
+        <>
+          <PlayerStageHeader
+            cinematicToggleLabel={playerStageProps.cinematicToggleLabel}
+            isCinematicModeActive={playerStageProps.isCinematicModeActive}
+            isMobileLayout={playerStageProps.isMobileLayout}
+            onOpenRegionModal={playerStageProps.onOpenRegionModal}
+            onToggleCinematicMode={playerStageProps.onToggleCinematicMode}
+            selectedCategoryLabel={playerStageProps.selectedCategoryLabel}
+            selectedCountryName={playerStageProps.selectedCountryName}
+          />
+          <div className="app-shell__mobile-player-stage-sticky-shell">
+            <PlayerViewportContent
+              canNavigateVideos={playerStageProps.canNavigateVideos}
+              isChartLoading={playerStageProps.isChartLoading}
+              isCinematicModeActive={playerStageProps.isCinematicModeActive}
+              isMobileLayout={playerStageProps.isMobileLayout}
+              isVideoPlayerDocked={Boolean(videoPlayerDockStyle)}
+              onNextVideo={playerStageProps.onNextVideo}
+              onPlaybackRestoreApplied={playerStageProps.onPlaybackRestoreApplied}
+              onPlaybackStateChange={playerStageProps.onPlaybackStateChange}
+              onPreviousVideo={playerStageProps.onPreviousVideo}
+              playbackRestore={playerStageProps.playbackRestore}
+              playerRef={playerStageProps.playerRef}
+              playerViewportRef={playerStageProps.playerViewportRef}
+              playerViewportStyle={playerViewportStyle}
+              selectedVideoId={playerStageProps.selectedVideoId}
+              videoPlayerDockStyle={videoPlayerDockStyle}
+            />
+          </div>
+        </>
+      ) : null}
       <PlayerStage
         {...playerStageProps}
         chartContent={renderChartPanel(true)}
         filterContent={renderFilterBar()}
         isVideoPlayerDocked={Boolean(videoPlayerDockStyle)}
+        renderHeaderInline={!shouldRenderDetachedMobileViewport}
         playerViewportStyle={playerViewportStyle}
+        renderViewportInline={!shouldRenderDetachedMobileViewport}
         videoPlayerDockStyle={videoPlayerDockStyle}
       />
       {!playerStageProps.isCinematicModeActive ? renderFilterBar() : null}

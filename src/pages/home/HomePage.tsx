@@ -1807,16 +1807,13 @@ function HomePage() {
           stickySelectedVideoContent={({
             desktopPlayerDockSlotRef,
             isDesktopPlayerDockEnabled,
-            isMobilePlayerPreviewEnabled,
             onJumpToTop,
             onScrollToTop,
-            onToggleMobilePlayerPreviewEnabled,
             onToggleCollapse,
           }) =>
             renderSelectedVideoActionsContent(
               <StickySelectedVideoControls
                 isMobileLayout={isMobileLayout}
-                isMobilePlayerPreviewEnabled={isMobilePlayerPreviewEnabled}
                 isPlaybackPaused={isPlaybackPaused}
                 onCollapsePanel={!isMobileLayout ? onToggleCollapse : undefined}
                 onJumpToTop={isMobileLayout ? onJumpToTop : undefined}
@@ -1825,14 +1822,12 @@ function HomePage() {
                 onPreviousVideo={handlePlayPreviousVideoWithPreview}
                 onResumeVideo={handleResumeCurrentVideo}
                 onScrollToTop={!isMobileLayout ? onScrollToTop : undefined}
-                onToggleMobilePlayerPreviewEnabled={isMobileLayout ? onToggleMobilePlayerPreviewEnabled : undefined}
               />,
               isMobileLayout ? onToggleCollapse : onToggleCollapse,
               handleOpenSelectedVideoRankHistory,
               {
                 desktopPlayerDockSlotRef: isDesktopPlayerDockEnabled ? desktopPlayerDockSlotRef : undefined,
                 isDesktopMiniPlayerEnabled: false,
-                onEyebrowClick: isMobileLayout ? onToggleMobilePlayerPreviewEnabled : undefined,
               },
             )
           }

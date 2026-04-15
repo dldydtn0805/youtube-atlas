@@ -13,14 +13,22 @@ vi.mock('./FilterPanels', () => ({
 }));
 
 vi.mock('./PlayerStage', () => ({
+  PlayerStageHeader: () => <div data-testid="player-stage-header">Now Playing</div>,
+  PlayerViewportContent: ({
+    playerViewportRef,
+  }: {
+    playerViewportRef: React.RefObject<HTMLDivElement | null>;
+  }) => <div ref={playerViewportRef} data-testid="player-viewport" />,
   default: ({
     isVideoPlayerDocked,
     playerSectionRef,
+    renderViewportInline,
     playerViewportRef,
     topContent,
   }: {
     isVideoPlayerDocked?: boolean;
     playerSectionRef: React.RefObject<HTMLElement | null>;
+    renderViewportInline?: boolean;
     playerViewportRef: React.RefObject<HTMLDivElement | null>;
     topContent?: React.ReactNode;
   }) => (
@@ -28,7 +36,7 @@ vi.mock('./PlayerStage', () => ({
       <div data-testid="player-dock-state">{isVideoPlayerDocked ? 'docked' : 'undocked'}</div>
       {topContent}
       <section ref={playerSectionRef} data-testid="player-section" />
-      <div ref={playerViewportRef} data-testid="player-viewport" />
+      {renderViewportInline !== false ? <div ref={playerViewportRef} data-testid="player-viewport" /> : null}
     </div>
   ),
 }));
@@ -1068,7 +1076,7 @@ describe('HomePlaybackSection', () => {
       expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('true');
       expect(screen.getByText('Now Playing')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: '페이지 맨 위로 즉시 이동' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '미니 플레이어 숨기기' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '미니 플레이어 숨기기' })).not.toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: '페이지 맨 위로 즉시 이동' }));
@@ -1078,33 +1086,15 @@ describe('HomePlaybackSection', () => {
       top: 0,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: '미니 플레이어 숨기기' }));
-
-    await waitFor(() => {
-      expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('false');
-    });
-
     fireEvent.click(screen.getByText('Now Playing'));
-
-    await waitFor(() => {
-      expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('true');
-    });
-
-    fireEvent.click(screen.getByText('Now Playing'));
-
-    await waitFor(() => {
-      expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('false');
-    });
-
-    fireEvent.click(screen.getByText('Preview Title'));
-    flushAnimationFrames();
 
     await waitFor(() => {
       expect(screen.getByText('Selected video actions')).toBeInTheDocument();
     });
+
+    expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('true');
     expect(document.querySelector<HTMLElement>('.app-shell__sticky-player-preview-shell')?.style.left).toBe('12px');
     expect(document.querySelector<HTMLElement>('.app-shell__sticky-player-preview-shell')?.style.top).toBe('12px');
-    expect(document.querySelector('.app-shell__sticky-player-preview-shell')?.getAttribute('data-visible')).toBe('false');
   });
 
   it('scrolls to the player stage when the top button is pressed', async () => {

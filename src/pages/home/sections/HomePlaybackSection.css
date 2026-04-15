@@ -8,6 +8,10 @@
   z-index: var(--layer-sticky-selected-video);
 }
 
+.app-shell__mobile-player-stage-sticky-shell {
+  width: 100%;
+}
+
 .app-shell__sticky-selected-video-frame {
   min-width: 0;
   overflow-x: clip;
@@ -265,6 +269,25 @@
 }
 
 @media (max-width: 768px) {
+  .app-shell__mobile-player-stage-sticky-shell {
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    position: sticky;
+    top: 0;
+    width: 100vw;
+    z-index: 20;
+  }
+
+  .app-shell__mobile-player-stage-sticky-shell .app-shell__player-viewport {
+    width: 100%;
+  }
+
+  .app-shell__mobile-player-stage-sticky-shell .video-player,
+  .app-shell__mobile-player-stage-sticky-shell .video-player__frame-slot,
+  .app-shell__mobile-player-stage-sticky-shell .video-player__frame {
+    margin: 0;
+  }
+
   .app-shell__sticky-selected-video-slot {
     bottom: max(8px, env(safe-area-inset-bottom));
     width: min(calc(100% - (var(--app-shell-inline-padding, 12px) * 2)), var(--app-content-max-width));

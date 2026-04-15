@@ -218,6 +218,7 @@
   min-height: 0;
 }
 
+
 .video-player[data-cinematic='true'] .video-player__embed-shell,
 .video-player[data-cinematic='true'] .video-player__embed,
 .video-player[data-cinematic='true'] .video-player__placeholder {

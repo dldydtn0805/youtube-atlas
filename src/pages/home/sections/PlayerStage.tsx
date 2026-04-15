@@ -4,49 +4,149 @@ import type { AuthStatus } from '../../../features/auth/types';
 import type { PendingPlaybackRestore } from '../utils';
 import './PlayerStage.css';
 
-interface PlayerStageProps {
-  authStatus: AuthStatus;
+interface PlayerViewportContentProps {
   canNavigateVideos: boolean;
+  isChartLoading: boolean;
+  isCinematicModeActive: boolean;
+  isMobileLayout: boolean;
+  onNextVideo: () => void;
+  onPreviousVideo: () => void;
+  onPlaybackRestoreApplied?: (restoreId: number) => void;
+  onPlaybackStateChange?: (state: 'paused' | 'playing') => void;
+  playbackRestore?: PendingPlaybackRestore | null;
+  playerRef: RefObject<VideoPlayerHandle | null>;
+  playerViewportRef: RefObject<HTMLDivElement | null>;
+  playerViewportStyle?: CSSProperties;
+  selectedVideoId?: string;
+  videoPlayerDockStyle?: CSSProperties;
+  isVideoPlayerDocked?: boolean;
+}
+
+interface PlayerStageHeaderProps {
+  cinematicToggleLabel: string;
+  isCinematicModeActive: boolean;
+  isMobileLayout: boolean;
+  onOpenRegionModal: () => void;
+  onToggleCinematicMode: () => void;
+  selectedCategoryLabel?: string;
+  selectedCountryName: string;
+}
+
+interface PlayerStageProps extends PlayerViewportContentProps {
+  authStatus: AuthStatus;
   chartContent?: ReactNode;
   cinematicToggleLabel: string;
   favoriteToggleLabel: string;
   filterContent?: ReactNode;
-  isChartLoading: boolean;
-  isCinematicModeActive: boolean;
   isFavoriteToggleDisabled: boolean;
   isManualPlaybackSaveDisabled: boolean;
-  isMobileLayout: boolean;
   isSelectedChannelFavorited: boolean;
   manualPlaybackSaveButtonLabel: string;
   manualPlaybackSaveStatus?: string;
   onManualPlaybackSave: () => void;
-  onNextVideo: () => void;
   onOpenRegionModal: () => void;
-  onPreviousVideo: () => void;
-  onPlaybackRestoreApplied?: (restoreId: number) => void;
-  onPlaybackStateChange?: (state: 'paused' | 'playing') => void;
   onToggleCinematicMode: () => void;
   onToggleFavoriteStreamer: () => void;
-  playbackRestore?: PendingPlaybackRestore | null;
-  playerRef: RefObject<VideoPlayerHandle | null>;
   playerSectionRef: RefObject<HTMLElement | null>;
   playerStageRef: RefObject<HTMLDivElement | null>;
-  playerViewportRef: RefObject<HTMLDivElement | null>;
-  playerViewportStyle?: CSSProperties;
+  renderHeaderInline?: boolean;
+  renderViewportInline?: boolean;
   selectedCategoryLabel?: string;
   selectedCountryName: string;
   selectedVideoChannelTitle?: string;
-  selectedVideoId?: string;
   selectedVideoRankLabel?: string;
   selectedVideoStatLabel?: string;
   selectedVideoTitle?: string;
-  videoPlayerDockStyle?: CSSProperties;
-  isVideoPlayerDocked?: boolean;
   stageActionContent?: ReactNode;
   stageMetadataContent?: ReactNode;
   supplementalContent?: ReactNode;
   topContent?: ReactNode;
   toggleFavoriteStreamerPending: boolean;
+}
+
+export function PlayerViewportContent({
+  canNavigateVideos,
+  isChartLoading,
+  isCinematicModeActive,
+  isMobileLayout,
+  onNextVideo,
+  onPreviousVideo,
+  onPlaybackRestoreApplied,
+  onPlaybackStateChange,
+  playbackRestore,
+  playerRef,
+  playerViewportRef,
+  playerViewportStyle,
+  selectedVideoId,
+  videoPlayerDockStyle,
+  isVideoPlayerDocked = false,
+}: PlayerViewportContentProps) {
+  const isVideoPlayerCinematic =
+    isCinematicModeActive || (isMobileLayout && isVideoPlayerDocked);
+
+  return (
+    <div
+      ref={playerViewportRef}
+      className="app-shell__player-viewport"
+      data-docked={isVideoPlayerDocked ? 'true' : 'false'}
+      style={playerViewportStyle}
+    >
+      <VideoPlayer
+        canNavigateVideos={canNavigateVideos}
+        dockStyle={videoPlayerDockStyle}
+        isCinematic={isVideoPlayerCinematic}
+        isDocked={isVideoPlayerDocked}
+        isLoading={isChartLoading}
+        onNextVideo={onNextVideo}
+        onPlaybackRestoreApplied={onPlaybackRestoreApplied}
+        onPlaybackStateChange={onPlaybackStateChange}
+        onPreviousVideo={onPreviousVideo}
+        onVideoEnd={onNextVideo}
+        playbackRestore={playbackRestore}
+        ref={playerRef}
+        selectedVideoId={selectedVideoId}
+        showOverlayNavigation={!isMobileLayout}
+      />
+    </div>
+  );
+}
+
+export function PlayerStageHeader({
+  cinematicToggleLabel,
+  isCinematicModeActive,
+  isMobileLayout,
+  onOpenRegionModal,
+  onToggleCinematicMode,
+  selectedCategoryLabel,
+  selectedCountryName,
+}: PlayerStageHeaderProps) {
+  return (
+    <div className="app-shell__section-heading app-shell__section-heading--player">
+      <div className="app-shell__section-heading-copy">
+        <p className="app-shell__section-eyebrow">Now Playing</p>
+        <h2 className="app-shell__section-title">
+          <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
+            {selectedCountryName}
+          </button>
+          {selectedCategoryLabel ? ` · ${selectedCategoryLabel}` : ''}
+        </h2>
+      </div>
+      {!isMobileLayout ? (
+        <div className="app-shell__player-actions">
+          <button
+            aria-label={cinematicToggleLabel}
+            className="app-shell__mode-toggle"
+            data-active={isCinematicModeActive}
+            onClick={onToggleCinematicMode}
+            title={cinematicToggleLabel}
+            type="button"
+          >
+            {cinematicToggleLabel}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function PlayerStage({
@@ -78,6 +178,8 @@ function PlayerStage({
   playerStageRef,
   playerViewportRef,
   playerViewportStyle,
+  renderHeaderInline = true,
+  renderViewportInline = true,
   selectedCategoryLabel,
   selectedCountryName,
   selectedVideoChannelTitle,
@@ -95,8 +197,6 @@ function PlayerStage({
 }: PlayerStageProps) {
   const hasSelectedVideo = Boolean(selectedVideoId);
   const hasFallbackMetadata = Boolean(selectedVideoRankLabel || selectedVideoStatLabel);
-  const isVideoPlayerCinematic =
-    isCinematicModeActive || (isMobileLayout && isVideoPlayerDocked);
 
   return (
     <div
@@ -117,54 +217,36 @@ function PlayerStage({
           data-cinematic={isCinematicModeActive}
           data-player-docked={isVideoPlayerDocked}
         >
-          <div className="app-shell__section-heading app-shell__section-heading--player">
-            <div className="app-shell__section-heading-copy">
-              <p className="app-shell__section-eyebrow">Now Playing</p>
-              <h2 className="app-shell__section-title">
-                <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
-                  {selectedCountryName}
-                </button>
-                {selectedCategoryLabel ? ` · ${selectedCategoryLabel}` : ''}
-              </h2>
-            </div>
-            {!isMobileLayout ? (
-              <div className="app-shell__player-actions">
-                <button
-                  aria-label={cinematicToggleLabel}
-                  className="app-shell__mode-toggle"
-                  data-active={isCinematicModeActive}
-                  onClick={onToggleCinematicMode}
-                  title={cinematicToggleLabel}
-                  type="button"
-                >
-                  {cinematicToggleLabel}
-                </button>
-              </div>
-            ) : null}
-          </div>
-          <div
-            ref={playerViewportRef}
-            className="app-shell__player-viewport"
-            data-docked={isVideoPlayerDocked ? 'true' : 'false'}
-            style={playerViewportStyle}
-          >
-            <VideoPlayer
+          {renderHeaderInline ? (
+            <PlayerStageHeader
+              cinematicToggleLabel={cinematicToggleLabel}
+              isCinematicModeActive={isCinematicModeActive}
+              isMobileLayout={isMobileLayout}
+              onOpenRegionModal={onOpenRegionModal}
+              onToggleCinematicMode={onToggleCinematicMode}
+              selectedCategoryLabel={selectedCategoryLabel}
+              selectedCountryName={selectedCountryName}
+            />
+          ) : null}
+          {renderViewportInline ? (
+            <PlayerViewportContent
               canNavigateVideos={canNavigateVideos}
-              dockStyle={videoPlayerDockStyle}
-              isCinematic={isVideoPlayerCinematic}
-              isDocked={isVideoPlayerDocked}
-              isLoading={isChartLoading}
+              isChartLoading={isChartLoading}
+              isCinematicModeActive={isCinematicModeActive}
+              isMobileLayout={isMobileLayout}
+              isVideoPlayerDocked={isVideoPlayerDocked}
               onNextVideo={onNextVideo}
               onPlaybackRestoreApplied={onPlaybackRestoreApplied}
               onPlaybackStateChange={onPlaybackStateChange}
               onPreviousVideo={onPreviousVideo}
-              onVideoEnd={onNextVideo}
               playbackRestore={playbackRestore}
-              ref={playerRef}
+              playerRef={playerRef}
+              playerViewportRef={playerViewportRef}
+              playerViewportStyle={playerViewportStyle}
               selectedVideoId={selectedVideoId}
-              showOverlayNavigation={!isMobileLayout}
+              videoPlayerDockStyle={videoPlayerDockStyle}
             />
-          </div>
+          ) : null}
           {hasSelectedVideo ? (
             <div className="app-shell__stage-meta">
               <div className="app-shell__stage-copy">
