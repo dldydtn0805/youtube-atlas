@@ -307,16 +307,7 @@
   .app-shell__mobile-player-stage-sticky-shell .video-player__frame,
   .app-shell__mobile-player-stage-sticky-shell .video-player__embed-shell,
   .app-shell__mobile-player-stage-sticky-shell .video-player__embed {
-    background: #000;
-  }
-
-  .app-shell__mobile-player-stage-sticky-shell .video-player[data-docked='true'] .video-player__frame-slot,
-  .app-shell__mobile-player-stage-sticky-shell .video-player[data-docked='true'] .video-player__frame,
-  .app-shell__mobile-player-stage-sticky-shell .video-player[data-docked='true'] .video-player__embed-shell,
-  .app-shell__mobile-player-stage-sticky-shell .video-player[data-docked='true'] .video-player__embed,
-  .app-shell__mobile-player-stage-sticky-shell .video-player[data-docked='true'] .video-player__embed iframe,
-  .app-shell__mobile-player-stage-sticky-shell .video-player[data-docked='true'] .video-player__placeholder {
-    border-radius: 0;
+    background: var(--page-bg);
   }
 
   .app-shell__sticky-selected-video-slot {
