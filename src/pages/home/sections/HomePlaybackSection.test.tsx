@@ -63,6 +63,24 @@ describe('HomePlaybackSection', () => {
     callbacks.forEach((callback) => callback(0));
   };
 
+  const expandCollapsedStickyPanel = async () => {
+    if (screen.queryByText('Selected video actions')) {
+      return;
+    }
+
+    const expandButton = screen.queryByRole('button', { name: '선택한 영상 패널 펼치기' });
+
+    if (!expandButton) {
+      return;
+    }
+
+    fireEvent.click(expandButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
+    });
+  };
+
   beforeEach(() => {
     animationFrameCallbacks = new Map<number, FrameRequestCallback>();
     nextAnimationFrameId = 1;
@@ -209,9 +227,7 @@ describe('HomePlaybackSection', () => {
 
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
-    });
+    await expandCollapsedStickyPanel();
 
     fireEvent.click(screen.getByRole('button', { name: '접기' }));
 
@@ -274,9 +290,7 @@ describe('HomePlaybackSection', () => {
 
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
-    });
+    await expandCollapsedStickyPanel();
 
     fireEvent.click(screen.getByRole('button', { name: '접기' }));
     fireEvent.click(screen.getByText('Now Playing'));
@@ -337,9 +351,7 @@ describe('HomePlaybackSection', () => {
 
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
-    });
+    await expandCollapsedStickyPanel();
 
     fireEvent.click(screen.getByRole('button', { name: '접기' }));
     expect(window.localStorage.getItem('youtube-atlas-sticky-selected-video-collapsed')).toBe('true');
@@ -444,9 +456,7 @@ describe('HomePlaybackSection', () => {
 
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
-    });
+    await expandCollapsedStickyPanel();
 
     fireEvent.click(screen.getByRole('button', { name: '접기' }));
 
@@ -497,12 +507,10 @@ describe('HomePlaybackSection', () => {
 
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
-    });
+    await expandCollapsedStickyPanel();
   });
 
-  it('collapses the cinematic dock preview immediately when the selected video panel is collapsed', async () => {
+  it('keeps the cinematic dock preview undocked while the selected video panel stays collapsed by default', async () => {
     render(
       <HomePlaybackSection
         chartPanelProps={{} as never}
@@ -550,22 +558,11 @@ describe('HomePlaybackSection', () => {
     flushAnimationFrames();
 
     await waitFor(() => {
-      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('player-dock-state')).toHaveTextContent('docked');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: '접기' }));
-
-    await waitFor(() => {
       expect(screen.getByText('Now Playing')).toBeInTheDocument();
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId('player-dock-state')).toHaveTextContent('undocked');
-    });
+    expect(screen.queryByText('Selected video actions')).not.toBeInTheDocument();
+    expect(screen.getByTestId('player-dock-state')).toHaveTextContent('undocked');
   });
 
   it('docks the desktop player into the selected video slot in default mode', async () => {
@@ -614,9 +611,7 @@ describe('HomePlaybackSection', () => {
 
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
-    });
+    await expandCollapsedStickyPanel();
 
     expect(screen.getByTestId('player-dock-state')).toHaveTextContent('undocked');
 
@@ -1246,15 +1241,64 @@ describe('HomePlaybackSection', () => {
 
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: '맨 위로' })).toBeInTheDocument();
-    });
+    await expandCollapsedStickyPanel();
 
     fireEvent.click(screen.getByRole('button', { name: '맨 위로' }));
 
     expect(scrollTo).toHaveBeenCalledWith({
       behavior: 'smooth',
       top: 0,
+    });
+  });
+
+  it('jumps to the top when a new video is selected on mobile while sticky is disabled', async () => {
+    const scrollTo = vi.fn();
+
+    vi.stubGlobal('scrollTo', scrollTo);
+    window.localStorage.setItem(MOBILE_PLAYER_STAGE_STICKY_ENABLED_STORAGE_KEY, 'false');
+
+    const playerStageProps = {
+      isCinematicModeActive: false,
+      isMobileLayout: true,
+      playerSectionRef: createRef<HTMLElement>(),
+      playerStageRef: createRef<HTMLDivElement>(),
+      playerViewportRef: createRef<HTMLDivElement>(),
+      selectedVideoId: 'video-1',
+    } as never;
+
+    const { rerender } = render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={playerStageProps}
+        stickySelectedVideoContent={<div>Selected video actions</div>}
+      />,
+    );
+
+    flushAnimationFrames();
+    scrollTo.mockClear();
+
+    rerender(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={
+          {
+            ...playerStageProps,
+            selectedVideoId: 'video-2',
+          } as never
+        }
+        stickySelectedVideoContent={<div>Selected video actions</div>}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(scrollTo).toHaveBeenCalledWith({
+        behavior: 'auto',
+        top: 0,
+      });
     });
   });
 });

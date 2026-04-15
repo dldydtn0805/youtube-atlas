@@ -62,8 +62,12 @@ function getCinematicChartClassName(className?: string) {
   return className ? `${className} app-shell__panel--chart-cinematic` : 'app-shell__panel--chart-cinematic';
 }
 
-function getInitialStickySelectedVideoCollapsed() {
+function getInitialStickySelectedVideoCollapsed(isMobileLayout: boolean) {
   if (typeof window === 'undefined') {
+    return true;
+  }
+
+  if (!isMobileLayout) {
     return true;
   }
 
@@ -215,7 +219,7 @@ export default function HomePlaybackSection({
   const [isStickySelectedVideoVisible, setIsStickySelectedVideoVisible] = useState(false);
   const [isDesktopPlayerDockActive, setIsDesktopPlayerDockActive] = useState(false);
   const [isStickySelectedVideoCollapsed, setIsStickySelectedVideoCollapsed] = useState(
-    getInitialStickySelectedVideoCollapsed,
+    () => getInitialStickySelectedVideoCollapsed(playerStageProps.isMobileLayout),
   );
   const [isMobilePlayerPreviewEnabled, setIsMobilePlayerPreviewEnabled] = useState(
     getInitialMobilePlayerPreviewEnabled,
@@ -224,6 +228,7 @@ export default function HomePlaybackSection({
     getInitialMobilePlayerStageStickyEnabled,
   );
   const [isMobilePlayerPreviewCollapsed, setIsMobilePlayerPreviewCollapsed] = useState(false);
+  const lastSelectedVideoIdRef = useRef<string | undefined>(playerStageProps.selectedVideoId);
   const mobilePlayerPreviewVideoId = preferredPreviewVideoId ?? playerStageProps.selectedVideoId;
   const shouldMountStickyPlayerPreview =
     !playerStageProps.isCinematicModeActive &&
@@ -470,6 +475,34 @@ export default function HomePlaybackSection({
       JSON.stringify(mobilePlayerPreviewLayout),
     );
   }, [mobilePlayerPreviewLayout]);
+
+  useEffect(() => {
+    if (playerStageProps.isMobileLayout) {
+      return;
+    }
+
+    setIsStickySelectedVideoCollapsed(true);
+  }, [playerStageProps.isMobileLayout]);
+
+  useEffect(() => {
+    const previousSelectedVideoId = lastSelectedVideoIdRef.current;
+    lastSelectedVideoIdRef.current = playerStageProps.selectedVideoId;
+
+    if (
+      !playerStageProps.isMobileLayout ||
+      isMobilePlayerStageStickyEnabled ||
+      !playerStageProps.selectedVideoId ||
+      playerStageProps.selectedVideoId === previousSelectedVideoId
+    ) {
+      return;
+    }
+
+    handleJumpToTop();
+  }, [
+    isMobilePlayerStageStickyEnabled,
+    playerStageProps.isMobileLayout,
+    playerStageProps.selectedVideoId,
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
