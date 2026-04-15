@@ -27,19 +27,66 @@
 }
 
 @media (max-width: 768px) {
-  .app-shell__panel--favorites,
-  .app-shell__panel--community,
-  .app-shell__panel--chart {
-    padding: 16px;
+  .app-shell__panel.app-shell__panel--favorites,
+  .app-shell__panel.app-shell__panel--community,
+  .app-shell__panel.app-shell__panel--chart,
+  .app-shell__panel.app-shell__panel--chart-cinematic {
+    backdrop-filter: none;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding: 16px 0;
+    width: 100vw;
+  }
+
+  .app-shell__panel.app-shell__panel--favorites::before,
+  .app-shell__panel.app-shell__panel--community::before,
+  .app-shell__panel.app-shell__panel--chart::before,
+  .app-shell__panel.app-shell__panel--chart-cinematic::before {
+    display: none;
+  }
+
+  .app-shell__panel--favorites > .app-shell__section-heading,
+  .app-shell__panel--community > .app-shell__section-heading,
+  .app-shell__panel--chart > .app-shell__section-heading,
+  .app-shell__panel--chart-cinematic > .app-shell__section-heading,
+  .app-shell__panel--favorites > .video-list,
+  .app-shell__panel--chart > .video-list,
+  .app-shell__panel--chart-cinematic > .video-list,
+  .app-shell__panel--favorites > .app-shell__favorites-status,
+  .app-shell__panel--community > .comment-section,
+  .app-shell__panel--chart > .video-list__status,
+  .app-shell__panel--chart-cinematic > .video-list__status {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
 }
 
 @media (max-width: 480px) {
-  .app-shell__panel--favorites,
-  .app-shell__panel--community,
-  .app-shell__panel--chart {
-    border-radius: 22px;
-    padding: 14px;
+  .app-shell__panel.app-shell__panel--favorites,
+  .app-shell__panel.app-shell__panel--community,
+  .app-shell__panel.app-shell__panel--chart,
+  .app-shell__panel.app-shell__panel--chart-cinematic {
+    padding-bottom: 14px;
+    padding-top: 14px;
+  }
+
+  .app-shell__panel--favorites > .app-shell__section-heading,
+  .app-shell__panel--community > .app-shell__section-heading,
+  .app-shell__panel--chart > .app-shell__section-heading,
+  .app-shell__panel--chart-cinematic > .app-shell__section-heading,
+  .app-shell__panel--favorites > .video-list,
+  .app-shell__panel--chart > .video-list,
+  .app-shell__panel--chart-cinematic > .video-list,
+  .app-shell__panel--favorites > .app-shell__favorites-status,
+  .app-shell__panel--community > .comment-section,
+  .app-shell__panel--chart > .video-list__status,
+  .app-shell__panel--chart-cinematic > .video-list__status {
+    padding-left: 14px;
+    padding-right: 14px;
   }
 }

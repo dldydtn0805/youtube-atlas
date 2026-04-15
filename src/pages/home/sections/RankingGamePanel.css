@@ -1860,6 +1860,8 @@
 
 @media (max-width: 768px) {
   .app-shell__game-panel {
+    border-color: transparent;
+    box-shadow: none;
     border-radius: 20px;
     padding: 14px;
   }
