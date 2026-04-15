@@ -652,10 +652,8 @@
   .app-shell__panel.app-shell__panel--player {
     backdrop-filter: none;
     background: transparent;
-    border: 0;
-    border-left: 0;
+    border: 1px solid var(--border);
     border-radius: 0;
-    border-right: 0;
     box-shadow: none;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
@@ -680,10 +678,8 @@
 
   .app-shell__player-viewport .video-player__frame {
     background: transparent;
-    border: 0;
-    border-left: 0;
+    border: 1px solid var(--border);
     border-radius: 0;
-    border-right: 0;
     box-shadow: none;
   }
 

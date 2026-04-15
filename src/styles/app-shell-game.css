@@ -379,6 +379,8 @@
   --game-tier-card-glare-y: 18%;
   --game-tier-card-rotate-x: 0deg;
   --game-tier-card-rotate-y: 0deg;
+  --game-tier-card-spin-x: 0deg;
+  --game-tier-card-spin-y: 0deg;
   --game-tier-card-scale: 1;
   --game-tier-metal-deep: color-mix(in srgb, var(--game-tier-accent) 42%, #09090b 58%);
   --game-tier-metal-mid: color-mix(in srgb, var(--game-tier-accent) 74%, #27272a 26%);
@@ -416,8 +418,11 @@
   justify-self: center;
   max-width: var(--game-tier-card-max-width);
   padding: 14px 16px;
-  touch-action: none;
-  transform: rotateX(var(--game-tier-card-rotate-x)) rotateY(var(--game-tier-card-rotate-y)) scale(var(--game-tier-card-scale));
+  touch-action: pan-y;
+  transform:
+    rotateX(calc(var(--game-tier-card-rotate-x) + var(--game-tier-card-spin-x)))
+    rotateY(calc(var(--game-tier-card-rotate-y) + var(--game-tier-card-spin-y)))
+    scale(var(--game-tier-card-scale));
   transform-origin: 50% 50%;
   transform-style: preserve-3d;
   transition:
@@ -475,17 +480,13 @@
   z-index: 3;
 }
 
-.app-shell__game-tier-card:hover {
-  --game-tier-card-scale: 1.02;
+.app-shell__game-tier-card[data-interacting='true'] {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.56),
     inset 0 -1px 0 rgba(0, 0, 0, 0.34),
     inset 0 0 0 1px rgba(var(--game-tier-accent-rgb), 0.28),
     0 26px 44px rgba(15, 23, 42, 0.22),
     0 0 42px rgba(var(--game-tier-accent-rgb), 0.24);
-}
-
-.app-shell__game-tier-card[data-interacting='true'] {
   transition: box-shadow 180ms ease;
 }
 
