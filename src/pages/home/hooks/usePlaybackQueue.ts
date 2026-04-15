@@ -60,8 +60,8 @@ function usePlaybackQueue({
   });
   const canPlayNextVideo = activePlaybackItems.length > 1;
 
-  function requestScrollToPlayer(options?: { includeMobile?: boolean }) {
-    if (isMobileLayout && !options?.includeMobile) {
+  function requestScrollToPlayer() {
+    if (isMobileLayout) {
       return;
     }
 
@@ -74,7 +74,7 @@ function usePlaybackQueue({
     playbackQueueId: string,
     triggerElement?: HTMLButtonElement,
   ) {
-    requestScrollToPlayer({ includeMobile: true });
+    requestScrollToPlayer();
     shouldAutoSelectNextAvailableRef.current = false;
     setActivePlaybackQueueId(playbackQueueId);
     setSelectedVideoId(videoId);

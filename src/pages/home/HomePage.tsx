@@ -324,6 +324,10 @@ function HomePage() {
   }, [collapsedHomeSectionIds]);
 
   const scrollToPlayerStage = useCallback(() => {
+    if (isMobileLayout) {
+      return;
+    }
+
     window.setTimeout(() => {
       if (typeof window === 'undefined') {
         return;
@@ -347,7 +351,7 @@ function HomePage() {
         top: 0,
       });
     }, 0);
-  }, []);
+  }, [isMobileLayout]);
 
   const {
     data: videoCategories = [],

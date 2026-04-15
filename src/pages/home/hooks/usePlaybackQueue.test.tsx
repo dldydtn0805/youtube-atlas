@@ -216,7 +216,7 @@ describe('usePlaybackQueue', () => {
     expect(scrollToPlayerTop).not.toHaveBeenCalled();
   });
 
-  it('scrolls to the player on mobile when a video is selected', () => {
+  it('does not scroll to the player on mobile when a video is selected', () => {
     const setSelectedCategoryId = vi.fn();
     const scrollToPlayerTop = vi.fn();
 
@@ -238,7 +238,7 @@ describe('usePlaybackQueue', () => {
       result.current.handleSelectVideo('video-top', getCategoryPlaybackQueueId('0'));
     });
 
-    expect(scrollToPlayerTop).toHaveBeenCalledTimes(1);
+    expect(scrollToPlayerTop).not.toHaveBeenCalled();
   });
 
   it('keeps a history playback selection instead of falling back to the first chart video', async () => {
