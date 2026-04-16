@@ -36,10 +36,11 @@
     border: 0;
     border-radius: 0;
     box-shadow: none;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
+    margin-left: calc(var(--app-shell-inline-padding, 12px) * -1);
+    margin-right: calc(var(--app-shell-inline-padding, 12px) * -1);
+    max-width: 100vw;
     padding: 16px 0;
-    width: 100vw;
+    width: calc(100% + (var(--app-shell-inline-padding, 12px) * 2));
   }
 
   :root[data-mobile-layout='true'] .app-shell__panel.app-shell__panel--favorites::before,
