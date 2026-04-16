@@ -685,6 +685,30 @@
     box-shadow: none;
   }
 
+  :root[data-mobile-layout='true'] .app-shell__player-viewport .video-player__frame-slot,
+  :root[data-mobile-layout='true'] .app-shell__player-viewport .video-player__embed-shell,
+  :root[data-mobile-layout='true'] .app-shell__player-viewport .video-player__embed,
+  :root[data-mobile-layout='true'] .app-shell__player-viewport .video-player__embed iframe,
+  :root[data-mobile-layout='true'] .app-shell__player-viewport .video-player__embed-shell iframe {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    outline: 0;
+  }
+
+  :root[data-mobile-layout='true'] .app-shell__player-viewport .video-player__embed-shell,
+  :root[data-mobile-layout='true'] .app-shell__player-viewport .video-player__embed {
+    overflow: hidden;
+  }
+
+  :root[data-mobile-layout='true'] .app-shell__player-viewport .video-player__embed iframe,
+  :root[data-mobile-layout='true'] .app-shell__player-viewport .video-player__embed-shell iframe {
+    height: calc(100% + 2px);
+    transform: translate(-1px, -1px);
+    width: calc(100% + 2px);
+  }
+
   :root[data-mobile-layout='true'] .app-shell__section-heading.app-shell__section-heading--player {
     align-items: flex-start;
     flex-direction: row;
