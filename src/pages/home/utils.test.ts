@@ -17,6 +17,7 @@ import {
   resolvePlaybackCategoryLabel,
   shouldRenderRealtimeSurgingSection,
   shouldPrefetchBuyableVideos,
+  sortVideoSection,
 } from './utils';
 import type { GamePosition } from '../../features/game/types';
 import type { YouTubeCategorySection } from '../../features/youtube/types';
@@ -325,6 +326,45 @@ describe('home utils', () => {
       items: [],
       label: 'TOP 200',
     });
+  });
+
+  it('sorts a video section by market price descending while keeping videos without prices last', () => {
+    const section = createVideoSection('0', '전체', ['video-1', 'video-2', 'video-3']);
+
+    expect(
+      sortVideoSection(section, 'price-desc', {
+        marketVideos: [
+          { videoId: 'video-1', currentPricePoints: 500 },
+          { videoId: 'video-3', currentPricePoints: 100 },
+        ],
+      })?.items.map((item) => item.id),
+    ).toEqual(['video-1', 'video-3', 'video-2']);
+  });
+
+  it('sorts a video section by market price ascending while keeping videos without prices last', () => {
+    const section = createVideoSection('0', '전체', ['video-1', 'video-2', 'video-3']);
+
+    expect(
+      sortVideoSection(section, 'price-asc', {
+        marketVideos: [
+          { videoId: 'video-1', currentPricePoints: 500 },
+          { videoId: 'video-3', currentPricePoints: 100 },
+        ],
+      })?.items.map((item) => item.id),
+    ).toEqual(['video-3', 'video-1', 'video-2']);
+  });
+
+  it('sorts a video section by view count descending', () => {
+    const section = createVideoSection('0', '전체', ['video-1', 'video-2', 'video-3']);
+    section.items[0].statistics = { viewCount: '100' };
+    section.items[1].statistics = { viewCount: '300' };
+    section.items[2].trend = { currentViewCount: 200 };
+
+    expect(sortVideoSection(section, 'views')?.items.map((item) => item.id)).toEqual([
+      'video-2',
+      'video-3',
+      'video-1',
+    ]);
   });
 
   it('prefetches more pages only while buyable-only filtering needs more videos', () => {

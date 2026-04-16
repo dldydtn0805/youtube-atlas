@@ -48,10 +48,11 @@ import {
   relabelVideoSection,
   resolvePlaybackCategoryLabel,
   shouldPrefetchBuyableVideos,
+  sortVideoSection,
   sortedCountryCodes,
   type RegionCode,
 } from './utils';
-import type { ChartViewMode } from './types';
+import type { ChartSortMode, ChartViewMode } from './types';
 import countryCodes from '../../constants/countryCodes';
 import {
   ALL_VIDEO_CATEGORY_ID,
@@ -93,6 +94,12 @@ import '../../styles/app.css';
 
 const COLLAPSED_HOME_SECTIONS_STORAGE_KEY = 'youtube-atlas-collapsed-home-sections';
 const RANKING_GAME_SECTION_ID = 'ranking-game';
+const CHART_SORT_OPTIONS: Array<{ id: ChartSortMode; label: string }> = [
+  { id: 'popular', label: '인기순' },
+  { id: 'price-desc', label: '가격 높은순' },
+  { id: 'price-asc', label: '가격 낮은순' },
+  { id: 'views', label: '조회순' },
+];
 
 function mergeRankHistories(
   positionHistory?: GamePositionRankHistory,
@@ -297,7 +304,8 @@ function HomePage() {
   const [isChartViewModalOpen, setIsChartViewModalOpen] = useState(false);
   const [pendingRegionTopVideoSelection, setPendingRegionTopVideoSelection] = useState<string | null>(null);
   const [isPlaybackPaused, setIsPlaybackPaused] = useState(false);
-  const [selectedChartView, setSelectedChartView] = useState<ChartViewMode>('all');
+  const [selectedChartView, setSelectedChartView] = useState<ChartViewMode>('popular');
+  const [chartSortMode, setChartSortMode] = useState<ChartSortMode>('popular');
   const [coinCountdownNow, setCoinCountdownNow] = useState(() => Date.now());
   const lastCoinAutoRefreshAtRef = useRef<number | null>(null);
   const playerStageRef = useRef<HTMLDivElement | null>(null);
@@ -607,13 +615,17 @@ function HomePage() {
         : musicPlaybackSection,
     [buyableVideoIdSet, isBuyableOnlyFilterActive, musicPlaybackSection],
   );
+  const sortedFilteredMusicChartSection = useMemo(
+    () => sortVideoSection(filteredMusicChartSection, chartSortMode, { marketVideos: gameMarket }),
+    [chartSortMode, filteredMusicChartSection, gameMarket],
+  );
   const musicTrendSignalsByVideoId = useMemo(
     () => mapMusicTrendSignalsByVideoId(musicPlaybackSection, selectedRegionCode),
     [musicPlaybackSection, selectedRegionCode],
   );
   const extraPlaybackSections = useMemo(
-    () => (musicPlaybackSection ? [musicPlaybackSection] : []),
-    [musicPlaybackSection],
+    () => (sortedFilteredMusicChartSection ? [sortedFilteredMusicChartSection] : []),
+    [sortedFilteredMusicChartSection],
   );
   const loadedSelectedVideoCount = selectedSection?.items.length ?? 0;
   const selectedPlaybackSection = useMemo(
@@ -774,11 +786,49 @@ function HomePage() {
     ? `매수 가능 영상을 찾는 중 · ${Math.min(loadedMusicVideoCount, 200)}/200개 확인`
     : undefined;
   const displaySelectedPlaybackSection = useMemo(
-    () =>
-      shouldShowTop200Label
+    () => {
+      const labeledSection = shouldShowTop200Label
         ? relabelVideoSection(filteredSelectedPlaybackSection, 'TOP 200')
-        : filteredSelectedPlaybackSection,
-    [filteredSelectedPlaybackSection, shouldShowTop200Label],
+        : filteredSelectedPlaybackSection;
+
+      return sortVideoSection(labeledSection, chartSortMode, { marketVideos: gameMarket });
+    },
+    [chartSortMode, filteredSelectedPlaybackSection, gameMarket, shouldShowTop200Label],
+  );
+  const sortedBuyableFavoriteChartSection = useMemo(
+    () => sortVideoSection(buyableFavoriteChartSection, chartSortMode, { marketVideos: gameMarket }),
+    [buyableFavoriteChartSection, chartSortMode, gameMarket],
+  );
+  const sortedRealtimeSurgingSection = useMemo(
+    () => sortVideoSection(realtimeSurgingSection, chartSortMode, { marketVideos: gameMarket }),
+    [chartSortMode, gameMarket, realtimeSurgingSection],
+  );
+  const sortedNewChartEntriesSection = useMemo(
+    () => sortVideoSection(newChartEntriesSection, chartSortMode, { marketVideos: gameMarket }),
+    [chartSortMode, gameMarket, newChartEntriesSection],
+  );
+  const sortedFeaturedChartSections = useMemo(
+    () =>
+      featuredChartSections.map((featuredSection) => {
+        const sortedSection =
+          featuredSection.section.categoryId === sortedRealtimeSurgingSection?.categoryId
+            ? sortedRealtimeSurgingSection
+            : featuredSection.section.categoryId === sortedNewChartEntriesSection?.categoryId
+              ? sortedNewChartEntriesSection
+              : sortVideoSection(featuredSection.section, chartSortMode, { marketVideos: gameMarket });
+
+        return {
+          ...featuredSection,
+          section: sortedSection ?? featuredSection.section,
+        };
+      }),
+    [
+      chartSortMode,
+      featuredChartSections,
+      gameMarket,
+      sortedNewChartEntriesSection,
+      sortedRealtimeSurgingSection,
+    ],
   );
   const labeledSelectedPlaybackSection = useMemo(
     () =>
@@ -815,7 +865,7 @@ function HomePage() {
     selectedChartViewOption,
   } = useHomeChartViewState({
     authStatus,
-    buyableFavoriteChartSection,
+    buyableFavoriteChartSection: sortedBuyableFavoriteChartSection,
     buyableVideoSearchStatus,
     chartErrorMessage,
     chartTrendSignalsByVideoId,
@@ -825,7 +875,7 @@ function HomePage() {
     favoriteTrendSignalsByVideoId,
     fetchNextFavoriteStreamerVideosPage,
     fetchNextPage,
-    featuredChartSections,
+    featuredChartSections: sortedFeaturedChartSections,
     hasNextFavoriteStreamerVideosPage,
     hasNextPage,
     hasResolvedChartTrendSignals,
@@ -850,7 +900,7 @@ function HomePage() {
     isTrendRegionSelected,
     hasNextMusicChartPage,
     musicBuyableVideoSearchStatus: buyableMusicVideoSearchStatus,
-    musicChartSection: filteredMusicChartSection,
+    musicChartSection: sortedFilteredMusicChartSection,
     musicTrendSignalsByVideoId,
     onLoadMoreMusicChart: fetchNextMusicChartPage,
     selectedChartView,
@@ -880,10 +930,10 @@ function HomePage() {
     favoriteStreamerVideoSection,
     gamePortfolioSection,
     historyPlaybackSection,
-    newChartEntriesSection,
+    newChartEntriesSection: sortedNewChartEntriesSection,
     isMobileLayout,
     logout,
-    realtimeSurgingSection,
+    realtimeSurgingSection: sortedRealtimeSurgingSection,
     scrollToPlayerTop: scrollToPlayerStage,
     selectedCategoryId,
     selectedPlaybackSection,
@@ -900,8 +950,8 @@ function HomePage() {
         extraPlaybackSections,
         fallbackLabel: selectedChartViewOption.label,
         favoriteStreamerVideoSection,
-        newChartEntriesSection,
-        realtimeSurgingSection,
+        newChartEntriesSection: sortedNewChartEntriesSection,
+        realtimeSurgingSection: sortedRealtimeSurgingSection,
         selectedPlaybackSection: labeledSelectedPlaybackSection,
         selectedVideoId,
       }),
@@ -910,8 +960,8 @@ function HomePage() {
       extraPlaybackSections,
       favoriteStreamerVideoSection,
       labeledSelectedPlaybackSection,
-      newChartEntriesSection,
-      realtimeSurgingSection,
+      sortedNewChartEntriesSection,
+      sortedRealtimeSurgingSection,
       selectedChartViewOption.label,
       selectedVideoId,
     ],
@@ -1280,13 +1330,13 @@ function HomePage() {
     (viewId: ChartViewMode) => {
       const targetSection =
         viewId === 'favorites'
-          ? buyableFavoriteChartSection
+          ? sortedBuyableFavoriteChartSection
           : viewId === 'music'
-            ? filteredMusicChartSection
+            ? sortedFilteredMusicChartSection
             : viewId === 'realtime-surging'
-              ? realtimeSurgingSection
+              ? sortedRealtimeSurgingSection
               : viewId === 'new-chart-entries'
-                ? newChartEntriesSection
+                ? sortedNewChartEntriesSection
                 : displaySelectedPlaybackSection;
       const topVideoId = targetSection?.items[0]?.id;
 
@@ -1297,12 +1347,12 @@ function HomePage() {
       handleSelectVideoWithPreview(topVideoId, targetSection.categoryId);
     },
     [
-      buyableFavoriteChartSection,
+      sortedBuyableFavoriteChartSection,
       displaySelectedPlaybackSection,
-      filteredMusicChartSection,
       handleSelectVideoWithPreview,
-      newChartEntriesSection,
-      realtimeSurgingSection,
+      sortedNewChartEntriesSection,
+      sortedRealtimeSurgingSection,
+      sortedFilteredMusicChartSection,
     ],
   );
 
@@ -1694,7 +1744,7 @@ function HomePage() {
       isGameLeaderboardLoading={isGameLeaderboardLoading}
       isSelectedLeaderboardPositionsError={isSelectedLeaderboardPositionsError}
       isSelectedLeaderboardPositionsLoading={isSelectedLeaderboardPositionsLoading}
-      newChartEntriesSection={newChartEntriesSection}
+      newChartEntriesSection={sortedNewChartEntriesSection}
       onOpenCoinModal={openCoinModal}
       onSelectGameHistoryVideo={handleSelectGameHistoryVideo}
       onSelectGamePositionVideo={handleSelectGamePositionVideo}
@@ -1707,7 +1757,7 @@ function HomePage() {
       openPositionsEvaluationPoints={openPositionsEvaluationPoints}
       openPositionsProfitPoints={openPositionsProfitPoints}
       positionsEmptyMessage={positionsEmptyMessage}
-      realtimeSurgingSection={realtimeSurgingSection}
+      realtimeSurgingSection={sortedRealtimeSurgingSection}
       selectedLeaderboardPositions={selectedLeaderboardPositions}
       selectedLeaderboardPositionsError={selectedLeaderboardPositionsError}
       selectedLeaderboardUserId={selectedLeaderboardUserId}
@@ -1796,6 +1846,8 @@ function HomePage() {
           chartPanelProps={{
             buyableVideoSearchStatus: activeChartBuyableVideoSearchStatus,
             chartErrorMessage: activeChartErrorMessage,
+            chartSortMode,
+            chartSortOptions: CHART_SORT_OPTIONS,
             collapsedFeaturedSectionIds,
             currentTierCode: gameCoinTierProgress?.currentTier.tierCode,
             featuredSections: activeChartFeaturedSections,
@@ -1808,6 +1860,7 @@ function HomePage() {
             isChartLoading: activeChartIsLoading,
             isFetchingNextPage: activeChartIsFetchingNextPage,
             mainSectionCollapseKey: activeChartMainSectionCollapseKey,
+            onChangeChartSortMode: setChartSortMode,
             onLoadMore: activeChartOnLoadMore,
             onSelectVideo: handleSelectVideoWithPreview,
             onToggleBuyableOnlyFilter: () => setIsBuyableOnlyFilterActive((current) => !current),

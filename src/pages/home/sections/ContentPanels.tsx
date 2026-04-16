@@ -5,12 +5,20 @@ import type { AuthStatus } from '../../../features/auth/types';
 import type { FavoriteStreamer } from '../../../features/favorites/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features/youtube/types';
+import type { ChartSortMode } from '../types';
 import './ContentPanels.css';
+
+interface ChartSortOption {
+  id: ChartSortMode;
+  label: string;
+}
 
 interface ChartPanelProps {
   activePlaybackQueueId?: string;
   buyableVideoSearchStatus?: string;
   chartErrorMessage?: string;
+  chartSortMode: ChartSortMode;
+  chartSortOptions: ChartSortOption[];
   className?: string;
   collapsedFeaturedSectionIds?: string[];
   currentTierCode?: string;
@@ -24,6 +32,7 @@ interface ChartPanelProps {
   isChartLoading: boolean;
   isFetchingNextPage: boolean;
   mainSectionCollapseKey?: string;
+  onChangeChartSortMode: (sortMode: ChartSortMode) => void;
   onLoadMore: () => void;
   onToggleFeaturedSectionCollapse?: (sectionId: string) => void;
   onToggleBuyableOnlyFilter?: () => void;
@@ -79,6 +88,8 @@ export function ChartPanel({
   activePlaybackQueueId,
   buyableVideoSearchStatus,
   chartErrorMessage,
+  chartSortMode,
+  chartSortOptions,
   className,
   collapsedFeaturedSectionIds,
   currentTierCode,
@@ -92,6 +103,7 @@ export function ChartPanel({
   isChartLoading,
   isFetchingNextPage,
   mainSectionCollapseKey,
+  onChangeChartSortMode,
   onLoadMore,
   onToggleFeaturedSectionCollapse,
   onToggleBuyableOnlyFilter,
@@ -131,6 +143,20 @@ export function ChartPanel({
                 매수 가능 목록 탐색
               </button>
             ) : null}
+            <label className="app-shell__chart-sort-field">
+              <select
+                aria-label="인기 영상 정렬"
+                className="app-shell__chart-sort-select"
+                onChange={(event) => onChangeChartSortMode(event.target.value as ChartSortMode)}
+                value={chartSortMode}
+              >
+                {chartSortOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           {buyableVideoSearchStatus ? (
             <p className="app-shell__chart-filter-status">{buyableVideoSearchStatus}</p>

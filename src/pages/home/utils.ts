@@ -1,6 +1,6 @@
 import countryCodes from '../../constants/countryCodes';
 import { ALL_VIDEO_CATEGORY_ID, TREND_SNAPSHOT_REGION_CODES } from '../../constants/videoCategories';
-import type { GamePosition } from '../../features/game/types';
+import type { GameMarketVideo, GamePosition } from '../../features/game/types';
 import type { PlaybackProgress } from '../../features/playback/types';
 import { formatCompactCount } from '../../features/trending/presentation';
 import type {
@@ -9,6 +9,7 @@ import type {
   VideoTrendSignal,
 } from '../../features/trending/types';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../features/youtube/types';
+import type { ChartSortMode } from './types';
 
 export const DEFAULT_REGION_CODE = 'US';
 export const DEFAULT_CATEGORY_ID = ALL_VIDEO_CATEGORY_ID;
@@ -209,6 +210,60 @@ export function relabelVideoSection(
   return {
     ...section,
     label,
+  };
+}
+
+function getVideoViewCount(item: YouTubeVideoItem) {
+  if (typeof item.trend?.currentViewCount === 'number') {
+    return item.trend.currentViewCount;
+  }
+
+  const parsedViewCount = Number(item.statistics?.viewCount);
+
+  return Number.isFinite(parsedViewCount) && parsedViewCount >= 0 ? parsedViewCount : null;
+}
+
+export function sortVideoSection(
+  section: YouTubeCategorySection | undefined,
+  sortMode: ChartSortMode,
+  options: {
+    marketVideos?: Pick<GameMarketVideo, 'videoId' | 'currentPricePoints'>[];
+  } = {},
+) {
+  if (!section || sortMode === 'popular') {
+    return section;
+  }
+
+  const priceByVideoId = new Map(
+    (options.marketVideos ?? []).map((marketVideo) => [marketVideo.videoId, marketVideo.currentPricePoints]),
+  );
+  const sortedItems = section.items
+    .map((item, index) => ({ item, index }))
+    .sort((left, right) => {
+      const leftValue = sortMode.startsWith('price') ? priceByVideoId.get(left.item.id) : getVideoViewCount(left.item);
+      const rightValue = sortMode.startsWith('price') ? priceByVideoId.get(right.item.id) : getVideoViewCount(right.item);
+
+      if (typeof leftValue !== 'number' && typeof rightValue !== 'number') {
+        return left.index - right.index;
+      }
+
+      if (typeof leftValue !== 'number') {
+        return 1;
+      }
+
+      if (typeof rightValue !== 'number') {
+        return -1;
+      }
+
+      const valueOrder = sortMode === 'price-asc' ? leftValue - rightValue : rightValue - leftValue;
+
+      return valueOrder || left.index - right.index;
+    })
+    .map(({ item }) => item);
+
+  return {
+    ...section,
+    items: sortedItems,
   };
 }
 

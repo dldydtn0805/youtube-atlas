@@ -5,3 +5,5 @@ export type ChartViewMode =
   | 'favorites'
   | 'popular'
   | 'music';
+
+export type ChartSortMode = 'popular' | 'price-desc' | 'price-asc' | 'views';

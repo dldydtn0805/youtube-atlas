@@ -128,7 +128,6 @@ export default function useHomeChartViewState({
   const chartViewOptions = useMemo(
     () =>
       [
-        { id: 'all', label: '전체' },
         { id: 'popular', label: 'TOP 200' },
         {
           id: 'favorites',
@@ -162,7 +161,6 @@ export default function useHomeChartViewState({
 
     if (
       isTrendRegionSelected ||
-      selectedChartView === 'all' ||
       selectedChartView === 'favorites' ||
       selectedChartView === 'popular' ||
       selectedChartView === 'music'
@@ -170,17 +168,16 @@ export default function useHomeChartViewState({
       return;
     }
 
-    setSelectedChartView('all');
+    setSelectedChartView('popular');
   }, [authStatus, isTrendRegionSelected, selectedChartView, setSelectedChartView]);
 
   const effectiveChartView: ChartViewMode =
     !isTrendRegionSelected &&
-    selectedChartView !== 'all' &&
     selectedChartView !== 'favorites' &&
     selectedChartView !== 'popular'
-      ? 'all'
+      ? 'popular'
       : authStatus !== 'authenticated' && selectedChartView === 'favorites'
-        ? 'all'
+        ? 'popular'
         : selectedChartView;
 
   const selectedChartViewOption =
