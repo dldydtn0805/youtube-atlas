@@ -97,7 +97,7 @@ interface UseSelectedVideoGameStateResult {
   totalSelectedVideoBuyPoints: number | null;
 }
 
-function buildSelectedVideoTrendBadgeSource(options: {
+export function buildSelectedVideoTrendBadgeSource(options: {
   currentGameSeason?: GameCurrentSeason;
   selectedCategoryId: string;
   selectedCategoryLabel?: string;
@@ -114,31 +114,27 @@ function buildSelectedVideoTrendBadgeSource(options: {
     selectedVideoTrendSignal,
   } = options;
 
-  if (selectedVideoTrendSignal) {
-    return selectedVideoTrendSignal;
+  if (selectedVideoMarketEntry) {
+    return {
+      categoryId: selectedCategoryId,
+      categoryLabel: selectedCategoryLabel ?? '',
+      capturedAt: selectedVideoMarketEntry.capturedAt,
+      currentRank: selectedVideoMarketEntry.currentRank,
+      currentViewCount: selectedVideoMarketEntry.currentViewCount,
+      isNew: selectedVideoMarketEntry.isNew,
+      previousRank: selectedVideoMarketEntry.previousRank,
+      previousViewCount: null,
+      rankChange: selectedVideoMarketEntry.rankChange,
+      regionCode: currentGameSeason?.regionCode ?? selectedRegionCode,
+      title: selectedVideoMarketEntry.title,
+      channelTitle: selectedVideoMarketEntry.channelTitle,
+      thumbnailUrl: selectedVideoMarketEntry.thumbnailUrl,
+      videoId: selectedVideoMarketEntry.videoId,
+      viewCountDelta: selectedVideoMarketEntry.viewCountDelta,
+    } satisfies VideoTrendSignal;
   }
 
-  if (!selectedVideoMarketEntry) {
-    return null;
-  }
-
-  return {
-    categoryId: selectedCategoryId,
-    categoryLabel: selectedCategoryLabel ?? '',
-    capturedAt: selectedVideoMarketEntry.capturedAt,
-    currentRank: selectedVideoMarketEntry.currentRank,
-    currentViewCount: selectedVideoMarketEntry.currentViewCount,
-    isNew: selectedVideoMarketEntry.isNew,
-    previousRank: selectedVideoMarketEntry.previousRank,
-    previousViewCount: null,
-    rankChange: selectedVideoMarketEntry.rankChange,
-    regionCode: currentGameSeason?.regionCode ?? selectedRegionCode,
-    title: selectedVideoMarketEntry.title,
-    channelTitle: selectedVideoMarketEntry.channelTitle,
-    thumbnailUrl: selectedVideoMarketEntry.thumbnailUrl,
-    videoId: selectedVideoMarketEntry.videoId,
-    viewCountDelta: selectedVideoMarketEntry.viewCountDelta,
-  } satisfies VideoTrendSignal;
+  return selectedVideoTrendSignal ?? null;
 }
 
 export default function useSelectedVideoGameState({

@@ -128,6 +128,57 @@ describe('VideoList', () => {
     expect(screen.queryByText('NEW')).not.toBeInTheDocument();
   });
 
+  it('prefers snapshot-backed item trend data over stale separate trend signals', () => {
+    render(
+      <VideoList
+        hasNextPage={false}
+        hasResolvedTrendSignals
+        isError={false}
+        isFetchingNextPage={false}
+        isLoading={false}
+        onLoadMore={vi.fn()}
+        onSelectVideo={vi.fn()}
+        section={{
+          ...baseSection,
+          items: [
+            {
+              ...baseSection.items[0],
+              trend: {
+                capturedAt: '2026-04-17T09:00:00.000Z',
+                currentRank: 15,
+                currentViewCount: 1500,
+                isNew: false,
+                previousRank: 9,
+                previousViewCount: 1200,
+                rankChange: -6,
+                viewCountDelta: 300,
+              },
+            },
+          ],
+        }}
+        trendSignalsByVideoId={{
+          'video-1': {
+            categoryId: '0',
+            categoryLabel: '전체',
+            capturedAt: '2026-04-17T08:00:00.000Z',
+            currentRank: 9,
+            currentViewCount: 1200,
+            isNew: false,
+            previousRank: 9,
+            previousViewCount: 1100,
+            rankChange: 0,
+            regionCode: 'KR',
+            videoId: 'video-1',
+            viewCountDelta: 100,
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText('▼ 6')).toBeInTheDocument();
+    expect(screen.queryByText('• 유지')).not.toBeInTheDocument();
+  });
+
   it('re-renders the main section with the updated item order after the section changes', () => {
     const { rerender } = render(
       <VideoList

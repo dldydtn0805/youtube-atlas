@@ -65,33 +65,27 @@ function resolveVideoTrendSignal(
   item: YouTubeVideoItem,
   trendSignalsByVideoId?: Record<string, VideoTrendSignal>,
 ): VideoTrendSignal | undefined {
-  const signal = trendSignalsByVideoId?.[item.id];
-
-  if (signal) {
-    return signal;
+  if (item.trend && typeof item.trend.currentRank === 'number') {
+    return {
+      regionCode: '',
+      videoId: item.id,
+      title: item.snippet.title,
+      channelTitle: item.snippet.channelTitle,
+      thumbnailUrl: item.snippet.thumbnails.high.url,
+      categoryId: item.snippet.categoryId,
+      categoryLabel: item.trend.categoryLabel ?? item.snippet.categoryLabel ?? '',
+      capturedAt: item.trend.capturedAt ?? '',
+      currentRank: item.trend.currentRank,
+      previousRank: item.trend.previousRank ?? null,
+      rankChange: item.trend.rankChange ?? null,
+      currentViewCount: item.trend.currentViewCount ?? null,
+      previousViewCount: item.trend.previousViewCount ?? null,
+      viewCountDelta: item.trend.viewCountDelta ?? null,
+      isNew: item.trend.isNew ?? false,
+    };
   }
 
-  if (!item.trend || typeof item.trend.currentRank !== 'number') {
-    return undefined;
-  }
-
-  return {
-    regionCode: '',
-    videoId: item.id,
-    title: item.snippet.title,
-    channelTitle: item.snippet.channelTitle,
-    thumbnailUrl: item.snippet.thumbnails.high.url,
-    categoryId: item.snippet.categoryId,
-    categoryLabel: item.trend.categoryLabel ?? item.snippet.categoryLabel ?? '',
-    capturedAt: item.trend.capturedAt ?? '',
-    currentRank: item.trend.currentRank,
-    previousRank: item.trend.previousRank ?? null,
-    rankChange: item.trend.rankChange ?? null,
-    currentViewCount: item.trend.currentViewCount ?? null,
-    previousViewCount: item.trend.previousViewCount ?? null,
-    viewCountDelta: item.trend.viewCountDelta ?? null,
-    isNew: item.trend.isNew ?? false,
-  };
+  return trendSignalsByVideoId?.[item.id];
 }
 
 function getSectionRenderKey(

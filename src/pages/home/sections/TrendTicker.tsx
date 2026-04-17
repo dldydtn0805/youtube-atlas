@@ -25,6 +25,10 @@ function formatTickerDelta(signal: VideoTrendSignal) {
     return `+${signal.rankChange}`;
   }
 
+   if (typeof signal.rankChange === 'number' && signal.rankChange < 0) {
+    return `${signal.rankChange}`;
+  }
+
   return signal.previousRank ? `${signal.previousRank}→${signal.currentRank}` : `${signal.currentRank}위`;
 }
 
@@ -180,9 +184,11 @@ export default function TrendTicker({
                         ? ' · 신규 진입'
                         : typeof item.rankChange === 'number' && item.rankChange > 0
                           ? ` · ${item.rankChange}계단 상승`
-                          : item.previousRank
-                            ? ` · ${item.previousRank}위에서 이동`
-                            : ''}
+                          : typeof item.rankChange === 'number' && item.rankChange < 0
+                            ? ` · ${Math.abs(item.rankChange)}계단 하락`
+                            : item.previousRank
+                              ? ` · ${item.previousRank}위에서 이동`
+                              : ''}
                     </span>
                   </span>
                 </button>
@@ -211,7 +217,7 @@ export default function TrendTicker({
         onClick={() => setIsOpen((currentValue) => !currentValue)}
         type="button"
       >
-        <span className="app-shell__trend-ticker-label">인기 급상승</span>
+        <span className="app-shell__trend-ticker-label">순위 변동 Top 10</span>
         <span className="app-shell__trend-ticker-viewport" aria-live="polite">
           <span
             className="app-shell__trend-ticker-track"

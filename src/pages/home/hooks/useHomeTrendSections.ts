@@ -62,6 +62,13 @@ function mapSignalsByVideoId(signals?: VideoTrendSignal[]) {
   return Object.fromEntries((signals ?? []).map((signal) => [signal.videoId, signal]));
 }
 
+export function buildChartTrendSignalsByVideoId(
+  shouldShowSelectedCategoryTrendSignals: boolean,
+  trendSignalsByVideoId: Record<string, VideoTrendSignal>,
+) {
+  return shouldShowSelectedCategoryTrendSignals ? trendSignalsByVideoId : {};
+}
+
 function getSectionRankLabel(
   item: YouTubeVideoItem,
   signalsByVideoId: Record<string, VideoTrendSignal>,
@@ -156,18 +163,8 @@ export default function useHomeTrendSections({
     [newChartEntriesData?.items],
   );
   const chartTrendSignalsByVideoId = useMemo(
-    () =>
-      shouldShowSelectedCategoryTrendSignals
-        ? {
-            ...trendSignalsByVideoId,
-            ...(isAllCategorySelected ? realtimeSurgingSignalsByVideoId : {}),
-            ...(isAllCategorySelected ? newChartEntriesSignalsByVideoId : {}),
-          }
-        : {},
+    () => buildChartTrendSignalsByVideoId(shouldShowSelectedCategoryTrendSignals, trendSignalsByVideoId),
     [
-      isAllCategorySelected,
-      newChartEntriesSignalsByVideoId,
-      realtimeSurgingSignalsByVideoId,
       shouldShowSelectedCategoryTrendSignals,
       trendSignalsByVideoId,
     ],
