@@ -1,5 +1,6 @@
-import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  fetchBuyableMarketChart,
   buyGamePosition,
   fetchCurrentGameSeason,
   fetchGameCoinOverview,
@@ -16,6 +17,8 @@ import {
 import type { CreateGamePositionInput, SellGamePositionsInput } from './types';
 
 export const gameQueryKeys = {
+  buyableMarketChart: (accessToken: string | null, regionCode: string | null) =>
+    ['game', 'buyableMarketChart', accessToken, regionCode] as const,
   currentSeason: (accessToken: string | null, regionCode: string | null) =>
     ['game', 'currentSeason', accessToken, regionCode] as const,
   coinOverview: (accessToken: string | null, regionCode: string | null) =>
@@ -60,6 +63,10 @@ export async function invalidateGameQueries(
         refetchType: 'active',
       }),
       queryClient.invalidateQueries({
+        queryKey: gameQueryKeys.buyableMarketChart(accessToken, regionCode),
+        refetchType: 'active',
+      }),
+      queryClient.invalidateQueries({
         queryKey: gameQueryKeys.coinOverview(accessToken, regionCode),
         refetchType: 'active',
       }),
@@ -84,6 +91,10 @@ export async function invalidateGameQueries(
     invalidations.push(
       queryClient.invalidateQueries({
         queryKey: ['game', 'currentSeason', accessToken],
+        refetchType: 'active',
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ['game', 'buyableMarketChart', accessToken],
         refetchType: 'active',
       }),
       queryClient.invalidateQueries({
@@ -138,6 +149,17 @@ export function useCurrentGameSeason(accessToken: string | null, regionCode: str
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useBuyableMarketChart(accessToken: string | null, regionCode: string, enabled = true) {
+  return useInfiniteQuery({
+    enabled: enabled && Boolean(accessToken) && Boolean(regionCode),
+    queryKey: gameQueryKeys.buyableMarketChart(accessToken, regionCode),
+    queryFn: ({ pageParam }) => fetchBuyableMarketChart(accessToken as string, regionCode, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextPageToken,
+    staleTime: 1000 * 15,
   });
 }
 

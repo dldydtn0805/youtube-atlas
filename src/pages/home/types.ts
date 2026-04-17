@@ -1,5 +1,6 @@
 export type ChartViewMode =
   | 'all'
+  | 'buyable'
   | 'realtime-surging'
   | 'new-chart-entries'
   | 'favorites'

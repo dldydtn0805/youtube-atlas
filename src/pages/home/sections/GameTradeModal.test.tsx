@@ -36,4 +36,32 @@ describe('GameTradeModal', () => {
     expect(screen.queryByRole('button', { name: '25%' })).not.toBeInTheDocument();
     expect(screen.getByText(/1개 단위로만 주문할 수 있습니다/)).toBeInTheDocument();
   });
+
+  it('renders projected balance summary items in the modal', () => {
+    render(
+      <GameTradeModal
+        confirmLabel="매도"
+        currentRankLabel="3위"
+        helperText="테스트"
+        isOpen
+        isSubmitting={false}
+        maxQuantity={200}
+        mode="sell"
+        onChangeQuantity={vi.fn()}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        quantity={100}
+        summaryItems={[
+          { label: '정산 금액', value: '900P' },
+          { label: '거래 후 잔액', value: '10,900P' },
+        ]}
+        thumbnailUrl={null}
+        title="테스트 영상"
+        unitPointsLabel="1,000P"
+      />,
+    );
+
+    expect(screen.getByText('거래 후 잔액')).toBeInTheDocument();
+    expect(screen.getByText('10,900P')).toBeInTheDocument();
+  });
 });

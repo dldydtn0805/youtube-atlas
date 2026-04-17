@@ -12,6 +12,7 @@ import type {
   SellGamePositionsInput,
   SellGamePositionResponse,
 } from './types';
+import type { YouTubeCategorySection } from '../youtube/types';
 
 function createAuthorizationHeader(accessToken: string) {
   return { Authorization: `Bearer ${accessToken}` };
@@ -29,6 +30,18 @@ export async function fetchGameMarket(accessToken: string, regionCode: string) {
   const params = new URLSearchParams({ regionCode });
 
   return fetchApi<GameMarketVideo[]>(`/api/game/market?${params.toString()}`, {
+    headers: createAuthorizationHeader(accessToken),
+  });
+}
+
+export async function fetchBuyableMarketChart(accessToken: string, regionCode: string, pageToken?: string) {
+  const params = new URLSearchParams({ regionCode });
+
+  if (pageToken) {
+    params.set('pageToken', pageToken);
+  }
+
+  return fetchApi<YouTubeCategorySection>(`/api/game/market/buyable-chart?${params.toString()}`, {
     headers: createAuthorizationHeader(accessToken),
   });
 }

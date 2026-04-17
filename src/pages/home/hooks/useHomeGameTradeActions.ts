@@ -29,6 +29,7 @@ interface UseHomeGameTradeActionsOptions {
   maxSellQuantity: number;
   mutateBuyGamePosition: (input: CreateGamePositionInput) => Promise<unknown>;
   mutateSellGamePositions: (input: SellGamePositionsInput) => Promise<SellGamePositionResponse[]>;
+  onBuySuccess?: () => Promise<void> | void;
   selectedOpenPositionId?: number | null;
   selectedGameActionTitle: string;
   selectedVideoId?: string;
@@ -62,6 +63,7 @@ export default function useHomeGameTradeActions({
   maxSellQuantity,
   mutateBuyGamePosition,
   mutateSellGamePositions,
+  onBuySuccess,
   selectedOpenPositionId,
   selectedGameActionTitle,
   selectedVideoId,
@@ -159,6 +161,7 @@ export default function useHomeGameTradeActions({
         stakePoints: selectedVideoMarketEntry.currentPricePoints,
         videoId: selectedVideoId,
       });
+      await onBuySuccess?.();
       setActiveTradeModal(null);
       setBuyQuantity(DEFAULT_GAME_QUANTITY);
       setGameActionStatus(
@@ -191,6 +194,7 @@ export default function useHomeGameTradeActions({
     logout,
     maxBuyQuantity,
     mutateBuyGamePosition,
+    onBuySuccess,
     selectedVideoId,
     selectedVideoMarketEntry,
     setActiveTradeModal,

@@ -41,7 +41,6 @@ import {
   getFullscreenElement,
   getAdjacentGamePosition,
   getVideoThumbnailUrl,
-  isBuyableVideoSearchActive,
   mapGamePositionToVideoItem,
   mergeUniqueVideoItems,
   mergeSections,
@@ -65,6 +64,7 @@ import { useAuth } from '../../features/auth/useAuth';
 import {
   invalidateGameQueries,
   gameQueryKeys,
+  useBuyableMarketChart,
   useBuyGamePosition,
   useCurrentGameSeason,
   useGameCoinOverview,
@@ -100,6 +100,18 @@ const CHART_SORT_OPTIONS: Array<{ id: ChartSortMode; label: string }> = [
   { id: 'price-asc', label: '가격 낮은순' },
   { id: 'views', label: '조회순' },
 ];
+
+function getProjectedWalletBalance(currentBalancePoints?: number | null, deltaPoints?: number | null) {
+  if (typeof currentBalancePoints !== 'number' || !Number.isFinite(currentBalancePoints)) {
+    return null;
+  }
+
+  if (typeof deltaPoints !== 'number' || !Number.isFinite(deltaPoints)) {
+    return null;
+  }
+
+  return currentBalancePoints + deltaPoints;
+}
 
 function mergeRankHistories(
   positionHistory?: GamePositionRankHistory,
@@ -390,6 +402,15 @@ function HomePage() {
     isLoading: isGameMarketLoading,
   } = useGameMarket(accessToken, selectedRegionCode, shouldLoadGame);
   const {
+    data: buyableMarketChartData,
+    error: buyableMarketChartError,
+    fetchNextPage: fetchNextBuyableMarketChartPage,
+    hasNextPage: hasNextBuyableMarketChartPage = false,
+    isFetchingNextPage: isFetchingNextBuyableMarketChartPage,
+    isLoading: isBuyableMarketChartLoading,
+    isError: isBuyableMarketChartError,
+  } = useBuyableMarketChart(accessToken, selectedRegionCode, shouldLoadGame);
+  const {
     data: gameCoinOverview,
     error: gameCoinOverviewError,
     dataUpdatedAt: gameCoinOverviewUpdatedAt,
@@ -594,6 +615,16 @@ function HomePage() {
         : undefined,
     [musicChartData?.pages, selectedCategory?.id, selectedRegionCode],
   );
+  const buyableMarketChartSection = useMemo(
+    () =>
+      mergeSections(buyableMarketChartData?.pages) ?? {
+        categoryId: 'buyable-market',
+        description: '현재 지갑과 보유 상태 기준으로 바로 매수 가능한 영상만 모았습니다.',
+        items: [],
+        label: '매수 가능',
+      },
+    [buyableMarketChartData?.pages],
+  );
   const musicPlaybackSection = useMemo(
     () =>
       musicChartSection
@@ -618,6 +649,10 @@ function HomePage() {
   const sortedFilteredMusicChartSection = useMemo(
     () => sortVideoSection(filteredMusicChartSection, chartSortMode, { marketVideos: gameMarket }),
     [chartSortMode, filteredMusicChartSection, gameMarket],
+  );
+  const sortedBuyableMarketChartSection = useMemo(
+    () => sortVideoSection(buyableMarketChartSection, chartSortMode, { marketVideos: gameMarket }),
+    [buyableMarketChartSection, chartSortMode, gameMarket],
   );
   const musicTrendSignalsByVideoId = useMemo(
     () => mapMusicTrendSignalsByVideoId(musicPlaybackSection, selectedRegionCode),
@@ -775,16 +810,6 @@ function HomePage() {
     isFetchingNextPage: isFetchingNextMusicChartPage,
     loadedItemCount: loadedMusicVideoCount,
   });
-  const isBuyableMusicVideoSearchActive = isBuyableVideoSearchActive({
-    hasNextPage: hasNextMusicChartPage,
-    isBuyableOnlyFilterActive,
-    isBuyableOnlyFilterAvailable,
-    isFetchingNextPage: isFetchingNextMusicChartPage,
-    loadedItemCount: loadedMusicVideoCount,
-  });
-  const buyableMusicVideoSearchStatus = isBuyableMusicVideoSearchActive
-    ? `매수 가능 영상을 찾는 중 · ${Math.min(loadedMusicVideoCount, 200)}/200개 확인`
-    : undefined;
   const displaySelectedPlaybackSection = useMemo(
     () => {
       const labeledSection = shouldShowTop200Label
@@ -841,10 +866,22 @@ function HomePage() {
     favoriteStreamerVideosError instanceof Error
       ? favoriteStreamerVideosError.message
       : '즐겨찾기 영상을 불러오지 못했습니다.';
+  const openDistinctVideoCount = new Set(openGamePositions.map((position) => position.videoId)).size;
+  const buyableChartEmptyMessage = useMemo(() => {
+    if (currentGameSeason && openDistinctVideoCount >= currentGameSeason.maxOpenPositions) {
+      return '보유 가능한 종목 슬롯을 모두 사용 중입니다. 기존 포지션을 정리하면 다시 매수 가능한 영상이 표시됩니다.';
+    }
+
+    if (
+      gameMarket.length > 0 &&
+      gameMarket.every((marketVideo) => marketVideo.buyBlockedReason === '현재 가격 기준 보유 포인트가 부족합니다.')
+    ) {
+      return '현재 잔액으로는 즉시 매수 가능한 영상이 없습니다.';
+    }
+
+    return '지금 바로 매수 가능한 영상이 없습니다.';
+  }, [currentGameSeason, gameMarket, openDistinctVideoCount]);
   const {
-    activeChartBuyableOnlyFilterActive,
-    activeChartBuyableOnlyFilterAvailable,
-    activeChartBuyableVideoSearchStatus,
     activeChartEmptyMessage,
     activeChartErrorMessage,
     activeChartFeaturedSections,
@@ -865,29 +902,33 @@ function HomePage() {
     selectedChartViewOption,
   } = useHomeChartViewState({
     authStatus,
+    buyableChartEmptyMessage,
+    buyableChartSection: sortedBuyableMarketChartSection,
     buyableFavoriteChartSection: sortedBuyableFavoriteChartSection,
-    buyableVideoSearchStatus,
     chartErrorMessage,
     chartTrendSignalsByVideoId,
     displaySelectedPlaybackSection,
     favoriteStreamerVideoErrorMessage,
     favoriteStreamersCount: favoriteStreamers.length,
     favoriteTrendSignalsByVideoId,
+    fetchNextBuyableChartPage: fetchNextBuyableMarketChartPage,
     fetchNextFavoriteStreamerVideosPage,
     fetchNextPage,
     featuredChartSections: sortedFeaturedChartSections,
+    hasNextBuyableChartPage: hasNextBuyableMarketChartPage,
     hasNextFavoriteStreamerVideosPage,
     hasNextPage,
     hasResolvedChartTrendSignals,
     hasResolvedFavoriteTrendSignals,
-    isBuyableOnlyFilterActive,
-    isBuyableOnlyFilterAvailable,
+    isBuyableChartError: isBuyableMarketChartError,
+    isBuyableChartLoading: isBuyableMarketChartLoading,
     isChartError,
     isChartLoading,
     isFavoriteStreamerVideosError,
     isFavoriteStreamerVideosLoading,
     isFavoriteStreamersError,
     isFavoriteStreamersLoading,
+    isFetchingNextBuyableChartPage: isFetchingNextBuyableMarketChartPage,
     isFetchingNextFavoriteStreamerVideosPage,
     isFetchingNextPage,
     isFetchingNextMusicChartPage,
@@ -899,7 +940,6 @@ function HomePage() {
     isRealtimeSurgingLoading,
     isTrendRegionSelected,
     hasNextMusicChartPage,
-    musicBuyableVideoSearchStatus: buyableMusicVideoSearchStatus,
     musicChartSection: sortedFilteredMusicChartSection,
     musicTrendSignalsByVideoId,
     onLoadMoreMusicChart: fetchNextMusicChartPage,
@@ -989,7 +1029,6 @@ function HomePage() {
     openGamePositions,
     selectedVideoId: selectedOpenPositionId != null ? `${selectedVideoId ?? ''}:${selectedOpenPositionId}` : selectedVideoId,
   });
-  const openDistinctVideoCount = new Set(openGamePositions.map((position) => position.videoId)).size;
   const isRankingGameCollapsed = collapsedHomeSectionIds.includes(RANKING_GAME_SECTION_ID);
   const collapsedFeaturedSectionIds = collapsedHomeSectionIds;
   const toggleCollapsedSection = useCallback((sectionId: string) => {
@@ -1043,6 +1082,7 @@ function HomePage() {
   useLogoutOnUnauthorized(gameCoinOverviewError, logout);
   useLogoutOnUnauthorized(gameCoinTierProgressError, logout);
   useLogoutOnUnauthorized(gameMarketError, logout);
+  useLogoutOnUnauthorized(buyableMarketChartError, logout);
   useLogoutOnUnauthorized(openGamePositionsError, logout);
   useLogoutOnUnauthorized(gameHistoryPositionsError, logout);
   useLogoutOnUnauthorized(selectedPositionRankHistoryError, logout);
@@ -1226,6 +1266,55 @@ function HomePage() {
         : null,
     [openGamePositions, selectedOpenPositionId],
   );
+  const refetchCurrentChartAfterBuy = useCallback(async () => {
+    const invalidations: Array<Promise<unknown>> = [];
+
+    if (effectiveChartView === 'favorites' && accessToken) {
+      invalidations.push(
+        queryClient.invalidateQueries({
+          queryKey: ['favoriteStreamerVideos', accessToken, selectedRegionCode],
+          refetchType: 'active',
+        }),
+      );
+    } else if (effectiveChartView === 'buyable' && accessToken) {
+      invalidations.push(
+        queryClient.invalidateQueries({
+          queryKey: gameQueryKeys.buyableMarketChart(accessToken, selectedRegionCode),
+          refetchType: 'active',
+        }),
+      );
+    } else if (effectiveChartView === 'music') {
+      invalidations.push(
+        queryClient.invalidateQueries({
+          queryKey: ['musicTopVideos', selectedRegionCode],
+          refetchType: 'active',
+        }),
+      );
+    } else if (effectiveChartView === 'realtime-surging') {
+      invalidations.push(
+        queryClient.invalidateQueries({
+          queryKey: ['realtimeSurging', selectedRegionCode],
+          refetchType: 'active',
+        }),
+      );
+    } else if (effectiveChartView === 'new-chart-entries') {
+      invalidations.push(
+        queryClient.invalidateQueries({
+          queryKey: ['newChartEntries', selectedRegionCode],
+          refetchType: 'active',
+        }),
+      );
+    } else {
+      invalidations.push(
+        queryClient.invalidateQueries({
+          queryKey: ['popularVideosByCategory', selectedRegionCode, selectedCategory?.id],
+          refetchType: 'active',
+        }),
+      );
+    }
+
+    await Promise.all(invalidations);
+  }, [accessToken, effectiveChartView, queryClient, selectedCategory?.id, selectedRegionCode]);
 
   const {
     handleBuyCurrentVideo,
@@ -1245,6 +1334,7 @@ function HomePage() {
     maxSellQuantity,
     mutateBuyGamePosition: buyGamePositionMutation.mutateAsync,
     mutateSellGamePositions: sellGamePositionsMutation.mutateAsync,
+    onBuySuccess: refetchCurrentChartAfterBuy,
     selectedOpenPositionId: selectedSellPositionId,
     selectedGameActionTitle,
     selectedVideoId,
@@ -1286,6 +1376,19 @@ function HomePage() {
     selectedVideoOpenPositionSummary.evaluationPoints,
     totalSelectedVideoBuyPoints,
   ]);
+  const projectedWalletBalanceAfterBuy = useMemo(
+    () =>
+      getProjectedWalletBalance(
+        currentGameSeason?.wallet.balancePoints,
+        -(totalSelectedVideoBuyPoints ?? (selectedVideoUnitPricePoints ?? 0)),
+      ),
+    [currentGameSeason?.wallet.balancePoints, selectedVideoUnitPricePoints, totalSelectedVideoBuyPoints],
+  );
+  const projectedWalletBalanceAfterSell = useMemo(
+    () =>
+      getProjectedWalletBalance(currentGameSeason?.wallet.balancePoints, selectedVideoSellSummary.settledPoints),
+    [currentGameSeason?.wallet.balancePoints, selectedVideoSellSummary.settledPoints],
+  );
 
   async function handleToggleFavoriteStreamer() {
     if (authStatus !== 'authenticated' || !resolvedSelectedVideo || !selectedChannelId) {
@@ -1329,7 +1432,9 @@ function HomePage() {
   const handleSelectTopVideoForChartView = useCallback(
     (viewId: ChartViewMode) => {
       const targetSection =
-        viewId === 'favorites'
+        viewId === 'buyable'
+          ? sortedBuyableMarketChartSection
+          : viewId === 'favorites'
           ? sortedBuyableFavoriteChartSection
           : viewId === 'music'
             ? sortedFilteredMusicChartSection
@@ -1347,6 +1452,7 @@ function HomePage() {
       handleSelectVideoWithPreview(topVideoId, targetSection.categoryId);
     },
     [
+      sortedBuyableMarketChartSection,
       sortedBuyableFavoriteChartSection,
       displaySelectedPlaybackSection,
       handleSelectVideoWithPreview,
@@ -1844,7 +1950,6 @@ function HomePage() {
           onPlayPreviousStickySelectedVideo={handlePlayPreviousVideoWithPreview}
           onResumeStickySelectedVideo={handleResumeCurrentVideo}
           chartPanelProps={{
-            buyableVideoSearchStatus: activeChartBuyableVideoSearchStatus,
             chartErrorMessage: activeChartErrorMessage,
             chartSortMode,
             chartSortOptions: CHART_SORT_OPTIONS,
@@ -1854,8 +1959,6 @@ function HomePage() {
             getRankLabel: activeChartRankLabel,
             hasNextPage: activeChartHasNextPage,
             hasResolvedTrendSignals: activeChartHasResolvedTrendSignals,
-            isBuyableOnlyFilterActive: activeChartBuyableOnlyFilterActive,
-            isBuyableOnlyFilterAvailable: activeChartBuyableOnlyFilterAvailable,
             isChartError: activeChartIsError,
             isChartLoading: activeChartIsLoading,
             isFetchingNextPage: activeChartIsFetchingNextPage,
@@ -1863,7 +1966,6 @@ function HomePage() {
             onChangeChartSortMode: setChartSortMode,
             onLoadMore: activeChartOnLoadMore,
             onSelectVideo: handleSelectVideoWithPreview,
-            onToggleBuyableOnlyFilter: () => setIsBuyableOnlyFilterActive((current) => !current),
             onToggleFeaturedSectionCollapse: toggleCollapsedSection,
             primarySectionEyebrow: activeChartSectionEyebrow,
             section: activeChartSection,
@@ -2037,6 +2139,9 @@ function HomePage() {
           { label: '수량', value: formatGameOrderQuantity(normalizedBuyQuantity) },
           { label: '1개당 가격', value: formatPoints(selectedVideoUnitPricePoints ?? 0) },
           { label: '총 매수', value: formatPoints(totalSelectedVideoBuyPoints ?? (selectedVideoUnitPricePoints ?? 0)) },
+          ...(typeof projectedWalletBalanceAfterBuy === 'number'
+            ? [{ label: '거래 후 잔액', value: formatPoints(projectedWalletBalanceAfterBuy) }]
+            : []),
           ...(selectedVideoBuyCoinSummary
             ? [
                 {
@@ -2086,6 +2191,9 @@ function HomePage() {
         summaryItems={[
           { label: '수량', value: formatGameOrderQuantity(normalizedSellQuantity) },
           { label: '정산 금액', value: formatPoints(selectedVideoSellSummary.settledPoints) },
+          ...(typeof projectedWalletBalanceAfterSell === 'number'
+            ? [{ label: '거래 후 잔액', value: formatPoints(projectedWalletBalanceAfterSell) }]
+            : []),
           { label: '매도 금액', value: formatPoints(selectedVideoSellSummary.grossSellPoints) },
           { label: '수수료', value: formatPoints(selectedVideoSellSummary.feePoints) },
           {

@@ -15,7 +15,6 @@ interface ChartSortOption {
 
 interface ChartPanelProps {
   activePlaybackQueueId?: string;
-  buyableVideoSearchStatus?: string;
   chartErrorMessage?: string;
   chartSortMode: ChartSortMode;
   chartSortOptions: ChartSortOption[];
@@ -26,8 +25,6 @@ interface ChartPanelProps {
   getRankLabel?: (item: YouTubeVideoItem, index: number) => string;
   hasNextPage: boolean;
   hasResolvedTrendSignals: boolean;
-  isBuyableOnlyFilterActive?: boolean;
-  isBuyableOnlyFilterAvailable?: boolean;
   isChartError: boolean;
   isChartLoading: boolean;
   isFetchingNextPage: boolean;
@@ -35,7 +32,6 @@ interface ChartPanelProps {
   onChangeChartSortMode: (sortMode: ChartSortMode) => void;
   onLoadMore: () => void;
   onToggleFeaturedSectionCollapse?: (sectionId: string) => void;
-  onToggleBuyableOnlyFilter?: () => void;
   onSelectVideo: (
     videoId: string,
     playbackQueueId: string,
@@ -86,7 +82,6 @@ interface CommunityPanelProps {
 
 export function ChartPanel({
   activePlaybackQueueId,
-  buyableVideoSearchStatus,
   chartErrorMessage,
   chartSortMode,
   chartSortOptions,
@@ -97,8 +92,6 @@ export function ChartPanel({
   getRankLabel,
   hasNextPage,
   hasResolvedTrendSignals,
-  isBuyableOnlyFilterActive = false,
-  isBuyableOnlyFilterAvailable = false,
   isChartError,
   isChartLoading,
   isFetchingNextPage,
@@ -106,7 +99,6 @@ export function ChartPanel({
   onChangeChartSortMode,
   onLoadMore,
   onToggleFeaturedSectionCollapse,
-  onToggleBuyableOnlyFilter,
   onSelectVideo,
   primarySectionEyebrow,
   section,
@@ -133,16 +125,6 @@ export function ChartPanel({
             {selectedCategoryLabel ? ` · ${selectedCategoryLabel}` : ''}
           </p>
           <div className="app-shell__chart-filter-actions">
-            {isBuyableOnlyFilterAvailable ? (
-              <button
-                className="app-shell__subtle-toggle"
-                data-active={isBuyableOnlyFilterActive}
-                onClick={onToggleBuyableOnlyFilter}
-                type="button"
-              >
-                매수 가능 목록 탐색
-              </button>
-            ) : null}
             <label className="app-shell__chart-sort-field">
               <select
                 aria-label="인기 영상 정렬"
@@ -158,9 +140,6 @@ export function ChartPanel({
               </select>
             </label>
           </div>
-          {buyableVideoSearchStatus ? (
-            <p className="app-shell__chart-filter-status">{buyableVideoSearchStatus}</p>
-          ) : null}
         </div>
       </div>
       <VideoList
@@ -182,11 +161,7 @@ export function ChartPanel({
         onSelectVideo={onSelectVideo}
         onToggleSectionCollapse={onToggleFeaturedSectionCollapse}
         section={section}
-        sectionEmptyMessage={
-          isBuyableOnlyFilterActive
-            ? '지금 매수 가능한 영상이 없습니다. 더 불러오거나 필터를 해제해 보세요.'
-            : sectionEmptyMessage
-        }
+        sectionEmptyMessage={sectionEmptyMessage}
         selectedVideoId={selectedVideoId}
         trendSignalsByVideoId={trendSignalsByVideoId}
       />

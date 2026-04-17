@@ -14,8 +14,9 @@ interface ChartViewOption {
 
 interface UseHomeChartViewStateOptions {
   authStatus: AuthStatus;
+  buyableChartEmptyMessage?: string;
+  buyableChartSection?: YouTubeCategorySection;
   buyableFavoriteChartSection?: YouTubeCategorySection;
-  buyableVideoSearchStatus?: string;
   chartErrorMessage?: string;
   chartTrendSignalsByVideoId: Record<string, VideoTrendSignal>;
   displaySelectedPlaybackSection?: YouTubeCategorySection;
@@ -23,14 +24,17 @@ interface UseHomeChartViewStateOptions {
   favoriteStreamersCount: number;
   favoriteTrendSignalsByVideoId: Record<string, VideoTrendSignal>;
   fetchNextFavoriteStreamerVideosPage: () => Promise<unknown>;
+  fetchNextBuyableChartPage: () => Promise<unknown>;
   fetchNextPage: () => Promise<unknown>;
   featuredChartSections: FeaturedVideoSection[];
+  hasNextBuyableChartPage: boolean;
   hasNextFavoriteStreamerVideosPage: boolean;
   hasNextPage: boolean;
   hasResolvedChartTrendSignals: boolean;
   hasResolvedFavoriteTrendSignals: boolean;
-  isBuyableOnlyFilterActive: boolean;
-  isBuyableOnlyFilterAvailable: boolean;
+  isBuyableChartError: boolean;
+  isBuyableChartLoading: boolean;
+  isFetchingNextBuyableChartPage: boolean;
   isChartError: boolean;
   isChartLoading: boolean;
   isFavoriteStreamerVideosError: boolean;
@@ -50,7 +54,6 @@ interface UseHomeChartViewStateOptions {
   hasNextMusicChartPage: boolean;
   musicChartSection?: YouTubeCategorySection;
   musicTrendSignalsByVideoId: Record<string, VideoTrendSignal>;
-  musicBuyableVideoSearchStatus?: string;
   onLoadMoreMusicChart: () => Promise<unknown>;
   selectedChartView: ChartViewMode;
   setCollapsedHomeSectionIds: Dispatch<SetStateAction<string[]>>;
@@ -58,9 +61,6 @@ interface UseHomeChartViewStateOptions {
 }
 
 interface HomeChartViewState {
-  activeChartBuyableOnlyFilterActive: boolean;
-  activeChartBuyableOnlyFilterAvailable: boolean;
-  activeChartBuyableVideoSearchStatus?: string;
   activeChartEmptyMessage?: string;
   activeChartErrorMessage?: string;
   activeChartFeaturedSections: FeaturedVideoSection[];
@@ -83,8 +83,9 @@ interface HomeChartViewState {
 
 export default function useHomeChartViewState({
   authStatus,
+  buyableChartEmptyMessage,
+  buyableChartSection,
   buyableFavoriteChartSection,
-  buyableVideoSearchStatus,
   chartErrorMessage,
   chartTrendSignalsByVideoId,
   displaySelectedPlaybackSection,
@@ -92,14 +93,17 @@ export default function useHomeChartViewState({
   favoriteStreamersCount,
   favoriteTrendSignalsByVideoId,
   fetchNextFavoriteStreamerVideosPage,
+  fetchNextBuyableChartPage,
   fetchNextPage,
   featuredChartSections,
+  hasNextBuyableChartPage,
   hasNextFavoriteStreamerVideosPage,
   hasNextPage,
   hasResolvedChartTrendSignals,
   hasResolvedFavoriteTrendSignals,
-  isBuyableOnlyFilterActive,
-  isBuyableOnlyFilterAvailable,
+  isBuyableChartError,
+  isBuyableChartLoading,
+  isFetchingNextBuyableChartPage,
   isChartError,
   isChartLoading,
   isFavoriteStreamerVideosError,
@@ -119,7 +123,6 @@ export default function useHomeChartViewState({
   hasNextMusicChartPage,
   musicChartSection,
   musicTrendSignalsByVideoId,
-  musicBuyableVideoSearchStatus,
   onLoadMoreMusicChart,
   selectedChartView,
   setCollapsedHomeSectionIds,
@@ -129,6 +132,11 @@ export default function useHomeChartViewState({
     () =>
       [
         { id: 'popular', label: 'TOP 200' },
+        {
+          id: 'buyable',
+          label: '매수 가능',
+          disabled: authStatus !== 'authenticated',
+        },
         {
           id: 'favorites',
           label: '즐겨찾기',
@@ -150,11 +158,11 @@ export default function useHomeChartViewState({
           disabled: !musicChartSection,
         },
       ] satisfies ChartViewOption[],
-    [authStatus, isTrendRegionSelected, musicChartSection],
+    [authStatus, buyableChartSection, isTrendRegionSelected, musicChartSection],
   );
 
   useEffect(() => {
-    if (selectedChartView === 'favorites' && authStatus !== 'authenticated') {
+    if ((selectedChartView === 'favorites' || selectedChartView === 'buyable') && authStatus !== 'authenticated') {
       setSelectedChartView('all');
       return;
     }
@@ -162,6 +170,7 @@ export default function useHomeChartViewState({
     if (
       isTrendRegionSelected ||
       selectedChartView === 'favorites' ||
+      selectedChartView === 'buyable' ||
       selectedChartView === 'popular' ||
       selectedChartView === 'music'
     ) {
@@ -174,9 +183,10 @@ export default function useHomeChartViewState({
   const effectiveChartView: ChartViewMode =
     !isTrendRegionSelected &&
     selectedChartView !== 'favorites' &&
+    selectedChartView !== 'buyable' &&
     selectedChartView !== 'popular'
       ? 'popular'
-      : authStatus !== 'authenticated' && selectedChartView === 'favorites'
+      : authStatus !== 'authenticated' && (selectedChartView === 'favorites' || selectedChartView === 'buyable')
         ? 'popular'
         : selectedChartView;
 
@@ -226,9 +236,7 @@ export default function useHomeChartViewState({
             emptyMessage:
               favoriteStreamersCount === 0
                 ? '저장한 채널이 생기면 해당 채널의 인기 영상을 여기에서 바로 볼 수 있습니다.'
-                : isBuyableOnlyFilterActive
-                  ? '지금 매수 가능한 즐겨찾기 영상이 없습니다. 필터를 해제하거나 다른 보기를 확인해 보세요.'
-                  : undefined,
+                : undefined,
             getRankLabel: favoriteChartGetRankLabel,
           }
         : undefined,
@@ -237,7 +245,6 @@ export default function useHomeChartViewState({
       buyableFavoriteChartSection,
       favoriteChartGetRankLabel,
       favoriteStreamersCount,
-      isBuyableOnlyFilterActive,
     ],
   );
 
@@ -246,6 +253,8 @@ export default function useHomeChartViewState({
       ? realtimeSurgingFeaturedSection?.section
       : effectiveChartView === 'new-chart-entries'
         ? newChartEntriesFeaturedSection?.section
+        : effectiveChartView === 'buyable'
+          ? buyableChartSection
         : effectiveChartView === 'favorites'
           ? buyableFavoriteChartSection
           : effectiveChartView === 'music'
@@ -262,6 +271,8 @@ export default function useHomeChartViewState({
       ? realtimeSurgingFeaturedSection?.eyebrow
       : effectiveChartView === 'new-chart-entries'
         ? newChartEntriesFeaturedSection?.eyebrow
+        : effectiveChartView === 'buyable'
+          ? 'Buyable Market'
         : effectiveChartView === 'favorites'
           ? 'Favorite Videos'
           : effectiveChartView === 'music'
@@ -274,6 +285,8 @@ export default function useHomeChartViewState({
       ? realtimeSurgingFeaturedSection?.getRankLabel
       : effectiveChartView === 'new-chart-entries'
         ? newChartEntriesFeaturedSection?.getRankLabel
+        : effectiveChartView === 'buyable'
+          ? musicChartGetRankLabel
         : effectiveChartView === 'favorites'
           ? favoriteChartGetRankLabel
           : effectiveChartView === 'music'
@@ -284,12 +297,12 @@ export default function useHomeChartViewState({
       ? realtimeSurgingFeaturedSection?.emptyMessage
       : effectiveChartView === 'new-chart-entries'
         ? newChartEntriesFeaturedSection?.emptyMessage
+        : effectiveChartView === 'buyable'
+          ? buyableChartEmptyMessage
         : effectiveChartView === 'favorites'
           ? favoriteStreamersCount === 0
             ? '저장한 채널이 생기면 해당 채널의 인기 영상을 여기에서 바로 볼 수 있습니다.'
-            : isBuyableOnlyFilterActive
-              ? '지금 매수 가능한 즐겨찾기 영상이 없습니다. 필터를 해제하거나 다른 보기를 확인해 보세요.'
-              : undefined
+            : undefined
           : effectiveChartView === 'music'
             ? '음악 차트에 표시할 영상이 없습니다.'
           : undefined;
@@ -299,6 +312,8 @@ export default function useHomeChartViewState({
       ? isRealtimeSurgingLoading
       : effectiveChartView === 'new-chart-entries'
         ? isNewChartEntriesLoading
+        : effectiveChartView === 'buyable'
+          ? isBuyableChartLoading
         : effectiveChartView === 'favorites'
           ? isFavoriteStreamersLoading || isFavoriteStreamerVideosLoading
           : effectiveChartView === 'music'
@@ -309,6 +324,8 @@ export default function useHomeChartViewState({
       ? isRealtimeSurgingError
       : effectiveChartView === 'new-chart-entries'
         ? isNewChartEntriesError
+        : effectiveChartView === 'buyable'
+          ? isBuyableChartError
         : effectiveChartView === 'favorites'
           ? isFavoriteStreamersError || isFavoriteStreamerVideosError
           : effectiveChartView === 'music'
@@ -334,10 +351,10 @@ export default function useHomeChartViewState({
       : activeTrendViewIsError && !chartErrorMessage
         ? '선택한 차트 보기를 불러오지 못했습니다.'
         : chartErrorMessage;
-  const resolvedBuyableVideoSearchStatus =
-    effectiveChartView === 'music' ? musicBuyableVideoSearchStatus : buyableVideoSearchStatus;
   const activeChartHasNextPage =
-    effectiveChartView === 'favorites'
+    effectiveChartView === 'buyable'
+      ? hasNextBuyableChartPage
+      : effectiveChartView === 'favorites'
       ? hasNextFavoriteStreamerVideosPage
       : effectiveChartView === 'music'
         ? hasNextMusicChartPage
@@ -348,24 +365,35 @@ export default function useHomeChartViewState({
     ? activeChartSection?.categoryId
     : 'chart-main-list';
   const activeChartHasResolvedTrendSignals =
-    effectiveChartView === 'favorites'
+    effectiveChartView === 'buyable'
+      ? true
+      : effectiveChartView === 'favorites'
       ? hasResolvedFavoriteTrendSignals
       : effectiveChartView === 'music'
         ? true
         : hasResolvedChartTrendSignals;
   const activeChartIsFetchingNextPage =
-    effectiveChartView === 'favorites'
+    effectiveChartView === 'buyable'
+      ? isFetchingNextBuyableChartPage
+      : effectiveChartView === 'favorites'
       ? isFetchingNextFavoriteStreamerVideosPage
       : effectiveChartView === 'music'
         ? isFetchingNextMusicChartPage
         : isFetchingNextPage;
   const activeChartTrendSignalsByVideoId =
-    effectiveChartView === 'favorites'
+    effectiveChartView === 'buyable'
+      ? {}
+      : effectiveChartView === 'favorites'
       ? favoriteTrendSignalsByVideoId
       : effectiveChartView === 'music'
         ? musicTrendSignalsByVideoId
         : chartTrendSignalsByVideoId;
   const activeChartOnLoadMore = useCallback(() => {
+    if (effectiveChartView === 'buyable') {
+      void fetchNextBuyableChartPage();
+      return;
+    }
+
     if (effectiveChartView === 'favorites') {
       void fetchNextFavoriteStreamerVideosPage();
       return;
@@ -377,7 +405,7 @@ export default function useHomeChartViewState({
     }
 
     void fetchNextPage();
-  }, [effectiveChartView, fetchNextFavoriteStreamerVideosPage, fetchNextPage, onLoadMoreMusicChart]);
+  }, [effectiveChartView, fetchNextBuyableChartPage, fetchNextFavoriteStreamerVideosPage, fetchNextPage, onLoadMoreMusicChart]);
   const chartViewExpandedSectionIds = useMemo(
     (): Partial<Record<ChartViewMode, string[]>> => ({
       all: [
@@ -385,6 +413,7 @@ export default function useHomeChartViewState({
         ...featuredChartSections.map(({ section }) => section.categoryId),
         ...(favoriteFeaturedSection ? [favoriteFeaturedSection.section.categoryId] : []),
       ],
+      buyable: buyableChartSection?.categoryId ? [buyableChartSection.categoryId] : [],
       favorites: buyableFavoriteChartSection?.categoryId ? [buyableFavoriteChartSection.categoryId] : [],
       music: musicChartSection?.categoryId ? [musicChartSection.categoryId] : [],
       'new-chart-entries': newChartEntriesFeaturedSection?.section.categoryId
@@ -396,11 +425,12 @@ export default function useHomeChartViewState({
         : [],
     }),
     [
+      buyableChartSection?.categoryId,
+      buyableChartEmptyMessage,
       buyableFavoriteChartSection?.categoryId,
       displaySelectedPlaybackSection?.categoryId,
       favoriteFeaturedSection,
       featuredChartSections,
-      musicChartGetRankLabel,
       musicChartSection?.categoryId,
       newChartEntriesFeaturedSection?.section.categoryId,
       realtimeSurgingFeaturedSection?.section.categoryId,
@@ -431,9 +461,6 @@ export default function useHomeChartViewState({
   );
 
   return {
-    activeChartBuyableOnlyFilterActive: isBuyableOnlyFilterActive,
-    activeChartBuyableOnlyFilterAvailable: isBuyableOnlyFilterAvailable,
-    activeChartBuyableVideoSearchStatus: resolvedBuyableVideoSearchStatus,
     activeChartEmptyMessage,
     activeChartErrorMessage,
     activeChartFeaturedSections,
