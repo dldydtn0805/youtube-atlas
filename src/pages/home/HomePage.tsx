@@ -639,6 +639,13 @@ function HomePage() {
     () => new Set(gameMarket.filter((marketVideo) => marketVideo.canBuy).map((marketVideo) => marketVideo.videoId)),
     [gameMarket],
   );
+  const marketPriceByVideoId = useMemo(
+    () =>
+      Object.fromEntries(
+        gameMarket.map((marketVideo) => [marketVideo.videoId, marketVideo.currentPricePoints]),
+      ),
+    [gameMarket],
+  );
   const filteredMusicChartSection = useMemo(
     () =>
       isBuyableOnlyFilterActive
@@ -659,8 +666,11 @@ function HomePage() {
     [musicPlaybackSection, selectedRegionCode],
   );
   const extraPlaybackSections = useMemo(
-    () => (sortedFilteredMusicChartSection ? [sortedFilteredMusicChartSection] : []),
-    [sortedFilteredMusicChartSection],
+    () =>
+      [sortedBuyableMarketChartSection, sortedFilteredMusicChartSection].filter(
+        (section): section is NonNullable<typeof section> => Boolean(section),
+      ),
+    [sortedBuyableMarketChartSection, sortedFilteredMusicChartSection],
   );
   const loadedSelectedVideoCount = selectedSection?.items.length ?? 0;
   const selectedPlaybackSection = useMemo(
@@ -1951,6 +1961,7 @@ function HomePage() {
           onResumeStickySelectedVideo={handleResumeCurrentVideo}
           chartPanelProps={{
             chartErrorMessage: activeChartErrorMessage,
+            marketPriceByVideoId,
             chartSortMode,
             chartSortOptions: CHART_SORT_OPTIONS,
             collapsedFeaturedSectionIds,

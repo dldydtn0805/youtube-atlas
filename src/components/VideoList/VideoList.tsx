@@ -16,6 +16,7 @@ interface VideoListProps {
   isLoading: boolean;
   isError: boolean;
   errorMessage?: string;
+  marketPriceByVideoId?: Record<string, number>;
   section?: YouTubeCategorySection;
   sectionEmptyMessage?: string;
   getRankLabel?: (item: YouTubeVideoItem, index: number) => string;
@@ -52,12 +53,21 @@ function formatViewCount(viewCount?: string) {
   return `조회수 ${formatCompactCount(parsedViewCount)}`;
 }
 
+function formatPrice(points?: number) {
+  if (typeof points !== 'number' || !Number.isFinite(points) || points < 0) {
+    return undefined;
+  }
+
+  return `가격 ${points.toLocaleString('ko-KR')}P`;
+}
+
 function VideoList({
   activePlaybackQueueId,
   currentTierCode,
   isLoading,
   isError,
   errorMessage,
+  marketPriceByVideoId,
   section,
   sectionEmptyMessage,
   getRankLabel,
@@ -166,7 +176,9 @@ function VideoList({
                     ? [getFallbackNewBadge()]
                     : [];
               const rankLabel = getRankLabel?.(item, index) ?? `${currentSection.label} #${index + 1}`;
+              const priceLabel = formatPrice(marketPriceByVideoId?.[item.id]);
               const viewCountLabel = formatViewCount(item.statistics?.viewCount);
+              const metaLabel = [priceLabel, viewCountLabel].filter(Boolean).join(' · ');
 
               return (
                 <button
@@ -203,7 +215,7 @@ function VideoList({
                   <strong className="video-card__title">{item.snippet.title}</strong>
                   <div className="video-card__footer">
                     <span className="video-card__channel">{item.snippet.channelTitle}</span>
-                    {viewCountLabel ? <span className="video-card__views">{viewCountLabel}</span> : null}
+                    {metaLabel ? <span className="video-card__views">{metaLabel}</span> : null}
                   </div>
                 </button>
               );

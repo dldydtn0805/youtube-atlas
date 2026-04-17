@@ -304,4 +304,33 @@ describe('usePlaybackQueue', () => {
       expect(result.current.selectedVideoId).toBe('video-history-2');
     });
   });
+
+  it('keeps a selection from an extra playback section', async () => {
+    const setSelectedCategoryId = vi.fn();
+    const buyableSection = createSection('buyable-market', ['video-buyable']);
+
+    const { result } = renderHook(() =>
+      usePlaybackQueue({
+        extraPlaybackSections: [buyableSection],
+        favoriteStreamerVideoSection: undefined,
+        isMobileLayout: false,
+        realtimeSurgingSection: undefined,
+        restoredPlaybackVideo: undefined,
+        scrollToPlayerTop: vi.fn(),
+        selectedCategoryId: '0',
+        selectedSection: createSection(getCategoryPlaybackQueueId('0'), ['video-top']),
+        setSelectedCategoryId,
+        sortedVideoCategories,
+      }),
+    );
+
+    act(() => {
+      result.current.handleSelectVideo('video-buyable', buyableSection.categoryId);
+    });
+
+    await waitFor(() => {
+      expect(result.current.activePlaybackQueueId).toBe(buyableSection.categoryId);
+      expect(result.current.selectedVideoId).toBe('video-buyable');
+    });
+  });
 });

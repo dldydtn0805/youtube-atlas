@@ -3,6 +3,7 @@ import CommentSection from '../../../components/CommentSection/CommentSection';
 import VideoList, { type FeaturedVideoSection } from '../../../components/VideoList/VideoList';
 import type { AuthStatus } from '../../../features/auth/types';
 import type { FavoriteStreamer } from '../../../features/favorites/types';
+import type { GameMarketVideo } from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features/youtube/types';
 import type { ChartSortMode } from '../types';
@@ -16,6 +17,7 @@ interface ChartSortOption {
 interface ChartPanelProps {
   activePlaybackQueueId?: string;
   chartErrorMessage?: string;
+  marketPriceByVideoId?: Record<string, GameMarketVideo['currentPricePoints']>;
   chartSortMode: ChartSortMode;
   chartSortOptions: ChartSortOption[];
   className?: string;
@@ -83,6 +85,7 @@ interface CommunityPanelProps {
 export function ChartPanel({
   activePlaybackQueueId,
   chartErrorMessage,
+  marketPriceByVideoId,
   chartSortMode,
   chartSortOptions,
   className,
@@ -155,6 +158,7 @@ export function ChartPanel({
         isFetchingNextPage={isFetchingNextPage}
         isLoading={isChartLoading}
         isPrimarySectionCollapsible={Boolean(mainSectionCollapseKey)}
+        marketPriceByVideoId={marketPriceByVideoId}
         primarySectionEyebrow={primarySectionEyebrow}
         primarySectionCollapseKey={mainSectionCollapseKey}
         onLoadMore={onLoadMore}

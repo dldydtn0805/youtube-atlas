@@ -59,8 +59,9 @@ describe('VideoList', () => {
   });
 
   it('shows a static playing badge for the selected video card', () => {
-    render(
+    const { container } = render(
       <VideoList
+        activePlaybackQueueId="favorite-streamers"
         hasNextPage={false}
         isError={false}
         isFetchingNextPage={false}
@@ -72,6 +73,23 @@ describe('VideoList', () => {
       />,
     );
 
-    expect(screen.getByText('재생 중')).toBeInTheDocument();
+    expect(container.querySelector('.video-card')?.getAttribute('data-active')).toBe('true');
+  });
+
+  it('shows both price and view count when price data exists', () => {
+    render(
+      <VideoList
+        hasNextPage={false}
+        isError={false}
+        isFetchingNextPage={false}
+        isLoading={false}
+        marketPriceByVideoId={{ 'video-1': 12345 }}
+        onLoadMore={vi.fn()}
+        onSelectVideo={vi.fn()}
+        section={baseSection}
+      />,
+    );
+
+    expect(screen.getByText('가격 12,345P · 조회수 1.5천')).toBeInTheDocument();
   });
 });
