@@ -95,7 +95,14 @@ import '../../styles/app.css';
 
 const COLLAPSED_HOME_SECTIONS_STORAGE_KEY = 'youtube-atlas-collapsed-home-sections';
 const RANKING_GAME_SECTION_ID = 'ranking-game';
-const FULL_CHART_PREFETCH_SORT_MODES = new Set<ChartSortMode>(['popular-asc', 'price-asc', 'views-asc', 'rank-down']);
+const FULL_CHART_PREFETCH_SORT_MODES = new Set<ChartSortMode>([
+  'popular-asc',
+  'price-asc',
+  'views-desc',
+  'views-asc',
+  'rank-up',
+  'rank-down',
+]);
 const MAX_CHART_ITEM_COUNT = 200;
 const MAX_SORT_PREFETCH_PAGE_COUNT = 10;
 const CHART_SORT_OPTIONS: Array<{ id: ChartSortMode; label: string }> = [
