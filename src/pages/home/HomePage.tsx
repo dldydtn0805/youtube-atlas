@@ -2098,7 +2098,6 @@ function HomePage() {
       trendSignalsByVideoId={chartTrendSignalsByVideoId}
     />
   );
-  const portfolioContent = renderPortfolioContent();
   const isRankHistoryModalOpen = Boolean(selectedRankHistoryPosition || selectedVideoRankHistoryVideoId);
   const relatedPositionRankHistories = useMemo(
     () =>
@@ -2278,7 +2277,7 @@ function HomePage() {
             selectedVideoTitle: resolvedSelectedVideo?.snippet.title,
             stageActionContent: gameActionContent,
             stageMetadataContent,
-            supplementalContent: isMobileLayout ? undefined : portfolioContent,
+            supplementalContent: undefined,
             toggleFavoriteStreamerPending: toggleFavoriteStreamerMutation.isPending,
           }}
           stickySelectedVideoLabel="Now Playing"
