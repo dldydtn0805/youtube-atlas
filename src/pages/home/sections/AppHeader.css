@@ -163,6 +163,51 @@
   outline-offset: 2px;
 }
 
+.app-shell__auth-summary-item--game {
+  background:
+    linear-gradient(180deg, rgba(255, 248, 237, 0.96), rgba(255, 241, 220, 0.92)),
+    rgba(255, 244, 230, 0.94);
+  border-color: rgba(194, 104, 50, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 10px 22px rgba(194, 104, 50, 0.1);
+}
+
+.app-shell__auth-summary-item--game .app-shell__auth-summary-label {
+  color: #9a4f1d;
+}
+
+.app-shell__auth-summary-item--game:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 252, 245, 0.98), rgba(255, 239, 214, 0.94)),
+    rgba(255, 247, 235, 0.96);
+  border-color: rgba(194, 104, 50, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 14px 24px rgba(194, 104, 50, 0.14);
+}
+
+:root[data-theme='dark'] .app-shell__auth-summary-item--game {
+  background:
+    linear-gradient(180deg, rgba(78, 36, 16, 0.92), rgba(45, 20, 8, 0.96)),
+    rgba(56, 24, 10, 0.94);
+  border-color: rgba(242, 166, 109, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 14px 28px rgba(0, 0, 0, 0.32);
+}
+
+:root[data-theme='dark'] .app-shell__auth-summary-item--game .app-shell__auth-summary-label {
+  color: #f2a66d;
+}
+
+:root[data-theme='dark'] .app-shell__auth-summary-item--game:hover {
+  background:
+    linear-gradient(180deg, rgba(94, 43, 20, 0.94), rgba(56, 25, 10, 0.98)),
+    rgba(68, 31, 13, 0.96);
+  border-color: rgba(242, 166, 109, 0.38);
+}
+
 .app-shell__auth-summary-label {
   color: var(--text-muted);
   font-size: 0.58rem;

@@ -28,9 +28,9 @@ export default function GamePanelModal({ children, isOpen, onClose }: GamePanelM
       >
         <div className="app-shell__modal-header">
           <div className="app-shell__section-heading">
-            <p className="app-shell__section-eyebrow">Ranking Game</p>
+            <p className="app-shell__section-eyebrow">My Game</p>
             <h2 className="app-shell__section-title" id="game-panel-modal-title">
-              게임
+              내 게임
             </h2>
           </div>
           <button aria-label="게임 모달 닫기" className="app-shell__modal-close" onClick={onClose} type="button">
