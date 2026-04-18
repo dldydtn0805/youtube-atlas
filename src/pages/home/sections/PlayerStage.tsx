@@ -195,13 +195,13 @@ export function PlayerStageHeader({
                   <span className="app-shell__player-mobile-summary-value">{tierSummary}</span>
                 </button>
                 <button
-                  aria-label="게임 패널 열기"
-                  className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button"
+                  aria-label="내 게임 열기"
+                  className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button app-shell__player-mobile-summary-item--game"
+                  data-tier-code={currentTierCode ?? undefined}
                   onClick={onOpenGameModal}
                   type="button"
                 >
-                  <span className="app-shell__player-mobile-summary-label">게임</span>
-                  <span className="app-shell__player-mobile-summary-value">열기</span>
+                  <span className="app-shell__player-mobile-summary-label">내 게임</span>
                 </button>
               </div>
             </div>

@@ -107,6 +107,7 @@ function AppHeader({
               <button
                 aria-label="내 게임 열기"
                 className="app-shell__auth-summary-item app-shell__auth-summary-item--button app-shell__auth-summary-item--game"
+                data-tier-code={currentTierCode ?? undefined}
                 onClick={onOpenGameModal}
                 type="button"
               >
