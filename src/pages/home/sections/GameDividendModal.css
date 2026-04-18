@@ -34,6 +34,16 @@
   gap: 12px;
   max-width: 100%;
   min-width: 0;
+  width: 100%;
+}
+
+.app-shell__modal--dividend .app-shell__modal-field--tier .app-shell__game-tier-card-frame {
+  width: 100%;
+}
+
+.app-shell__modal--dividend .app-shell__modal-field--tier .app-shell__game-tier-card {
+  --game-tier-card-max-width: min(100%, 700px);
+  justify-self: stretch;
 }
 
 .app-shell__modal--dividend .app-shell__game-dividend-metric {
@@ -379,6 +389,13 @@
 
   :root[data-mobile-layout='true'] .app-shell__modal--dividend .app-shell__modal-field {
     min-width: 0;
+  }
+
+  :root[data-mobile-layout='true']
+    .app-shell__modal--dividend
+    .app-shell__modal-field--tier
+    .app-shell__game-tier-card {
+    --game-tier-card-max-width: 100%;
   }
 
   :root[data-mobile-layout='true'] .app-shell__game-dividend-rate-examples {

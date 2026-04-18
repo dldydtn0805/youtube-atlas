@@ -19,7 +19,7 @@ import {
   RankingGamePositionsTab,
 } from './RankingGamePanel';
 
-type GameTab = 'positions' | 'history' | 'leaderboard';
+type GameTab = 'positions' | 'history' | 'leaderboard' | 'guide';
 
 interface GamePanelSectionProps {
   activeGameTab: GameTab;
@@ -209,12 +209,42 @@ export default function GamePanelSection({
     />
   );
 
+  const guideContent = (
+    <div className="app-shell__game-guide" aria-label="랭킹 게임 설명">
+      <ol className="app-shell__game-guide-list">
+        <li className="app-shell__game-guide-item">
+          <strong className="app-shell__game-guide-title">사고 팔아 포인트 벌기</strong>
+          <p className="app-shell__game-guide-copy">
+            홈에서 영상 차트를 확인하고, 순위가 오를 것 같은 영상을 싸게 사보세요. 나중에 순위가 오르면
+            비싸게 팔아 차익을 포인트로 챙길 수 있어요!
+          </p>
+        </li>
+        <li className="app-shell__game-guide-item">
+          <strong className="app-shell__game-guide-title">코인 모아 티어 올리기</strong>
+          <p className="app-shell__game-guide-copy">
+            영상을 보유하고 있으면 포인트에 비례해서 코인이 자동으로 들어와요. 인기 영상일수록 코인이 더
+            많이 쌓이니, 좋은 영상을 잘 고를수록 티어가 빨리 올라가요!
+          </p>
+        </li>
+        <li className="app-shell__game-guide-item">
+          <strong className="app-shell__game-guide-title">기록과 경쟁</strong>
+          <p className="app-shell__game-guide-copy">
+            거래내역에서 내가 했던 선택들을 돌아보고, 리더보드에서 다른 유저들과 이번 시즌 순위를
+            비교해보세요. 1위를 노려봐요!
+          </p>
+        </li>
+      </ol>
+    </div>
+  );
+
   const activeGameTabContent =
     activeGameTab === 'positions'
       ? positionsContent
       : activeGameTab === 'history'
         ? historyContent
-        : leaderboardContent;
+        : activeGameTab === 'leaderboard'
+          ? leaderboardContent
+          : guideContent;
 
   return (
     <RankingGamePanelShell

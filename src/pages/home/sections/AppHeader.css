@@ -129,9 +129,10 @@
   box-shadow: var(--shadow-card);
   color: var(--text);
   display: inline-flex;
+  flex: 0 0 auto;
   gap: 4px;
   line-height: 1;
-  max-width: 96px;
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
   padding: 6px 9px;

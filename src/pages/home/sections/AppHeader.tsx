@@ -104,6 +104,15 @@ function AppHeader({
                 <span className="app-shell__auth-summary-label">티어</span>
                 <strong className="app-shell__auth-summary-value">{tierSummary}</strong>
               </button>
+              <button
+                aria-label="게임 패널 열기"
+                className="app-shell__auth-summary-item app-shell__auth-summary-item--button"
+                onClick={onOpenGameModal}
+                type="button"
+              >
+                <span className="app-shell__auth-summary-label">게임</span>
+                <strong className="app-shell__auth-summary-value">열기</strong>
+              </button>
             </div>
           ) : null}
           <button

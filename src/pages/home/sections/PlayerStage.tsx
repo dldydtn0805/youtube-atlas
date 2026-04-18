@@ -30,6 +30,7 @@ interface PlayerStageHeaderProps {
   headerSupplementalContent?: ReactNode;
   isCinematicModeActive: boolean;
   isMobileLayout: boolean;
+  onOpenGameModal?: () => void;
   onOpenRegionModal: () => void;
   onOpenTierModal?: () => void;
   onOpenWalletModal?: () => void;
@@ -56,6 +57,7 @@ interface PlayerStageProps extends PlayerViewportContentProps {
   manualPlaybackSaveButtonLabel: string;
   manualPlaybackSaveStatus?: string;
   onManualPlaybackSave: () => void;
+  onOpenGameModal?: () => void;
   onOpenRegionModal: () => void;
   onOpenTierModal?: () => void;
   onOpenWalletModal?: () => void;
@@ -134,6 +136,7 @@ export function PlayerStageHeader({
   headerSupplementalContent,
   isCinematicModeActive,
   isMobileLayout,
+  onOpenGameModal,
   onOpenRegionModal,
   onOpenTierModal,
   onOpenWalletModal,
@@ -152,47 +155,82 @@ export function PlayerStageHeader({
   return (
     <div className="app-shell__section-heading app-shell__section-heading--player">
       <div className="app-shell__section-heading-copy">
-        <p className="app-shell__section-eyebrow">Now Playing</p>
-        <div className="app-shell__player-title-row">
-          <h2 className="app-shell__section-title">
-            <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
-              {selectedCountryName}
-            </button>
-            {selectedCategoryLabel ? (
-              <>
-                {' · '}
-                <button className="app-shell__section-title-button" onClick={onOpenViewModal} type="button">
-                  {selectedCategoryLabel}
+        {isMobileLayout ? (
+          <>
+            <div className="app-shell__player-mobile-header-row">
+              <div className="app-shell__player-title-row app-shell__player-title-row--mobile">
+                <p className="app-shell__section-eyebrow">Now Playing</p>
+                <h2 className="app-shell__section-title app-shell__section-title--mobile-player">
+                  <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
+                    {selectedCountryName}
+                  </button>
+                  {selectedCategoryLabel ? (
+                    <>
+                      {' '}
+                      <button className="app-shell__section-title-button" onClick={onOpenViewModal} type="button">
+                        {selectedCategoryLabel}
+                      </button>
+                    </>
+                  ) : null}
+                </h2>
+              </div>
+              <div className="app-shell__player-mobile-summary" aria-label="내 게임 요약">
+                <button
+                  aria-label="지갑 현황 열기"
+                  className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button"
+                  onClick={onOpenWalletModal}
+                  type="button"
+                >
+                  <span className="app-shell__player-mobile-summary-label">잔액</span>
+                  <span className="app-shell__player-mobile-summary-value">{walletSummary}</span>
                 </button>
-              </>
-            ) : null}
-          </h2>
-          {isMobileLayout ? (
-            <div className="app-shell__player-mobile-summary" aria-label="내 지갑 및 티어">
-              <button
-                aria-label="지갑 현황 열기"
-                className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button"
-                onClick={onOpenWalletModal}
-                type="button"
-              >
-                <span className="app-shell__player-mobile-summary-label">잔액</span>
-                <span className="app-shell__player-mobile-summary-value">{walletSummary}</span>
-              </button>
-              <button
-                aria-label="티어 현황 열기"
-                className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button"
-                data-tier-code={currentTierCode ?? undefined}
-                onClick={onOpenTierModal}
-                type="button"
-              >
-                <span className="app-shell__player-mobile-summary-label">티어</span>
-                <span className="app-shell__player-mobile-summary-value">{tierSummary}</span>
-              </button>
+                <button
+                  aria-label="티어 현황 열기"
+                  className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button"
+                  data-tier-code={currentTierCode ?? undefined}
+                  onClick={onOpenTierModal}
+                  type="button"
+                >
+                  <span className="app-shell__player-mobile-summary-label">티어</span>
+                  <span className="app-shell__player-mobile-summary-value">{tierSummary}</span>
+                </button>
+                <button
+                  aria-label="게임 패널 열기"
+                  className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button"
+                  onClick={onOpenGameModal}
+                  type="button"
+                >
+                  <span className="app-shell__player-mobile-summary-label">게임</span>
+                  <span className="app-shell__player-mobile-summary-value">열기</span>
+                </button>
+              </div>
             </div>
-          ) : null}
-        </div>
+            {headerSupplementalContent ? (
+              <div className="app-shell__player-heading-supplemental app-shell__player-heading-supplemental--mobile">
+                {headerSupplementalContent}
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <div className="app-shell__player-title-row app-shell__player-title-row--desktop">
+            <p className="app-shell__section-eyebrow">Now Playing</p>
+            <h2 className="app-shell__section-title">
+              <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
+                {selectedCountryName}
+              </button>
+              {selectedCategoryLabel ? (
+                <>
+                  {' · '}
+                  <button className="app-shell__section-title-button" onClick={onOpenViewModal} type="button">
+                    {selectedCategoryLabel}
+                  </button>
+                </>
+              ) : null}
+            </h2>
+          </div>
+        )}
       </div>
-      {headerSupplementalContent ? (
+      {!isMobileLayout && headerSupplementalContent ? (
         <div className="app-shell__player-heading-supplemental">{headerSupplementalContent}</div>
       ) : null}
       {!isMobileLayout ? (
@@ -257,6 +295,7 @@ function PlayerStage({
   manualPlaybackSaveButtonLabel,
   manualPlaybackSaveStatus,
   onManualPlaybackSave,
+  onOpenGameModal,
   onNextVideo,
   onOpenRegionModal,
   onOpenTierModal,
@@ -321,6 +360,7 @@ function PlayerStage({
               headerSupplementalContent={headerSupplementalContent}
               isCinematicModeActive={isCinematicModeActive}
               isMobileLayout={isMobileLayout}
+              onOpenGameModal={onOpenGameModal}
               onOpenRegionModal={onOpenRegionModal}
               onOpenTierModal={onOpenTierModal}
               onOpenWalletModal={onOpenWalletModal}

@@ -1179,6 +1179,7 @@ export default function HomePlaybackSection({
             headerSupplementalContent={playerStageProps.headerSupplementalContent}
             isCinematicModeActive={playerStageProps.isCinematicModeActive}
             isMobileLayout={playerStageProps.isMobileLayout}
+            onOpenGameModal={playerStageProps.onOpenGameModal}
             onOpenRegionModal={playerStageProps.onOpenRegionModal}
             onOpenTierModal={playerStageProps.onOpenTierModal}
             onOpenWalletModal={playerStageProps.onOpenWalletModal}

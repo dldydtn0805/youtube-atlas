@@ -414,7 +414,7 @@ function HomePage() {
   const queryClient = useQueryClient();
   const { accessToken, isLoggingOut, logout, status: authStatus, user } = useAuth();
   const [selectedOpenPositionId, setSelectedOpenPositionId] = useState<number | null>(null);
-  const [activeGameTab, setActiveGameTab] = useState<'positions' | 'history' | 'leaderboard'>('positions');
+  const [activeGameTab, setActiveGameTab] = useState<'positions' | 'history' | 'leaderboard' | 'guide'>('positions');
   const [isBuyableOnlyFilterActive, setIsBuyableOnlyFilterActive] = useState(false);
   const [collapsedHomeSectionIds, setCollapsedHomeSectionIds] = useState(getInitialCollapsedHomeSectionIds);
   const [selectedLeaderboardUserId, setSelectedLeaderboardUserId] = useState<number | null>(null);
@@ -1932,7 +1932,7 @@ function HomePage() {
     },
     [handleSelectVideoWithPreview, scrollToPlayerStage, setGameActionStatus],
   );
-  const handleSelectGameTab = useCallback((tab: 'positions' | 'history' | 'leaderboard') => {
+  const handleSelectGameTab = useCallback((tab: 'positions' | 'history' | 'leaderboard' | 'guide') => {
     startTransition(() => {
       setActiveGameTab(tab);
     });
@@ -2253,6 +2253,7 @@ function HomePage() {
             manualPlaybackSaveStatus: manualPlaybackSaveStatus ?? undefined,
             onManualPlaybackSave: () => void handleManualPlaybackSave(),
             onNextVideo: handlePlayNextVideoWithPreview,
+            onOpenGameModal: () => setIsGameModalOpen(true),
             onOpenRegionModal: () => setIsRegionModalOpen(true),
             onOpenTierModal: isMobileLayout ? openCoinModal : undefined,
             onOpenWalletModal: isMobileLayout ? () => setIsWalletModalOpen(true) : undefined,
