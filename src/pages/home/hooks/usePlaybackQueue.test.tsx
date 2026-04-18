@@ -108,6 +108,81 @@ describe('usePlaybackQueue', () => {
     });
   });
 
+  it('applies the preferred initial section once when a selection key is provided', async () => {
+    const setSelectedCategoryId = vi.fn();
+    const buyableSection = createSection('buyable-market', ['video-buyable']);
+    let preferredInitialPlaybackSectionSelectionKey: string | null = null;
+
+    const { result, rerender } = renderHook(() =>
+      usePlaybackQueue({
+        extraPlaybackSections: [buyableSection],
+        favoriteStreamerVideoSection: undefined,
+        isMobileLayout: false,
+        preferredInitialPlaybackSection: buyableSection,
+        preferredInitialPlaybackSectionSelectionKey,
+        realtimeSurgingSection: undefined,
+        restoredPlaybackVideo: undefined,
+        scrollToPlayerTop: vi.fn(),
+        selectedCategoryId: '0',
+        selectedSection: createSection(getCategoryPlaybackQueueId('0'), ['video-top']),
+        setSelectedCategoryId,
+        sortedVideoCategories,
+      }),
+    );
+
+    act(() => {
+      result.current.handleSelectVideo('video-top', getCategoryPlaybackQueueId('0'));
+    });
+
+    expect(result.current.selectedVideoId).toBe('video-top');
+
+    preferredInitialPlaybackSectionSelectionKey = 'login:user-1';
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.activePlaybackQueueId).toBe('buyable-market');
+      expect(result.current.selectedVideoId).toBe('video-buyable');
+    });
+
+    act(() => {
+      result.current.handleSelectVideo('video-top', getCategoryPlaybackQueueId('0'));
+    });
+
+    rerender();
+
+    expect(result.current.selectedVideoId).toBe('video-top');
+  });
+
+  it('falls back to the first portfolio video when the keyed preferred section is empty', async () => {
+    const setSelectedCategoryId = vi.fn();
+    const buyableSection = createSection('buyable-market', []);
+    const portfolioSection = createSection(GAME_PORTFOLIO_QUEUE_ID, ['video-latest-position']);
+
+    const { result } = renderHook(() =>
+      usePlaybackQueue({
+        extraPlaybackSections: [buyableSection],
+        favoriteStreamerVideoSection: undefined,
+        gamePortfolioSection: portfolioSection,
+        isMobileLayout: false,
+        preferredInitialPlaybackFallbackSection: portfolioSection,
+        preferredInitialPlaybackSection: buyableSection,
+        preferredInitialPlaybackSectionSelectionKey: 'login:user-1',
+        realtimeSurgingSection: undefined,
+        restoredPlaybackVideo: undefined,
+        scrollToPlayerTop: vi.fn(),
+        selectedCategoryId: '0',
+        selectedSection: createSection(getCategoryPlaybackQueueId('0'), ['video-top']),
+        setSelectedCategoryId,
+        sortedVideoCategories,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.activePlaybackQueueId).toBe(GAME_PORTFOLIO_QUEUE_ID);
+      expect(result.current.selectedVideoId).toBe('video-latest-position');
+    });
+  });
+
   it('waits for the preferred initial playback section before falling back to the chart', async () => {
     const setSelectedCategoryId = vi.fn();
     let preferredInitialPlaybackSection = createSection('buyable-market', []);

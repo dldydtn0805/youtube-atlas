@@ -29,8 +29,11 @@ interface UseHomePlaybackStateOptions {
   isMobileLayout: boolean;
   logout: () => Promise<void>;
   newChartEntriesSection?: YouTubeCategorySection;
+  preferredInitialPlaybackFallbackSection?: YouTubeCategorySection;
+  preferredInitialPlaybackFallbackSectionLoading?: boolean;
   preferredInitialPlaybackSection?: YouTubeCategorySection;
   preferredInitialPlaybackSectionLoading?: boolean;
+  preferredInitialPlaybackSectionSelectionKey?: string | null;
   realtimeSurgingSection?: YouTubeCategorySection;
   scrollToPlayerTop: () => void;
   selectedCategoryId: string;
@@ -102,8 +105,11 @@ export default function useHomePlaybackState({
   isMobileLayout,
   logout,
   newChartEntriesSection,
+  preferredInitialPlaybackFallbackSection,
+  preferredInitialPlaybackFallbackSectionLoading,
   preferredInitialPlaybackSection,
   preferredInitialPlaybackSectionLoading,
+  preferredInitialPlaybackSectionSelectionKey,
   realtimeSurgingSection,
   scrollToPlayerTop,
   selectedCategoryId,
@@ -169,8 +175,11 @@ export default function useHomePlaybackState({
     historyPlaybackSection,
     isMobileLayout,
     newChartEntriesSection,
+    preferredInitialPlaybackFallbackSection,
+    preferredInitialPlaybackFallbackSectionLoading,
     preferredInitialPlaybackSection,
     preferredInitialPlaybackSectionLoading,
+    preferredInitialPlaybackSectionSelectionKey,
     realtimeSurgingSection,
     restoredPlaybackVideo,
     scrollToPlayerTop,

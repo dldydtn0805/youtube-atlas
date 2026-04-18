@@ -12,8 +12,11 @@ interface UsePlaybackQueueOptions {
   historyPlaybackSection?: YouTubeCategorySection;
   isMobileLayout: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
+  preferredInitialPlaybackFallbackSection?: YouTubeCategorySection;
+  preferredInitialPlaybackFallbackSectionLoading?: boolean;
   preferredInitialPlaybackSection?: YouTubeCategorySection;
   preferredInitialPlaybackSectionLoading?: boolean;
+  preferredInitialPlaybackSectionSelectionKey?: string | null;
   realtimeSurgingSection?: YouTubeCategorySection;
   restoredPlaybackVideo?: YouTubeVideoItem;
   scrollToPlayerTop: () => void;
@@ -31,8 +34,11 @@ function usePlaybackQueue({
   historyPlaybackSection,
   isMobileLayout,
   newChartEntriesSection,
+  preferredInitialPlaybackFallbackSection,
+  preferredInitialPlaybackFallbackSectionLoading = false,
   preferredInitialPlaybackSection,
   preferredInitialPlaybackSectionLoading = false,
+  preferredInitialPlaybackSectionSelectionKey,
   realtimeSurgingSection,
   restoredPlaybackVideo,
   scrollToPlayerTop,
@@ -51,6 +57,7 @@ function usePlaybackQueue({
   const [activePlaybackQueueId, setActivePlaybackQueueId] = useState<string>(selectedCategoryQueueId);
   const shouldScrollToPlayerRef = useRef(false);
   const shouldAutoSelectNextAvailableRef = useRef(false);
+  const handledPreferredInitialSelectionKeyRef = useRef<string | null>(null);
 
   const activePlaybackItems = getPlaybackQueueItems(activePlaybackQueueId, {
     extraSections: extraPlaybackSections,
@@ -191,6 +198,43 @@ function usePlaybackQueue({
       !shouldAutoSelectNextAvailableRef.current &&
       activePlaybackQueueId === selectedCategoryQueueId;
     const preferredInitialVideoId = preferredInitialPlaybackSection?.items[0]?.id;
+    const preferredInitialFallbackVideoId = preferredInitialPlaybackFallbackSection?.items[0]?.id;
+    const shouldApplyPreferredInitialSelection =
+      Boolean(preferredInitialPlaybackSectionSelectionKey) &&
+      handledPreferredInitialSelectionKeyRef.current !== preferredInitialPlaybackSectionSelectionKey;
+    const preferredInitialTargetSection =
+      preferredInitialVideoId && preferredInitialPlaybackSection?.categoryId
+        ? preferredInitialPlaybackSection
+        : preferredInitialFallbackVideoId && preferredInitialPlaybackFallbackSection?.categoryId
+          ? preferredInitialPlaybackFallbackSection
+          : undefined;
+    const preferredInitialTargetVideoId =
+      preferredInitialTargetSection === preferredInitialPlaybackSection
+        ? preferredInitialVideoId
+        : preferredInitialFallbackVideoId;
+
+    if (!preferredInitialPlaybackSectionSelectionKey) {
+      handledPreferredInitialSelectionKeyRef.current = null;
+    }
+
+    if (
+      shouldApplyPreferredInitialSelection &&
+      (preferredInitialPlaybackSectionLoading ||
+        (!preferredInitialVideoId && preferredInitialPlaybackFallbackSectionLoading))
+    ) {
+      return;
+    }
+
+    if (
+      shouldApplyPreferredInitialSelection &&
+      preferredInitialTargetVideoId &&
+      preferredInitialTargetSection?.categoryId
+    ) {
+      handledPreferredInitialSelectionKeyRef.current = preferredInitialPlaybackSectionSelectionKey ?? null;
+      setActivePlaybackQueueId(preferredInitialTargetSection.categoryId);
+      setSelectedVideoId(preferredInitialTargetVideoId);
+      return;
+    }
 
     if (shouldPreferInitialPlaybackSection && preferredInitialVideoId && preferredInitialPlaybackSection?.categoryId) {
       setActivePlaybackQueueId(preferredInitialPlaybackSection.categoryId);
@@ -259,8 +303,11 @@ function usePlaybackQueue({
     historyPlaybackSection,
     newChartEntriesSection,
     matchedSelectedSection,
+    preferredInitialPlaybackFallbackSection,
+    preferredInitialPlaybackFallbackSectionLoading,
     preferredInitialPlaybackSection,
     preferredInitialPlaybackSectionLoading,
+    preferredInitialPlaybackSectionSelectionKey,
     realtimeSurgingSection,
     restoredPlaybackVideo,
     selectedCategoryQueueId,

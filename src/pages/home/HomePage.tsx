@@ -610,6 +610,7 @@ function HomePage() {
   const {
     data: openGamePositions = [],
     error: openGamePositionsError,
+    isLoading: isOpenGamePositionsLoading,
   } = useMyGamePositions(accessToken, selectedRegionCode, 'OPEN', shouldLoadGame);
   const {
     data: selectedLeaderboardPositions = [],
@@ -860,7 +861,9 @@ function HomePage() {
     () => ({
       categoryId: GAME_PORTFOLIO_QUEUE_ID,
       description: '매수한 영상은 여기서 바로 다시 열고 정리할 수 있습니다.',
-      items: openGamePositions.map(mapGamePositionToVideoItem),
+      items: [...openGamePositions]
+        .sort((left, right) => new Date(right.buyCapturedAt).getTime() - new Date(left.buyCapturedAt).getTime())
+        .map(mapGamePositionToVideoItem),
       label: '내 보유 포지션',
     }),
     [openGamePositions],
@@ -1175,6 +1178,12 @@ function HomePage() {
       authStatus === 'authenticated' ? sortedBuyableMarketChartSection : undefined,
     preferredInitialPlaybackSectionLoading:
       authStatus === 'authenticated' && isBuyableMarketChartLoading,
+    preferredInitialPlaybackFallbackSection:
+      authStatus === 'authenticated' ? gamePortfolioSection : undefined,
+    preferredInitialPlaybackFallbackSectionLoading:
+      authStatus === 'authenticated' && isOpenGamePositionsLoading,
+    preferredInitialPlaybackSectionSelectionKey:
+      authStatus === 'authenticated' ? `login:${user?.id ?? accessToken ?? 'session'}` : null,
     scrollToPlayerTop: scrollToPlayerStage,
     selectedCategoryId,
     selectedPlaybackSection,
