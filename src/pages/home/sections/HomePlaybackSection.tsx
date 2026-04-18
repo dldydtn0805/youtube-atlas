@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties, type ComponentProps, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { ChartPanel, CommunityPanel } from './ContentPanels';
-import { FilterBar } from './FilterPanels';
+import CommentSection from '../../../components/CommentSection/CommentSection';
+import { ChartPanel } from './ContentPanels';
+import type { FilterBarProps } from './FilterPanels';
 import PlayerStage, { PlayerStageHeader, PlayerViewportContent } from './PlayerStage';
 import StickySelectedVideoHeaderCopy from './StickySelectedVideoHeaderCopy';
 import StickySelectedVideoControls from './StickySelectedVideoControls';
@@ -45,9 +46,12 @@ interface StickySelectedVideoControls {
 }
 
 interface HomePlaybackSectionProps {
-  chartPanelProps: ComponentProps<typeof ChartPanel>;
-  communityPanelProps: ComponentProps<typeof CommunityPanel>;
-  filterBarProps: ComponentProps<typeof FilterBar>;
+  chartPanelProps: Omit<
+    ComponentProps<typeof ChartPanel>,
+    'onOpenRegionModal' | 'onSelectView' | 'selectedViewId' | 'viewOptions'
+  >;
+  communityPanelProps: ComponentProps<typeof CommentSection>;
+  filterBarProps: FilterBarProps;
   isStickySelectedVideoPlaybackPaused?: boolean;
   onPauseStickySelectedVideo?: () => void;
   onPlayNextStickySelectedVideo?: () => void;
@@ -217,6 +221,10 @@ export default function HomePlaybackSection({
   stickySelectedVideoContent,
   stickySelectedVideoLabel = 'Now Playing',
 }: HomePlaybackSectionProps) {
+  const {
+    supplementalContent,
+    ...playerStageCoreProps
+  } = playerStageProps;
   const [isStickySelectedVideoVisible, setIsStickySelectedVideoVisible] = useState(false);
   const [isDesktopPlayerDockActive, setIsDesktopPlayerDockActive] = useState(false);
   const [isStickySelectedVideoCollapsed, setIsStickySelectedVideoCollapsed] = useState(
@@ -1112,11 +1120,14 @@ export default function HomePlaybackSection({
         </div>
       </div>
     ) : null;
-  const renderFilterBar = () => <FilterBar {...filterBarProps} />;
   const renderChartPanel = (isCinematic = false) => (
     <ChartPanel
       {...chartPanelProps}
       className={isCinematic ? getCinematicChartClassName(chartPanelProps.className) : chartPanelProps.className}
+      onOpenRegionModal={filterBarProps.onOpenRegionModal}
+      onSelectView={filterBarProps.onSelectView}
+      selectedViewId={filterBarProps.selectedViewId}
+      viewOptions={filterBarProps.viewOptions}
     />
   );
   const fullscreenElement = typeof document === 'undefined' ? null : getFullscreenElement();
@@ -1163,14 +1174,19 @@ export default function HomePlaybackSection({
         <>
           <PlayerStageHeader
             cinematicToggleLabel={playerStageProps.cinematicToggleLabel}
+            currentTierCode={playerStageProps.currentTierCode}
+            currentTierName={playerStageProps.currentTierName}
             headerSupplementalContent={playerStageProps.headerSupplementalContent}
             isCinematicModeActive={playerStageProps.isCinematicModeActive}
             isMobileLayout={playerStageProps.isMobileLayout}
             onOpenRegionModal={playerStageProps.onOpenRegionModal}
+            onOpenTierModal={playerStageProps.onOpenTierModal}
+            onOpenWalletModal={playerStageProps.onOpenWalletModal}
             onOpenViewModal={playerStageProps.onOpenViewModal}
             onToggleCinematicMode={playerStageProps.onToggleCinematicMode}
             selectedCategoryLabel={playerStageProps.selectedCategoryLabel}
             selectedCountryName={playerStageProps.selectedCountryName}
+            walletBalancePoints={playerStageProps.walletBalancePoints}
           />
           <div
             className="app-shell__mobile-player-stage-sticky-shell"
@@ -1197,18 +1213,20 @@ export default function HomePlaybackSection({
         </>
       ) : null}
       <PlayerStage
-        {...playerStageProps}
+        {...playerStageCoreProps}
         chartContent={renderChartPanel(true)}
-        filterContent={renderFilterBar()}
+        communityContent={<CommentSection hideHeader {...communityPanelProps} />}
+        currentTierCode={playerStageCoreProps.currentTierCode}
+        filterContent={undefined}
+        supplementalContent={undefined}
         isVideoPlayerDocked={Boolean(videoPlayerDockStyle)}
         renderHeaderInline={!shouldRenderDetachedMobileViewport}
         playerViewportStyle={playerViewportStyle}
         renderViewportInline={!shouldRenderDetachedMobileViewport}
         videoPlayerDockStyle={videoPlayerDockStyle}
       />
-      <CommunityPanel {...communityPanelProps} />
-      {!playerStageProps.isCinematicModeActive ? renderFilterBar() : null}
       {!playerStageProps.isCinematicModeActive ? renderChartPanel() : null}
+      {supplementalContent}
     </>
   );
 }

@@ -112,6 +112,12 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
 
         <div className="app-shell__modal-body">
           <div className="app-shell__modal-fields">
+            {tierProgress ? (
+              <section className="app-shell__modal-field app-shell__modal-field--tier">
+                <GameCoinTierSummary progress={tierProgress} surfaceVariant="season-coin" title="티어 진행 현황" />
+              </section>
+            ) : null}
+
             {overview ? (
               <section className="app-shell__modal-field">
                 <div className="app-shell__section-heading">
@@ -155,12 +161,6 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
                     <li>순위가 높을수록 채굴률이 더 가파르게 올라가며, 특히 상위권일수록 보상이 크게 커집니다.</li>
                   </ul>
                 </div>
-              </section>
-            ) : null}
-
-            {tierProgress ? (
-              <section className="app-shell__modal-field app-shell__modal-field--tier">
-                <GameCoinTierSummary progress={tierProgress} surfaceVariant="season-coin" title="티어 진행 현황" />
               </section>
             ) : null}
 

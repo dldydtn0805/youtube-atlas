@@ -5,11 +5,10 @@ import HomePlaybackSection, { MOBILE_PLAYER_STAGE_STICKY_ENABLED_STORAGE_KEY } f
 
 vi.mock('./ContentPanels', () => ({
   ChartPanel: () => <div data-testid="chart-panel" />,
-  CommunityPanel: () => <div data-testid="community-panel" />,
 }));
 
-vi.mock('./FilterPanels', () => ({
-  FilterBar: () => <div data-testid="filter-bar" />,
+vi.mock('../../../components/CommentSection/CommentSection', () => ({
+  default: () => <div data-testid="comment-section" />,
 }));
 
 vi.mock('./PlayerStage', () => ({
@@ -20,12 +19,14 @@ vi.mock('./PlayerStage', () => ({
     playerViewportRef: React.RefObject<HTMLDivElement | null>;
   }) => <div ref={playerViewportRef} data-testid="player-viewport" />,
   default: ({
+    communityContent,
     isVideoPlayerDocked,
     playerSectionRef,
     renderViewportInline,
     playerViewportRef,
     topContent,
   }: {
+    communityContent?: React.ReactNode;
     isVideoPlayerDocked?: boolean;
     playerSectionRef: React.RefObject<HTMLElement | null>;
     renderViewportInline?: boolean;
@@ -37,6 +38,7 @@ vi.mock('./PlayerStage', () => ({
       {topContent}
       <section ref={playerSectionRef} data-testid="player-section" />
       {renderViewportInline !== false ? <div ref={playerViewportRef} data-testid="player-viewport" /> : null}
+      {communityContent}
     </div>
   ),
 }));
@@ -153,7 +155,7 @@ describe('HomePlaybackSection', () => {
     expect(screen.getByText('Now Playing')).toBeInTheDocument();
   });
 
-  it('renders the community panel between the player stage and filter bar', () => {
+  it('renders the embedded comment section before the chart panel', () => {
     const { getByTestId } = render(
       <HomePlaybackSection
         chartPanelProps={{} as never}
@@ -171,11 +173,65 @@ describe('HomePlaybackSection', () => {
     );
 
     const playerStage = getByTestId('player-stage');
-    const communityPanel = getByTestId('community-panel');
-    const filterBar = getByTestId('filter-bar');
+    const commentSection = getByTestId('comment-section');
+    const chartPanel = getByTestId('chart-panel');
 
-    expect(playerStage.compareDocumentPosition(communityPanel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(communityPanel.compareDocumentPosition(filterBar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(playerStage.compareDocumentPosition(commentSection) & Node.DOCUMENT_POSITION_CONTAINED_BY).toBeTruthy();
+    expect(commentSection.compareDocumentPosition(chartPanel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('renders the chart panel before supplemental content on mobile', () => {
+    const { getByTestId, getByText } = render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={
+          {
+            isCinematicModeActive: false,
+            isMobileLayout: true,
+            playerSectionRef: createRef<HTMLElement>(),
+            playerStageRef: createRef<HTMLDivElement>(),
+            playerViewportRef: createRef<HTMLDivElement>(),
+            supplementalContent: <div data-testid="supplemental-content">game panel</div>,
+          } as never
+        }
+      />,
+    );
+
+    const commentSection = getByTestId('comment-section');
+    const chartPanel = getByTestId('chart-panel');
+    const supplementalContent = getByText('game panel');
+
+    expect(commentSection.compareDocumentPosition(chartPanel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(chartPanel.compareDocumentPosition(supplementalContent) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('renders the chart panel before supplemental content on desktop', () => {
+    const { getByTestId, getByText } = render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={
+          {
+            isCinematicModeActive: false,
+            isMobileLayout: false,
+            playerSectionRef: createRef<HTMLElement>(),
+            playerStageRef: createRef<HTMLDivElement>(),
+            playerViewportRef: createRef<HTMLDivElement>(),
+            supplementalContent: <div data-testid="supplemental-content">game panel desktop</div>,
+          } as never
+        }
+      />,
+    );
+
+    const commentSection = getByTestId('comment-section');
+    const chartPanel = getByTestId('chart-panel');
+    const supplementalContent = getByText('game panel desktop');
+
+    expect(commentSection.compareDocumentPosition(chartPanel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(chartPanel.compareDocumentPosition(supplementalContent) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('can collapse and expand the sticky selected video panel', async () => {

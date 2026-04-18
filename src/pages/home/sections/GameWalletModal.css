@@ -1,0 +1,23 @@
+.app-shell__modal--wallet {
+  max-width: 560px;
+}
+
+.app-shell__modal-body--wallet {
+  padding-bottom: 0;
+}
+
+.app-shell__modal--wallet .app-shell__game-wallet {
+  height: auto;
+}
+
+@media (max-width: 768px) {
+  .app-shell__modal--wallet {
+    border-radius: 28px;
+    max-height: min(760px, calc(100dvh - 24px));
+    padding: 20px;
+  }
+
+  .app-shell__modal-body--wallet {
+    padding-top: 8px;
+  }
+}

@@ -1,0 +1,83 @@
+.app-shell__modal--game-panel {
+  max-width: 820px;
+}
+
+.app-shell__modal-body--game-panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.app-shell__modal-body--game-panel > .app-shell__game-panel {
+  flex: 1 1 auto;
+  margin-top: 0;
+  min-height: 0;
+}
+
+.app-shell__modal-body--game-panel .app-shell__game-panel-header {
+  display: none;
+}
+
+.app-shell__modal-body--game-panel .app-shell__game-panel-overview {
+  display: none;
+}
+
+.app-shell__modal-body--game-panel .app-shell__game-tab-panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.app-shell__modal-body--game-panel .app-shell__game-positions,
+.app-shell__modal-body--game-panel .app-shell__game-history {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.app-shell__modal-body--game-panel .app-shell__game-history {
+  max-height: none;
+}
+
+@media (max-width: 768px) {
+  .app-shell__modal-backdrop--game-panel {
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .app-shell__modal--game-panel {
+    border-radius: 28px;
+    max-height: calc(100dvh - 24px);
+    padding: 18px;
+  }
+
+  .app-shell__modal-body--game-panel {
+    padding-top: 8px;
+  }
+
+  :root[data-mobile-layout='true'] .app-shell__modal-body--game-panel .app-shell__game-positions,
+  :root[data-mobile-layout='true'] .app-shell__modal-body--game-panel .app-shell__game-history {
+    display: grid;
+    gap: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-x: auto;
+    overscroll-behavior-y: contain;
+    padding-bottom: 0;
+    scroll-padding-inline: 0;
+    scroll-snap-type: none;
+  }
+
+  :root[data-mobile-layout='true'] .app-shell__modal-body--game-panel .app-shell__game-positions .app-shell__game-position,
+  :root[data-mobile-layout='true'] .app-shell__modal-body--game-panel .app-shell__game-history .app-shell__game-history-item {
+    flex: initial;
+    scroll-snap-align: unset;
+  }
+}

@@ -1,15 +1,22 @@
 import GoogleLoginButton from '../../../components/GoogleLoginButton/GoogleLoginButton';
 import type { AuthStatus, AuthUser } from '../../../features/auth/types';
+import { formatPoints } from '../gameHelpers';
 import './AppHeader.css';
 
 interface AppHeaderProps {
   authStatus: AuthStatus;
+  currentTierCode?: string | null;
+  currentTierName?: string | null;
   isDarkMode: boolean;
   isLoggingOut: boolean;
   onLogout: () => void;
+  onOpenGameModal?: () => void;
+  onOpenTierModal?: () => void;
+  onOpenWalletModal?: () => void;
   onToggleThemeMode: () => void;
   themeToggleLabel: string;
   user?: AuthUser | null;
+  walletBalancePoints?: number | null;
 }
 
 function ThemeToggleIcon({ isDarkMode }: { isDarkMode: boolean }) {
@@ -49,20 +56,56 @@ function ThemeToggleIcon({ isDarkMode }: { isDarkMode: boolean }) {
 
 function AppHeader({
   authStatus,
+  currentTierCode,
+  currentTierName,
   isDarkMode,
   isLoggingOut,
   onLogout,
+  onOpenGameModal,
+  onOpenTierModal,
+  onOpenWalletModal,
   onToggleThemeMode,
   themeToggleLabel,
   user,
+  walletBalancePoints,
 }: AppHeaderProps) {
   const userIdentityLabel = user?.displayName || user?.email || 'Google 계정';
+  const walletSummary =
+    typeof walletBalancePoints === 'number' && Number.isFinite(walletBalancePoints)
+      ? formatPoints(walletBalancePoints)
+      : '집계 중';
+  const tierSummary = currentTierName?.trim() || '미정';
+  const canOpenGameModalFromProfile = typeof onOpenGameModal === 'function';
+  const profileButtonLabel = `${userIdentityLabel} 프로필로 게임 내역 열기`;
 
   return (
     <header className="app-shell__header">
       <div className="app-shell__header-top">
         <h1 className="app-shell__title">YouTube Atlas</h1>
         <div className="app-shell__header-actions">
+          {authStatus === 'authenticated' && user ? (
+            <div className="app-shell__auth-summary" aria-label="내 지갑 및 티어">
+              <button
+                aria-label="지갑 현황 열기"
+                className="app-shell__auth-summary-item app-shell__auth-summary-item--button"
+                onClick={onOpenWalletModal}
+                type="button"
+              >
+                <span className="app-shell__auth-summary-label">잔액</span>
+                <strong className="app-shell__auth-summary-value">{walletSummary}</strong>
+              </button>
+              <button
+                aria-label="티어 현황 열기"
+                className="app-shell__auth-summary-item app-shell__auth-summary-item--button"
+                data-tier-code={currentTierCode ?? undefined}
+                onClick={onOpenTierModal}
+                type="button"
+              >
+                <span className="app-shell__auth-summary-label">티어</span>
+                <strong className="app-shell__auth-summary-value">{tierSummary}</strong>
+              </button>
+            </div>
+          ) : null}
           <button
             aria-label={themeToggleLabel}
             aria-pressed={isDarkMode}
@@ -75,19 +118,46 @@ function AppHeader({
           </button>
           {authStatus === 'authenticated' && user ? (
             <div className="app-shell__auth-session">
-              {user.pictureUrl ? (
-                <img
-                  alt={`${userIdentityLabel} 프로필`}
-                  className="app-shell__auth-avatar"
-                  src={user.pictureUrl}
-                />
-              ) : (
-                <span
-                  aria-hidden="true"
-                  className="app-shell__auth-avatar app-shell__auth-avatar--fallback"
+              {canOpenGameModalFromProfile ? (
+                <button
+                  aria-label={profileButtonLabel}
+                  className="app-shell__auth-avatar-button"
+                  onClick={onOpenGameModal}
+                  title={profileButtonLabel}
+                  type="button"
                 >
-                  {userIdentityLabel.slice(0, 1).toUpperCase()}
-                </span>
+                  {user.pictureUrl ? (
+                    <img
+                      alt={`${userIdentityLabel} 프로필`}
+                      className="app-shell__auth-avatar"
+                      src={user.pictureUrl}
+                    />
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="app-shell__auth-avatar app-shell__auth-avatar--fallback"
+                    >
+                      {userIdentityLabel.slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                </button>
+              ) : (
+                <>
+                  {user.pictureUrl ? (
+                    <img
+                      alt={`${userIdentityLabel} 프로필`}
+                      className="app-shell__auth-avatar"
+                      src={user.pictureUrl}
+                    />
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="app-shell__auth-avatar app-shell__auth-avatar--fallback"
+                    >
+                      {userIdentityLabel.slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                </>
               )}
               <button
                 className="app-shell__auth-logout"

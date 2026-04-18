@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode, RefObject } from 'react';
 import VideoPlayer, { type VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
 import type { AuthStatus } from '../../../features/auth/types';
+import { formatPoints } from '../gameHelpers';
 import type { PendingPlaybackRestore } from '../utils';
 import './PlayerStage.css';
 
@@ -24,20 +25,28 @@ interface PlayerViewportContentProps {
 
 interface PlayerStageHeaderProps {
   cinematicToggleLabel: string;
+  currentTierCode?: string | null;
+  currentTierName?: string | null;
   headerSupplementalContent?: ReactNode;
   isCinematicModeActive: boolean;
   isMobileLayout: boolean;
   onOpenRegionModal: () => void;
+  onOpenTierModal?: () => void;
+  onOpenWalletModal?: () => void;
   onOpenViewModal?: () => void;
   onToggleCinematicMode: () => void;
   selectedCategoryLabel?: string;
   selectedCountryName: string;
+  walletBalancePoints?: number | null;
 }
 
 interface PlayerStageProps extends PlayerViewportContentProps {
   authStatus: AuthStatus;
   chartContent?: ReactNode;
   cinematicToggleLabel: string;
+  communityContent?: ReactNode;
+  currentTierCode?: string | null;
+  currentTierName?: string | null;
   favoriteToggleLabel: string;
   filterContent?: ReactNode;
   headerSupplementalContent?: ReactNode;
@@ -48,6 +57,8 @@ interface PlayerStageProps extends PlayerViewportContentProps {
   manualPlaybackSaveStatus?: string;
   onManualPlaybackSave: () => void;
   onOpenRegionModal: () => void;
+  onOpenTierModal?: () => void;
+  onOpenWalletModal?: () => void;
   onOpenViewModal?: () => void;
   onToggleCinematicMode: () => void;
   onToggleFavoriteStreamer: () => void;
@@ -57,6 +68,7 @@ interface PlayerStageProps extends PlayerViewportContentProps {
   renderViewportInline?: boolean;
   selectedCategoryLabel?: string;
   selectedCountryName: string;
+  walletBalancePoints?: number | null;
   selectedVideoChannelTitle?: string;
   selectedVideoRankLabel?: string;
   selectedVideoStatLabel?: string;
@@ -117,32 +129,68 @@ export function PlayerViewportContent({
 
 export function PlayerStageHeader({
   cinematicToggleLabel,
+  currentTierCode,
+  currentTierName,
   headerSupplementalContent,
   isCinematicModeActive,
   isMobileLayout,
   onOpenRegionModal,
+  onOpenTierModal,
+  onOpenWalletModal,
   onOpenViewModal,
   onToggleCinematicMode,
   selectedCategoryLabel,
   selectedCountryName,
+  walletBalancePoints,
 }: PlayerStageHeaderProps) {
+  const walletSummary =
+    typeof walletBalancePoints === 'number' && Number.isFinite(walletBalancePoints)
+      ? formatPoints(walletBalancePoints)
+      : '집계 중';
+  const tierSummary = currentTierName?.trim() || '미정';
+
   return (
     <div className="app-shell__section-heading app-shell__section-heading--player">
       <div className="app-shell__section-heading-copy">
         <p className="app-shell__section-eyebrow">Now Playing</p>
-        <h2 className="app-shell__section-title">
-          <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
-            {selectedCountryName}
-          </button>
-          {selectedCategoryLabel ? (
-            <>
-              {' · '}
-              <button className="app-shell__section-title-button" onClick={onOpenViewModal} type="button">
-                {selectedCategoryLabel}
+        <div className="app-shell__player-title-row">
+          <h2 className="app-shell__section-title">
+            <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
+              {selectedCountryName}
+            </button>
+            {selectedCategoryLabel ? (
+              <>
+                {' · '}
+                <button className="app-shell__section-title-button" onClick={onOpenViewModal} type="button">
+                  {selectedCategoryLabel}
+                </button>
+              </>
+            ) : null}
+          </h2>
+          {isMobileLayout ? (
+            <div className="app-shell__player-mobile-summary" aria-label="내 지갑 및 티어">
+              <button
+                aria-label="지갑 현황 열기"
+                className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button"
+                onClick={onOpenWalletModal}
+                type="button"
+              >
+                <span className="app-shell__player-mobile-summary-label">잔액</span>
+                <span className="app-shell__player-mobile-summary-value">{walletSummary}</span>
               </button>
-            </>
+              <button
+                aria-label="티어 현황 열기"
+                className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button"
+                data-tier-code={currentTierCode ?? undefined}
+                onClick={onOpenTierModal}
+                type="button"
+              >
+                <span className="app-shell__player-mobile-summary-label">티어</span>
+                <span className="app-shell__player-mobile-summary-value">{tierSummary}</span>
+              </button>
+            </div>
           ) : null}
-        </h2>
+        </div>
       </div>
       {headerSupplementalContent ? (
         <div className="app-shell__player-heading-supplemental">{headerSupplementalContent}</div>
@@ -194,6 +242,9 @@ function PlayerStage({
   canNavigateVideos,
   chartContent,
   cinematicToggleLabel,
+  communityContent,
+  currentTierCode,
+  currentTierName,
   favoriteToggleLabel,
   filterContent,
   headerSupplementalContent,
@@ -208,6 +259,8 @@ function PlayerStage({
   onManualPlaybackSave,
   onNextVideo,
   onOpenRegionModal,
+  onOpenTierModal,
+  onOpenWalletModal,
   onOpenViewModal,
   onPreviousVideo,
   onPlaybackRestoreApplied,
@@ -224,6 +277,7 @@ function PlayerStage({
   renderViewportInline = true,
   selectedCategoryLabel,
   selectedCountryName,
+  walletBalancePoints,
   selectedVideoChannelTitle,
   selectedVideoId,
   selectedVideoRankLabel,
@@ -262,14 +316,19 @@ function PlayerStage({
           {renderHeaderInline ? (
             <PlayerStageHeader
               cinematicToggleLabel={cinematicToggleLabel}
+              currentTierCode={currentTierCode}
+              currentTierName={currentTierName}
               headerSupplementalContent={headerSupplementalContent}
               isCinematicModeActive={isCinematicModeActive}
               isMobileLayout={isMobileLayout}
               onOpenRegionModal={onOpenRegionModal}
+              onOpenTierModal={onOpenTierModal}
+              onOpenWalletModal={onOpenWalletModal}
               onOpenViewModal={onOpenViewModal}
               onToggleCinematicMode={onToggleCinematicMode}
               selectedCategoryLabel={selectedCategoryLabel}
               selectedCountryName={selectedCountryName}
+              walletBalancePoints={walletBalancePoints}
             />
           ) : null}
           {renderViewportInline ? (
@@ -383,6 +442,7 @@ function PlayerStage({
               </div>
             </div>
           ) : null}
+          {communityContent}
           {supplementalContent}
         </section>
         {isCinematicModeActive ? filterContent : null}

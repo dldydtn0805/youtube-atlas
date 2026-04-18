@@ -6,6 +6,7 @@ import type { FavoriteStreamer } from '../../../features/favorites/types';
 import type { GameMarketVideo } from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features/youtube/types';
+import { QuickViewButtons, type ViewOption } from './FilterPanels';
 import type { ChartSortMode } from '../types';
 import './ContentPanels.css';
 
@@ -33,6 +34,8 @@ interface ChartPanelProps {
   mainSectionCollapseKey?: string;
   onChangeChartSortMode: (sortMode: ChartSortMode) => void;
   onLoadMore: () => void;
+  onOpenRegionModal: () => void;
+  onSelectView: (viewId: string, triggerElement?: HTMLButtonElement) => void;
   onToggleFeaturedSectionCollapse?: (sectionId: string) => void;
   onSelectVideo: (
     videoId: string,
@@ -44,8 +47,10 @@ interface ChartPanelProps {
   sectionEmptyMessage?: string;
   selectedCategoryLabel?: string;
   selectedCountryName: string;
+  selectedViewId: string;
   selectedVideoId?: string;
   trendSignalsByVideoId: Record<string, VideoTrendSignal>;
+  viewOptions: ViewOption[];
 }
 
 interface FavoriteVideosPanelProps {
@@ -101,6 +106,8 @@ export function ChartPanel({
   mainSectionCollapseKey,
   onChangeChartSortMode,
   onLoadMore,
+  onOpenRegionModal,
+  onSelectView,
   onToggleFeaturedSectionCollapse,
   onSelectVideo,
   primarySectionEyebrow,
@@ -108,8 +115,10 @@ export function ChartPanel({
   sectionEmptyMessage,
   selectedCategoryLabel,
   selectedCountryName,
+  selectedViewId,
   selectedVideoId,
   trendSignalsByVideoId,
+  viewOptions,
 }: ChartPanelProps) {
   const panelClassName = className
     ? `app-shell__panel app-shell__panel--chart ${className}`
@@ -117,6 +126,23 @@ export function ChartPanel({
 
   return (
     <section className={panelClassName}>
+      <div className="app-shell__chart-explore">
+        <div className="app-shell__chart-explore-copy">
+          <p className="app-shell__section-eyebrow">Explore</p>
+          <h3 className="app-shell__chart-explore-title">
+            <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
+              {selectedCountryName}
+            </button>{' '}
+            탐색 필터
+          </h3>
+          <p className="app-shell__chart-explore-helper">
+            국가명을 클릭하면 다른 국가 차트로 바꿀 수 있어요.
+          </p>
+        </div>
+        <div className="app-shell__quick-category-group" aria-label="탐색 필터 선택">
+          <QuickViewButtons onSelectView={onSelectView} options={viewOptions} selectedViewId={selectedViewId} />
+        </div>
+      </div>
       <div className="app-shell__section-heading app-shell__section-heading--chart">
         <div className="app-shell__section-heading-copy">
           <p className="app-shell__section-eyebrow">Program Queue</p>

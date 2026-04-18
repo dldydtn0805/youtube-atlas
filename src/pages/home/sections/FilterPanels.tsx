@@ -3,7 +3,7 @@ import SearchBar, { type SearchBarOption } from '../../../components/SearchBar/S
 import { getFullscreenElement } from '../utils';
 import './FilterPanels.css';
 
-interface ViewOption {
+export interface ViewOption {
   id: string;
   label: string;
   disabled?: boolean;
@@ -15,7 +15,7 @@ interface QuickViewButtonsProps {
   selectedViewId: string;
 }
 
-interface FilterBarProps {
+export interface FilterBarProps {
   onOpenRegionModal: () => void;
   onSelectView: (viewId: string, triggerElement?: HTMLButtonElement) => void;
   selectedCountryName: string;
@@ -155,7 +155,7 @@ export function ChartViewModal({
   );
 }
 
-function QuickViewButtons({ options, onSelectView, selectedViewId }: QuickViewButtonsProps) {
+export function QuickViewButtons({ options, onSelectView, selectedViewId }: QuickViewButtonsProps) {
   return (
     <>
       {options.map((option) => (

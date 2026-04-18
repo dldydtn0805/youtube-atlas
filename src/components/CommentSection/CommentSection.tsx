@@ -16,6 +16,7 @@ import type { ChatMessage } from '../../features/comments/types';
 import './CommentSection.css';
 
 interface CommentSectionProps {
+  hideHeader?: boolean;
   videoId?: string;
   videoTitle?: string;
 }
@@ -60,7 +61,7 @@ function formatCooldownFeedback(seconds: number) {
   return `채팅 흐름을 위해 ${seconds}초 후에 다시 보낼 수 있어요.`;
 }
 
-function CommentSection({ videoId, videoTitle }: CommentSectionProps) {
+function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSectionProps) {
   const { logout, status, user } = useAuth();
   const [author, setAuthor] = useState('');
   const [content, setContent] = useState('');
@@ -407,12 +408,17 @@ function CommentSection({ videoId, videoTitle }: CommentSectionProps) {
   );
 
   return (
-    <section className="comment-section" aria-label="실시간 익명 채팅">
-      <header className="comment-section__header">
-        <div className="comment-section__room">
-          <h3 className="comment-section__title">{videoTitle ?? '현재 영상 채팅방'}</h3>
-        </div>
-      </header>
+    <section
+      className={`comment-section ${hideHeader ? 'comment-section--body-only' : ''}`}
+      aria-label="실시간 익명 채팅"
+    >
+      {hideHeader ? null : (
+        <header className="comment-section__header">
+          <div className="comment-section__room">
+            <h3 className="comment-section__title">{videoTitle ?? '현재 영상 채팅방'}</h3>
+          </div>
+        </header>
+      )}
 
       <div ref={commentListRef} className="comment-list" aria-live="polite">
         {commentsQuery.isLoading ? (

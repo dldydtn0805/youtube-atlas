@@ -114,6 +114,97 @@
   padding: 0;
 }
 
+.app-shell__auth-summary {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  margin-right: 2px;
+}
+
+.app-shell__auth-summary-item {
+  align-items: center;
+  background: var(--surface-interactive);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+  display: inline-flex;
+  gap: 4px;
+  line-height: 1;
+  max-width: 96px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 6px 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell__auth-summary-item--button {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    background 0.22s ease,
+    color 0.22s ease;
+}
+
+.app-shell__auth-summary-item--button:hover {
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
+.app-shell__auth-summary-item--button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand-primary, #14b8a6) 64%, white 36%);
+  outline-offset: 2px;
+}
+
+.app-shell__auth-summary-label {
+  color: var(--text-muted);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.app-shell__auth-summary-value {
+  color: var(--text);
+  font-size: 0.68rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-shell__auth-summary-item[data-tier-code='BRONZE'] .app-shell__auth-summary-value {
+  color: #c26832;
+}
+
+.app-shell__auth-summary-item[data-tier-code='SILVER'] .app-shell__auth-summary-value {
+  color: #94a3b8;
+}
+
+.app-shell__auth-summary-item[data-tier-code='GOLD'] .app-shell__auth-summary-value {
+  color: #eab308;
+}
+
+.app-shell__auth-summary-item[data-tier-code='PLATINUM'] .app-shell__auth-summary-value {
+  color: #14b8a6;
+}
+
+.app-shell__auth-summary-item[data-tier-code='DIAMOND'] .app-shell__auth-summary-value {
+  color: #60a5fa;
+}
+
+.app-shell__auth-summary-item[data-tier-code='MASTER'] .app-shell__auth-summary-value {
+  color: #a855f7;
+}
+
+.app-shell__auth-summary-item[data-tier-code='LEGEND'] .app-shell__auth-summary-value {
+  color: #f43f5e;
+}
+
 .app-shell__auth-avatar {
   border: 1px solid var(--surface-stat-border);
   border-radius: 999px;
@@ -121,6 +212,22 @@
   height: 32px;
   object-fit: cover;
   width: 32px;
+}
+
+.app-shell__auth-avatar-button {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  padding: 0;
+}
+
+.app-shell__auth-avatar-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand-primary, #14b8a6) 64%, white 36%);
+  outline-offset: 2px;
 }
 
 .app-shell__auth-avatar--fallback {
@@ -187,6 +294,19 @@
   :root[data-mobile-layout='true'] .app-shell__auth-panel,
   :root[data-mobile-layout='true'] .app-shell__auth-session {
     width: auto;
+  }
+
+  :root[data-mobile-layout='true'] .app-shell__auth-summary {
+    display: none;
+  }
+
+  :root[data-mobile-layout='true'] .app-shell__auth-summary-item--button:hover {
+    transform: none;
+  }
+
+  :root[data-mobile-layout='true'] .app-shell__auth-avatar-button {
+    min-height: 32px;
+    min-width: 32px;
   }
 
   :root[data-mobile-layout='true'] .app-shell__theme-toggle {

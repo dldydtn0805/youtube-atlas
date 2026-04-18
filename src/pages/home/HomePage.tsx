@@ -5,10 +5,13 @@ import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer
 import AppHeader from './sections/AppHeader';
 import { GameSelectedVideoPriceSummary, SelectedVideoGameActionsBundle } from './sections/GameActionContent';
 import GameCoinModal from './sections/GameDividendModal';
+import GamePanelModal from './sections/GamePanelModal';
 import { ChartViewModal, RegionFilterModal } from './sections/FilterPanels';
 import GamePanelSection from './sections/GamePanelSection';
 import GameRankHistoryModal from './sections/GameRankHistoryModal';
 import GameTradeModal from './sections/GameTradeModal';
+import GameIntroModal from './sections/GameIntroModal';
+import GameWalletModal from './sections/GameWalletModal';
 import HomePlaybackSection from './sections/HomePlaybackSection';
 import StickySelectedVideoControls from './sections/StickySelectedVideoControls';
 import TrendTicker from './sections/TrendTicker';
@@ -94,6 +97,7 @@ import { ApiRequestError, isApiConfigured } from '../../lib/api';
 import '../../styles/app.css';
 
 const COLLAPSED_HOME_SECTIONS_STORAGE_KEY = 'youtube-atlas-collapsed-home-sections';
+const GAME_INTRO_MODAL_DISMISSED_STORAGE_KEY = 'youtube-atlas-game-intro-dismissed';
 const RANKING_GAME_SECTION_ID = 'ranking-game';
 const FULL_CHART_PREFETCH_SORT_MODES = new Set<ChartSortMode>([
   'popular-asc',
@@ -241,6 +245,14 @@ function mergeRankHistories(
     latestRank: videoHistory.latestRank,
     points: [...positionHistory.points, ...trailingVideoPoints],
   };
+}
+
+function getInitialGameIntroModalOpen() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return window.localStorage.getItem(GAME_INTRO_MODAL_DISMISSED_STORAGE_KEY) !== 'true';
 }
 
 function mapMusicTrendSignalsByVideoId(
@@ -408,6 +420,9 @@ function HomePage() {
   const [selectedLeaderboardUserId, setSelectedLeaderboardUserId] = useState<number | null>(null);
   const [historyPlaybackVideo, setHistoryPlaybackVideo] = useState<YouTubeVideoItem | null>(null);
   const [historyPlaybackLoadingVideoId, setHistoryPlaybackLoadingVideoId] = useState<string | null>(null);
+  const [isGameModalOpen, setIsGameModalOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [isGameIntroModalOpen, setIsGameIntroModalOpen] = useState(getInitialGameIntroModalOpen);
   const [isRegionModalOpen, setIsRegionModalOpen] = useState(false);
   const [isChartViewModalOpen, setIsChartViewModalOpen] = useState(false);
   const [pendingRegionTopVideoSelection, setPendingRegionTopVideoSelection] = useState<string | null>(null);
@@ -2031,7 +2046,7 @@ function HomePage() {
       selectedVideoTrendBadges={selectedVideoTrendBadges}
     />
   );
-  const portfolioContent = (
+  const renderPortfolioContent = (isModal = false) => (
     <GamePanelSection
       activeGameTab={activeGameTab}
       activePlaybackQueueId={activePlaybackQueueId}
@@ -2052,7 +2067,7 @@ function HomePage() {
       hasApiConfigured={isApiConfigured}
       historyPlaybackLoadingVideoId={historyPlaybackLoadingVideoId}
       historyPlaybackSection={historyPlaybackSection}
-      isCollapsed={isRankingGameCollapsed}
+      isCollapsed={isModal ? false : isRankingGameCollapsed}
       isGameHistoryLoading={isGameHistoryLoading}
       isGameLeaderboardError={isGameLeaderboardError}
       isGameLeaderboardLoading={isGameLeaderboardLoading}
@@ -2083,6 +2098,7 @@ function HomePage() {
       trendSignalsByVideoId={chartTrendSignalsByVideoId}
     />
   );
+  const portfolioContent = renderPortfolioContent();
   const isRankHistoryModalOpen = Boolean(selectedRankHistoryPosition || selectedVideoRankHistoryVideoId);
   const relatedPositionRankHistories = useMemo(
     () =>
@@ -2108,8 +2124,11 @@ function HomePage() {
   const isSellTradeModalOpen =
     activeTradeModal === 'sell' && Boolean(selectedVideoId) && selectedVideoOpenPositionCount > 0;
   const isAnyModalOpen =
+    isGameIntroModalOpen ||
     isRankHistoryModalOpen ||
     isRegionModalOpen ||
+    isGameModalOpen ||
+    isWalletModalOpen ||
     isCoinModalOpen ||
     isBuyTradeModalOpen ||
     isSellTradeModalOpen;
@@ -2156,12 +2175,18 @@ function HomePage() {
     <div className="app-shell">
       <AppHeader
         authStatus={authStatus}
+        currentTierCode={gameCoinTierProgress?.currentTier.tierCode}
+        currentTierName={gameCoinTierProgress?.currentTier.displayName}
         isDarkMode={isDarkMode}
         isLoggingOut={isLoggingOut}
         onLogout={() => void logout()}
+        onOpenGameModal={() => setIsGameModalOpen(true)}
+        onOpenTierModal={openCoinModal}
+        onOpenWalletModal={() => setIsWalletModalOpen(true)}
         onToggleThemeMode={handleToggleThemeMode}
         themeToggleLabel={themeToggleLabel}
         user={user}
+        walletBalancePoints={currentGameSeason?.wallet.balancePoints}
       />
       <main className="app-shell__main">
         <HomePlaybackSection
@@ -2200,8 +2225,8 @@ function HomePage() {
             trendSignalsByVideoId: activeChartTrendSignalsByVideoId,
           }}
           communityPanelProps={{
-            selectedVideoId,
-            selectedVideoTitle: resolvedSelectedVideo?.snippet.title,
+            videoId: selectedVideoId,
+            videoTitle: resolvedSelectedVideo?.snippet.title,
           }}
           filterBarProps={{
             onOpenRegionModal: () => setIsRegionModalOpen(true),
@@ -2223,11 +2248,15 @@ function HomePage() {
               authStatus !== 'authenticated' || !selectedVideoId || isManualPlaybackSavePending,
             isMobileLayout,
             isSelectedChannelFavorited,
+            currentTierCode: gameCoinTierProgress?.currentTier.tierCode,
+            currentTierName: gameCoinTierProgress?.currentTier.displayName,
             manualPlaybackSaveButtonLabel: isManualPlaybackSavePending ? '저장 중...' : '저장',
             manualPlaybackSaveStatus: manualPlaybackSaveStatus ?? undefined,
             onManualPlaybackSave: () => void handleManualPlaybackSave(),
             onNextVideo: handlePlayNextVideoWithPreview,
             onOpenRegionModal: () => setIsRegionModalOpen(true),
+            onOpenTierModal: isMobileLayout ? openCoinModal : undefined,
+            onOpenWalletModal: isMobileLayout ? () => setIsWalletModalOpen(true) : undefined,
             onOpenViewModal: () => setIsChartViewModalOpen(true),
             onPlaybackRestoreApplied: handlePlaybackRestoreApplied,
             onPlaybackStateChange: handlePlaybackStateChange,
@@ -2241,6 +2270,7 @@ function HomePage() {
             playerViewportRef,
             selectedCategoryLabel: selectedChartViewOption.label,
             selectedCountryName,
+            walletBalancePoints: currentGameSeason?.wallet.balancePoints,
             selectedVideoChannelTitle: resolvedSelectedVideo?.snippet.channelTitle,
             selectedVideoId,
             selectedVideoRankLabel,
@@ -2248,7 +2278,7 @@ function HomePage() {
             selectedVideoTitle: resolvedSelectedVideo?.snippet.title,
             stageActionContent: gameActionContent,
             stageMetadataContent,
-            supplementalContent: portfolioContent,
+            supplementalContent: isMobileLayout ? undefined : portfolioContent,
             toggleFavoriteStreamerPending: toggleFavoriteStreamerMutation.isPending,
           }}
           stickySelectedVideoLabel="Now Playing"
@@ -2287,6 +2317,16 @@ function HomePage() {
           }
         />
       </main>
+      <GameIntroModal
+        isOpen={isGameIntroModalOpen}
+        onClose={(dismissForever) => {
+          setIsGameIntroModalOpen(false);
+
+          if (dismissForever && typeof window !== 'undefined') {
+            window.localStorage.setItem(GAME_INTRO_MODAL_DISMISSED_STORAGE_KEY, 'true');
+          }
+        }}
+      />
       <GameRankHistoryModal
         error={
           selectedPositionRankHistoryError instanceof Error
@@ -2321,6 +2361,21 @@ function HomePage() {
         regionOptions={regionOptions}
         selectedRegionCode={selectedRegionCode}
       />
+      <GameWalletModal
+        computedWalletTotalAssetPoints={computedWalletTotalAssetPoints}
+        currentTierCode={gameCoinTierProgress?.currentTier.tierCode}
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+        openDistinctVideoCount={openDistinctVideoCount}
+        openPositionsBuyPoints={openPositionsBuyPoints}
+        openPositionsEvaluationPoints={openPositionsEvaluationPoints}
+        openPositionsProfitPoints={openPositionsProfitPoints}
+        season={currentGameSeason}
+        walletUpdatedAt={currentGameSeasonUpdatedAt}
+      />
+      <GamePanelModal isOpen={isGameModalOpen} onClose={() => setIsGameModalOpen(false)}>
+        {renderPortfolioContent(true)}
+      </GamePanelModal>
       <ChartViewModal
         isOpen={isChartViewModalOpen}
         onClose={() => setIsChartViewModalOpen(false)}
