@@ -715,6 +715,15 @@
   justify-content: space-between;
 }
 
+.app-shell__game-tier-coin-side {
+  align-items: end;
+  display: grid;
+  flex-shrink: 0;
+  gap: 4px;
+  justify-items: end;
+  min-width: 0;
+}
+
 .app-shell__game-tier-head-copy {
   display: grid;
   gap: 4px;
@@ -844,6 +853,30 @@
   flex-shrink: 0;
   font-size: 0.8rem;
   text-align: right;
+}
+
+.app-shell__game-tier-yield {
+  align-items: center;
+  color: rgba(255, 253, 248, 0.82);
+  display: inline-flex;
+  font-size: 0.56rem;
+  font-weight: 800;
+  gap: 5px;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  max-width: 100%;
+  min-width: 0;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.46),
+    0 0 12px rgba(var(--game-tier-accent-rgb), 0.34);
+  text-transform: uppercase;
+}
+
+.app-shell__game-tier-yield-value {
+  color: rgba(255, 240, 210, 0.96);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-shell__game-tier-progress-label {

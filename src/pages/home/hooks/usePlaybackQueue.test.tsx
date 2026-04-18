@@ -81,6 +81,68 @@ describe('usePlaybackQueue', () => {
     });
   });
 
+  it('prefers the configured initial playback section when auto-selecting', async () => {
+    const setSelectedCategoryId = vi.fn();
+    const buyableSection = createSection('buyable-market', ['video-buyable']);
+
+    const { result } = renderHook(() =>
+      usePlaybackQueue({
+        autoSelectFirstVideoWhenEmpty: true,
+        extraPlaybackSections: [buyableSection],
+        favoriteStreamerVideoSection: undefined,
+        isMobileLayout: false,
+        preferredInitialPlaybackSection: buyableSection,
+        realtimeSurgingSection: undefined,
+        restoredPlaybackVideo: undefined,
+        scrollToPlayerTop: vi.fn(),
+        selectedCategoryId: '0',
+        selectedSection: createSection(getCategoryPlaybackQueueId('0'), ['video-top']),
+        setSelectedCategoryId,
+        sortedVideoCategories,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.activePlaybackQueueId).toBe('buyable-market');
+      expect(result.current.selectedVideoId).toBe('video-buyable');
+    });
+  });
+
+  it('waits for the preferred initial playback section before falling back to the chart', async () => {
+    const setSelectedCategoryId = vi.fn();
+    let preferredInitialPlaybackSection = createSection('buyable-market', []);
+    let preferredInitialPlaybackSectionLoading = true;
+
+    const { result, rerender } = renderHook(() =>
+      usePlaybackQueue({
+        autoSelectFirstVideoWhenEmpty: true,
+        extraPlaybackSections: [preferredInitialPlaybackSection],
+        favoriteStreamerVideoSection: undefined,
+        isMobileLayout: false,
+        preferredInitialPlaybackSection,
+        preferredInitialPlaybackSectionLoading,
+        realtimeSurgingSection: undefined,
+        restoredPlaybackVideo: undefined,
+        scrollToPlayerTop: vi.fn(),
+        selectedCategoryId: '0',
+        selectedSection: createSection(getCategoryPlaybackQueueId('0'), ['video-top']),
+        setSelectedCategoryId,
+        sortedVideoCategories,
+      }),
+    );
+
+    expect(result.current.selectedVideoId).toBeUndefined();
+
+    preferredInitialPlaybackSection = createSection('buyable-market', ['video-buyable']);
+    preferredInitialPlaybackSectionLoading = false;
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.activePlaybackQueueId).toBe('buyable-market');
+      expect(result.current.selectedVideoId).toBe('video-buyable');
+    });
+  });
+
   it('auto-selects the first video after a user changes category', async () => {
     const setSelectedCategoryId = vi.fn();
     let selectedCategoryId = '0';

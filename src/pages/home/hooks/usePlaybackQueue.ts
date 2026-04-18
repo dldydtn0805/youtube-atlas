@@ -12,6 +12,8 @@ interface UsePlaybackQueueOptions {
   historyPlaybackSection?: YouTubeCategorySection;
   isMobileLayout: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
+  preferredInitialPlaybackSection?: YouTubeCategorySection;
+  preferredInitialPlaybackSectionLoading?: boolean;
   realtimeSurgingSection?: YouTubeCategorySection;
   restoredPlaybackVideo?: YouTubeVideoItem;
   scrollToPlayerTop: () => void;
@@ -29,6 +31,8 @@ function usePlaybackQueue({
   historyPlaybackSection,
   isMobileLayout,
   newChartEntriesSection,
+  preferredInitialPlaybackSection,
+  preferredInitialPlaybackSectionLoading = false,
   realtimeSurgingSection,
   restoredPlaybackVideo,
   scrollToPlayerTop,
@@ -181,6 +185,23 @@ function usePlaybackQueue({
       restoredPlaybackVideo,
       selectedSection: matchedSelectedSection,
     });
+    const shouldPreferInitialPlaybackSection =
+      autoSelectFirstVideoWhenEmpty &&
+      !selectedVideoId &&
+      !shouldAutoSelectNextAvailableRef.current &&
+      activePlaybackQueueId === selectedCategoryQueueId;
+    const preferredInitialVideoId = preferredInitialPlaybackSection?.items[0]?.id;
+
+    if (shouldPreferInitialPlaybackSection && preferredInitialVideoId && preferredInitialPlaybackSection?.categoryId) {
+      setActivePlaybackQueueId(preferredInitialPlaybackSection.categoryId);
+      setSelectedVideoId(preferredInitialVideoId);
+      return;
+    }
+
+    if (shouldPreferInitialPlaybackSection && preferredInitialPlaybackSectionLoading) {
+      return;
+    }
+
     const fallbackQueueId = isWaitingForSelectedCategoryQueue
       ? undefined
       : matchedSelectedSection?.categoryId ??
@@ -238,6 +259,8 @@ function usePlaybackQueue({
     historyPlaybackSection,
     newChartEntriesSection,
     matchedSelectedSection,
+    preferredInitialPlaybackSection,
+    preferredInitialPlaybackSectionLoading,
     realtimeSurgingSection,
     restoredPlaybackVideo,
     selectedCategoryQueueId,

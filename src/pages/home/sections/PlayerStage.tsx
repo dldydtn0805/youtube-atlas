@@ -75,6 +75,7 @@ interface PlayerStageProps extends PlayerViewportContentProps {
   selectedVideoRankLabel?: string;
   selectedVideoStatLabel?: string;
   selectedVideoTitle?: string;
+  showManualPlaybackSave?: boolean;
   stageActionContent?: ReactNode;
   stageMetadataContent?: ReactNode;
   supplementalContent?: ReactNode;
@@ -322,6 +323,7 @@ function PlayerStage({
   selectedVideoRankLabel,
   selectedVideoStatLabel,
   selectedVideoTitle,
+  showManualPlaybackSave = true,
   videoPlayerDockStyle,
   isVideoPlayerDocked = false,
   stageActionContent,
@@ -435,40 +437,42 @@ function PlayerStage({
               <div className="app-shell__stage-side">
                 <div className="app-shell__stage-actions">
                   {stageActionContent}
-                  <div className="app-shell__stage-action-item">
-                    <button
-                      aria-label={manualPlaybackSaveButtonLabel}
-                      className="app-shell__stage-action-button app-shell__stage-action-button--save"
-                      disabled={isManualPlaybackSaveDisabled}
-                      onClick={onManualPlaybackSave}
-                      title={manualPlaybackSaveButtonLabel}
-                      type="button"
-                    >
-                      <span className="app-shell__stage-action-icon" aria-hidden="true">
-                        {manualPlaybackSaveButtonLabel === '저장 중...' ? (
-                          '⋯'
-                        ) : (
-                          <svg viewBox="0 0 24 24" fill="none">
-                            <path
-                              d="M7.25 4.75h9.5a1.5 1.5 0 0 1 1.5 1.5v11.5a1.5 1.5 0 0 1-1.5 1.5h-9.5a1.5 1.5 0 0 1-1.5-1.5V6.25a1.5 1.5 0 0 1 1.5-1.5Z"
-                              stroke="currentColor"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="1.7"
-                            />
-                            <path
-                              d="M9 9.25h6M9 12.25h6M9 15.25h4"
-                              stroke="currentColor"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="1.7"
-                            />
-                          </svg>
-                        )}
-                      </span>
-                    </button>
-                    <span className="app-shell__stage-action-caption">저장</span>
-                  </div>
+                  {showManualPlaybackSave ? (
+                    <div className="app-shell__stage-action-item">
+                      <button
+                        aria-label={manualPlaybackSaveButtonLabel}
+                        className="app-shell__stage-action-button app-shell__stage-action-button--save"
+                        disabled={isManualPlaybackSaveDisabled}
+                        onClick={onManualPlaybackSave}
+                        title={manualPlaybackSaveButtonLabel}
+                        type="button"
+                      >
+                        <span className="app-shell__stage-action-icon" aria-hidden="true">
+                          {manualPlaybackSaveButtonLabel === '저장 중...' ? (
+                            '⋯'
+                          ) : (
+                            <svg viewBox="0 0 24 24" fill="none">
+                              <path
+                                d="M7.25 4.75h9.5a1.5 1.5 0 0 1 1.5 1.5v11.5a1.5 1.5 0 0 1-1.5 1.5h-9.5a1.5 1.5 0 0 1-1.5-1.5V6.25a1.5 1.5 0 0 1 1.5-1.5Z"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="1.7"
+                              />
+                              <path
+                                d="M9 9.25h6M9 12.25h6M9 15.25h4"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="1.7"
+                              />
+                            </svg>
+                          )}
+                        </span>
+                      </button>
+                      <span className="app-shell__stage-action-caption">저장</span>
+                    </div>
+                  ) : null}
                 </div>
                 <p
                   aria-hidden={!manualPlaybackSaveStatus}

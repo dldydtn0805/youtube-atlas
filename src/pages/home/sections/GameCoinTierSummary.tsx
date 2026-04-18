@@ -1,9 +1,10 @@
 import { useEffect, useRef, type PointerEvent } from 'react';
 
 import type { GameCoinTierProgress } from '../../../features/game/types';
-import { formatCoins } from '../gameHelpers';
+import { formatCoins, formatFullCoins } from '../gameHelpers';
 
 interface GameCoinTierSummaryProps {
+  coinYieldPerTenMinutes?: number | null;
   progress?: GameCoinTierProgress;
   surfaceVariant?: 'default' | 'season-coin';
   title?: string;
@@ -83,6 +84,7 @@ function handleTierCardPointerEnd(event: PointerEvent<HTMLDivElement>) {
 }
 
 export default function GameCoinTierSummary({
+  coinYieldPerTenMinutes,
   progress,
   surfaceVariant = 'default',
   title = '현재 티어',
@@ -262,6 +264,11 @@ export default function GameCoinTierSummary({
     : 0;
   const tierCardNumber = getTierCardNumber(progress);
   const progressLabel = `${Math.round(progressPercent)}%`;
+  const hasCoinYieldPerTenMinutes =
+    typeof coinYieldPerTenMinutes === 'number' && Number.isFinite(coinYieldPerTenMinutes);
+  const coinYieldPerTenMinutesLabel = hasCoinYieldPerTenMinutes
+    ? `${coinYieldPerTenMinutes > 0 ? '+' : ''}${formatCoins(coinYieldPerTenMinutes)}`
+    : null;
 
   return (
     <section
@@ -314,9 +321,20 @@ export default function GameCoinTierSummary({
             <span className="app-shell__game-tier-name" title={`${progress.currentTier.displayName} 티어`}>
               {progress.currentTier.displayName}
             </span>
-            <strong className="app-shell__game-tier-balance" title={formatCoins(progress.coinBalance)}>
-              {formatCoins(progress.coinBalance)}
-            </strong>
+            <span className="app-shell__game-tier-coin-side">
+              <strong className="app-shell__game-tier-balance" title={formatCoins(progress.coinBalance)}>
+                {formatCoins(progress.coinBalance)}
+              </strong>
+              {coinYieldPerTenMinutesLabel ? (
+                <span
+                  className="app-shell__game-tier-yield"
+                  title={formatFullCoins(coinYieldPerTenMinutes as number)}
+                >
+                  <span className="app-shell__game-tier-yield-label">10분 채굴</span>
+                  <span className="app-shell__game-tier-yield-value">{coinYieldPerTenMinutesLabel}</span>
+                </span>
+              ) : null}
+            </span>
           </div>
 
           <p className="app-shell__game-tier-description">

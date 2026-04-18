@@ -600,7 +600,13 @@ export function RankingGameCoinOverview({
       aria-label="시즌 코인 미리보기"
       data-current-tier={coinTierProgress?.currentTier.tierCode}
     >
-      <GameCoinTierSummary progress={coinTierProgress} showLadder={false} surfaceVariant="season-coin" title="현재 티어 카드" />
+      <GameCoinTierSummary
+        coinYieldPerTenMinutes={overview?.myEstimatedCoinYield}
+        progress={coinTierProgress}
+        showLadder={false}
+        surfaceVariant="season-coin"
+        title="현재 티어 카드"
+      />
       <div className="app-shell__game-dividend-header">
         <div className="app-shell__game-dividend-copy">
           <p className="app-shell__game-dividend-eyebrow">Season Coin</p>

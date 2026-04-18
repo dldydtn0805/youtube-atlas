@@ -56,6 +56,16 @@
     text-align: left;
   }
 
+  :root[data-mobile-layout='true'] .app-shell__game-tier-coin-side {
+    align-items: start;
+    justify-items: start;
+  }
+
+  :root[data-mobile-layout='true'] .app-shell__game-tier-yield {
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
   :root[data-mobile-layout='true'] .app-shell__game-tier-card-frame {
     display: grid;
     width: 100%;

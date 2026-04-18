@@ -17,6 +17,8 @@ import {
 } from '../utils';
 import { formatPlaybackSaveTimestamp } from '../gameHelpers';
 
+const ENABLE_PLAYBACK_PROGRESS = false;
+
 interface UseHomePlaybackStateOptions {
   accessToken: string | null;
   authStatus: AuthStatus;
@@ -27,6 +29,8 @@ interface UseHomePlaybackStateOptions {
   isMobileLayout: boolean;
   logout: () => Promise<void>;
   newChartEntriesSection?: YouTubeCategorySection;
+  preferredInitialPlaybackSection?: YouTubeCategorySection;
+  preferredInitialPlaybackSectionLoading?: boolean;
   realtimeSurgingSection?: YouTubeCategorySection;
   scrollToPlayerTop: () => void;
   selectedCategoryId: string;
@@ -98,6 +102,8 @@ export default function useHomePlaybackState({
   isMobileLayout,
   logout,
   newChartEntriesSection,
+  preferredInitialPlaybackSection,
+  preferredInitialPlaybackSectionLoading,
   realtimeSurgingSection,
   scrollToPlayerTop,
   selectedCategoryId,
@@ -115,7 +121,7 @@ export default function useHomePlaybackState({
   const handledPlaybackRestoreSignatureRef = useRef<string | null>(null);
   const lastPersistedPlaybackSecondsRef = useRef<Record<string, number>>({});
 
-  const restoredPlaybackVideo = user?.lastPlaybackProgress
+  const restoredPlaybackVideo = ENABLE_PLAYBACK_PROGRESS && user?.lastPlaybackProgress
     ? mapPlaybackProgressToVideoItem(user.lastPlaybackProgress)
     : undefined;
   const combinedPlayableItems = useMemo(
@@ -154,13 +160,17 @@ export default function useHomePlaybackState({
     selectedVideoId,
     updateActivePlaybackQueueId,
   } = usePlaybackQueue({
-    autoSelectFirstVideoWhenEmpty: authStatus === 'anonymous',
+    autoSelectFirstVideoWhenEmpty:
+      authStatus === 'anonymous' ||
+      (authStatus === 'authenticated' && (!ENABLE_PLAYBACK_PROGRESS || !user?.lastPlaybackProgress)),
     extraPlaybackSections,
     favoriteStreamerVideoSection,
     gamePortfolioSection,
     historyPlaybackSection,
     isMobileLayout,
     newChartEntriesSection,
+    preferredInitialPlaybackSection,
+    preferredInitialPlaybackSectionLoading,
     realtimeSurgingSection,
     restoredPlaybackVideo,
     scrollToPlayerTop,
@@ -223,7 +233,7 @@ export default function useHomePlaybackState({
   }, [isManualPlaybackSavePending, manualPlaybackSaveStatus]);
 
   useEffect(() => {
-    if (authStatus !== 'authenticated' || !user?.lastPlaybackProgress) {
+    if (!ENABLE_PLAYBACK_PROGRESS || authStatus !== 'authenticated' || !user?.lastPlaybackProgress) {
       return;
     }
 
@@ -351,7 +361,7 @@ export default function useHomePlaybackState({
         force?: boolean;
       },
     ) => {
-      if (authStatus !== 'authenticated' || !accessToken) {
+      if (!ENABLE_PLAYBACK_PROGRESS || authStatus !== 'authenticated' || !accessToken) {
         return null;
       }
 
@@ -401,6 +411,11 @@ export default function useHomePlaybackState({
   );
 
   const handleManualPlaybackSave = useCallback(async () => {
+    if (!ENABLE_PLAYBACK_PROGRESS) {
+      setManualPlaybackSaveStatus('재생 위치 저장을 사용하지 않습니다.');
+      return;
+    }
+
     if (authStatus !== 'authenticated' || !selectedVideoId) {
       setManualPlaybackSaveStatus('로그인 후 저장할 수 있습니다.');
       return;

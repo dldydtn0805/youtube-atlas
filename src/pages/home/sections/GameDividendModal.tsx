@@ -115,6 +115,7 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
             {tierProgress ? (
               <section className="app-shell__modal-field app-shell__modal-field--tier">
                 <GameCoinTierSummary
+                  coinYieldPerTenMinutes={overview?.myEstimatedCoinYield}
                   progress={tierProgress}
                   showLadder={false}
                   surfaceVariant="season-coin"

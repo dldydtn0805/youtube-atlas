@@ -1171,6 +1171,10 @@ function HomePage() {
     isMobileLayout,
     logout,
     realtimeSurgingSection: sortedRealtimeSurgingSection,
+    preferredInitialPlaybackSection:
+      authStatus === 'authenticated' ? sortedBuyableMarketChartSection : undefined,
+    preferredInitialPlaybackSectionLoading:
+      authStatus === 'authenticated' && isBuyableMarketChartLoading,
     scrollToPlayerTop: scrollToPlayerStage,
     selectedCategoryId,
     selectedPlaybackSection,
@@ -2276,6 +2280,7 @@ function HomePage() {
             selectedVideoRankLabel,
             selectedVideoStatLabel,
             selectedVideoTitle: resolvedSelectedVideo?.snippet.title,
+            showManualPlaybackSave: false,
             stageActionContent: gameActionContent,
             stageMetadataContent,
             supplementalContent: undefined,
