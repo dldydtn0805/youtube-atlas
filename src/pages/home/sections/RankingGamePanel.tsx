@@ -601,7 +601,7 @@ export function RankingGameCoinOverview({
       data-current-tier={coinTierProgress?.currentTier.tierCode}
     >
       <GameCoinTierSummary
-        coinYieldPerTenMinutes={overview?.myEstimatedCoinYield}
+        coinYieldEstimate={overview?.myEstimatedCoinYield}
         progress={coinTierProgress}
         showLadder={false}
         surfaceVariant="season-coin"

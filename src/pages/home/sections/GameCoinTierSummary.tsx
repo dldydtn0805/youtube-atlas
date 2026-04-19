@@ -4,7 +4,7 @@ import type { GameCoinTierProgress } from '../../../features/game/types';
 import { formatCoins, formatFullCoins } from '../gameHelpers';
 
 interface GameCoinTierSummaryProps {
-  coinYieldPerTenMinutes?: number | null;
+  coinYieldEstimate?: number | null;
   progress?: GameCoinTierProgress;
   surfaceVariant?: 'default' | 'season-coin';
   title?: string;
@@ -84,7 +84,7 @@ function handleTierCardPointerEnd(event: PointerEvent<HTMLDivElement>) {
 }
 
 export default function GameCoinTierSummary({
-  coinYieldPerTenMinutes,
+  coinYieldEstimate,
   progress,
   surfaceVariant = 'default',
   title = '현재 티어',
@@ -264,10 +264,10 @@ export default function GameCoinTierSummary({
     : 0;
   const tierCardNumber = getTierCardNumber(progress);
   const progressLabel = `${Math.round(progressPercent)}%`;
-  const hasCoinYieldPerTenMinutes =
-    typeof coinYieldPerTenMinutes === 'number' && Number.isFinite(coinYieldPerTenMinutes);
-  const coinYieldPerTenMinutesLabel = hasCoinYieldPerTenMinutes
-    ? `${coinYieldPerTenMinutes > 0 ? '+' : ''}${formatCoins(coinYieldPerTenMinutes)}`
+  const hasCoinYieldEstimate =
+    typeof coinYieldEstimate === 'number' && Number.isFinite(coinYieldEstimate);
+  const coinYieldEstimateLabel = hasCoinYieldEstimate
+    ? `${coinYieldEstimate > 0 ? '+' : ''}${formatCoins(coinYieldEstimate)}`
     : null;
 
   return (
@@ -325,13 +325,13 @@ export default function GameCoinTierSummary({
               <strong className="app-shell__game-tier-balance" title={formatCoins(progress.coinBalance)}>
                 {formatCoins(progress.coinBalance)}
               </strong>
-              {coinYieldPerTenMinutesLabel ? (
+              {coinYieldEstimateLabel ? (
                 <span
                   className="app-shell__game-tier-yield"
-                  title={formatFullCoins(coinYieldPerTenMinutes as number)}
+                  title={formatFullCoins(coinYieldEstimate as number)}
                 >
-                  <span className="app-shell__game-tier-yield-label">10분 채굴</span>
-                  <span className="app-shell__game-tier-yield-value">{coinYieldPerTenMinutesLabel}</span>
+                  <span className="app-shell__game-tier-yield-label">예상 채굴</span>
+                  <span className="app-shell__game-tier-yield-value">{coinYieldEstimateLabel}</span>
                 </span>
               ) : null}
             </span>

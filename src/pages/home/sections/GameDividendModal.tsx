@@ -115,7 +115,7 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
             {tierProgress ? (
               <section className="app-shell__modal-field app-shell__modal-field--tier">
                 <GameCoinTierSummary
-                  coinYieldPerTenMinutes={overview?.myEstimatedCoinYield}
+                  coinYieldEstimate={overview?.myEstimatedCoinYield}
                   progress={tierProgress}
                   showLadder={false}
                   surfaceVariant="season-coin"
@@ -233,7 +233,7 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
                   <ul className="app-shell__game-dividend-rule-list">
                     <li>Top {overview.eligibleRankCutoff} 안에 든 포지션만 코인 채굴 대상이 됩니다.</li>
                     <li>{formatHoldCountdown(overview.minimumHoldSeconds)} 이상 보유하면 채굴 대기 상태에서 채굴 진행 중으로 전환됩니다.</li>
-                    <li>채굴 시작 후에는 10분마다 10% 채굴 부스트가 붙습니다.</li>
+                    <li>채굴 시작 후에는 60분마다 10% 채굴 부스트가 붙습니다.</li>
                     <li>채굴 부스트는 최대 100%까지 누적되어 최종 채굴 효율은 최대 2배가 됩니다.</li>
                     <li>코인은 10분마다 한 번씩 채굴됩니다.</li>
                     <li>채굴 시점의 최신 차트와 평가금액 기준으로 코인이 계산됩니다.</li>
