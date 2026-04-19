@@ -2213,7 +2213,23 @@ function HomePage() {
         </div>
       </div>
     ) : null;
-  const buyableVideoSearchOverlayContainer =
+  const tradeActionOverlay =
+    isBuySubmitting || isSellSubmitting ? (
+      <div className="app-shell__fullscreen-loading" role="status" aria-live="polite" aria-modal="true">
+        <div className="app-shell__fullscreen-loading-card">
+          <span className="app-shell__fullscreen-loading-spinner" aria-hidden="true" />
+          <p className="app-shell__fullscreen-loading-eyebrow">Trading Order</p>
+          <p className="app-shell__fullscreen-loading-title">
+            {isBuySubmitting ? '매수 처리 중' : '매도 처리 중'}
+          </p>
+          <p className="app-shell__fullscreen-loading-copy">
+            주문을 서버에 반영하고 지갑과 포지션을 갱신하고 있습니다. 잠시만 기다려 주세요.
+          </p>
+          <p className="app-shell__fullscreen-loading-status">{selectedGameActionTitle}</p>
+        </div>
+      </div>
+    ) : null;
+  const fullscreenOverlayContainer =
     typeof document === 'undefined'
       ? null
       : (() => {
@@ -2540,11 +2556,14 @@ function HomePage() {
         title={selectedGameActionTitle}
         unitPointsLabel={formatPoints(selectedVideoUnitPricePoints ?? selectedVideoSellSummary.settledPoints ?? 0)}
       />
-      {buyableVideoSearchOverlay && buyableVideoSearchOverlayContainer
-        ? createPortal(buyableVideoSearchOverlay, buyableVideoSearchOverlayContainer)
+      {buyableVideoSearchOverlay && fullscreenOverlayContainer
+        ? createPortal(buyableVideoSearchOverlay, fullscreenOverlayContainer)
         : null}
-      {sortPrefetchOverlay && buyableVideoSearchOverlayContainer
-        ? createPortal(sortPrefetchOverlay, buyableVideoSearchOverlayContainer)
+      {sortPrefetchOverlay && fullscreenOverlayContainer
+        ? createPortal(sortPrefetchOverlay, fullscreenOverlayContainer)
+        : null}
+      {tradeActionOverlay && fullscreenOverlayContainer
+        ? createPortal(tradeActionOverlay, fullscreenOverlayContainer)
         : null}
     </div>
   );
