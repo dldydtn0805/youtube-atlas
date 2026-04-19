@@ -39,6 +39,7 @@ vi.mock('./api', async () => {
   return {
     ...actual,
     fetchComments: vi.fn().mockResolvedValue([]),
+    fetchCommentPresence: vi.fn().mockResolvedValue({ active_count: 0 }),
   };
 });
 
@@ -133,5 +134,6 @@ describe('comments queries', () => {
     client?.onConnect?.();
 
     expect(client?.subscribe).toHaveBeenCalledWith('/topic/comments', expect.any(Function));
+    expect(client?.subscribe).toHaveBeenCalledWith('/topic/comments/presence', expect.any(Function));
   });
 });

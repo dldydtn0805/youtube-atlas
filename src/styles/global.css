@@ -60,6 +60,7 @@
     #fff;
   --surface-chip: rgba(255, 255, 255, 0.72);
   --surface-chip-muted: rgba(15, 23, 42, 0.04);
+  --surface-overlay-chip: rgba(255, 255, 255, 0.9);
   --surface-input: #fff;
   --surface-input-strong: rgba(255, 255, 255, 0.96);
   --surface-player-frame:
@@ -143,6 +144,7 @@
     rgba(14, 14, 14, 0.98);
   --surface-chip: rgba(18, 18, 18, 0.92);
   --surface-chip-muted: rgba(255, 255, 255, 0.08);
+  --surface-overlay-chip: rgba(12, 12, 12, 0.88);
   --surface-input: rgba(8, 8, 8, 0.92);
   --surface-input-strong: rgba(14, 14, 14, 0.96);
   --surface-player-frame:

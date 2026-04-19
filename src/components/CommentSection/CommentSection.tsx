@@ -27,6 +27,8 @@ const GLOBAL_CHAT_ROOM_ID = 'global';
 
 function formatMessageDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', {
+    month: 'numeric',
+    day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
   }).format(new Date(value));
@@ -61,8 +63,44 @@ function isOwnMessage(message: ChatMessage, participantId: string, userId?: numb
   return message.client_id === participantId;
 }
 
+function isSystemMessage(message: ChatMessage) {
+  return (
+    message.message_type === 'SYSTEM' ||
+    typeof message.system_event_type === 'string' ||
+    message.client_id.startsWith('system:')
+  );
+}
+
+function isTradeSystemMessage(message: ChatMessage) {
+  return message.system_event_type === 'TRADE';
+}
+
 function formatCooldownFeedback(seconds: number) {
   return `채팅 흐름을 위해 ${seconds}초 후에 다시 보낼 수 있어요.`;
+}
+
+function getSystemMessageVariant(message: ChatMessage) {
+  if (message.system_event_type === 'LOGIN') {
+    return 'comment-message--system-login';
+  }
+
+  if (message.system_event_type === 'TIER') {
+    return 'comment-message--system-tier';
+  }
+
+  if (message.system_event_type === 'TRADE') {
+    if (message.content.includes('매수')) {
+      return 'comment-message--system-buy';
+    }
+
+    if (message.content.includes('매도')) {
+      return 'comment-message--system-sell';
+    }
+
+    return 'comment-message--system-trade';
+  }
+
+  return 'comment-message--system-generic';
 }
 
 function CommentSection({ hideHeader = false, videoId }: CommentSectionProps) {
@@ -77,6 +115,7 @@ function CommentSection({ hideHeader = false, videoId }: CommentSectionProps) {
   const cooldownDeadlineByVideoRef = useRef<Record<string, number>>({});
   const recentMessagesByVideoRef = useRef<Record<string, RecentCommentSnapshot[]>>({});
   const commentsQuery = useComments(videoId, isApiConfigured);
+  const activeParticipantCount = commentsQuery.presenceQuery?.data?.active_count;
   const createCommentMutation = useCreateComment();
   const remainingCooldownMs = getRemainingDurationMs(cooldownEndsAt);
   const remainingCooldownSeconds = Math.ceil(remainingCooldownMs / 1000);
@@ -86,6 +125,7 @@ function CommentSection({ hideHeader = false, videoId }: CommentSectionProps) {
   const feedbackMessage = isCooldownActive
     ? formatCooldownFeedback(remainingCooldownSeconds)
     : submissionError?.message;
+  const visibleMessages = commentsQuery.data ?? [];
 
   useEffect(() => {
     setContent('');
@@ -118,7 +158,7 @@ function CommentSection({ hideHeader = false, videoId }: CommentSectionProps) {
       top: commentList.scrollHeight,
       behavior: 'smooth',
     });
-  }, [commentsQuery.data]);
+  }, [visibleMessages]);
 
   useEffect(() => {
     return () => {
@@ -372,7 +412,6 @@ function CommentSection({ hideHeader = false, videoId }: CommentSectionProps) {
       </div>
     </form>
   );
-
   return (
     <section
       className={`comment-section ${hideHeader ? 'comment-section--body-only' : ''}`}
@@ -387,6 +426,11 @@ function CommentSection({ hideHeader = false, videoId }: CommentSectionProps) {
       )}
 
       <div ref={commentListRef} className="comment-list" aria-live="polite">
+        {typeof activeParticipantCount === 'number' ? (
+          <p className="comment-section__presence comment-section__presence--overlay">
+            실시간 {activeParticipantCount}명
+          </p>
+        ) : null}
         {commentsQuery.isLoading ? (
           <p className="comment-section__status">채팅을 불러오는 중입니다.</p>
         ) : null}
@@ -400,8 +444,24 @@ function CommentSection({ hideHeader = false, videoId }: CommentSectionProps) {
         {!commentsQuery.isLoading && !commentsQuery.isError && commentsQuery.data?.length === 0 ? (
           <p className="comment-section__status">아직 대화가 없습니다. 첫 메시지를 보내보세요.</p>
         ) : null}
-        {commentsQuery.data?.map((message) => {
+        {visibleMessages.map((message) => {
           const ownMessage = isOwnMessage(message, participantId, user?.id);
+          const systemMessage = isSystemMessage(message);
+
+          if (systemMessage && !isTradeSystemMessage(message)) {
+            const systemToneClassName = getSystemMessageVariant(message);
+
+            return (
+              <article
+                key={message.id}
+                className={`comment-message comment-message--system ${systemToneClassName}`}
+              >
+                <p className="comment-message__system-text">
+                  <span>{message.content}</span>
+                </p>
+              </article>
+            );
+          }
 
           return (
             <article

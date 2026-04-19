@@ -2,12 +2,13 @@ import { useEffect } from 'react';
 import { Client, type StompSubscription } from '@stomp/stompjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getWebSocketUrl } from '../../lib/api';
-import { COMMENTS_TOPIC, createComment, fetchComments } from './api';
-import type { ChatMessage, SendMessageInput } from './types';
+import { COMMENTS_PRESENCE_TOPIC, COMMENTS_TOPIC, createComment, fetchCommentPresence, fetchComments } from './api';
+import type { ChatMessage, ChatPresence, SendMessageInput } from './types';
 
 const SAME_COMMENT_TIME_WINDOW_MS = 10_000;
 
 const commentsQueryKey = ['comments', 'global'] as const;
+const commentsPresenceQueryKey = ['comments', 'presence'] as const;
 
 function isSameCommentEvent(current: ChatMessage, next: ChatMessage) {
   if (current.id === next.id) {
@@ -50,10 +51,15 @@ export function mergeComment(existing: ChatMessage[] = [], nextComment: ChatMess
 
 export function useComments(_videoId?: string, enabled = true) {
   const queryClient = useQueryClient();
-  const query = useQuery({
+  const commentsQuery = useQuery({
     enabled,
     queryKey: commentsQueryKey,
     queryFn: fetchComments,
+  });
+  const presenceQuery = useQuery({
+    enabled,
+    queryKey: commentsPresenceQueryKey,
+    queryFn: fetchCommentPresence,
   });
 
   useEffect(() => {
@@ -62,7 +68,8 @@ export function useComments(_videoId?: string, enabled = true) {
     }
 
     let isDisposed = false;
-    let subscription: StompSubscription | undefined;
+    let commentsSubscription: StompSubscription | undefined;
+    let presenceSubscription: StompSubscription | undefined;
     const client = new Client({
       brokerURL: getWebSocketUrl(),
       debug: () => {},
@@ -75,7 +82,7 @@ export function useComments(_videoId?: string, enabled = true) {
         return;
       }
 
-      subscription = client.subscribe(COMMENTS_TOPIC, (message) => {
+      commentsSubscription = client.subscribe(COMMENTS_TOPIC, (message) => {
         try {
           const nextComment = JSON.parse(message.body) as ChatMessage;
 
@@ -86,18 +93,32 @@ export function useComments(_videoId?: string, enabled = true) {
           // Ignore malformed messages so the existing list stays usable.
         }
       });
+
+      presenceSubscription = client.subscribe(COMMENTS_PRESENCE_TOPIC, (message) => {
+        try {
+          const nextPresence = JSON.parse(message.body) as ChatPresence;
+
+          queryClient.setQueryData<ChatPresence>(commentsPresenceQueryKey, nextPresence);
+        } catch {
+          // Ignore malformed presence updates so the existing count stays usable.
+        }
+      });
     };
 
     client.activate();
 
     return () => {
       isDisposed = true;
-      subscription?.unsubscribe();
+      commentsSubscription?.unsubscribe();
+      presenceSubscription?.unsubscribe();
       void client.deactivate();
     };
   }, [enabled, queryClient]);
 
-  return query;
+  return {
+    ...commentsQuery,
+    presenceQuery,
+  };
 }
 
 export function useCreateComment() {

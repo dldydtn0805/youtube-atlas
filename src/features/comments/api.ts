@@ -1,6 +1,6 @@
 import { getStoredAccessToken } from '../auth/storage';
 import { fetchApi } from '../../lib/api';
-import type { ChatMessage, SendMessageInput } from './types';
+import type { ChatMessage, ChatPresence, SendMessageInput } from './types';
 import {
   CommentSubmissionError,
   normalizeMessageContent,
@@ -8,9 +8,14 @@ import {
 } from './spam';
 
 const COMMENTS_TOPIC = '/topic/comments';
+const COMMENTS_PRESENCE_TOPIC = '/topic/comments/presence';
 
 export async function fetchComments(): Promise<ChatMessage[]> {
   return fetchApi<ChatMessage[]>('/api/comments');
+}
+
+export async function fetchCommentPresence(): Promise<ChatPresence> {
+  return fetchApi<ChatPresence>('/api/comments/presence');
 }
 
 export async function createComment(input: SendMessageInput): Promise<ChatMessage> {
@@ -44,4 +49,4 @@ export async function createComment(input: SendMessageInput): Promise<ChatMessag
   }
 }
 
-export { COMMENTS_TOPIC };
+export { COMMENTS_PRESENCE_TOPIC, COMMENTS_TOPIC };
