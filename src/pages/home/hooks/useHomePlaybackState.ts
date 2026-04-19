@@ -16,7 +16,7 @@ import {
 import { formatPlaybackSaveTimestamp } from '../gameHelpers';
 
 const ENABLE_PLAYBACK_PROGRESS = true;
-const PLAYBACK_PROGRESS_AUTOSAVE_INTERVAL_MS = 15000;
+const PLAYBACK_PROGRESS_AUTOSAVE_INTERVAL_MS = 60000;
 
 interface UseHomePlaybackStateOptions {
   accessToken: string | null;

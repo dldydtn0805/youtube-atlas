@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiRequestError, isApiConfigured } from '../../lib/api';
 import {
   fetchCurrentUser,
@@ -19,11 +20,13 @@ import {
   writeStoredAuthSession,
 } from './storage';
 import { AuthContext } from './context';
+import { authQueryKeys } from './queries';
 import type { AuthSession, AuthStatus } from './types';
 
 const initialSession = readStoredAuthSession();
 
 export function AuthProvider({ children }: PropsWithChildren) {
+  const queryClient = useQueryClient();
   const [session, setSession] = useState<AuthSession | null>(initialSession);
   const [status, setStatus] = useState<AuthStatus>(initialSession ? 'loading' : 'anonymous');
   const [authError, setAuthError] = useState<string | null>(null);
@@ -32,6 +35,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isGoogleAuthLoading, setIsGoogleAuthLoading] = useState(isApiConfigured);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [hasVerifiedInitialSession, setHasVerifiedInitialSession] = useState(
+    !initialSession?.accessToken,
+  );
+  const accessToken = session?.accessToken ?? null;
+
+  const currentUserQuery = useQuery({
+    enabled: Boolean(accessToken),
+    queryKey: authQueryKeys.currentUser(accessToken),
+    queryFn: () => fetchCurrentUser(accessToken as string),
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
 
   useEffect(() => {
     if (!isApiConfigured) {
@@ -74,105 +89,99 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    if (!initialSession?.accessToken) {
-      setStatus('anonymous');
+    if (!session || !currentUserQuery.data) {
       return;
     }
 
-    let isCancelled = false;
+    setHasVerifiedInitialSession(true);
 
-    void fetchCurrentUser(initialSession.accessToken)
-      .then((user) => {
-        if (isCancelled) {
-          return;
-        }
+    if (session.user === currentUserQuery.data && status === 'authenticated') {
+      return;
+    }
 
-        const nextSession = { ...initialSession, user };
+    const nextSession = { ...session, user: currentUserQuery.data };
 
-        writeStoredAuthSession(nextSession);
-        startTransition(() => {
-          setSession(nextSession);
-          setStatus('authenticated');
-        });
-      })
-      .catch(() => {
-        clearStoredAuthSession();
+    writeStoredAuthSession(nextSession);
+    startTransition(() => {
+      setSession(nextSession);
+      setStatus('authenticated');
+    });
+  }, [currentUserQuery.data, session, status]);
 
-        if (isCancelled) {
-          return;
-        }
+  useEffect(() => {
+    if (!currentUserQuery.error) {
+      return;
+    }
 
-        startTransition(() => {
-          setSession(null);
-          setStatus('anonymous');
-        });
-      });
+    const shouldClearSession =
+      (currentUserQuery.error instanceof ApiRequestError &&
+        (currentUserQuery.error.code === 'unauthorized' ||
+          currentUserQuery.error.code === 'session_expired')) ||
+      !hasVerifiedInitialSession;
 
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
+    if (!shouldClearSession) {
+      return;
+    }
+
+    clearStoredAuthSession();
+    queryClient.removeQueries({ queryKey: authQueryKeys.all });
+    startTransition(() => {
+      setSession(null);
+      setStatus('anonymous');
+    });
+    setHasVerifiedInitialSession(true);
+  }, [currentUserQuery.error, hasVerifiedInitialSession, queryClient]);
 
   const clearAuthError = useCallback(() => {
     setAuthError(null);
   }, []);
 
   const refreshCurrentUser = useCallback(async () => {
-    const accessToken = session?.accessToken;
-
     if (!accessToken) {
       return;
     }
 
-    try {
-      const user = await fetchCurrentUser(accessToken);
-      const nextSession = { ...session, user };
+    await queryClient.refetchQueries(
+      {
+        queryKey: authQueryKeys.currentUser(accessToken),
+        type: 'active',
+      },
+      { throwOnError: true },
+    );
+  }, [accessToken, queryClient]);
 
-      writeStoredAuthSession(nextSession);
-      startTransition(() => {
-        setSession(nextSession);
-        setStatus('authenticated');
-      });
-    } catch (error) {
-      if (
-        error instanceof ApiRequestError &&
-        (error.code === 'unauthorized' || error.code === 'session_expired')
-      ) {
-        clearStoredAuthSession();
+  const loginWithGoogleCode = useCallback(
+    async (code: string, redirectUri: string) => {
+      setIsLoggingIn(true);
+      setAuthError(null);
+
+      try {
+        const nextSession = await loginWithGoogleAuthorizationCode(code, redirectUri);
+
+        queryClient.setQueryData(
+          authQueryKeys.currentUser(nextSession.accessToken),
+          nextSession.user,
+        );
+        writeStoredAuthSession(nextSession);
+        setHasVerifiedInitialSession(true);
         startTransition(() => {
-          setSession(null);
-          setStatus('anonymous');
+          setSession(nextSession);
+          setStatus('authenticated');
         });
+      } catch (error) {
+        const nextMessage =
+          error instanceof ApiRequestError
+            ? error.message
+            : '구글 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+
+        setAuthError(nextMessage);
+        throw error;
+      } finally {
+        setIsLoggingIn(false);
       }
-
-      throw error;
-    }
-  }, [session]);
-
-  const loginWithGoogleCode = useCallback(async (code: string, redirectUri: string) => {
-    setIsLoggingIn(true);
-    setAuthError(null);
-
-    try {
-      const nextSession = await loginWithGoogleAuthorizationCode(code, redirectUri);
-
-      writeStoredAuthSession(nextSession);
-      startTransition(() => {
-        setSession(nextSession);
-        setStatus('authenticated');
-      });
-    } catch (error) {
-      const nextMessage =
-        error instanceof ApiRequestError
-          ? error.message
-          : '구글 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
-
-      setAuthError(nextMessage);
-      throw error;
-    } finally {
-      setIsLoggingIn(false);
-    }
-  }, []);
+    },
+    [queryClient],
+  );
 
   const logout = useCallback(async () => {
     const accessToken = session?.accessToken;
@@ -188,13 +197,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
       // Local sign-out should still succeed even if the backend session cleanup fails.
     } finally {
       clearStoredAuthSession();
+      queryClient.removeQueries({ queryKey: authQueryKeys.all });
+      setHasVerifiedInitialSession(true);
       startTransition(() => {
         setSession(null);
         setStatus('anonymous');
       });
       setIsLoggingOut(false);
     }
-  }, [session?.accessToken]);
+  }, [queryClient, session?.accessToken]);
 
   const value = useMemo(
     () => ({

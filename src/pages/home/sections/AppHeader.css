@@ -4,7 +4,7 @@
   padding: 18px 16px 20px;
   position: relative;
   width: 100%;
-  z-index: calc(var(--layer-modal-backdrop, 1400) + 1);
+  z-index: calc(var(--layer-modal-backdrop, 1400) - 1);
 }
 
 .app-shell__header-top {
