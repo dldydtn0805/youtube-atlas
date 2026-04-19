@@ -1,10 +1,9 @@
-import { useCallback, type Dispatch, type ReactNode, type SetStateAction } from 'react';
+import { useCallback, type ReactNode } from 'react';
 import type { AuthStatus } from '../../../features/auth/types';
 import type {
   GameCoinOverview,
   GameCoinTierProgress,
   GameCurrentSeason,
-  GameLeaderboardEntry,
   GamePosition,
 } from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
@@ -14,12 +13,11 @@ import type { OpenGameHolding } from '../gameHelpers';
 import {
   RankingGameCoinOverview,
   RankingGameHistoryTab,
-  RankingGameLeaderboardTab,
   RankingGamePanelShell,
   RankingGamePositionsTab,
 } from './RankingGamePanel';
 
-type GameTab = 'positions' | 'history' | 'leaderboard' | 'guide';
+type GameTab = 'positions' | 'history' | 'guide';
 
 interface GamePanelSectionProps {
   activeGameTab: GameTab;
@@ -34,24 +32,17 @@ interface GamePanelSectionProps {
   favoriteStreamerVideoSection?: YouTubeCategorySection;
   favoriteTrendSignalsByVideoId: Record<string, VideoTrendSignal>;
   gameHistoryPositions: GamePosition[];
-  gameLeaderboard: GameLeaderboardEntry[];
-  gameLeaderboardError: unknown;
   gameMarketSignalsByVideoId: Record<string, VideoTrendSignal>;
   gamePortfolioSection: YouTubeCategorySection;
   hasApiConfigured: boolean;
   historyPlaybackLoadingVideoId: string | null;
   historyPlaybackSection?: YouTubeCategorySection;
   isGameHistoryLoading: boolean;
-  isGameLeaderboardError: boolean;
-  isGameLeaderboardLoading: boolean;
   isCollapsed: boolean;
-  isSelectedLeaderboardPositionsError: boolean;
-  isSelectedLeaderboardPositionsLoading: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
   onOpenCoinModal: () => void;
   onSelectGameHistoryVideo: (position: GamePosition, playbackQueueId?: string) => void | Promise<void>;
   onSelectGamePositionVideo: (position: GamePosition) => void;
-  onSelectLeaderboardPositionVideo: (position: GamePosition, playbackQueueId?: string) => void | Promise<void>;
   onSelectTab: (tab: GameTab) => void;
   onToggleCollapse: () => void;
   openDistinctVideoCount: number;
@@ -61,14 +52,10 @@ interface GamePanelSectionProps {
   openPositionsProfitPoints: number;
   positionsEmptyMessage: string | null;
   realtimeSurgingSection?: YouTubeCategorySection;
-  selectedLeaderboardPositions: GamePosition[];
-  selectedLeaderboardPositionsError: unknown;
-  selectedLeaderboardUserId: number | null;
   selectedPositionId?: number | null;
   selectedPlaybackSection?: YouTubeCategorySection;
   selectedVideoActions?: ReactNode;
   selectedVideoId?: string;
-  setSelectedLeaderboardUserId: Dispatch<SetStateAction<number | null>>;
   trendSignalsByVideoId: Record<string, VideoTrendSignal>;
 }
 
@@ -85,24 +72,17 @@ export default function GamePanelSection({
   favoriteStreamerVideoSection,
   favoriteTrendSignalsByVideoId,
   gameHistoryPositions,
-  gameLeaderboard,
-  gameLeaderboardError,
   gameMarketSignalsByVideoId,
   gamePortfolioSection,
   hasApiConfigured,
   historyPlaybackLoadingVideoId,
   historyPlaybackSection,
   isGameHistoryLoading,
-  isGameLeaderboardError,
-  isGameLeaderboardLoading,
   isCollapsed,
-  isSelectedLeaderboardPositionsError,
-  isSelectedLeaderboardPositionsLoading,
   newChartEntriesSection,
   onOpenCoinModal,
   onSelectGameHistoryVideo,
   onSelectGamePositionVideo,
-  onSelectLeaderboardPositionVideo,
   onSelectTab,
   onToggleCollapse,
   openDistinctVideoCount,
@@ -112,24 +92,13 @@ export default function GamePanelSection({
   openPositionsProfitPoints,
   positionsEmptyMessage,
   realtimeSurgingSection,
-  selectedLeaderboardPositions,
-  selectedLeaderboardPositionsError,
-  selectedLeaderboardUserId,
   selectedPositionId,
   selectedPlaybackSection,
   selectedVideoActions,
   selectedVideoId,
-  setSelectedLeaderboardUserId,
   trendSignalsByVideoId,
 }: GamePanelSectionProps) {
   const historyEmptyMessage = currentGameSeason ? '아직 현재 시즌 거래내역이 없습니다.' : null;
-  const selectedLeaderboardEntry = selectedLeaderboardUserId
-    ? gameLeaderboard.find((entry) => entry.userId === selectedLeaderboardUserId) ?? null
-    : null;
-  const selectedLeaderboardPositionsTitle = selectedLeaderboardEntry
-    ? `${selectedLeaderboardEntry.displayName}님의 보유 포지션`
-    : '보유 포지션';
-
   const resolvePlaybackQueueId = useCallback(
     (videoId: string) =>
       findPlaybackQueueIdForVideo(videoId, {
@@ -153,30 +122,6 @@ export default function GamePanelSection({
   if (!hasApiConfigured || authStatus !== 'authenticated') {
     return null;
   }
-
-  const leaderboardContent = (
-    <RankingGameLeaderboardTab
-      entries={gameLeaderboard}
-      error={gameLeaderboardError}
-      isError={isGameLeaderboardError}
-      isLoading={isGameLeaderboardLoading}
-      isPositionsError={isSelectedLeaderboardPositionsError}
-      isPositionsLoading={isSelectedLeaderboardPositionsLoading}
-      loadingVideoId={historyPlaybackLoadingVideoId}
-      onSelectPosition={(position, playbackQueueId) => {
-        void onSelectLeaderboardPositionVideo(position, playbackQueueId);
-      }}
-      onToggleUser={(userId) =>
-        setSelectedLeaderboardUserId((currentUserId) => (currentUserId === userId ? null : userId))
-      }
-      positions={selectedLeaderboardPositions}
-      positionsError={selectedLeaderboardPositionsError}
-      positionsTitle={selectedLeaderboardPositionsTitle}
-      resolvePlaybackQueueId={resolvePlaybackQueueId}
-      season={currentGameSeason}
-      selectedUserId={selectedLeaderboardUserId}
-    />
-  );
 
   const positionsContent = (
     <RankingGamePositionsTab
@@ -242,9 +187,7 @@ export default function GamePanelSection({
       ? positionsContent
       : activeGameTab === 'history'
         ? historyContent
-        : activeGameTab === 'leaderboard'
-          ? leaderboardContent
-          : guideContent;
+        : guideContent;
 
   return (
     <RankingGamePanelShell

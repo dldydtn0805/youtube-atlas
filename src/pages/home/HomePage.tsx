@@ -13,6 +13,7 @@ import GameTradeModal from './sections/GameTradeModal';
 import GameIntroModal from './sections/GameIntroModal';
 import GameWalletModal from './sections/GameWalletModal';
 import HomePlaybackSection from './sections/HomePlaybackSection';
+import { RankingGameLeaderboardTab } from './sections/RankingGamePanel';
 import StickySelectedVideoControls from './sections/StickySelectedVideoControls';
 import TrendTicker from './sections/TrendTicker';
 import {
@@ -41,6 +42,7 @@ import {
   FAVORITE_STREAMER_VIDEO_SECTION,
   GAME_PORTFOLIO_QUEUE_ID,
   HISTORY_PLAYBACK_QUEUE_ID,
+  findPlaybackQueueIdForVideo,
   filterVideoSection,
   getFullscreenElement,
   getAdjacentGamePosition,
@@ -414,7 +416,7 @@ function HomePage() {
   const queryClient = useQueryClient();
   const { accessToken, isLoggingOut, logout, status: authStatus, user } = useAuth();
   const [selectedOpenPositionId, setSelectedOpenPositionId] = useState<number | null>(null);
-  const [activeGameTab, setActiveGameTab] = useState<'positions' | 'history' | 'leaderboard' | 'guide'>('positions');
+  const [activeGameTab, setActiveGameTab] = useState<'positions' | 'history' | 'guide'>('positions');
   const [isBuyableOnlyFilterActive, setIsBuyableOnlyFilterActive] = useState(false);
   const [collapsedHomeSectionIds, setCollapsedHomeSectionIds] = useState(getInitialCollapsedHomeSectionIds);
   const [selectedLeaderboardUserId, setSelectedLeaderboardUserId] = useState<number | null>(null);
@@ -621,7 +623,7 @@ function HomePage() {
     accessToken,
     selectedLeaderboardUserId,
     selectedRegionCode,
-    shouldLoadGame && activeGameTab === 'leaderboard' && selectedLeaderboardUserId !== null,
+    shouldLoadGame && selectedLeaderboardUserId !== null,
   );
   const {
     data: gameHistoryPositions = [],
@@ -1945,7 +1947,7 @@ function HomePage() {
     },
     [handleSelectVideoWithPreview, scrollToPlayerStage, setGameActionStatus],
   );
-  const handleSelectGameTab = useCallback((tab: 'positions' | 'history' | 'leaderboard' | 'guide') => {
+  const handleSelectGameTab = useCallback((tab: 'positions' | 'history' | 'guide') => {
     startTransition(() => {
       setActiveGameTab(tab);
     });
@@ -2059,6 +2061,54 @@ function HomePage() {
       selectedVideoTrendBadges={selectedVideoTrendBadges}
     />
   );
+  const selectedLeaderboardEntry = selectedLeaderboardUserId
+    ? gameLeaderboard.find((entry) => entry.userId === selectedLeaderboardUserId) ?? null
+    : null;
+  const selectedLeaderboardPositionsTitle = selectedLeaderboardEntry
+    ? `${selectedLeaderboardEntry.displayName}님의 보유 포지션`
+    : '보유 포지션';
+  const resolveLeaderboardPlaybackQueueId = useCallback(
+    (videoId: string) =>
+      findPlaybackQueueIdForVideo(videoId, {
+        favoriteStreamerVideoSection,
+        gamePortfolioSection,
+        historyPlaybackSection,
+        newChartEntriesSection: sortedNewChartEntriesSection,
+        realtimeSurgingSection: sortedRealtimeSurgingSection,
+        selectedSection: selectedPlaybackSection,
+      }),
+    [
+      favoriteStreamerVideoSection,
+      gamePortfolioSection,
+      historyPlaybackSection,
+      selectedPlaybackSection,
+      sortedNewChartEntriesSection,
+      sortedRealtimeSurgingSection,
+    ],
+  );
+  const coinModalRankingContent = (
+    <RankingGameLeaderboardTab
+      entries={gameLeaderboard}
+      error={gameLeaderboardError}
+      isError={isGameLeaderboardError}
+      isLoading={isGameLeaderboardLoading}
+      isPositionsError={isSelectedLeaderboardPositionsError}
+      isPositionsLoading={isSelectedLeaderboardPositionsLoading}
+      loadingVideoId={historyPlaybackLoadingVideoId}
+      onSelectPosition={(position, playbackQueueId) => {
+        void handleSelectLeaderboardPositionVideo(position, playbackQueueId);
+      }}
+      onToggleUser={(userId) =>
+        setSelectedLeaderboardUserId((currentUserId) => (currentUserId === userId ? null : userId))
+      }
+      positions={selectedLeaderboardPositions}
+      positionsError={selectedLeaderboardPositionsError}
+      positionsTitle={selectedLeaderboardPositionsTitle}
+      resolvePlaybackQueueId={resolveLeaderboardPlaybackQueueId}
+      season={currentGameSeason}
+      selectedUserId={selectedLeaderboardUserId}
+    />
+  );
   const renderPortfolioContent = (isModal = false) => (
     <GamePanelSection
       activeGameTab={activeGameTab}
@@ -2073,8 +2123,6 @@ function HomePage() {
       favoriteStreamerVideoSection={favoriteStreamerVideoSection}
       favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
       gameHistoryPositions={gameHistoryPositions}
-      gameLeaderboard={gameLeaderboard}
-      gameLeaderboardError={gameLeaderboardError}
       gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
       gamePortfolioSection={gamePortfolioSection}
       hasApiConfigured={isApiConfigured}
@@ -2082,15 +2130,10 @@ function HomePage() {
       historyPlaybackSection={historyPlaybackSection}
       isCollapsed={isModal ? false : isRankingGameCollapsed}
       isGameHistoryLoading={isGameHistoryLoading}
-      isGameLeaderboardError={isGameLeaderboardError}
-      isGameLeaderboardLoading={isGameLeaderboardLoading}
-      isSelectedLeaderboardPositionsError={isSelectedLeaderboardPositionsError}
-      isSelectedLeaderboardPositionsLoading={isSelectedLeaderboardPositionsLoading}
       newChartEntriesSection={sortedNewChartEntriesSection}
       onOpenCoinModal={openCoinModal}
       onSelectGameHistoryVideo={handleSelectGameHistoryVideo}
       onSelectGamePositionVideo={handleSelectGamePositionVideo}
-      onSelectLeaderboardPositionVideo={handleSelectLeaderboardPositionVideo}
       onSelectTab={handleSelectGameTab}
       onToggleCollapse={() => toggleCollapsedSection(RANKING_GAME_SECTION_ID)}
       openDistinctVideoCount={openDistinctVideoCount}
@@ -2100,14 +2143,10 @@ function HomePage() {
       openPositionsProfitPoints={openPositionsProfitPoints}
       positionsEmptyMessage={positionsEmptyMessage}
       realtimeSurgingSection={sortedRealtimeSurgingSection}
-      selectedLeaderboardPositions={selectedLeaderboardPositions}
-      selectedLeaderboardPositionsError={selectedLeaderboardPositionsError}
-      selectedLeaderboardUserId={selectedLeaderboardUserId}
       selectedPlaybackSection={selectedPlaybackSection}
       selectedVideoActions={null}
       selectedPositionId={selectedOpenPositionId}
       selectedVideoId={selectedVideoId}
-      setSelectedLeaderboardUserId={setSelectedLeaderboardUserId}
       trendSignalsByVideoId={chartTrendSignalsByVideoId}
     />
   );
@@ -2401,6 +2440,7 @@ function HomePage() {
         isOpen={isCoinModalOpen}
         onClose={closeCoinModal}
         overview={liveGameCoinOverview}
+        rankingContent={coinModalRankingContent}
         tierProgress={gameCoinTierProgress}
       />
       <GameTradeModal

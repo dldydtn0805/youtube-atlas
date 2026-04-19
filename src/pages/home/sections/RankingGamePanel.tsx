@@ -38,7 +38,7 @@ import GameWalletSummary from './GameWalletSummary';
 import MiniVideoPreview from './MiniVideoPreview';
 import StickySelectedVideoHeaderCopy from './StickySelectedVideoHeaderCopy';
 
-type GameTab = 'positions' | 'history' | 'leaderboard' | 'guide';
+type GameTab = 'positions' | 'history' | 'guide';
 
 function inferGrossSellPointsFromSettled(settledPoints?: number | null) {
   if (typeof settledPoints !== 'number' || !Number.isFinite(settledPoints) || settledPoints < 0) {
@@ -551,16 +551,6 @@ export function RankingGamePanelShell({
               type="button"
             >
               거래내역
-            </button>
-            <button
-              aria-selected={activeGameTab === 'leaderboard'}
-              className="app-shell__game-tab"
-              data-active={activeGameTab === 'leaderboard'}
-              onClick={() => onSelectTab('leaderboard')}
-              role="tab"
-              type="button"
-            >
-              리더보드
             </button>
             <button
               aria-selected={activeGameTab === 'guide'}

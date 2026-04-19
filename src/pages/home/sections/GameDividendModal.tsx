@@ -1,3 +1,4 @@
+import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { GameCoinOverview, GameCoinPosition, GameCoinTierProgress } from '../../../features/game/types';
 import {
@@ -17,6 +18,7 @@ interface GameDividendModalProps {
   isOpen: boolean;
   onClose: () => void;
   overview?: GameCoinOverview;
+  rankingContent?: ReactNode;
   tierProgress?: GameCoinTierProgress;
 }
 
@@ -73,8 +75,22 @@ function formatCoinRateExpression(position: GameCoinPosition) {
   return `${baseRate} x 100 / 100 = ${finalRate}`;
 }
 
-export default function GameDividendModal({ isOpen, onClose, overview, tierProgress }: GameDividendModalProps) {
-  if (!isOpen || typeof document === 'undefined' || (!overview && !tierProgress)) {
+export default function GameDividendModal({
+  isOpen,
+  onClose,
+  overview,
+  rankingContent,
+  tierProgress,
+}: GameDividendModalProps) {
+  const [activeTab, setActiveTab] = useState<'coin' | 'ranking'>('coin');
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab('coin');
+    }
+  }, [isOpen]);
+
+  if (!isOpen || typeof document === 'undefined' || (!overview && !tierProgress && !rankingContent)) {
     return null;
   }
 
@@ -111,7 +127,31 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
         </div>
 
         <div className="app-shell__modal-body">
-          <div className="app-shell__modal-fields">
+          <div aria-label="코인 모달 탭" className="app-shell__coin-modal-tabs" role="tablist">
+            <button
+              aria-selected={activeTab === 'coin'}
+              className="app-shell__coin-modal-tab"
+              data-active={activeTab === 'coin'}
+              onClick={() => setActiveTab('coin')}
+              role="tab"
+              type="button"
+            >
+              코인
+            </button>
+            <button
+              aria-selected={activeTab === 'ranking'}
+              className="app-shell__coin-modal-tab"
+              data-active={activeTab === 'ranking'}
+              onClick={() => setActiveTab('ranking')}
+              role="tab"
+              type="button"
+            >
+              랭킹
+            </button>
+          </div>
+
+          {activeTab === 'coin' ? (
+            <div className="app-shell__modal-fields" role="tabpanel">
             {tierProgress ? (
               <section className="app-shell__modal-field app-shell__modal-field--tier">
                 <GameCoinTierSummary
@@ -266,7 +306,12 @@ export default function GameDividendModal({ isOpen, onClose, overview, tierProgr
                 </ul>
               </section>
             ) : null}
-          </div>
+            </div>
+          ) : (
+            <div className="app-shell__coin-modal-ranking" role="tabpanel">
+              {rankingContent ?? <p className="app-shell__game-empty">랭킹 정보를 불러올 수 없습니다.</p>}
+            </div>
+          )}
         </div>
       </section>
     </div>,
