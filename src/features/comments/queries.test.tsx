@@ -8,6 +8,7 @@ const clientInstances: MockClient[] = [];
 
 class MockClient {
   brokerURL?: string;
+  connectHeaders?: Record<string, string>;
   debug?: () => void;
   reconnectDelay?: number;
   onConnect?: () => void;
@@ -17,8 +18,14 @@ class MockClient {
   activate = vi.fn();
   deactivate = vi.fn(async () => {});
 
-  constructor(config: { brokerURL: string; debug: () => void; reconnectDelay: number }) {
+  constructor(config: {
+    brokerURL: string;
+    connectHeaders?: Record<string, string>;
+    debug: () => void;
+    reconnectDelay: number;
+  }) {
     this.brokerURL = config.brokerURL;
+    this.connectHeaders = config.connectHeaders;
     this.debug = config.debug;
     this.reconnectDelay = config.reconnectDelay;
     clientInstances.push(this);
@@ -54,6 +61,8 @@ describe('comments queries', () => {
     clientInstances.length = 0;
     const { resetCommentsRealtimeForTests } = await import('./queries');
     resetCommentsRealtimeForTests();
+    const { resetSharedRealtimeClientForTests } = await import('../realtime/stompClient');
+    resetSharedRealtimeClientForTests();
   });
 
   it('merges duplicate comment events when the realtime payload uses a different id', async () => {
@@ -137,6 +146,7 @@ describe('comments queries', () => {
 
     expect(client?.subscribe).toHaveBeenCalledWith('/topic/comments', expect.any(Function));
     expect(client?.subscribe).toHaveBeenCalledWith('/topic/comments/presence', expect.any(Function));
+    expect(client?.connectHeaders).toMatchObject({ 'x-participant-id': expect.any(String) });
   });
 
   it('reuses a single realtime client across multiple mounted comment hooks', async () => {

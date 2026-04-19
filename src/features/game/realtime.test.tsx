@@ -49,9 +49,11 @@ function createWrapper(queryClient: QueryClient) {
 }
 
 describe('game realtime', () => {
-  afterEach(() => {
+  afterEach(async () => {
     clientInstances.length = 0;
     invalidateGameQueriesMock.mockReset();
+    const { resetSharedRealtimeClientForTests } = await import('../realtime/stompClient');
+    resetSharedRealtimeClientForTests();
   });
 
   it('invalidates game queries when a wallet update event arrives for the current region', async () => {
@@ -176,5 +178,24 @@ describe('game realtime', () => {
     });
 
     expect(invalidateGameQueriesMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('shares the same realtime client with comments subscriptions', async () => {
+    const { useComments } = await import('../comments/queries');
+    const { useGameRealtimeInvalidation } = await import('./realtime');
+
+    function HookHarness() {
+      useComments(undefined);
+      useGameRealtimeInvalidation('token-1', 'KR');
+      return null;
+    }
+
+    const queryClient = new QueryClient();
+
+    render(<HookHarness />, {
+      wrapper: createWrapper(queryClient),
+    });
+
+    expect(clientInstances).toHaveLength(1);
   });
 });

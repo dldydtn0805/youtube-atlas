@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Client, type StompSubscription } from '@stomp/stompjs';
 import { useQueryClient } from '@tanstack/react-query';
-import { getWebSocketUrl } from '../../lib/api';
+import { subscribeToRealtimeTopic } from '../realtime/stompClient';
 import { invalidateGameQueries } from './queries';
 import type { GameRealtimeEvent } from './types';
 
@@ -32,54 +31,35 @@ export function useGameRealtimeInvalidation(
       return;
     }
 
-    let isDisposed = false;
-    let subscription: StompSubscription | undefined;
-    const client = new Client({
-      brokerURL: getWebSocketUrl(),
-      debug: () => {},
-      reconnectDelay: 5_000,
+    const unsubscribe = subscribeToRealtimeTopic(`${GAME_TOPIC_PREFIX}/${regionCode}`, (messageBody) => {
+      try {
+        const event = JSON.parse(messageBody) as GameRealtimeEvent;
+
+        if (event.eventType !== WALLET_UPDATED_EVENT || event.regionCode !== regionCode) {
+          return;
+        }
+
+        const nextEventKey = toRealtimeEventKey(event);
+
+        if (handledEventKeyRef.current === nextEventKey) {
+          return;
+        }
+
+        handledEventKeyRef.current = nextEventKey;
+
+        void invalidateGameQueries(queryClient, {
+          accessToken,
+          includeLeaderboardPositions: true,
+          regionCode,
+          seasonId: event.seasonId,
+        });
+      } catch {
+        // Ignore malformed realtime messages so game queries keep working.
+      }
     });
 
-    client.onConnect = () => {
-      if (isDisposed) {
-        void client.deactivate();
-        return;
-      }
-
-      subscription = client.subscribe(`${GAME_TOPIC_PREFIX}/${regionCode}`, (message) => {
-        try {
-          const event = JSON.parse(message.body) as GameRealtimeEvent;
-
-          if (event.eventType !== WALLET_UPDATED_EVENT || event.regionCode !== regionCode) {
-            return;
-          }
-
-          const nextEventKey = toRealtimeEventKey(event);
-
-          if (handledEventKeyRef.current === nextEventKey) {
-            return;
-          }
-
-          handledEventKeyRef.current = nextEventKey;
-
-          void invalidateGameQueries(queryClient, {
-            accessToken,
-            includeLeaderboardPositions: true,
-            regionCode,
-            seasonId: event.seasonId,
-          });
-        } catch {
-          // Ignore malformed realtime messages so game queries keep working.
-        }
-      });
-    };
-
-    client.activate();
-
     return () => {
-      isDisposed = true;
-      subscription?.unsubscribe();
-      void client.deactivate();
+      unsubscribe();
     };
   }, [accessToken, enabled, queryClient, regionCode]);
 }

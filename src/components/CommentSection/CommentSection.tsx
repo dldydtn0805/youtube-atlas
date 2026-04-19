@@ -12,6 +12,7 @@ import {
   type RecentCommentSnapshot,
   toCommentSubmissionError,
 } from '../../features/comments/spam';
+import { getChatParticipantId } from '../../features/comments/participant';
 import type { ChatMessage } from '../../features/comments/types';
 import './CommentSection.css';
 
@@ -21,7 +22,6 @@ interface CommentSectionProps {
   videoTitle?: string;
 }
 
-const CHAT_PARTICIPANT_STORAGE_KEY = 'youtube-atlas-chat-participant-id';
 const CHAT_COMPOSER_FOCUSED_ATTRIBUTE = 'data-chat-composer-focus';
 const GLOBAL_CHAT_ROOM_ID = 'global';
 
@@ -32,27 +32,6 @@ function formatMessageDate(value: string) {
     hour: 'numeric',
     minute: '2-digit',
   }).format(new Date(value));
-}
-
-function getChatParticipantId() {
-  if (typeof window === 'undefined') {
-    return 'server-render';
-  }
-
-  const storedValue = window.localStorage.getItem(CHAT_PARTICIPANT_STORAGE_KEY);
-
-  if (storedValue) {
-    return storedValue;
-  }
-
-  const nextValue =
-    typeof crypto !== 'undefined' && 'randomUUID' in crypto
-      ? crypto.randomUUID()
-      : `participant-${Date.now()}`;
-
-  window.localStorage.setItem(CHAT_PARTICIPANT_STORAGE_KEY, nextValue);
-
-  return nextValue;
 }
 
 function isOwnMessage(message: ChatMessage, participantId: string, userId?: number | null) {
