@@ -218,6 +218,44 @@ describe('CommentSection', () => {
     expect(screen.getByPlaceholderText('메시지를 입력하세요.')).toBeInTheDocument();
   });
 
+  it('marks messages from the authenticated user as own even when the client id differs', () => {
+    useAuthMock.mockReturnValue({
+      logout: vi.fn(),
+      status: 'authenticated',
+      user: {
+        displayName: 'Atlas User',
+        email: 'atlas@example.com',
+        id: 7,
+        pictureUrl: null,
+      },
+    });
+    useCommentsMock.mockReturnValue({
+      data: [
+        {
+          author: 'Atlas User',
+          client_id: 'other-device-client',
+          content: '다른 기기에서 보낸 메시지',
+          created_at: '2026-03-22T00:00:00.000Z',
+          id: 1,
+          user_id: 7,
+          video_id: 'global',
+        },
+      ],
+      error: null,
+      isError: false,
+      isLoading: false,
+    });
+    useCreateCommentMock.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+
+    render(<CommentSection />);
+
+    expect(screen.getByText('나')).toBeInTheDocument();
+    expect(screen.getByText('다른 기기에서 보낸 메시지')).toBeInTheDocument();
+  });
+
   it('marks the document while the mobile composer is focused and clears it on blur', () => {
     useCreateCommentMock.mockReturnValue({
       isPending: false,

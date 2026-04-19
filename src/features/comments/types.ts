@@ -4,6 +4,7 @@ export interface ChatMessage {
   author: string;
   content: string;
   client_id: string;
+  user_id?: number | null;
   created_at: string;
 }
 

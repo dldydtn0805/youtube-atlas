@@ -54,7 +54,11 @@ function getChatParticipantId() {
   return nextValue;
 }
 
-function isOwnMessage(message: ChatMessage, participantId: string) {
+function isOwnMessage(message: ChatMessage, participantId: string, userId?: number | null) {
+  if (typeof userId === 'number' && message.user_id === userId) {
+    return true;
+  }
+
   return message.client_id === participantId;
 }
 
@@ -424,7 +428,7 @@ function CommentSection({ hideHeader = false, videoId }: CommentSectionProps) {
           <p className="comment-section__status">아직 대화가 없습니다. 첫 메시지를 보내보세요.</p>
         ) : null}
         {commentsQuery.data?.map((message) => {
-          const ownMessage = isOwnMessage(message, participantId);
+          const ownMessage = isOwnMessage(message, participantId, user?.id);
 
           return (
             <article
