@@ -2225,7 +2225,6 @@ function HomePage() {
           <p className="app-shell__fullscreen-loading-copy">
             주문을 서버에 반영하고 지갑과 포지션을 갱신하고 있습니다. 잠시만 기다려 주세요.
           </p>
-          <p className="app-shell__fullscreen-loading-status">{selectedGameActionTitle}</p>
         </div>
       </div>
     ) : null;
