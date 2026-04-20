@@ -3,7 +3,6 @@ import type { AuthStatus } from '../../../features/auth/types';
 import type {
   GameCoinTierProgress,
   GameCurrentSeason,
-  GameHighlight,
   GamePosition,
 } from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
@@ -16,9 +15,8 @@ import {
   RankingGamePanelShell,
   RankingGamePositionsTab,
 } from './RankingGamePanel';
-import GameHighlightsTab from './GameHighlightsTab';
 
-type GameTab = 'positions' | 'highlights' | 'history' | 'guide';
+type GameTab = 'positions' | 'history' | 'guide';
 
 interface GamePanelSectionProps {
   activeGameTab: GameTab;
@@ -32,18 +30,15 @@ interface GamePanelSectionProps {
   favoriteStreamerVideoSection?: YouTubeCategorySection;
   favoriteTrendSignalsByVideoId: Record<string, VideoTrendSignal>;
   gameHistoryPositions: GamePosition[];
-  gameHighlights: GameHighlight[];
   gameMarketSignalsByVideoId: Record<string, VideoTrendSignal>;
   gamePortfolioSection: YouTubeCategorySection;
   hasApiConfigured: boolean;
   historyPlaybackLoadingVideoId: string | null;
   historyPlaybackSection?: YouTubeCategorySection;
   isGameHistoryLoading: boolean;
-  isGameHighlightsLoading: boolean;
   isCollapsed: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
   onOpenCoinModal: () => void;
-  onSelectGameHighlight: (highlight: GameHighlight) => void;
   onSelectGameHistoryVideo: (position: GamePosition, playbackQueueId?: string) => void | Promise<void>;
   onSelectGamePositionVideo: (position: GamePosition) => void;
   onSelectTab: (tab: GameTab) => void;
@@ -74,18 +69,15 @@ export default function GamePanelSection({
   favoriteStreamerVideoSection,
   favoriteTrendSignalsByVideoId,
   gameHistoryPositions,
-  gameHighlights,
   gameMarketSignalsByVideoId,
   gamePortfolioSection,
   hasApiConfigured,
   historyPlaybackLoadingVideoId,
   historyPlaybackSection,
   isGameHistoryLoading,
-  isGameHighlightsLoading,
   isCollapsed,
   newChartEntriesSection,
   onOpenCoinModal,
-  onSelectGameHighlight,
   onSelectGameHistoryVideo,
   onSelectGamePositionVideo,
   onSelectTab,
@@ -157,14 +149,6 @@ export default function GamePanelSection({
       selectedVideoId={selectedVideoId}
     />
   );
-  const highlightsContent = (
-    <GameHighlightsTab
-      highlights={gameHighlights}
-      isLoading={isGameHighlightsLoading}
-      onSelectHighlight={onSelectGameHighlight}
-    />
-  );
-
   const guideContent = (
     <div className="app-shell__game-guide" aria-label="랭킹 게임 설명">
       <ol className="app-shell__game-guide-list">
@@ -178,9 +162,8 @@ export default function GamePanelSection({
         <li className="app-shell__game-guide-item">
           <strong className="app-shell__game-guide-title">하이라이트로 티어 올리기</strong>
           <p className="app-shell__game-guide-copy">
-            문샷은 100위 밖에서 사서 20위 안에 들면, 스나이프는 150위 밖에서 사서 100위 안에 들면
-            기록됩니다. 캐시아웃은 수익률 300% 이상일 때 쌓이고 큰 수익은 추가 점수도 붙어요. 시즌 티어와
-            랭킹은 이 점수로 결정돼요.
+            문샷, 스나이프, 스몰 캐시아웃, 빅 캐시아웃은 한 플레이에 동시에 붙을 수 있어요. 붙은 전략 태그가 전부 함께
+            기록되고, 점수도 태그별로 합산돼 시즌 티어와 랭킹을 올립니다.
           </p>
         </li>
         <li className="app-shell__game-guide-item">
@@ -197,8 +180,6 @@ export default function GamePanelSection({
   const activeGameTabContent =
     activeGameTab === 'positions'
       ? positionsContent
-      : activeGameTab === 'highlights'
-        ? highlightsContent
       : activeGameTab === 'history'
         ? historyContent
         : guideContent;

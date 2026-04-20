@@ -64,9 +64,8 @@ export default function GameIntroModal({ isOpen, onClose }: GameIntroModalProps)
                 <li className="app-shell__game-intro-item">
                   <strong className="app-shell__game-intro-title">하이라이트로 티어 올리기</strong>
                   <p className="app-shell__game-intro-copy">
-                    문샷은 100위 밖에서 사서 20위 안에 들면, 스나이프는 150위 밖에서 사서 100위 안에 들면
-                    기록됩니다. 캐시아웃은 수익률 300% 이상일 때 쌓이고 큰 수익은 추가 점수도 붙어요. 시즌
-                    티어와 랭킹은 이 점수로 결정돼요.
+                    문샷, 스나이프, 스몰 캐시아웃, 빅 캐시아웃 조건은 동시에 만족할 수 있어요. 한 번의 플레이에 여러 전략
+                    태그가 함께 붙고, 점수도 태그별로 합산돼 시즌 티어와 랭킹에 반영됩니다.
                   </p>
                 </li>
                 <li className="app-shell__game-intro-item">

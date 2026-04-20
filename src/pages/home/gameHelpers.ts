@@ -1,4 +1,4 @@
-import type { GameCurrentSeason, GameMarketVideo, GamePosition } from '../../features/game/types';
+import type { GameCurrentSeason, GameMarketVideo, GamePosition, GameStrategyType } from '../../features/game/types';
 import { calculateSellFeePoints, calculateSettledSellPoints } from './utils';
 
 const pointsFormatter = new Intl.NumberFormat('ko-KR');
@@ -41,6 +41,10 @@ export interface OpenGameHolding {
   stakePoints: number;
   currentPricePoints: number | null;
   profitPoints: number | null;
+  strategyTags: GameStrategyType[];
+  achievedStrategyTags: GameStrategyType[];
+  targetStrategyTags: GameStrategyType[];
+  projectedHighlightScore: number;
   createdAt: string;
 }
 
@@ -459,6 +463,10 @@ export function buildOpenGameHoldings(
         stakePoints: position.stakePoints,
         currentPricePoints,
         profitPoints,
+        strategyTags: position.strategyTags ?? [],
+        achievedStrategyTags: position.achievedStrategyTags ?? [],
+        targetStrategyTags: position.targetStrategyTags ?? [],
+        projectedHighlightScore: position.projectedHighlightScore ?? 0,
         createdAt: position.createdAt,
       };
     })

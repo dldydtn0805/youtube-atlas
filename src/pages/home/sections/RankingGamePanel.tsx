@@ -22,6 +22,7 @@ import {
   getPointTone,
   type OpenGameHolding,
 } from '../gameHelpers';
+import { buildPositionStrategyBadges } from '../gameStrategyTags';
 import {
   calculateSellFeePoints,
   formatSignedProfitRate,
@@ -33,7 +34,7 @@ import GameWalletSummary from './GameWalletSummary';
 import MiniVideoPreview from './MiniVideoPreview';
 import StickySelectedVideoHeaderCopy from './StickySelectedVideoHeaderCopy';
 
-type GameTab = 'positions' | 'highlights' | 'history' | 'guide';
+type GameTab = 'positions' | 'history' | 'guide';
 
 function inferGrossSellPointsFromSettled(settledPoints?: number | null) {
   if (typeof settledPoints !== 'number' || !Number.isFinite(settledPoints) || settledPoints < 0) {
@@ -190,11 +191,11 @@ function formatHighlightScore(score?: number | null) {
 }
 
 function getLeaderboardHighlightLabel(entry: GameLeaderboardEntry) {
-  if (!entry.topHighlightType || !entry.topHighlightGrade) {
+  if (!entry.topHighlightType) {
     return '아직 하이라이트 없음';
   }
 
-  return `${entry.topHighlightGrade} ${getLeaderboardHighlightTypeLabel(entry.topHighlightType)} · ${entry.highlightCount}개`;
+  return `${getLeaderboardHighlightTypeLabel(entry.topHighlightType)} · ${entry.highlightCount}개`;
 }
 
 function getLeaderboardHighlightTypeLabel(type: string) {
@@ -206,8 +207,12 @@ function getLeaderboardHighlightTypeLabel(type: string) {
     return '스나이프';
   }
 
-  if (type === 'CASHOUT') {
-    return '수익 실현';
+  if (type === 'SMALL_CASHOUT') {
+    return '스몰 캐시아웃';
+  }
+
+  if (type === 'BIG_CASHOUT') {
+    return '빅 캐시아웃';
   }
 
   return '하이라이트';
@@ -258,8 +263,7 @@ function LeaderboardHighlightList({
               <p className="app-shell__game-leaderboard-position-title">{highlight.title}</p>
               <p className="app-shell__game-leaderboard-position-meta">{highlight.videoTitle}</p>
               <p className="app-shell__game-leaderboard-position-meta">
-                <span className="app-shell__game-rank-emphasis">{highlight.grade}</span>
-                {' · '}{getLeaderboardHighlightTypeLabel(highlight.highlightType)}
+                {getLeaderboardHighlightTypeLabel(highlight.highlightType)}
                 {' · '}{formatRank(highlight.buyRank)} → {formatRank(highlight.highlightRank)}
                 {' · '}
                 <span data-tone={getPointTone(highlight.profitPoints)}>{formatSignedPoints(highlight.profitPoints)}</span>
@@ -481,16 +485,6 @@ export function RankingGamePanelShell({
               type="button"
             >
               내 포지션
-            </button>
-            <button
-              aria-selected={activeGameTab === 'highlights'}
-              className="app-shell__game-tab"
-              data-active={activeGameTab === 'highlights'}
-              onClick={() => onSelectTab('highlights')}
-              role="tab"
-              type="button"
-            >
-              하이라이트
             </button>
             <button
               aria-selected={activeGameTab === 'history'}
@@ -849,6 +843,7 @@ export function RankingGamePositionsTab({
         const isSelectedPosition =
           activePlaybackQueueId === GAME_PORTFOLIO_QUEUE_ID && holding.positionId === selectedPositionId;
         const holdingRankTrendBadge = getHoldingRankDiffBadge(holding);
+        const strategyBadges = buildPositionStrategyBadges(holding.achievedStrategyTags, holding.targetStrategyTags);
         const currentUnitPricePoints =
           typeof holding.currentPricePoints === 'number'
             ? calculateGameUnitPricePoints(holding.currentPricePoints, holding.quantity)
@@ -862,12 +857,15 @@ export function RankingGamePositionsTab({
               ? `매도 대기 · ${formatHoldCountdown(holding.nextSellableInSeconds)}`
               : '아직 매도 가능 수량 없음';
         const hasDetailBadges = Boolean(
-          holdingRankTrendBadge || positionStatusBadge || sellableStatusBadge,
+          strategyBadges.length || holdingRankTrendBadge || positionStatusBadge || sellableStatusBadge,
         );
         const holdStatusText =
           canShowGameActions && holding.sellableQuantity > 0 && holding.lockedQuantity > 0 && holding.nextSellableInSeconds !== null
             ? `잠금 ${formatGameQuantity(holding.lockedQuantity)} · ${formatHoldCountdown(holding.nextSellableInSeconds)}`
             : null;
+        const projectedHighlightScoreValue = formatHighlightScore(holding.projectedHighlightScore);
+        const projectedHighlightStateText =
+          strategyBadges.length === 0 ? '아직 노리는 하이라이트 조건이 없어요.' : null;
 
         return (
           <li key={holding.positionId} className="app-shell__game-position" data-selected={isSelectedPosition}>
@@ -887,6 +885,10 @@ export function RankingGamePositionsTab({
                   stakePoints: holding.stakePoints,
                   currentPricePoints: holding.currentPricePoints,
                   profitPoints: holding.profitPoints,
+                  strategyTags: holding.strategyTags,
+                  achievedStrategyTags: holding.achievedStrategyTags,
+                  targetStrategyTags: holding.targetStrategyTags,
+                  projectedHighlightScore: holding.projectedHighlightScore,
                   chartOut: holding.chartOut,
                   status: 'OPEN',
                   buyCapturedAt: holding.createdAt,
@@ -909,6 +911,11 @@ export function RankingGamePositionsTab({
                 <p className="app-shell__game-position-channel">{holding.channelTitle}</p>
                 <div className="app-shell__game-position-body">
                   <p className="app-shell__game-position-meta">
+                    <span className="app-shell__game-position-meta-label">예상 티어 점수</span>{' '}
+                    <span className="app-shell__game-position-score">
+                      {holding.projectedHighlightScore > 0 ? `+${projectedHighlightScoreValue}` : projectedHighlightScoreValue}
+                    </span>
+                    {' · '}
                     <span className="app-shell__game-position-meta-label">순위</span>{' '}
                     <span className="app-shell__game-position-rank" data-chart-out={holding.chartOut || undefined}>
                       {formatRank(holding.currentRank, {
@@ -925,6 +932,16 @@ export function RankingGamePositionsTab({
                   {hasDetailBadges ? (
                     <div className="app-shell__game-position-detail">
                       <span className="app-shell__game-position-detail-badges">
+                        {strategyBadges.map((badge) => (
+                          <span
+                            key={`${holding.positionId}-${badge.state}-${badge.type}`}
+                            className="app-shell__game-position-trend"
+                            data-state={badge.state}
+                            data-tone={badge.tone}
+                          >
+                            {badge.label}
+                          </span>
+                        ))}
                         {holdingRankTrendBadge ? (
                           <span
                             className="app-shell__game-position-trend"
@@ -944,6 +961,9 @@ export function RankingGamePositionsTab({
                           </span>
                         ) : null}
                       </span>
+                      {projectedHighlightStateText ? (
+                        <p className="app-shell__game-position-detail-copy">{projectedHighlightStateText}</p>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>

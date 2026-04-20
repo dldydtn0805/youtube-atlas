@@ -7,6 +7,7 @@ import GameTierGuide from './GameTierGuide';
 import './GameDividendModal.css';
 
 interface GameDividendModalProps {
+  highlightsContent?: ReactNode;
   isOpen: boolean;
   onClose: () => void;
   rankingContent?: ReactNode;
@@ -14,12 +15,13 @@ interface GameDividendModalProps {
 }
 
 export default function GameDividendModal({
+  highlightsContent,
   isOpen,
   onClose,
   rankingContent,
   tierProgress,
 }: GameDividendModalProps) {
-  const [activeTab, setActiveTab] = useState<'tier' | 'ranking'>('tier');
+  const [activeTab, setActiveTab] = useState<'tier' | 'highlights' | 'ranking'>('tier');
 
   useEffect(() => {
     if (isOpen) {
@@ -27,7 +29,7 @@ export default function GameDividendModal({
     }
   }, [isOpen]);
 
-  if (!isOpen || typeof document === 'undefined' || (!tierProgress && !rankingContent)) {
+  if (!isOpen || typeof document === 'undefined' || (!tierProgress && !rankingContent && !highlightsContent)) {
     return null;
   }
 
@@ -73,6 +75,16 @@ export default function GameDividendModal({
               티어
             </button>
             <button
+              aria-selected={activeTab === 'highlights'}
+              className="app-shell__coin-modal-tab"
+              data-active={activeTab === 'highlights'}
+              onClick={() => setActiveTab('highlights')}
+              role="tab"
+              type="button"
+            >
+              하이라이트
+            </button>
+            <button
               aria-selected={activeTab === 'ranking'}
               className="app-shell__coin-modal-tab"
               data-active={activeTab === 'ranking'}
@@ -104,6 +116,10 @@ export default function GameDividendModal({
                 </div>
                 <GameTierGuide />
               </section>
+            </div>
+          ) : activeTab === 'highlights' ? (
+            <div className="app-shell__coin-modal-ranking" role="tabpanel">
+              {highlightsContent ?? <p className="app-shell__game-empty">하이라이트를 불러올 수 없습니다.</p>}
             </div>
           ) : (
             <div className="app-shell__coin-modal-ranking" role="tabpanel">

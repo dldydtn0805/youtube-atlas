@@ -29,4 +29,17 @@ describe('GameDividendModal', () => {
     expect(screen.getByText('하이라이트 티어 기준')).toBeInTheDocument();
     expect(screen.getByText('하이라이트 점수로 티어가 정해집니다')).toBeInTheDocument();
   });
+
+  it('shows the highlights tab when highlight content is provided', () => {
+    render(
+      <GameDividendModal
+        highlightsContent={<div>하이라이트 목록</div>}
+        isOpen
+        onClose={() => undefined}
+        tierProgress={tierProgress}
+      />,
+    );
+
+    expect(screen.getByRole('tab', { name: '하이라이트' })).toBeInTheDocument();
+  });
 });

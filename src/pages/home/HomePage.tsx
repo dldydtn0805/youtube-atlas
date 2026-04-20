@@ -5,6 +5,7 @@ import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer
 import AppHeader from './sections/AppHeader';
 import { GameSelectedVideoPriceSummary, SelectedVideoGameActionsBundle } from './sections/GameActionContent';
 import GameCoinModal from './sections/GameDividendModal';
+import GameHighlightsTab from './sections/GameHighlightsTab';
 import GamePanelModal from './sections/GamePanelModal';
 import { ChartViewModal, RegionFilterModal } from './sections/FilterPanels';
 import GamePanelSection from './sections/GamePanelSection';
@@ -406,7 +407,7 @@ function HomePage() {
   const queryClient = useQueryClient();
   const { accessToken, isLoggingOut, logout, refreshCurrentUser, status: authStatus, user } = useAuth();
   const [selectedOpenPositionId, setSelectedOpenPositionId] = useState<number | null>(null);
-  const [activeGameTab, setActiveGameTab] = useState<'positions' | 'highlights' | 'history' | 'guide'>('positions');
+  const [activeGameTab, setActiveGameTab] = useState<'positions' | 'history' | 'guide'>('positions');
   const [rankHistoryFocusMode, setRankHistoryFocusMode] = useState<'full' | 'trade'>('full');
   const [isBuyableOnlyFilterActive, setIsBuyableOnlyFilterActive] = useState(false);
   const [collapsedHomeSectionIds, setCollapsedHomeSectionIds] = useState(getInitialCollapsedHomeSectionIds);
@@ -1858,7 +1859,7 @@ function HomePage() {
     },
     [handleSelectVideoWithPreview, scrollToPlayerStage, setGameActionStatus],
   );
-  const handleSelectGameTab = useCallback((tab: 'positions' | 'highlights' | 'history' | 'guide') => {
+  const handleSelectGameTab = useCallback((tab: 'positions' | 'history' | 'guide') => {
     startTransition(() => {
       setActiveGameTab(tab);
     });
@@ -2050,6 +2051,13 @@ function HomePage() {
       selectedUserId={selectedLeaderboardUserId}
     />
   );
+  const coinModalHighlightsContent = (
+    <GameHighlightsTab
+      highlights={gameHighlights}
+      isLoading={isGameHighlightsLoading}
+      onSelectHighlight={handleSelectGameHighlight}
+    />
+  );
   const renderPortfolioContent = (isModal = false) => (
     <GamePanelSection
       activeGameTab={activeGameTab}
@@ -2063,7 +2071,6 @@ function HomePage() {
       favoriteStreamerVideoSection={favoriteStreamerVideoSection}
       favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
       gameHistoryPositions={gameHistoryPositions}
-      gameHighlights={gameHighlights}
       gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
       gamePortfolioSection={gamePortfolioSection}
       hasApiConfigured={isApiConfigured}
@@ -2071,10 +2078,8 @@ function HomePage() {
       historyPlaybackSection={historyPlaybackSection}
       isCollapsed={isModal ? false : isRankingGameCollapsed}
       isGameHistoryLoading={isGameHistoryLoading}
-      isGameHighlightsLoading={isGameHighlightsLoading}
       newChartEntriesSection={sortedNewChartEntriesSection}
       onOpenCoinModal={openCoinModal}
-      onSelectGameHighlight={handleSelectGameHighlight}
       onSelectGameHistoryVideo={handleSelectGameHistoryVideo}
       onSelectGamePositionVideo={handleSelectGamePositionVideo}
       onSelectTab={handleSelectGameTab}
@@ -2409,6 +2414,7 @@ function HomePage() {
         viewOptions={chartViewOptions}
       />
       <GameCoinModal
+        highlightsContent={coinModalHighlightsContent}
         isOpen={isCoinModalOpen}
         onClose={closeCoinModal}
         rankingContent={coinModalRankingContent}

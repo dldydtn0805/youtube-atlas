@@ -7,6 +7,8 @@ export interface GameWallet {
   totalAssetPoints: number;
 }
 
+export type GameStrategyType = 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE';
+
 export interface GameCurrentSeason {
   seasonId: number;
   seasonName: string;
@@ -51,7 +53,6 @@ export interface GameLeaderboardEntry {
   highlightScore: number;
   highlightCount: number;
   topHighlightType: string | null;
-  topHighlightGrade: string | null;
   coinBalance: number;
   totalAssetPoints: number;
   balancePoints: number;
@@ -131,7 +132,6 @@ export interface GameCoinOverview {
 export interface GameHighlight {
   id: string;
   highlightType: string;
-  grade: string;
   title: string;
   description: string;
   positionId: number;
@@ -148,6 +148,7 @@ export interface GameHighlight {
   currentPricePoints: number | null;
   profitPoints: number | null;
   profitRatePercent: number | null;
+  strategyTags?: GameStrategyType[];
   highlightScore: number;
   status: string;
   createdAt: string;
@@ -166,6 +167,10 @@ export interface GamePosition {
   stakePoints: number;
   currentPricePoints: number | null;
   profitPoints: number | null;
+  strategyTags?: GameStrategyType[];
+  achievedStrategyTags?: GameStrategyType[];
+  targetStrategyTags?: GameStrategyType[];
+  projectedHighlightScore?: number;
   chartOut: boolean;
   status: string;
   buyCapturedAt: string;
