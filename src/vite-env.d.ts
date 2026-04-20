@@ -70,6 +70,22 @@ interface Window {
     capturedAt?: string | null;
     occurredAt?: string | null;
   }) => void;
+  __emitGameNotificationTest?: (notification?: {
+    id?: string;
+    notificationType?: 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE';
+    title?: string;
+    message?: string;
+    positionId?: number;
+    videoId?: string;
+    videoTitle?: string;
+    channelTitle?: string;
+    thumbnailUrl?: string;
+    strategyTags?: Array<'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE'>;
+    highlightScore?: number;
+    readAt?: string | null;
+    createdAt?: string;
+    showModal?: boolean;
+  }) => void;
   google?: {
     accounts?: {
       oauth2?: {

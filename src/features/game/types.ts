@@ -38,6 +38,7 @@ export interface GameNotification {
   highlightScore: number;
   readAt: string | null;
   createdAt: string;
+  showModal?: boolean;
 }
 
 export interface GameMarketVideo {

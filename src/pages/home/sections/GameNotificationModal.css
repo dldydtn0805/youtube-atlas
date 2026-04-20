@@ -1,0 +1,49 @@
+.game-notification-modal {
+  max-width: 520px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.game-notification-modal__thumb {
+  aspect-ratio: 16 / 9;
+  background: var(--surface-interactive);
+  object-fit: cover;
+  width: 100%;
+}
+
+.game-notification-modal__body {
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+}
+
+.game-notification-modal__body span {
+  color: var(--brand-primary, #14b8a6);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.game-notification-modal__body h2 {
+  color: var(--text);
+  font-size: 1.22rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.game-notification-modal__body p {
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.game-notification-modal__body strong {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.game-notification-modal .app-shell__modal-close {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+}
+

@@ -12,12 +12,14 @@ import GamePanelSection from './sections/GamePanelSection';
 import GameRankHistoryModal from './sections/GameRankHistoryModal';
 import GameTradeModal from './sections/GameTradeModal';
 import GameIntroModal from './sections/GameIntroModal';
+import GameNotificationModal from './sections/GameNotificationModal';
 import GameNotificationToast from './sections/GameNotificationToast';
 import GameWalletModal from './sections/GameWalletModal';
 import HomePlaybackSection from './sections/HomePlaybackSection';
 import { RankingGameLeaderboardTab } from './sections/RankingGamePanel';
 import StickySelectedVideoControls from './sections/StickySelectedVideoControls';
 import TrendTicker from './sections/TrendTicker';
+import { shouldOpenGameNotificationModal } from './sections/gameNotificationModalUtils';
 import {
   buildOpenGameHoldings,
   formatGameOrderQuantity,
@@ -442,6 +444,7 @@ function HomePage() {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isGameIntroModalOpen, setIsGameIntroModalOpen] = useState(getInitialGameIntroModalOpen);
   const [pushedGameNotifications, setPushedGameNotifications] = useState<GameNotification[]>([]);
+  const [modalGameNotification, setModalGameNotification] = useState<GameNotification | null>(null);
   const [visibleGameNotification, setVisibleGameNotification] = useState<GameNotification | null>(null);
   const [isRegionModalOpen, setIsRegionModalOpen] = useState(false);
   const [isChartViewModalOpen, setIsChartViewModalOpen] = useState(false);
@@ -543,6 +546,10 @@ function HomePage() {
       mergeGameNotifications([notification], currentNotifications),
     );
     setVisibleGameNotification(notification);
+
+    if (shouldOpenGameNotificationModal(notification)) {
+      setModalGameNotification(notification);
+    }
   }, []);
   useGameNotificationRealtime(
     accessToken,
@@ -597,13 +604,36 @@ function HomePage() {
         seasonId,
       });
     };
+    window.__emitGameNotificationTest = (notification) => {
+      const now = new Date().toISOString();
+      const notificationType = notification?.notificationType ?? 'MOONSHOT';
+
+      handleRealtimeGameNotification({
+        id: notification?.id ?? `game-test-${Date.now()}-${notificationType}`,
+        notificationType,
+        title: notification?.title ?? '문샷 적중',
+        message: notification?.message ?? '테스트 소켓 알림입니다.',
+        positionId: notification?.positionId ?? 999_999,
+        videoId: notification?.videoId ?? 'test-video',
+        videoTitle: notification?.videoTitle ?? '콘솔 테스트 영상',
+        channelTitle: notification?.channelTitle ?? '테스트 채널',
+        thumbnailUrl: notification?.thumbnailUrl ?? 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+        strategyTags: notification?.strategyTags ?? [notificationType],
+        highlightScore: notification?.highlightScore ?? 12_345,
+        readAt: notification?.readAt ?? null,
+        createdAt: notification?.createdAt ?? now,
+        showModal: notification?.showModal ?? true,
+      });
+    };
 
     return () => {
       delete window.__emitGameRealtimeTest;
+      delete window.__emitGameNotificationTest;
     };
   }, [
     accessToken,
     currentGameSeason?.seasonId,
+    handleRealtimeGameNotification,
     queryClient,
     selectedRegionCode,
   ]);
@@ -682,14 +712,17 @@ function HomePage() {
     }
 
     const previousPushedNotifications = pushedGameNotifications;
+    const previousModalNotification = modalGameNotification;
     const previousVisibleNotification = visibleGameNotification;
     setPushedGameNotifications([]);
+    setModalGameNotification(null);
     setVisibleGameNotification(null);
 
     try {
       await deleteGameNotificationsMutation.mutateAsync();
     } catch (error) {
       setPushedGameNotifications(previousPushedNotifications);
+      setModalGameNotification(previousModalNotification);
       setVisibleGameNotification(previousVisibleNotification);
       throw error;
     }
@@ -697,6 +730,7 @@ function HomePage() {
     accessToken,
     deleteGameNotificationsMutation,
     gameNotifications.length,
+    modalGameNotification,
     pushedGameNotifications,
     visibleGameNotification,
   ]);
@@ -706,22 +740,26 @@ function HomePage() {
     }
 
     const previousPushedNotifications = pushedGameNotifications;
+    const previousModalNotification = modalGameNotification;
     const previousVisibleNotification = visibleGameNotification;
     setPushedGameNotifications((notifications) =>
       notifications.filter((notification) => notification.id !== notificationId),
     );
+    setModalGameNotification((notification) => notification?.id === notificationId ? null : notification);
     setVisibleGameNotification((notification) => notification?.id === notificationId ? null : notification);
 
     try {
       await deleteGameNotificationMutation.mutateAsync(notificationId);
     } catch (error) {
       setPushedGameNotifications(previousPushedNotifications);
+      setModalGameNotification(previousModalNotification);
       setVisibleGameNotification(previousVisibleNotification);
       throw error;
     }
   }, [
     accessToken,
     deleteGameNotificationMutation,
+    modalGameNotification,
     pushedGameNotifications,
     visibleGameNotification,
   ]);
@@ -732,6 +770,7 @@ function HomePage() {
 
     await markGameNotificationsReadMutation.mutateAsync();
     setPushedGameNotifications([]);
+    setModalGameNotification(null);
     setVisibleGameNotification(null);
     await refetchGameNotifications();
   }, [
@@ -2307,6 +2346,7 @@ function HomePage() {
     activeTradeModal === 'sell' && Boolean(selectedVideoId) && selectedVideoOpenPositionCount > 0;
   const isAnyModalOpen =
     isGameIntroModalOpen ||
+    Boolean(modalGameNotification) ||
     isRankHistoryModalOpen ||
     isRegionModalOpen ||
     isGameModalOpen ||
@@ -2528,6 +2568,10 @@ function HomePage() {
       <GameNotificationToast
         notification={visibleGameNotification}
         onDismiss={() => setVisibleGameNotification(null)}
+      />
+      <GameNotificationModal
+        notification={modalGameNotification}
+        onClose={() => setModalGameNotification(null)}
       />
       <GameIntroModal
         isOpen={isGameIntroModalOpen}
