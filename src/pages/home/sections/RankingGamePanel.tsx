@@ -190,14 +190,6 @@ function formatHighlightScore(score?: number | null) {
   return `${score.toLocaleString('ko-KR')}점`;
 }
 
-function getLeaderboardHighlightLabel(entry: GameLeaderboardEntry) {
-  if (!entry.topHighlightType) {
-    return '아직 하이라이트 없음';
-  }
-
-  return `${getLeaderboardHighlightTypeLabel(entry.topHighlightType)} · ${entry.highlightCount}개`;
-}
-
 function getLeaderboardHighlightTypeLabel(type: string) {
   if (type === 'MOONSHOT') {
     return '문샷';
@@ -415,10 +407,6 @@ function LeaderboardRow({
               {formatHighlightScore(entry.highlightScore)}
             </p>
           </div>
-          <p className="app-shell__game-leaderboard-meta">
-            {getLeaderboardHighlightLabel(entry)}
-            {' · '}실시간 수익률 <span data-tone={getPointTone(entry.unrealizedPnlPoints)}>{formatSignedPercent(entry.profitRatePercent)}</span>
-          </p>
         </div>
         <span className="app-shell__game-leaderboard-expand" aria-hidden="true">
           ▾
@@ -955,6 +943,8 @@ export function RankingGamePositionsTab({
                     </span>
                     {' · '}
                     <span className="app-shell__game-position-meta-label">순위</span>{' '}
+                    <span className="app-shell__game-position-rank">{formatRank(holding.buyRank)}</span>
+                    {' → '}
                     <span className="app-shell__game-position-rank" data-chart-out={holding.chartOut || undefined}>
                       {formatRank(holding.currentRank, {
                         chartOut: holding.chartOut,

@@ -1,8 +1,14 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { GameHighlight, GameLeaderboardEntry, GamePosition } from '../../../features/game/types';
+import type { OpenGameHolding } from '../gameHelpers';
 import { HISTORY_PLAYBACK_QUEUE_ID } from '../utils';
-import { RankingGameHistoryTab, RankingGameLeaderboardTab, RankingGameSelectedVideoActions } from './RankingGamePanel';
+import {
+  RankingGameHistoryTab,
+  RankingGameLeaderboardTab,
+  RankingGamePositionsTab,
+  RankingGameSelectedVideoActions,
+} from './RankingGamePanel';
 
 function createGamePosition(overrides: Partial<GamePosition>): GamePosition {
   return {
@@ -83,6 +89,32 @@ function createLeaderboardEntry(overrides: Partial<GameLeaderboardEntry> = {}): 
     unrealizedPnlPoints: 100,
     openPositionCount: 1,
     me: false,
+    ...overrides,
+  };
+}
+
+function createOpenGameHolding(overrides: Partial<OpenGameHolding> = {}): OpenGameHolding {
+  return {
+    positionId: 1,
+    videoId: 'video-1',
+    title: 'Holding Video',
+    channelTitle: 'Channel',
+    thumbnailUrl: '',
+    buyRank: 96,
+    currentRank: 47,
+    chartOut: false,
+    quantity: 1,
+    sellableQuantity: 1,
+    lockedQuantity: 0,
+    nextSellableInSeconds: null,
+    stakePoints: 100,
+    currentPricePoints: 200,
+    profitPoints: 100,
+    strategyTags: [],
+    achievedStrategyTags: [],
+    targetStrategyTags: [],
+    projectedHighlightScore: 2500,
+    createdAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
   };
 }
@@ -179,6 +211,25 @@ describe('RankingGameSelectedVideoActions', () => {
     expect(screen.getByRole('button', { name: '선택한 영상 매수' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '선택한 영상 매도' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '선택한 영상 차트' })).not.toBeInTheDocument();
+  });
+});
+
+describe('RankingGamePositionsTab', () => {
+  it('shows buy rank into current rank for open positions', () => {
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[createOpenGameHolding()]}
+        onSelectPosition={vi.fn()}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    expect(screen.getByText('순위')).toBeInTheDocument();
+    expect(screen.getByText('96위')).toBeInTheDocument();
+    expect(screen.getByText('47위')).toBeInTheDocument();
   });
 });
 
@@ -285,6 +336,31 @@ describe('RankingGameHistoryTab', () => {
 });
 
 describe('RankingGameLeaderboardTab', () => {
+  it('keeps highlight summary metadata out of the tier ranking row', () => {
+    render(
+      <RankingGameLeaderboardTab
+        entries={[createLeaderboardEntry()]}
+        error={null}
+        highlights={[]}
+        highlightsError={null}
+        highlightsTitle="소몰 캐시아웃님의 하이라이트"
+        isError={false}
+        isHighlightsError={false}
+        isHighlightsLoading={false}
+        isLoading={false}
+        onSelectHighlight={vi.fn()}
+        onToggleUser={vi.fn()}
+        selectedUserId={null}
+      />,
+    );
+
+    const row = screen.getByRole('button', { name: /소몰 캐시아웃/ });
+
+    expect(within(row).queryByText('하이라이트 3개')).not.toBeInTheDocument();
+    expect(within(row).queryByText(/실시간 수익률/)).not.toBeInTheDocument();
+    expect(within(row).queryByText('스몰 캐시아웃')).not.toBeInTheDocument();
+  });
+
   it('renders expanded leaderboard highlights with the richer card metadata', () => {
     const onSelectHighlight = vi.fn();
     const highlight = createGameHighlight();
