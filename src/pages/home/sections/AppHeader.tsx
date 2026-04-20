@@ -16,6 +16,8 @@ interface AppHeaderProps {
   onOpenGameModal?: () => void;
   onOpenRecentPlayback?: (videoId: string) => void;
   onClearGameNotifications?: () => void;
+  onDeleteGameNotification?: (notificationId: string) => void;
+  onSelectGameNotification?: (notification: GameNotification) => void;
   onRefreshGameNotifications?: () => Promise<void>;
   onRefreshProfile?: () => Promise<void>;
   onOpenTierModal?: () => void;
@@ -125,6 +127,8 @@ function AppHeader({
   onOpenGameModal,
   onOpenRecentPlayback,
   onClearGameNotifications,
+  onDeleteGameNotification,
+  onSelectGameNotification,
   onRefreshGameNotifications,
   onRefreshProfile,
   onOpenTierModal,
@@ -325,6 +329,11 @@ function AppHeader({
                       isLoading={isGameNotificationsLoading}
                       notifications={gameNotifications}
                       onClear={onClearGameNotifications}
+                      onDelete={onDeleteGameNotification}
+                      onSelect={(notification) => {
+                        setIsProfileCardOpen(false);
+                        onSelectGameNotification?.(notification);
+                      }}
                     />
                   </div>
                   <div className="app-shell__profile-card-section">

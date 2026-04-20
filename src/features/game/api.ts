@@ -80,6 +80,31 @@ export async function fetchGameNotifications(accessToken: string, regionCode: st
   });
 }
 
+export async function markGameNotificationsRead(accessToken: string, regionCode: string) {
+  const params = new URLSearchParams({ regionCode });
+
+  return fetchApi<void>(`/api/game/notifications/read?${params.toString()}`, {
+    method: 'PATCH',
+    headers: createAuthorizationHeader(accessToken),
+  });
+}
+
+export async function deleteGameNotifications(accessToken: string, regionCode: string) {
+  const params = new URLSearchParams({ regionCode });
+
+  return fetchApi<void>(`/api/game/notifications?${params.toString()}`, {
+    method: 'DELETE',
+    headers: createAuthorizationHeader(accessToken),
+  });
+}
+
+export async function deleteGameNotification(accessToken: string, notificationId: string) {
+  return fetchApi<void>(`/api/game/notifications/${notificationId}`, {
+    method: 'DELETE',
+    headers: createAuthorizationHeader(accessToken),
+  });
+}
+
 export async function fetchGameCoinTierProgress(accessToken: string, regionCode: string) {
   const params = new URLSearchParams({ regionCode });
 

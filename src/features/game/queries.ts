@@ -2,6 +2,8 @@ import { QueryClient, useInfiniteQuery, useMutation, useQuery, useQueryClient } 
 import {
   fetchBuyableMarketChart,
   buyGamePosition,
+  deleteGameNotification,
+  deleteGameNotifications,
   fetchCurrentGameSeason,
   fetchGameCoinOverview,
   fetchGameCoinTierProgress,
@@ -15,10 +17,16 @@ import {
   fetchGamePositionRankHistory,
   fetchMySeasonCoinResult,
   fetchMyGamePositions,
+  markGameNotificationsRead,
   sellGamePosition,
   sellGamePositions,
 } from './api';
-import type { CreateGamePositionInput, SellGamePositionsInput } from './types';
+import type {
+  CreateGamePositionInput,
+  GameCurrentSeason,
+  GameNotification,
+  SellGamePositionsInput,
+} from './types';
 
 export const gameQueryKeys = {
   buyableMarketChart: (accessToken: string | null, regionCode: string | null) =>
@@ -232,6 +240,123 @@ export function useGameNotifications(accessToken: string | null, regionCode: str
     queryKey: gameQueryKeys.notifications(accessToken, regionCode),
     queryFn: () => fetchGameNotifications(accessToken as string, regionCode),
     staleTime: 1000 * 15,
+  });
+}
+
+function removeNotificationFromSeason(season: GameCurrentSeason | undefined, notificationId: string) {
+  if (!season?.notifications) {
+    return season;
+  }
+
+  return {
+    ...season,
+    notifications: season.notifications.filter((notification) => notification.id !== notificationId),
+  };
+}
+
+function clearNotificationsFromSeason(season: GameCurrentSeason | undefined) {
+  return season?.notifications ? { ...season, notifications: [] } : season;
+}
+
+export function useMarkGameNotificationsRead(accessToken: string | null, regionCode: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => markGameNotificationsRead(accessToken as string, regionCode),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: gameQueryKeys.notifications(accessToken, regionCode),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: gameQueryKeys.currentSeason(accessToken, regionCode),
+        refetchType: 'active',
+      });
+    },
+  });
+}
+
+export function useDeleteGameNotifications(accessToken: string | null, regionCode: string) {
+  const queryClient = useQueryClient();
+  const notificationsKey = gameQueryKeys.notifications(accessToken, regionCode);
+  const seasonKey = gameQueryKeys.currentSeason(accessToken, regionCode);
+
+  return useMutation({
+    mutationFn: () => deleteGameNotifications(accessToken as string, regionCode),
+    onMutate: async () => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: notificationsKey }),
+        queryClient.cancelQueries({ queryKey: seasonKey }),
+      ]);
+
+      const previousNotifications = queryClient.getQueryData<GameNotification[]>(notificationsKey);
+      const previousSeason = queryClient.getQueryData<GameCurrentSeason>(seasonKey);
+
+      queryClient.setQueryData<GameNotification[]>(notificationsKey, []);
+      queryClient.setQueryData<GameCurrentSeason | undefined>(seasonKey, clearNotificationsFromSeason);
+
+      return { previousNotifications, previousSeason };
+    },
+    onError: (_error, _variables, context) => {
+      queryClient.setQueryData(notificationsKey, context?.previousNotifications);
+      queryClient.setQueryData(seasonKey, context?.previousSeason);
+    },
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: notificationsKey,
+          refetchType: 'active',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: seasonKey,
+          refetchType: 'active',
+        }),
+      ]);
+    },
+  });
+}
+
+export function useDeleteGameNotification(accessToken: string | null, regionCode: string) {
+  const queryClient = useQueryClient();
+  const notificationsKey = gameQueryKeys.notifications(accessToken, regionCode);
+  const seasonKey = gameQueryKeys.currentSeason(accessToken, regionCode);
+
+  return useMutation({
+    mutationFn: (notificationId: string) => deleteGameNotification(accessToken as string, notificationId),
+    onMutate: async (notificationId) => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: notificationsKey }),
+        queryClient.cancelQueries({ queryKey: seasonKey }),
+      ]);
+
+      const previousNotifications = queryClient.getQueryData<GameNotification[]>(notificationsKey);
+      const previousSeason = queryClient.getQueryData<GameCurrentSeason>(seasonKey);
+
+      queryClient.setQueryData<GameNotification[] | undefined>(notificationsKey, (notifications) =>
+        notifications?.filter((notification) => notification.id !== notificationId),
+      );
+      queryClient.setQueryData<GameCurrentSeason | undefined>(seasonKey, (season) =>
+        removeNotificationFromSeason(season, notificationId),
+      );
+
+      return { previousNotifications, previousSeason };
+    },
+    onError: (_error, _variables, context) => {
+      queryClient.setQueryData(notificationsKey, context?.previousNotifications);
+      queryClient.setQueryData(seasonKey, context?.previousSeason);
+    },
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: notificationsKey,
+          refetchType: 'active',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: seasonKey,
+          refetchType: 'active',
+        }),
+      ]);
+    },
   });
 }
 

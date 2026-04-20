@@ -36,6 +36,7 @@ export interface GameNotification {
   thumbnailUrl: string;
   strategyTags: GameStrategyType[];
   highlightScore: number;
+  readAt: string | null;
   createdAt: string;
 }
 

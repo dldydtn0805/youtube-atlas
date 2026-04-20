@@ -5,6 +5,8 @@ interface GameNotificationsPanelProps {
   isLoading?: boolean;
   notifications: GameNotification[];
   onClear?: () => void;
+  onDelete?: (notificationId: string) => void;
+  onSelect?: (notification: GameNotification) => void;
 }
 
 const notificationDateFormatter = new Intl.DateTimeFormat('ko-KR', {
@@ -37,7 +39,21 @@ function getNotificationLabel(type: string) {
   }
 }
 
-function GameNotificationsPanel({ isLoading = false, notifications, onClear }: GameNotificationsPanelProps) {
+function formatHighlightScore(score: number) {
+  if (!Number.isFinite(score)) {
+    return '집계 중';
+  }
+
+  return `+${score.toLocaleString('ko-KR')}점`;
+}
+
+function GameNotificationsPanel({
+  isLoading = false,
+  notifications,
+  onClear,
+  onDelete,
+  onSelect,
+}: GameNotificationsPanelProps) {
   return (
     <div className="game-notifications">
       <div className="game-notifications__header">
@@ -55,15 +71,31 @@ function GameNotificationsPanel({ isLoading = false, notifications, onClear }: G
         <div className="game-notifications__list">
           {notifications.slice(0, 8).map((notification) => (
             <article className="game-notifications__item" key={notification.id}>
-              <img alt="" className="game-notifications__thumb" src={notification.thumbnailUrl} />
-              <div className="game-notifications__copy">
-                <div className="game-notifications__meta">
-                  <span>{getNotificationLabel(notification.notificationType)}</span>
-                  <time dateTime={notification.createdAt}>{formatNotificationDate(notification.createdAt)}</time>
+              <button
+                aria-label={`${notification.videoTitle} 랭킹 기록 보기`}
+                className="game-notifications__select"
+                onClick={() => onSelect?.(notification)}
+                type="button"
+              >
+                <img alt="" className="game-notifications__thumb" src={notification.thumbnailUrl} />
+                <div className="game-notifications__copy">
+                  <span className="game-notifications__type">{getNotificationLabel(notification.notificationType)}</span>
+                  <strong>{notification.videoTitle}</strong>
+                  <span className="game-notifications__score">
+                    {formatHighlightScore(notification.highlightScore)}
+                  </span>
                 </div>
-                <strong>{notification.title}</strong>
-                <p>{notification.message}</p>
-                <span>{notification.videoTitle}</span>
+              </button>
+              <div className="game-notifications__footer">
+                <time dateTime={notification.createdAt}>{formatNotificationDate(notification.createdAt)}</time>
+                <button
+                  aria-label="알림 지우기"
+                  className="game-notifications__delete"
+                  onClick={() => onDelete?.(notification.id)}
+                  type="button"
+                >
+                  지우기
+                </button>
               </div>
             </article>
           ))}
