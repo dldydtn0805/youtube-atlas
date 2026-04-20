@@ -188,7 +188,10 @@ function AppHeader({
     <header className="app-shell__header">
       <div className="app-shell__header-top">
         <a className="app-shell__title-link" href="/" aria-label="YouTube Atlas 메인 페이지로 이동">
-          <h1 className="app-shell__title">YouTube Atlas</h1>
+          <h1 className="app-shell__title">
+            <span className="app-shell__title-main">YouTube Atlas</span>
+            <span className="app-shell__title-subtitle">the rank game</span>
+          </h1>
         </a>
         <div className="app-shell__header-actions">
           {authStatus === 'authenticated' && user ? (

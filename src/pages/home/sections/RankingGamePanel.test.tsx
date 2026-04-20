@@ -231,6 +231,46 @@ describe('RankingGamePositionsTab', () => {
     expect(screen.getByText('96위')).toBeInTheDocument();
     expect(screen.getByText('47위')).toBeInTheDocument();
   });
+
+  it('opens position trade actions from the holding card', () => {
+    const onOpenBuyTradeModal = vi.fn();
+    const onOpenSellTradeModal = vi.fn();
+
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[createOpenGameHolding()]}
+        onOpenBuyTradeModal={onOpenBuyTradeModal}
+        onOpenSellTradeModal={onOpenSellTradeModal}
+        onSelectPosition={vi.fn()}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 추가 매수' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 매도' }));
+
+    expect(onOpenBuyTradeModal).toHaveBeenCalledWith(expect.objectContaining({ id: 1, videoId: 'video-1' }));
+    expect(onOpenSellTradeModal).toHaveBeenCalledWith(expect.objectContaining({ id: 1, videoId: 'video-1' }));
+  });
+
+  it('disables sell action until a holding has sellable quantity', () => {
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[createOpenGameHolding({ sellableQuantity: 0 })]}
+        onOpenSellTradeModal={vi.fn()}
+        onSelectPosition={vi.fn()}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Holding Video 매도' })).toBeDisabled();
+  });
 });
 
 describe('RankingGameHistoryTab', () => {

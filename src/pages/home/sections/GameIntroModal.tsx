@@ -64,8 +64,8 @@ export default function GameIntroModal({ isOpen, onClose }: GameIntroModalProps)
                 <li className="app-shell__game-intro-item">
                   <strong className="app-shell__game-intro-title">하이라이트로 티어 올리기</strong>
                   <p className="app-shell__game-intro-copy">
-                    문샷, 스나이프, 스몰 캐시아웃, 빅 캐시아웃 조건은 동시에 만족할 수 있어요. 한 번의 플레이에 여러 전략
-                    태그가 함께 붙고, 점수도 태그별로 합산돼 시즌 티어와 랭킹에 반영됩니다.
+                    문샷은 100위 밖에서 산 영상이 20위 안에 드는 큰 역전, 스나이프는 150위 밖에서 사서 100위 안에
+                    드는 저격 플레이예요. 캐시아웃은 수익률 하이라이트로, 300% 이상은 스몰, 1000% 이상은 빅으로 기록됩니다.
                   </p>
                 </li>
                 <li className="app-shell__game-intro-item">

@@ -39,6 +39,8 @@ interface GamePanelSectionProps {
   isCollapsed: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
   onOpenCoinModal: () => void;
+  onOpenPositionBuyTradeModal?: (position: GamePosition) => void;
+  onOpenPositionSellTradeModal?: (position: GamePosition) => void;
   onSelectGameHistoryVideo: (position: GamePosition, playbackQueueId?: string) => void | Promise<void>;
   onSelectGamePositionVideo: (position: GamePosition) => void;
   onSelectTab: (tab: GameTab) => void;
@@ -78,6 +80,8 @@ export default function GamePanelSection({
   isCollapsed,
   newChartEntriesSection,
   onOpenCoinModal,
+  onOpenPositionBuyTradeModal,
+  onOpenPositionSellTradeModal,
   onSelectGameHistoryVideo,
   onSelectGamePositionVideo,
   onSelectTab,
@@ -128,6 +132,8 @@ export default function GamePanelSection({
       favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
       gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
       holdings={openGameHoldings}
+      onOpenBuyTradeModal={onOpenPositionBuyTradeModal}
+      onOpenSellTradeModal={onOpenPositionSellTradeModal}
       onSelectPosition={onSelectGamePositionVideo}
       selectedPositionId={selectedPositionId}
       trendSignalsByVideoId={trendSignalsByVideoId}
@@ -162,8 +168,8 @@ export default function GamePanelSection({
         <li className="app-shell__game-guide-item">
           <strong className="app-shell__game-guide-title">하이라이트로 티어 올리기</strong>
           <p className="app-shell__game-guide-copy">
-            문샷, 스나이프, 스몰 캐시아웃, 빅 캐시아웃은 한 플레이에 동시에 붙을 수 있어요. 붙은 전략 태그가 전부 함께
-            기록되고, 점수도 태그별로 합산돼 시즌 티어와 랭킹을 올립니다.
+            문샷은 100위 밖에서 산 영상이 20위 안에 드는 큰 역전, 스나이프는 150위 밖에서 사서 100위 안에
+            드는 저격 플레이예요. 캐시아웃은 수익률 하이라이트로, 300% 이상은 스몰, 1000% 이상은 빅으로 기록됩니다.
           </p>
         </li>
         <li className="app-shell__game-guide-item">

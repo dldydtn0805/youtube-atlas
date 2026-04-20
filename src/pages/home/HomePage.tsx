@@ -1825,6 +1825,20 @@ function HomePage() {
     },
     [gamePortfolioSection.categoryId, handleSelectVideoWithPreview, scrollToPlayerStage],
   );
+  const handleOpenPositionBuyTradeModal = useCallback(
+    (position: GamePosition) => {
+      handleSelectGamePositionVideo(position);
+      window.setTimeout(openBuyTradeModal, 0);
+    },
+    [handleSelectGamePositionVideo, openBuyTradeModal],
+  );
+  const handleOpenPositionSellTradeModal = useCallback(
+    (position: GamePosition) => {
+      handleSelectGamePositionVideo(position);
+      window.setTimeout(openSellTradeModal, 0);
+    },
+    [handleSelectGamePositionVideo, openSellTradeModal],
+  );
   const handleSelectGameHistoryVideo = useCallback(
     async (position: GamePosition) => {
       scrollToPlayerStage();
@@ -2080,6 +2094,8 @@ function HomePage() {
       isGameHistoryLoading={isGameHistoryLoading}
       newChartEntriesSection={sortedNewChartEntriesSection}
       onOpenCoinModal={openCoinModal}
+      onOpenPositionBuyTradeModal={handleOpenPositionBuyTradeModal}
+      onOpenPositionSellTradeModal={handleOpenPositionSellTradeModal}
       onSelectGameHistoryVideo={handleSelectGameHistoryVideo}
       onSelectGamePositionVideo={handleSelectGamePositionVideo}
       onSelectTab={handleSelectGameTab}

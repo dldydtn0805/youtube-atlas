@@ -111,6 +111,8 @@ interface RankingGamePositionsTabProps {
   favoriteTrendSignalsByVideoId: Record<string, VideoTrendSignal>;
   gameMarketSignalsByVideoId: Record<string, VideoTrendSignal>;
   holdings: OpenGameHolding[];
+  onOpenBuyTradeModal?: (position: GamePosition) => void;
+  onOpenSellTradeModal?: (position: GamePosition) => void;
   onSelectPosition: (position: GamePosition) => void;
   selectedPositionId?: number | null;
   trendSignalsByVideoId: Record<string, VideoTrendSignal>;
@@ -226,6 +228,32 @@ function getHoldingRankDiffBadge(holding: Pick<OpenGameHolding, 'buyRank' | 'cur
   }
 
   return { label: '유지', tone: 'steady' as const };
+}
+
+function mapHoldingToGamePosition(holding: OpenGameHolding): GamePosition {
+  return {
+    id: holding.positionId,
+    videoId: holding.videoId,
+    title: holding.title,
+    channelTitle: holding.channelTitle,
+    thumbnailUrl: holding.thumbnailUrl,
+    buyRank: holding.buyRank,
+    currentRank: holding.currentRank,
+    rankDiff: null,
+    quantity: holding.quantity,
+    stakePoints: holding.stakePoints,
+    currentPricePoints: holding.currentPricePoints,
+    profitPoints: holding.profitPoints,
+    strategyTags: holding.strategyTags,
+    achievedStrategyTags: holding.achievedStrategyTags,
+    targetStrategyTags: holding.targetStrategyTags,
+    projectedHighlightScore: holding.projectedHighlightScore,
+    chartOut: holding.chartOut,
+    status: 'OPEN',
+    buyCapturedAt: holding.createdAt,
+    createdAt: holding.createdAt,
+    closedAt: null,
+  };
 }
 
 function LeaderboardHighlightList({
@@ -856,6 +884,8 @@ export function RankingGamePositionsTab({
   canShowGameActions,
   emptyMessage,
   holdings,
+  onOpenBuyTradeModal,
+  onOpenSellTradeModal,
   onSelectPosition,
   selectedPositionId,
 }: RankingGamePositionsTabProps) {
@@ -892,36 +922,16 @@ export function RankingGamePositionsTab({
         const projectedHighlightScoreValue = formatHighlightScore(holding.projectedHighlightScore);
         const projectedHighlightStateText =
           strategyBadges.length === 0 ? '아직 노리는 하이라이트 조건이 없어요.' : null;
+        const position = mapHoldingToGamePosition(holding);
+        const canOpenBuyTrade = canShowGameActions && Boolean(onOpenBuyTradeModal);
+        const canOpenSellTrade =
+          canShowGameActions && holding.sellableQuantity > 0 && Boolean(onOpenSellTradeModal);
 
         return (
           <li key={holding.positionId} className="app-shell__game-position" data-selected={isSelectedPosition}>
             <button
               className="app-shell__game-position-select"
-              onClick={() =>
-                onSelectPosition({
-                  id: holding.positionId,
-                  videoId: holding.videoId,
-                  title: holding.title,
-                  channelTitle: holding.channelTitle,
-                  thumbnailUrl: holding.thumbnailUrl,
-                  buyRank: holding.buyRank,
-                  currentRank: holding.currentRank,
-                  rankDiff: null,
-                  quantity: holding.quantity,
-                  stakePoints: holding.stakePoints,
-                  currentPricePoints: holding.currentPricePoints,
-                  profitPoints: holding.profitPoints,
-                  strategyTags: holding.strategyTags,
-                  achievedStrategyTags: holding.achievedStrategyTags,
-                  targetStrategyTags: holding.targetStrategyTags,
-                  projectedHighlightScore: holding.projectedHighlightScore,
-                  chartOut: holding.chartOut,
-                  status: 'OPEN',
-                  buyCapturedAt: holding.createdAt,
-                  createdAt: holding.createdAt,
-                  closedAt: null,
-                })
-              }
+              onClick={() => onSelectPosition(position)}
               type="button"
             >
               <img
@@ -998,6 +1008,46 @@ export function RankingGamePositionsTab({
               </div>
             </button>
             <div className="app-shell__game-position-side">
+              <div className="app-shell__game-position-actions" aria-label={`${holding.title} 거래`}>
+                <button
+                  aria-label={`${holding.title} 추가 매수`}
+                  className="app-shell__game-position-action"
+                  data-variant="buy"
+                  disabled={!canOpenBuyTrade}
+                  onClick={() => onOpenBuyTradeModal?.(position)}
+                  title={!canShowGameActions ? '전체 카테고리에서만 매수할 수 있습니다.' : '추가 매수'}
+                  type="button"
+                >
+                  <span className="app-shell__game-position-action-icon" aria-hidden="true">
+                    <svg fill="none" viewBox="0 0 24 24">
+                      <path d="M12 19V5M12 5l-5 5M12 5l5 5" />
+                    </svg>
+                  </span>
+                  <span className="app-shell__game-position-action-label">매수</span>
+                </button>
+                <button
+                  aria-label={`${holding.title} 매도`}
+                  className="app-shell__game-position-action"
+                  data-variant="sell"
+                  disabled={!canOpenSellTrade}
+                  onClick={() => onOpenSellTradeModal?.(position)}
+                  title={
+                    !canShowGameActions
+                      ? '전체 카테고리에서만 매도할 수 있습니다.'
+                      : holding.sellableQuantity > 0
+                        ? '매도'
+                        : '아직 매도 가능한 수량이 없습니다.'
+                  }
+                  type="button"
+                >
+                  <span className="app-shell__game-position-action-icon" aria-hidden="true">
+                    <svg fill="none" viewBox="0 0 24 24">
+                      <path d="M12 5v14M12 19l-5-5M12 19l5-5" />
+                    </svg>
+                  </span>
+                  <span className="app-shell__game-position-action-label">매도</span>
+                </button>
+              </div>
               {holdStatusText ? <span className="app-shell__game-position-hold">{holdStatusText}</span> : null}
             </div>
           </li>
