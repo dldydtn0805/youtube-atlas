@@ -768,11 +768,14 @@ function HomePage() {
       return;
     }
 
-    await markGameNotificationsReadMutation.mutateAsync();
+    await refetchGameNotifications();
     setPushedGameNotifications([]);
     setModalGameNotification(null);
     setVisibleGameNotification(null);
-    await refetchGameNotifications();
+
+    void markGameNotificationsReadMutation.mutateAsync().catch(() => {
+      // The notification list should remain usable even if read marking fails.
+    });
   }, [
     accessToken,
     markGameNotificationsReadMutation,

@@ -148,7 +148,9 @@ function AppHeader({
       : '집계 중';
   const tierSummary = currentTierName?.trim() || '미정';
   const [isProfileCardOpen, setIsProfileCardOpen] = useState(false);
+  const [isProfileRefreshing, setIsProfileRefreshing] = useState(false);
   const profileCardRef = useRef<HTMLDivElement | null>(null);
+  const profileRefreshRequestIdRef = useRef(0);
   const profileButtonLabel = `${userIdentityLabel} 프로필 정보 열기`;
   const playbackProgress = user?.lastPlaybackProgress ?? null;
   const recentPlaybackProgresses =
@@ -158,19 +160,36 @@ function AppHeader({
         ? [playbackProgress]
         : [];
 
-  const handleProfileButtonClick = async () => {
-    if (!isProfileCardOpen) {
-      try {
-        await Promise.all([
-          onRefreshProfile?.(),
-          onRefreshGameNotifications?.(),
-        ]);
-      } catch {
-        // Keep the profile card usable even if the background refresh fails.
-      }
+  const handleProfileButtonClick = () => {
+    if (isProfileCardOpen) {
+      setIsProfileCardOpen(false);
+      return;
     }
 
-    setIsProfileCardOpen((current) => !current);
+    setIsProfileCardOpen(true);
+
+    const refreshTasks = [
+      onRefreshProfile?.(),
+      onRefreshGameNotifications?.(),
+    ].filter((task): task is Promise<void> => Boolean(task));
+
+    if (refreshTasks.length === 0) {
+      return;
+    }
+
+    const requestId = profileRefreshRequestIdRef.current + 1;
+    profileRefreshRequestIdRef.current = requestId;
+    setIsProfileRefreshing(true);
+
+    void Promise.all(refreshTasks)
+      .catch(() => {
+        // Keep the profile card usable even if the background refresh fails.
+      })
+      .finally(() => {
+        if (profileRefreshRequestIdRef.current === requestId) {
+          setIsProfileRefreshing(false);
+        }
+      });
   };
 
   useEffect(() => {
@@ -286,6 +305,12 @@ function AppHeader({
               </button>
               {isProfileCardOpen ? (
                 <div className="app-shell__profile-card" role="dialog" aria-label="내 프로필 정보">
+                  {isProfileRefreshing ? (
+                    <div className="app-shell__profile-card-sync" role="status">
+                      <span className="app-shell__profile-card-sync-spinner" aria-hidden="true" />
+                      <span>최신 정보 불러오는 중</span>
+                    </div>
+                  ) : null}
                   <div className="app-shell__profile-card-header">
                     {user.pictureUrl ? (
                       <img
