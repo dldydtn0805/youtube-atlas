@@ -4,7 +4,7 @@ import {
   subscribeToAuthenticatedRealtimeTopic,
   subscribeToRealtimeTopic,
 } from '../realtime/stompClient';
-import { gameQueryKeys, invalidateGameQueries } from './queries';
+import { invalidateGameQueries } from './queries';
 import type { GameNotification, GameRealtimeEvent } from './types';
 
 const GAME_TOPIC_PREFIX = '/topic/game';
