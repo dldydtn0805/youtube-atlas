@@ -213,7 +213,6 @@ export interface AdminWalletUpdateRequest {
   balancePoints: number;
   reservedPoints: number;
   realizedPnlPoints: number;
-  tierScore: number;
 }
 
 export interface AdminPositionUpdateRequest {

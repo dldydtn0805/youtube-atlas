@@ -417,10 +417,9 @@ function UserDetailPanel({
     balancePoints: string;
     reservedPoints: string;
     realizedPnlPoints: string;
-    tierScore: string;
   };
   onWalletDraftChange: (
-    field: 'balancePoints' | 'reservedPoints' | 'realizedPnlPoints' | 'tierScore',
+    field: 'balancePoints' | 'reservedPoints' | 'realizedPnlPoints',
     value: string,
   ) => void;
   onSaveWallet: () => void;
@@ -537,22 +536,13 @@ function UserDetailPanel({
                   value={walletDraft.realizedPnlPoints}
                 />
               </label>
-              <label className="admin-page__field">
-                <span>티어 점수</span>
-                <input
-                  inputMode="numeric"
-                  onChange={(event) => onWalletDraftChange('tierScore', event.target.value)}
-                  type="text"
-                  value={walletDraft.tierScore}
-                />
-              </label>
             </div>
             <p className="admin-page__muted">
-              예약 포인트는 오픈 포지션과 연결되어 있을 수 있고, 티어 점수는 현재 티어 상태에 직접 반영됩니다. 수동 조정은 운영 기준으로만 사용하세요.
+              예약 포인트는 오픈 포지션과 연결되어 있을 수 있습니다. 티어 점수는 정산된 하이라이트 총합으로 자동 계산됩니다.
             </p>
             <div className="admin-page__action-row">
               <button className="admin-page__button" disabled={isSaving || isDeleting} onClick={onSaveWallet} type="button">
-                {isSaving ? '저장 중...' : '지갑/티어 저장'}
+                {isSaving ? '저장 중...' : '지갑 저장'}
               </button>
               <button
                 className="admin-page__button admin-page__button--danger"
@@ -693,7 +683,6 @@ export default function AdminPage() {
     balancePoints: '',
     reservedPoints: '',
     realizedPnlPoints: '',
-    tierScore: '',
   });
   const [selectedPositionId, setSelectedPositionId] = useState<number | null>(null);
   const [positionDraft, setPositionDraft] = useState({
@@ -827,7 +816,6 @@ export default function AdminPage() {
         balancePoints: '',
         reservedPoints: '',
         realizedPnlPoints: '',
-        tierScore: '',
       });
       return;
     }
@@ -836,7 +824,6 @@ export default function AdminPage() {
       balancePoints: String(game.balancePoints ?? 0),
       reservedPoints: String(game.reservedPoints ?? 0),
       realizedPnlPoints: String(game.realizedPnlPoints ?? 0),
-      tierScore: String(game.tierScore ?? 0),
     });
   }, [detailQuery.data, selectedSeasonId]);
 
@@ -876,7 +863,7 @@ export default function AdminPage() {
     dashboardQuery.error instanceof ApiRequestError && dashboardQuery.error.status === 403;
 
   const handleWalletDraftChange = (
-    field: 'balancePoints' | 'reservedPoints' | 'realizedPnlPoints' | 'tierScore',
+    field: 'balancePoints' | 'reservedPoints' | 'realizedPnlPoints',
     value: string,
   ) => {
     setWalletDraft((current) => ({
@@ -1014,7 +1001,6 @@ export default function AdminPage() {
         balancePoints: parsePointInput(walletDraft.balancePoints, '가용 포인트'),
         reservedPoints: parsePointInput(walletDraft.reservedPoints, '예약 포인트'),
         realizedPnlPoints: parsePointInput(walletDraft.realizedPnlPoints, '실현 손익'),
-        tierScore: parsePointInput(walletDraft.tierScore, '티어 점수'),
       };
 
       setActionMessage(null);
