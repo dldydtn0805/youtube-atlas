@@ -53,8 +53,8 @@
   border: 1px solid var(--surface-stat-border);
   border-radius: 8px;
   display: grid;
-  gap: 5px;
-  padding: 6px;
+  gap: 8px;
+  padding: 8px;
 }
 
 .game-notifications__item[data-projected='true'] {
@@ -62,14 +62,14 @@
 }
 
 .game-notifications__select {
-  align-items: center;
+  align-items: stretch;
   background: transparent;
   border: 0;
   color: inherit;
   cursor: pointer;
   display: grid;
-  gap: 8px;
-  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
   padding: 0;
   text-align: left;
@@ -97,7 +97,7 @@
 
 .game-notifications__copy {
   display: grid;
-  gap: 3px;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -126,7 +126,6 @@
   font-weight: 800;
   gap: 6px;
   justify-content: space-between;
-  padding-left: 66px;
 }
 
 .game-notifications__copy strong,

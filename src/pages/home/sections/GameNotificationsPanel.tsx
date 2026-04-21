@@ -1,4 +1,5 @@
 import type { GameNotification } from '../../../features/game/types';
+import { getGameNotificationLabel } from './gameNotificationLabels';
 import { hasProjectedGameNotificationScore, hasResolvedGameNotificationScore } from './gameNotificationModalUtils';
 import './GameNotificationsPanel.css';
 
@@ -23,10 +24,6 @@ function formatNotificationDate(value: string) {
   }
 
   return notificationDateFormatter.format(parsed);
-}
-
-function getNotificationLabel(notification: GameNotification) {
-  return notification.title;
 }
 
 function formatHighlightScore(score: number | null) {
@@ -73,7 +70,7 @@ function GameNotificationsPanel({
               >
                 <img alt="" className="game-notifications__thumb" src={notification.thumbnailUrl} />
                 <div className="game-notifications__copy">
-                  <span className="game-notifications__type">{getNotificationLabel(notification)}</span>
+                  <span className="game-notifications__type">{getGameNotificationLabel(notification)}</span>
                   <strong>{notification.videoTitle}</strong>
                   <span
                     className="game-notifications__score"
