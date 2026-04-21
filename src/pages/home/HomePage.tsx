@@ -2774,14 +2774,14 @@ function HomePage() {
           { label: '수량', value: formatGameOrderQuantity(resolvedSellSummary.quantity) },
           { label: '정산 금액', value: formatPoints(resolvedSellSummary.settledPoints) },
           {
-            label: '예상 티어 점수',
+            label: '해당 매도 시 티어 점수',
             value:
               sellPreviewQuery.isLoading || sellPreviewQuery.isFetching
                 ? '계산 중'
                 : formatTierScore(sellPreviewQuery.data?.projectedHighlightScore ?? 0),
           },
           {
-            label: '실제 반영',
+            label: '해당 매도 시 추가되는 티어 점수',
             tone:
               (sellPreviewQuery.data?.appliedHighlightScoreDelta ?? 0) > 0
                 ? 'gain'

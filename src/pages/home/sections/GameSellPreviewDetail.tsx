@@ -23,7 +23,7 @@ export default function GameSellPreviewDetail({ isLoading, preview }: GameSellPr
     <div className="app-shell__game-trade-modal-detail-stack">
       <p className="app-shell__game-trade-modal-detail-copy">
         기존 최고 티어 점수보다 높아야 기록이 갱신됩니다. 이번 매도는 {preview.recordEligibleCount}건 갱신 예정이고,
-        실제 누적 반영은 {formatTierScore(preview.appliedHighlightScoreDelta)}입니다.
+        해당 매도 시 추가되는 티어 점수는 {formatTierScore(preview.appliedHighlightScoreDelta)}입니다.
       </p>
       <ul className="app-shell__game-trade-modal-preview-list">
         {preview.items.map((item) => (
@@ -31,7 +31,7 @@ export default function GameSellPreviewDetail({ isLoading, preview }: GameSellPr
             <div>
               <strong>#{item.buyRank} 매수분 · {formatGameOrderQuantity(item.quantity)}</strong>
               <p>
-                예상 티어 점수 {formatTierScore(item.projectedHighlightScore)} / 현재 최고 {formatTierScore(item.bestHighlightScore)}
+                해당 매도 시 티어 점수 {formatTierScore(item.projectedHighlightScore)} / 현재 최고 {formatTierScore(item.bestHighlightScore)}
               </p>
             </div>
             <span data-tone={item.willUpdateRecord ? 'gain' : 'flat'}>
