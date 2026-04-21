@@ -93,13 +93,11 @@ export function useGameNotificationRealtime(
         try {
           const notification = JSON.parse(messageBody) as GameNotification;
           notificationHandlerRef.current(notification);
-
-          if (regionCode) {
-            void queryClient.invalidateQueries({
-              queryKey: gameQueryKeys.notifications(accessToken, regionCode),
-              refetchType: 'active',
-            });
-          }
+          void invalidateGameQueries(queryClient, {
+            accessToken,
+            includeLeaderboardPositions: true,
+            regionCode: regionCode ?? null,
+          });
         } catch {
           // Ignore malformed notification messages.
         }

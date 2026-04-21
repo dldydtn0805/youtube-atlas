@@ -219,4 +219,5 @@ export interface AdminWalletUpdateRequest {
 export interface AdminPositionUpdateRequest {
   quantity: number;
   stakePoints: number;
+  createdAt?: string;
 }

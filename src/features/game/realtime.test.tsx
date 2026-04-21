@@ -180,6 +180,54 @@ describe('game realtime', () => {
     expect(invalidateGameQueriesMock).toHaveBeenCalledTimes(2);
   });
 
+  it('invalidates game queries when an authenticated game notification arrives', async () => {
+    const { useGameNotificationRealtime } = await import('./realtime');
+
+    function HookHarness() {
+      useGameNotificationRealtime('token-1', 'KR', vi.fn());
+      return null;
+    }
+
+    const queryClient = new QueryClient();
+
+    render(<HookHarness />, {
+      wrapper: createWrapper(queryClient),
+    });
+
+    const client = clientInstances.at(-1);
+    expect(client).toBeDefined();
+
+    client?.onConnect?.();
+    const callback = client?.subscribe.mock.calls.at(0)?.at(1) as
+      | ((message: { body: string }) => void)
+      | undefined;
+
+    callback?.({
+      body: JSON.stringify({
+        id: 'tier-promotion-1-DIAMOND',
+        notificationType: 'TIER_PROMOTION',
+        title: '티어 승급',
+        message: '다이아몬드 티어에 도달했습니다. 축하합니다!',
+        positionId: 300,
+        videoId: 'video-1',
+        videoTitle: '다이아몬드 티어 달성',
+        channelTitle: 'Channel',
+        thumbnailUrl: 'https://example.com/thumb.jpg',
+        strategyTags: [],
+        highlightScore: 40000,
+        readAt: null,
+        createdAt: '2026-04-11T10:00:01Z',
+        showModal: true,
+      }),
+    });
+
+    expect(invalidateGameQueriesMock).toHaveBeenCalledWith(queryClient, {
+      accessToken: 'token-1',
+      includeLeaderboardPositions: true,
+      regionCode: 'KR',
+    });
+  });
+
   it('shares the same realtime client with comments subscriptions', async () => {
     const { useComments } = await import('../comments/queries');
     const { useGameRealtimeInvalidation } = await import('./realtime');

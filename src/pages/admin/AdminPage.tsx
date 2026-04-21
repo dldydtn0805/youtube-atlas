@@ -406,8 +406,9 @@ function UserDetailPanel({
   positionDraft: {
     quantity: string;
     stakePoints: string;
+    createdAt: string;
   };
-  onPositionDraftChange: (field: 'quantity' | 'stakePoints', value: string) => void;
+  onPositionDraftChange: (field: 'quantity' | 'stakePoints' | 'createdAt', value: string) => void;
   onSavePosition: () => void;
   isSavingPosition: boolean;
   selectedSeasonId: number | null;
@@ -634,9 +635,17 @@ function UserDetailPanel({
                       value={positionDraft.stakePoints}
                     />
                   </label>
+                  <label className="admin-page__field">
+                    <span>구매 시간</span>
+                    <input
+                      onChange={(event) => onPositionDraftChange('createdAt', event.target.value)}
+                      type="datetime-local"
+                      value={positionDraft.createdAt}
+                    />
+                  </label>
                 </div>
                 <p className="admin-page__muted">
-                  수량은 100 단위로만 수정할 수 있습니다. 매수 금액을 수정하면 지갑의 가용 포인트와 예약 포인트도 함께 보정됩니다.
+                  수량은 100 단위로만 수정할 수 있습니다. 매수 금액을 수정하면 지갑의 가용 포인트와 예약 포인트도 함께 보정됩니다. 구매 시간을 바꾸면 해당 시각 이전의 스냅샷으로 매수 랭크와 매수 시각이 다시 계산됩니다.
                 </p>
                 <div className="admin-page__action-row">
                   <button className="admin-page__button" disabled={isSavingPosition} onClick={onSavePosition} type="button">
@@ -690,6 +699,7 @@ export default function AdminPage() {
   const [positionDraft, setPositionDraft] = useState({
     quantity: '',
     stakePoints: '',
+    createdAt: '',
   });
   const [commentCleanupDraft, setCommentCleanupDraft] = useState('');
   const [tradeHistoryCleanupDraft, setTradeHistoryCleanupDraft] = useState('');
@@ -838,6 +848,7 @@ export default function AdminPage() {
       setPositionDraft({
         quantity: '',
         stakePoints: '',
+        createdAt: '',
       });
       return;
     }
@@ -845,6 +856,7 @@ export default function AdminPage() {
     setPositionDraft({
       quantity: String(position.quantity),
       stakePoints: String(position.stakePoints),
+      createdAt: formatDateTimeInput(position.createdAt),
     });
   }, [positionsQuery.data, selectedPositionId]);
 
@@ -889,7 +901,7 @@ export default function AdminPage() {
     }));
   };
 
-  const handlePositionDraftChange = (field: 'quantity' | 'stakePoints', value: string) => {
+  const handlePositionDraftChange = (field: 'quantity' | 'stakePoints' | 'createdAt', value: string) => {
     setPositionDraft((current) => ({
       ...current,
       [field]: value,
@@ -1056,6 +1068,9 @@ export default function AdminPage() {
       const request = {
         quantity: parsePointInput(positionDraft.quantity, '수량'),
         stakePoints: parsePointInput(positionDraft.stakePoints, '매수 금액'),
+        createdAt: positionDraft.createdAt.trim()
+          ? parseDateTimeInput(positionDraft.createdAt, '구매 시간')
+          : undefined,
       };
 
       setActionMessage(null);
