@@ -2,6 +2,7 @@ import { fetchApi } from '../../lib/api';
 import type {
   AdminCommentCleanupRequest,
   AdminCommentCleanupResponse,
+  AdminCoinTierSummary,
   AdminDashboard,
   AdminHighlightHistoryCleanupRequest,
   AdminHighlightHistoryCleanupResponse,
@@ -13,14 +14,84 @@ import type {
   AdminTradeHistoryCleanupRequest,
   AdminTradeHistoryCleanupResponse,
   AdminUserDetail,
+  AdminUserGameSummary,
   AdminUserHighlightSummary,
   AdminUserList,
   AdminUserPosition,
   AdminWalletUpdateRequest,
 } from './types';
 
+type ApiAdminTierSummary = Omit<AdminCoinTierSummary, 'minCoinBalance'> & {
+  minCoinBalance?: number | null;
+  minScore?: number | null;
+};
+
+type ApiAdminUserGameSummary = Omit<AdminUserGameSummary, 'coinBalance' | 'currentCoinTier' | 'nextCoinTier'> & {
+  coinBalance?: number | null;
+  currentCoinTier?: ApiAdminTierSummary | null;
+  nextCoinTier?: ApiAdminTierSummary | null;
+  currentTier?: ApiAdminTierSummary | null;
+  nextTier?: ApiAdminTierSummary | null;
+};
+
+type ApiAdminUserDetail = Omit<AdminUserDetail, 'activeSeasonGame' | 'activeSeasonGames'> & {
+  activeSeasonGame?: ApiAdminUserGameSummary | null;
+  activeSeasonGames?: ApiAdminUserGameSummary[];
+};
+
+type ApiAdminTradeHistoryCleanupResponse = Omit<AdminTradeHistoryCleanupResponse, 'deletedCoinPayoutCount'> & {
+  deletedCoinPayoutCount?: number | null;
+};
+
 function createAuthorizationHeader(accessToken: string) {
   return { Authorization: `Bearer ${accessToken}` };
+}
+
+function normalizeNullableNumber(value: number | null | undefined) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function normalizeAdminTierSummary(tier: ApiAdminTierSummary | null | undefined): AdminCoinTierSummary | null {
+  if (!tier) {
+    return null;
+  }
+
+  return {
+    ...tier,
+    minCoinBalance:
+      typeof tier.minCoinBalance === 'number' && Number.isFinite(tier.minCoinBalance)
+        ? tier.minCoinBalance
+        : typeof tier.minScore === 'number' && Number.isFinite(tier.minScore)
+          ? tier.minScore
+          : 0,
+  };
+}
+
+function normalizeAdminUserGameSummary(
+  gameSummary: ApiAdminUserGameSummary | null | undefined,
+): AdminUserGameSummary | null {
+  if (!gameSummary) {
+    return null;
+  }
+
+  return {
+    ...gameSummary,
+    coinBalance: typeof gameSummary.coinBalance === 'number' ? gameSummary.coinBalance : 0,
+    currentCoinTier: normalizeAdminTierSummary(gameSummary.currentCoinTier ?? gameSummary.currentTier),
+    nextCoinTier: normalizeAdminTierSummary(gameSummary.nextCoinTier ?? gameSummary.nextTier),
+  };
+}
+
+function normalizeAdminUserDetail(userDetail: ApiAdminUserDetail): AdminUserDetail {
+  return {
+    ...userDetail,
+    activeSeasonGame: normalizeAdminUserGameSummary(userDetail.activeSeasonGame),
+    activeSeasonGames: Array.isArray(userDetail.activeSeasonGames)
+      ? userDetail.activeSeasonGames
+          .map((gameSummary) => normalizeAdminUserGameSummary(gameSummary))
+          .filter((gameSummary): gameSummary is AdminUserGameSummary => gameSummary !== null)
+      : undefined,
+  };
 }
 
 export async function fetchAdminDashboard(accessToken: string) {
@@ -81,7 +152,7 @@ export async function purgeAdminTradeHistory(
   accessToken: string,
   request: AdminTradeHistoryCleanupRequest,
 ) {
-  return fetchApi<AdminTradeHistoryCleanupResponse>('/api/admin/trade-history/purge', {
+  const response = await fetchApi<ApiAdminTradeHistoryCleanupResponse>('/api/admin/trade-history/purge', {
     method: 'POST',
     headers: {
       ...createAuthorizationHeader(accessToken),
@@ -89,6 +160,11 @@ export async function purgeAdminTradeHistory(
     },
     body: JSON.stringify(request),
   });
+
+  return {
+    ...response,
+    deletedCoinPayoutCount: normalizeNullableNumber(response.deletedCoinPayoutCount),
+  };
 }
 
 export async function updateAdminSeasonSchedule(
@@ -142,9 +218,11 @@ export async function fetchAdminUsers(accessToken: string, query?: string | null
 }
 
 export async function fetchAdminUserDetail(accessToken: string, userId: number) {
-  return fetchApi<AdminUserDetail>(`/api/admin/users/${userId}`, {
+  const userDetail = await fetchApi<ApiAdminUserDetail>(`/api/admin/users/${userId}`, {
     headers: createAuthorizationHeader(accessToken),
   });
+
+  return normalizeAdminUserDetail(userDetail);
 }
 
 export async function fetchAdminUserHighlights(accessToken: string, userId: number, seasonId: number) {
@@ -168,7 +246,7 @@ export async function updateAdminUserWallet(
   userId: number,
   request: AdminWalletUpdateRequest,
 ) {
-  return fetchApi<AdminUserDetail>(`/api/admin/users/${userId}/wallet`, {
+  const userDetail = await fetchApi<ApiAdminUserDetail>(`/api/admin/users/${userId}/wallet`, {
     method: 'PATCH',
     headers: {
       ...createAuthorizationHeader(accessToken),
@@ -176,6 +254,8 @@ export async function updateAdminUserWallet(
     },
     body: JSON.stringify(request),
   });
+
+  return normalizeAdminUserDetail(userDetail);
 }
 
 export async function updateAdminUserPosition(

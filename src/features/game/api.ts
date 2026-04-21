@@ -2,6 +2,7 @@ import { fetchApi } from '../../lib/api';
 import type {
   CreateGamePositionInput,
   GameCoinOverview,
+  GameCoinTier,
   GameCoinTierProgress,
   GameCurrentSeason,
   GameHighlight,
@@ -17,16 +18,87 @@ import type {
 } from './types';
 import type { YouTubeCategorySection } from '../youtube/types';
 
+type ApiGameWallet = GameCurrentSeason['wallet'] & {
+  coinBalance?: number | null;
+};
+
+type ApiGameCoinTier = Omit<GameCoinTier, 'minCoinBalance'> & {
+  minCoinBalance?: number | null;
+  minScore?: number | null;
+};
+
+type ApiGameCoinTierProgress = Omit<GameCoinTierProgress, 'currentTier' | 'nextTier' | 'tiers' | 'coinBalance'> & {
+  coinBalance?: number | null;
+  currentTier: ApiGameCoinTier;
+  nextTier: ApiGameCoinTier | null;
+  tiers: ApiGameCoinTier[];
+};
+
+type ApiGameLeaderboardEntry = Omit<GameLeaderboardEntry, 'coinBalance' | 'currentTier'> & {
+  coinBalance?: number | null;
+  currentTier: ApiGameCoinTier;
+};
+
+type ApiGameCurrentSeason = Omit<GameCurrentSeason, 'wallet'> & {
+  wallet: ApiGameWallet;
+};
+
 function createAuthorizationHeader(accessToken: string) {
   return { Authorization: `Bearer ${accessToken}` };
+}
+
+function normalizeCoinBalance(value: number | null | undefined) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function normalizeGameCoinTier(tier: ApiGameCoinTier): GameCoinTier {
+  return {
+    ...tier,
+    minCoinBalance:
+      typeof tier.minCoinBalance === 'number' && Number.isFinite(tier.minCoinBalance)
+        ? tier.minCoinBalance
+        : typeof tier.minScore === 'number' && Number.isFinite(tier.minScore)
+          ? tier.minScore
+          : 0,
+  };
+}
+
+function normalizeGameCoinTierProgress(progress: ApiGameCoinTierProgress): GameCoinTierProgress {
+  return {
+    ...progress,
+    coinBalance: normalizeCoinBalance(progress.coinBalance),
+    currentTier: normalizeGameCoinTier(progress.currentTier),
+    nextTier: progress.nextTier ? normalizeGameCoinTier(progress.nextTier) : null,
+    tiers: progress.tiers.map(normalizeGameCoinTier),
+  };
+}
+
+function normalizeGameCurrentSeason(season: ApiGameCurrentSeason): GameCurrentSeason {
+  return {
+    ...season,
+    wallet: {
+      ...season.wallet,
+      coinBalance: normalizeCoinBalance(season.wallet.coinBalance),
+    },
+  };
+}
+
+function normalizeGameLeaderboardEntry(entry: ApiGameLeaderboardEntry): GameLeaderboardEntry {
+  return {
+    ...entry,
+    coinBalance: normalizeCoinBalance(entry.coinBalance),
+    currentTier: normalizeGameCoinTier(entry.currentTier),
+  };
 }
 
 export async function fetchCurrentGameSeason(accessToken: string, regionCode: string) {
   const params = new URLSearchParams({ regionCode });
 
-  return fetchApi<GameCurrentSeason>(`/api/game/seasons/current?${params.toString()}`, {
+  const season = await fetchApi<ApiGameCurrentSeason>(`/api/game/seasons/current?${params.toString()}`, {
     headers: createAuthorizationHeader(accessToken),
   });
+
+  return normalizeGameCurrentSeason(season);
 }
 
 export async function fetchGameMarket(accessToken: string, regionCode: string) {
@@ -52,9 +124,11 @@ export async function fetchBuyableMarketChart(accessToken: string, regionCode: s
 export async function fetchGameLeaderboard(accessToken: string, regionCode: string) {
   const params = new URLSearchParams({ regionCode });
 
-  return fetchApi<GameLeaderboardEntry[]>(`/api/game/leaderboard?${params.toString()}`, {
+  const leaderboard = await fetchApi<ApiGameLeaderboardEntry[]>(`/api/game/leaderboard?${params.toString()}`, {
     headers: createAuthorizationHeader(accessToken),
   });
+
+  return leaderboard.map(normalizeGameLeaderboardEntry);
 }
 
 export async function fetchGameCoinOverview(accessToken: string, regionCode: string) {
@@ -109,9 +183,11 @@ export async function deleteGameNotification(accessToken: string, notificationId
 export async function fetchGameCoinTierProgress(accessToken: string, regionCode: string) {
   const params = new URLSearchParams({ regionCode });
 
-  return fetchApi<GameCoinTierProgress>(`/api/game/tiers/current?${params.toString()}`, {
+  const progress = await fetchApi<ApiGameCoinTierProgress>(`/api/game/tiers/current?${params.toString()}`, {
     headers: createAuthorizationHeader(accessToken),
   });
+
+  return normalizeGameCoinTierProgress(progress);
 }
 
 export async function fetchMySeasonCoinResult(accessToken: string, seasonId: number) {
