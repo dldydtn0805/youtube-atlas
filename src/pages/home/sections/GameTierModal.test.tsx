@@ -1,14 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { GameCoinTierProgress } from '../../../features/game/types';
-import GameDividendModal from './GameDividendModal';
+import type { GameTierProgress } from '../../../features/game/types';
+import GameTierModal from './GameTierModal';
 
-const tierProgress: GameCoinTierProgress = {
-  coinBalance: 0,
+const tierProgress: GameTierProgress = {
   currentTier: {
     badgeCode: 'BRONZE',
     displayName: '브론즈',
-    minCoinBalance: 0,
+    minScore: 0,
     profileThemeCode: 'BRONZE',
     tierCode: 'BRONZE',
     titleCode: 'BRONZE',
@@ -21,9 +20,9 @@ const tierProgress: GameCoinTierProgress = {
   tiers: [],
 };
 
-describe('GameDividendModal', () => {
+describe('GameTierModal', () => {
   it('shows highlight tier guidance in the tier modal', () => {
-    render(<GameDividendModal isOpen onClose={() => undefined} tierProgress={tierProgress} />);
+    render(<GameTierModal isOpen onClose={() => undefined} tierProgress={tierProgress} />);
 
     expect(screen.getByRole('heading', { name: '티어' })).toBeInTheDocument();
     expect(screen.getByText('하이라이트 티어 기준')).toBeInTheDocument();
@@ -32,7 +31,7 @@ describe('GameDividendModal', () => {
 
   it('shows the highlights tab when highlight content is provided', () => {
     render(
-      <GameDividendModal
+      <GameTierModal
         highlightsContent={<div>하이라이트 목록</div>}
         isOpen
         onClose={() => undefined}

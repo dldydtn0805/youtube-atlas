@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
 import AppHeader from './sections/AppHeader';
 import { GameSelectedVideoPriceSummary, SelectedVideoGameActionsBundle } from './sections/GameActionContent';
-import GameCoinModal from './sections/GameDividendModal';
+import GameTierModal from './sections/GameTierModal';
 import GameHighlightsTab from './sections/GameHighlightsTab';
 import GamePanelModal from './sections/GamePanelModal';
 import { ChartViewModal, RegionFilterModal } from './sections/FilterPanels';
@@ -80,7 +80,7 @@ import {
   useCurrentGameSeason,
   useDeleteGameNotification,
   useDeleteGameNotifications,
-  useGameCoinTierProgress,
+  useGameTierProgress,
   useGameHighlights,
   useGameLeaderboard,
   useGameLeaderboardHighlights,
@@ -592,9 +592,9 @@ function HomePage() {
     isError: isBuyableMarketChartError,
   } = useBuyableMarketChart(accessToken, selectedRegionCode, shouldLoadGame);
   const {
-    data: gameCoinTierProgress,
-    error: gameCoinTierProgressError,
-  } = useGameCoinTierProgress(accessToken, selectedRegionCode, shouldLoadGame);
+    data: gameTierProgress,
+    error: gameTierProgressError,
+  } = useGameTierProgress(accessToken, selectedRegionCode, shouldLoadGame);
 
   useEffect(() => {
     if (!import.meta.env.DEV || typeof window === 'undefined') {
@@ -603,13 +603,11 @@ function HomePage() {
 
     window.__emitGameRealtimeTest = (event) => {
       const regionCode = event?.regionCode ?? selectedRegionCode;
-      const seasonId = event?.seasonId ?? currentGameSeason?.seasonId ?? null;
 
       void invalidateGameQueries(queryClient, {
         accessToken,
         includeLeaderboardPositions: true,
         regionCode,
-        seasonId,
       });
     };
     window.__emitGameNotificationTest = (notification) => {
@@ -1323,12 +1321,12 @@ function HomePage() {
   const {
     activeTradeModal,
     buyQuantity,
-    closeCoinModal,
+    closeTierModal,
     closeRankHistoryModal,
     closeTradeModal,
     getRemainingHoldSeconds,
-    isCoinModalOpen,
-    openCoinModal,
+    isTierModalOpen,
+    openTierModal,
     openRankHistoryModal,
     selectedRankHistoryPosition,
     selectedVideoRankHistoryVideoId,
@@ -1422,7 +1420,7 @@ function HomePage() {
   useLogoutOnUnauthorized(favoriteStreamerVideosError, logout);
   useLogoutOnUnauthorized(currentGameSeasonError, logout);
   useLogoutOnUnauthorized(gameLeaderboardError, logout);
-  useLogoutOnUnauthorized(gameCoinTierProgressError, logout);
+  useLogoutOnUnauthorized(gameTierProgressError, logout);
   useLogoutOnUnauthorized(gameMarketError, logout);
   useLogoutOnUnauthorized(buyableMarketChartError, logout);
   useLogoutOnUnauthorized(openGamePositionsError, logout);
@@ -1821,7 +1819,7 @@ function HomePage() {
 
       return (
         <TrendTicker
-          currentTierCode={gameCoinTierProgress?.currentTier.tierCode}
+          currentTierCode={gameTierProgress?.currentTier.tierCode}
           isAuthenticated={authStatus === 'authenticated'}
           items={topRankRisersSignals}
           onSelect={(videoId) => {
@@ -1833,7 +1831,7 @@ function HomePage() {
     [
       authStatus,
       handleSelectVideoWithPreview,
-      gameCoinTierProgress?.currentTier.tierCode,
+      gameTierProgress?.currentTier.tierCode,
       isAllCategorySelected,
       topRankRisersSignals,
       topRankRisersSection?.categoryId,
@@ -2305,7 +2303,7 @@ function HomePage() {
   const selectedLeaderboardHighlightsTitle = selectedLeaderboardEntry
     ? `${selectedLeaderboardEntry.displayName}님의 하이라이트`
     : '하이라이트';
-  const coinModalRankingContent = (
+  const tierModalRankingContent = (
     <RankingGameLeaderboardTab
       entries={gameLeaderboard}
       error={gameLeaderboardError}
@@ -2324,7 +2322,7 @@ function HomePage() {
       selectedUserId={selectedLeaderboardUserId}
     />
   );
-  const coinModalHighlightsContent = (
+  const tierModalHighlightsContent = (
     <GameHighlightsTab
       highlights={gameHighlights}
       isLoading={isGameHighlightsLoading}
@@ -2337,7 +2335,7 @@ function HomePage() {
       activePlaybackQueueId={activePlaybackQueueId}
       authStatus={authStatus}
       canShowGameActions={canShowGameActions}
-      coinTierProgress={gameCoinTierProgress}
+      tierProgress={gameTierProgress}
       computedWalletTotalAssetPoints={computedWalletTotalAssetPoints}
       currentGameSeason={currentGameSeason}
       currentGameSeasonUpdatedAt={currentGameSeasonUpdatedAt}
@@ -2352,7 +2350,7 @@ function HomePage() {
       isCollapsed={isModal ? false : isRankingGameCollapsed}
       isGameHistoryLoading={isGameHistoryLoading}
       newChartEntriesSection={sortedNewChartEntriesSection}
-      onOpenCoinModal={openCoinModal}
+      onOpenTierModal={openTierModal}
       onOpenHistoryChart={handleOpenGameHistoryChart}
       onOpenPositionChart={handleOpenGamePositionChart}
       onOpenPositionBuyTradeModal={handleOpenPositionBuyTradeModal}
@@ -2421,7 +2419,7 @@ function HomePage() {
     isRegionModalOpen ||
     isGameModalOpen ||
     isWalletModalOpen ||
-    isCoinModalOpen ||
+    isTierModalOpen ||
     isBuyTradeModalOpen ||
     isSellTradeModalOpen;
   const buyableVideoSearchOverlay =
@@ -2482,8 +2480,8 @@ function HomePage() {
     <div className="app-shell">
       <AppHeader
         authStatus={authStatus}
-        currentTierCode={gameCoinTierProgress?.currentTier.tierCode}
-        currentTierName={gameCoinTierProgress?.currentTier.displayName}
+        currentTierCode={gameTierProgress?.currentTier.tierCode}
+        currentTierName={gameTierProgress?.currentTier.displayName}
         isDarkMode={isDarkMode}
         isLoggingOut={isLoggingOut}
         onLogout={() => void logout()}
@@ -2494,7 +2492,7 @@ function HomePage() {
         onSelectGameNotification={handleSelectGameNotification}
         onRefreshGameNotifications={refreshGameNotifications}
         onRefreshProfile={refreshCurrentUser}
-        onOpenTierModal={openCoinModal}
+        onOpenTierModal={openTierModal}
         onOpenWalletModal={() => setIsWalletModalOpen(true)}
         onToggleThemeMode={handleToggleThemeMode}
         themeToggleLabel={themeToggleLabel}
@@ -2518,7 +2516,7 @@ function HomePage() {
             chartSortMode,
             chartSortOptions,
             collapsedFeaturedSectionIds,
-            currentTierCode: gameCoinTierProgress?.currentTier.tierCode,
+            currentTierCode: gameTierProgress?.currentTier.tierCode,
             featuredSections: activeChartFeaturedSections,
             getRankLabel: activeChartRankLabel,
             hasNextPage: activeChartHasNextPage,
@@ -2564,15 +2562,15 @@ function HomePage() {
               authStatus !== 'authenticated' || !selectedVideoId || isManualPlaybackSavePending,
             isMobileLayout,
             isSelectedChannelFavorited,
-            currentTierCode: gameCoinTierProgress?.currentTier.tierCode,
-            currentTierName: gameCoinTierProgress?.currentTier.displayName,
+            currentTierCode: gameTierProgress?.currentTier.tierCode,
+            currentTierName: gameTierProgress?.currentTier.displayName,
             manualPlaybackSaveButtonLabel: isManualPlaybackSavePending ? '저장 중...' : '저장',
             manualPlaybackSaveStatus: manualPlaybackSaveStatus ?? undefined,
             onManualPlaybackSave: () => void handleManualPlaybackSave(),
             onNextVideo: handlePlayNextVideoWithPreview,
             onOpenGameModal: () => setIsGameModalOpen(true),
             onOpenRegionModal: () => setIsRegionModalOpen(true),
-            onOpenTierModal: isMobileLayout ? openCoinModal : undefined,
+            onOpenTierModal: isMobileLayout ? openTierModal : undefined,
             onOpenWalletModal: isMobileLayout ? () => setIsWalletModalOpen(true) : undefined,
             onOpenViewModal: () => setIsChartViewModalOpen(true),
             onPlaybackRestoreApplied: handlePlaybackRestoreApplied,
@@ -2686,7 +2684,7 @@ function HomePage() {
       />
       <GameWalletModal
         computedWalletTotalAssetPoints={computedWalletTotalAssetPoints}
-        currentTierCode={gameCoinTierProgress?.currentTier.tierCode}
+        currentTierCode={gameTierProgress?.currentTier.tierCode}
         isOpen={isWalletModalOpen}
         onClose={() => setIsWalletModalOpen(false)}
         openDistinctVideoCount={openDistinctVideoCount}
@@ -2706,12 +2704,12 @@ function HomePage() {
         selectedViewId={effectiveChartView}
         viewOptions={chartViewOptions}
       />
-      <GameCoinModal
-        highlightsContent={coinModalHighlightsContent}
-        isOpen={isCoinModalOpen}
-        onClose={closeCoinModal}
-        rankingContent={coinModalRankingContent}
-        tierProgress={gameCoinTierProgress}
+      <GameTierModal
+        highlightsContent={tierModalHighlightsContent}
+        isOpen={isTierModalOpen}
+        onClose={closeTierModal}
+        rankingContent={tierModalRankingContent}
+        tierProgress={gameTierProgress}
       />
       <GameTradeModal
         confirmLabel={`${formatGameOrderQuantity(normalizedBuyQuantity)} 매수`}

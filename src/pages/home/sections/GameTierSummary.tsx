@@ -1,14 +1,14 @@
 import { useEffect, useRef, type PointerEvent } from 'react';
 
-import type { GameCoinTierProgress } from '../../../features/game/types';
+import type { GameTierProgress } from '../../../features/game/types';
 
 function formatScore(score: number) {
   return `${score.toLocaleString('ko-KR')}점`;
 }
 
-interface GameCoinTierSummaryProps {
-  progress?: GameCoinTierProgress;
-  surfaceVariant?: 'default' | 'season-coin';
+interface GameTierSummaryProps {
+  progress?: GameTierProgress;
+  surfaceVariant?: 'default' | 'highlight-tier';
   title?: string;
   showLadder?: boolean;
 }
@@ -16,24 +16,24 @@ interface GameCoinTierSummaryProps {
 const TIER_CARD_LONG_PRESS_MS = 320;
 const TIER_CARD_TOUCH_MOVE_TOLERANCE_PX = 12;
 
-function getTierProgressPercent(progress: GameCoinTierProgress) {
+function getTierProgressPercent(progress: GameTierProgress) {
   if (!progress.nextTier) {
     return 100;
   }
 
-  const currentFloor = progress.currentTier.minCoinBalance;
-  const nextFloor = progress.nextTier.minCoinBalance;
+  const currentFloor = progress.currentTier.minScore;
+  const nextFloor = progress.nextTier.minScore;
   const range = Math.max(nextFloor - currentFloor, 1);
   const progressed = Math.max(progress.highlightScore - currentFloor, 0);
 
   return Math.max(0, Math.min(100, (progressed / range) * 100));
 }
 
-function getTierCardNumber(progress: GameCoinTierProgress) {
+function getTierCardNumber(progress: GameTierProgress) {
   const tierCode = progress.currentTier.tierCode.slice(0, 4).padEnd(4, '0');
-  const currentFloor = String(progress.currentTier.minCoinBalance).padEnd(4, '0').slice(0, 4);
+  const currentFloor = String(progress.currentTier.minScore).padEnd(4, '0').slice(0, 4);
   const nextFloor = progress.nextTier
-    ? String(progress.nextTier.minCoinBalance).padEnd(4, '0').slice(0, 4)
+    ? String(progress.nextTier.minScore).padEnd(4, '0').slice(0, 4)
     : '9999';
   const score = String(progress.highlightScore).padStart(4, '0').slice(-4);
 
@@ -85,12 +85,12 @@ function handleTierCardPointerEnd(event: PointerEvent<HTMLDivElement>) {
   }
 }
 
-export default function GameCoinTierSummary({
+export default function GameTierSummary({
   progress,
   surfaceVariant = 'default',
   title = '현재 티어',
   showLadder = true,
-}: GameCoinTierSummaryProps) {
+}: GameTierSummaryProps) {
   const longPressTimeoutRef = useRef<number | null>(null);
   const mouseInteractionRef = useRef<{
     active: boolean;
@@ -261,7 +261,7 @@ export default function GameCoinTierSummary({
 
   const progressPercent = getTierProgressPercent(progress);
   const remainingToNextTier = progress.nextTier
-    ? Math.max(progress.nextTier.minCoinBalance - progress.highlightScore, 0)
+    ? Math.max(progress.nextTier.minScore - progress.highlightScore, 0)
     : 0;
   const tierCardNumber = getTierCardNumber(progress);
   const progressLabel = `${Math.round(progressPercent)}%`;
@@ -340,9 +340,9 @@ export default function GameCoinTierSummary({
           </div>
 
           <div className="app-shell__game-tier-progress-scale">
-            <span>{formatScore(progress.currentTier.minCoinBalance)}</span>
+            <span>{formatScore(progress.currentTier.minScore)}</span>
             <span>
-              {progress.nextTier ? formatScore(progress.nextTier.minCoinBalance) : 'MAX'}
+              {progress.nextTier ? formatScore(progress.nextTier.minScore) : 'MAX'}
             </span>
           </div>
         </div>
@@ -352,7 +352,7 @@ export default function GameCoinTierSummary({
         <ul className="app-shell__game-tier-ladder">
           {progress.tiers.map((tier) => {
             const isCurrent = tier.tierCode === progress.currentTier.tierCode;
-            const isReached = progress.highlightScore >= tier.minCoinBalance;
+            const isReached = progress.highlightScore >= tier.minScore;
 
             return (
               <li
@@ -363,7 +363,7 @@ export default function GameCoinTierSummary({
                 data-tier-code={tier.tierCode}
               >
                 <span className="app-shell__game-tier-step-name">{tier.displayName}</span>
-                <span className="app-shell__game-tier-step-value">{formatScore(tier.minCoinBalance)}</span>
+                <span className="app-shell__game-tier-step-value">{formatScore(tier.minScore)}</span>
               </li>
             );
           })}

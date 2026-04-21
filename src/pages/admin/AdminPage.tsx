@@ -24,7 +24,7 @@ import type {
   AdminSeasonSummary,
   AdminTrendSnapshotHistoryItem,
   AdminTrendSnapshot,
-  AdminCoinTierSummary,
+  AdminTierSummary,
   AdminUserDetail,
   AdminUserGameSummary,
   AdminUserHighlightSummary,
@@ -70,12 +70,12 @@ function formatDurationSeconds(value: number | null | undefined) {
     .join(':');
 }
 
-function getRemainingScoreToNextTier(tierScore: number | null | undefined, nextTier: AdminCoinTierSummary | null | undefined) {
+function getRemainingScoreToNextTier(tierScore: number | null | undefined, nextTier: AdminTierSummary | null | undefined) {
   if (typeof tierScore !== 'number' || !nextTier) {
     return null;
   }
 
-  return Math.max(nextTier.minCoinBalance - tierScore, 0);
+  return Math.max(nextTier.minScore - tierScore, 0);
 }
 
 function getActiveSeasonGames(user: AdminUserDetail | null | undefined) {
@@ -450,7 +450,7 @@ function UserDetailPanel({
   const selectedPosition = positions.find((item) => item.id === selectedPositionId) ?? positions[0] ?? null;
   const remainingScoreToNextTier = getRemainingScoreToNextTier(
     selectedSeasonGame?.tierScore,
-    selectedSeasonGame?.nextCoinTier,
+    selectedSeasonGame?.nextTier,
   );
 
   return (
@@ -526,8 +526,8 @@ function UserDetailPanel({
               <p><span>계산 티어 점수</span><strong>{formatNumber(selectedSeasonGame.calculatedTierScore)}</strong></p>
               <p><span>수동 보정값</span><strong>{formatNumber(selectedSeasonGame.manualTierScoreAdjustment)}</strong></p>
               <p><span>최종 티어 점수</span><strong>{formatNumber(selectedSeasonGame.tierScore)}</strong></p>
-              <p><span>현재 티어</span><strong>{selectedSeasonGame.currentCoinTier?.displayName ?? '-'}</strong></p>
-              <p><span>다음 티어</span><strong>{selectedSeasonGame.nextCoinTier?.displayName ?? '최종 티어'}</strong></p>
+              <p><span>현재 티어</span><strong>{selectedSeasonGame.currentTier?.displayName ?? '-'}</strong></p>
+              <p><span>다음 티어</span><strong>{selectedSeasonGame.nextTier?.displayName ?? '최종 티어'}</strong></p>
               <p><span>다음 티어까지</span><strong>{remainingScoreToNextTier !== null ? formatNumber(remainingScoreToNextTier) : '-'}</strong></p>
               <p><span>총 자산</span><strong>{formatNumber(selectedSeasonGame.totalAssetPoints)}</strong></p>
             </div>

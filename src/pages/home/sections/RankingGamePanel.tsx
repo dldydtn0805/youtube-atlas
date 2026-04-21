@@ -2,11 +2,11 @@ import './RankingGamePanel.css';
 import { memo, useEffect, useRef, type ReactNode, type RefObject } from 'react';
 import type { VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
 import type {
-  GameCoinTierProgress,
   GameCurrentSeason,
   GameHighlight,
   GameLeaderboardEntry,
   GamePosition,
+  GameTierProgress,
 } from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import {
@@ -29,7 +29,7 @@ import {
   GAME_PORTFOLIO_QUEUE_ID,
   HISTORY_PLAYBACK_QUEUE_ID,
 } from '../utils';
-import GameCoinTierSummary from './GameCoinTierSummary';
+import GameTierSummary from './GameTierSummary';
 import GameWalletSummary from './GameWalletSummary';
 import MiniVideoPreview from './MiniVideoPreview';
 import StickySelectedVideoHeaderCopy from './StickySelectedVideoHeaderCopy';
@@ -46,7 +46,7 @@ function inferGrossSellPointsFromSettled(settledPoints?: number | null) {
 
 interface RankingGamePanelShellProps {
   activeGameTab: GameTab;
-  coinTierProgress?: GameCoinTierProgress;
+  tierProgress?: GameTierProgress;
   dividendOverview?: ReactNode;
   isCollapsed: boolean;
   onSelectTab: (tab: GameTab) => void;
@@ -133,7 +133,7 @@ interface RankingGameHistoryTabProps {
 }
 
 interface RankingGameCoinOverviewProps {
-  coinTierProgress?: GameCoinTierProgress;
+  tierProgress?: GameTierProgress;
   onOpenDetails: () => void;
   season?: GameCurrentSeason;
 }
@@ -458,7 +458,7 @@ function LeaderboardRow({
 
 export function RankingGamePanelShell({
   activeGameTab,
-  coinTierProgress,
+  tierProgress,
   dividendOverview,
   isCollapsed,
   onSelectTab,
@@ -473,7 +473,7 @@ export function RankingGamePanelShell({
   const hasSelectedVideoActions = Boolean(selectedVideoActions);
 
   return (
-    <div className="app-shell__game-panel" data-current-tier={coinTierProgress?.currentTier.tierCode}>
+    <div className="app-shell__game-panel" data-current-tier={tierProgress?.currentTier.tierCode}>
       <div className="app-shell__game-panel-header">
         <div className="app-shell__game-panel-copy">
           <p className="app-shell__game-panel-eyebrow">Ranking Game</p>
@@ -511,7 +511,7 @@ export function RankingGamePanelShell({
               <div className="app-shell__game-panel-overview-side">
                 <GameWalletSummary
                   computedWalletTotalAssetPoints={summary.computedWalletTotalAssetPoints}
-                  currentTierCode={coinTierProgress?.currentTier.tierCode}
+                  currentTierCode={tierProgress?.currentTier.tierCode}
                   openDistinctVideoCount={summary.openDistinctVideoCount}
                   openPositionsBuyPoints={summary.openPositionsBuyPoints}
                   openPositionsEvaluationPoints={summary.openPositionsEvaluationPoints}
@@ -573,29 +573,29 @@ export function RankingGamePanelShell({
   );
 }
 
-export function RankingGameCoinOverview({
-  coinTierProgress,
+export function RankingGameTierOverview({
+  tierProgress,
   onOpenDetails,
   season,
 }: RankingGameCoinOverviewProps) {
-  if (!coinTierProgress && !season) {
+  if (!tierProgress && !season) {
     return null;
   }
 
-  const highlightScoreLabel = coinTierProgress
-    ? `${coinTierProgress.highlightScore.toLocaleString('ko-KR')}점`
+  const highlightScoreLabel = tierProgress
+    ? `${tierProgress.highlightScore.toLocaleString('ko-KR')}점`
     : '-';
 
   return (
     <section
       className="app-shell__game-dividend app-shell__game-dividend--preview"
       aria-label="하이라이트 티어 미리보기"
-      data-current-tier={coinTierProgress?.currentTier.tierCode}
+      data-current-tier={tierProgress?.currentTier.tierCode}
     >
-      <GameCoinTierSummary
-        progress={coinTierProgress}
+      <GameTierSummary
+        progress={tierProgress}
         showLadder={false}
-        surfaceVariant="season-coin"
+        surfaceVariant="highlight-tier"
         title="현재 티어 카드"
       />
       <div className="app-shell__game-dividend-header">
@@ -615,7 +615,7 @@ export function RankingGameCoinOverview({
           </div>
         </div>
       </div>
-      {coinTierProgress ? (
+      {tierProgress ? (
         <div className="app-shell__game-dividend-metrics app-shell__game-dividend-metrics--preview" aria-label="하이라이트 티어 요약">
           <span className="app-shell__game-dividend-metric">
             <span className="app-shell__game-dividend-metric-label">점수</span>
@@ -630,11 +630,11 @@ export function RankingGameCoinOverview({
           <span className="app-shell__game-dividend-metric">
             <span className="app-shell__game-dividend-metric-label">현재 티어</span>
             <strong className="app-shell__game-dividend-metric-value">
-              {coinTierProgress.currentTier.displayName}
+              {tierProgress.currentTier.displayName}
             </strong>
             <span className="app-shell__game-dividend-metric-detail">
-              {coinTierProgress.nextTier
-                ? `다음 ${coinTierProgress.nextTier.displayName}`
+              {tierProgress.nextTier
+                ? `다음 ${tierProgress.nextTier.displayName}`
                 : '최고 티어'}
             </span>
           </span>

@@ -6,8 +6,6 @@ import {
   deleteGameNotifications,
   fetchSellGamePreview,
   fetchCurrentGameSeason,
-  fetchGameCoinOverview,
-  fetchGameCoinTierProgress,
   fetchGameHighlights,
   fetchGameLeaderboard,
   fetchGameLeaderboardHighlights,
@@ -16,7 +14,7 @@ import {
   fetchGameMarket,
   fetchGameNotifications,
   fetchGamePositionRankHistory,
-  fetchMySeasonCoinResult,
+  fetchGameTierProgress,
   fetchMyGamePositions,
   markGameNotificationsRead,
   sellGamePosition,
@@ -34,10 +32,8 @@ export const gameQueryKeys = {
     ['game', 'buyableMarketChart', accessToken, regionCode] as const,
   currentSeason: (accessToken: string | null, regionCode: string | null) =>
     ['game', 'currentSeason', accessToken, regionCode] as const,
-  coinOverview: (accessToken: string | null, regionCode: string | null) =>
-    ['game', 'coinOverview', accessToken, regionCode] as const,
-  coinTierProgress: (accessToken: string | null, regionCode: string | null) =>
-    ['game', 'coinTierProgress', accessToken, regionCode] as const,
+  tierProgress: (accessToken: string | null, regionCode: string | null) =>
+    ['game', 'tierProgress', accessToken, regionCode] as const,
   leaderboard: (accessToken: string | null, regionCode: string | null) =>
     ['game', 'leaderboard', accessToken, regionCode] as const,
   highlights: (accessToken: string | null, regionCode: string | null) =>
@@ -67,20 +63,17 @@ export const gameQueryKeys = {
     videoId: string | null,
     quantity: number | null,
   ) => ['game', 'sellPreview', accessToken, regionCode, positionId, videoId, quantity] as const,
-  seasonCoinResult: (accessToken: string | null, seasonId: number | null) =>
-    ['game', 'seasonCoinResult', accessToken, seasonId] as const,
 };
 
 interface InvalidateGameQueriesOptions {
   accessToken: string | null;
   includeLeaderboardPositions?: boolean;
   regionCode?: string | null;
-  seasonId?: number | null;
 }
 
 export async function invalidateGameQueries(
   queryClient: QueryClient,
-  { accessToken, includeLeaderboardPositions = false, regionCode = null, seasonId = null }: InvalidateGameQueriesOptions,
+  { accessToken, includeLeaderboardPositions = false, regionCode = null }: InvalidateGameQueriesOptions,
 ) {
   if (!accessToken) {
     return;
@@ -99,11 +92,7 @@ export async function invalidateGameQueries(
         refetchType: 'active',
       }),
       queryClient.invalidateQueries({
-        queryKey: gameQueryKeys.coinOverview(accessToken, regionCode),
-        refetchType: 'active',
-      }),
-      queryClient.invalidateQueries({
-        queryKey: gameQueryKeys.coinTierProgress(accessToken, regionCode),
+        queryKey: gameQueryKeys.tierProgress(accessToken, regionCode),
         refetchType: 'active',
       }),
       queryClient.invalidateQueries({
@@ -138,11 +127,7 @@ export async function invalidateGameQueries(
         refetchType: 'active',
       }),
       queryClient.invalidateQueries({
-        queryKey: ['game', 'coinOverview', accessToken],
-        refetchType: 'active',
-      }),
-      queryClient.invalidateQueries({
-        queryKey: ['game', 'coinTierProgress', accessToken],
+        queryKey: ['game', 'tierProgress', accessToken],
         refetchType: 'active',
       }),
       queryClient.invalidateQueries({
@@ -176,15 +161,6 @@ export async function invalidateGameQueries(
       }),
       queryClient.invalidateQueries({
         queryKey: ['game', 'leaderboardHighlights', accessToken],
-        refetchType: 'active',
-      }),
-    );
-  }
-
-  if (typeof seasonId === 'number') {
-    invalidations.push(
-      queryClient.invalidateQueries({
-        queryKey: gameQueryKeys.seasonCoinResult(accessToken, seasonId),
         refetchType: 'active',
       }),
     );
@@ -368,20 +344,11 @@ export function useDeleteGameNotification(accessToken: string | null, regionCode
   });
 }
 
-export function useGameCoinOverview(accessToken: string | null, regionCode: string, enabled = true) {
+export function useGameTierProgress(accessToken: string | null, regionCode: string, enabled = true) {
   return useQuery({
     enabled: enabled && Boolean(accessToken) && Boolean(regionCode),
-    queryKey: gameQueryKeys.coinOverview(accessToken, regionCode),
-    queryFn: () => fetchGameCoinOverview(accessToken as string, regionCode),
-    staleTime: 1000 * 15,
-  });
-}
-
-export function useGameCoinTierProgress(accessToken: string | null, regionCode: string, enabled = true) {
-  return useQuery({
-    enabled: enabled && Boolean(accessToken) && Boolean(regionCode),
-    queryKey: gameQueryKeys.coinTierProgress(accessToken, regionCode),
-    queryFn: () => fetchGameCoinTierProgress(accessToken as string, regionCode),
+    queryKey: gameQueryKeys.tierProgress(accessToken, regionCode),
+    queryFn: () => fetchGameTierProgress(accessToken as string, regionCode),
     staleTime: 1000 * 15,
   });
 }
@@ -485,15 +452,6 @@ export function useGameLeaderboardPositionRankHistory(
     queryFn: () =>
       fetchGameLeaderboardPositionRankHistory(accessToken as string, userId as number, positionId as number, regionCode),
     staleTime: 1000 * 15,
-  });
-}
-
-export function useMySeasonCoinResult(accessToken: string | null, seasonId: number | null, enabled = true) {
-  return useQuery({
-    enabled: enabled && Boolean(accessToken) && typeof seasonId === 'number',
-    queryKey: gameQueryKeys.seasonCoinResult(accessToken, seasonId),
-    queryFn: () => fetchMySeasonCoinResult(accessToken as string, seasonId as number),
-    staleTime: 1000 * 60,
   });
 }
 

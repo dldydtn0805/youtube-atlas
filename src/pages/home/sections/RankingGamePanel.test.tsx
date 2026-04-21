@@ -70,7 +70,7 @@ function createLeaderboardEntry(overrides: Partial<GameLeaderboardEntry> = {}): 
     currentTier: {
       tierCode: 'PLATINUM',
       displayName: '플래티넘',
-      minCoinBalance: 1000,
+      minScore: 1000,
       badgeCode: 'badge',
       titleCode: 'title',
       profileThemeCode: 'theme',
@@ -78,7 +78,6 @@ function createLeaderboardEntry(overrides: Partial<GameLeaderboardEntry> = {}): 
     highlightScore: 37072,
     highlightCount: 3,
     topHighlightType: 'SMALL_CASHOUT',
-    coinBalance: 1000,
     totalAssetPoints: 2000,
     balancePoints: 1000,
     reservedPoints: 0,

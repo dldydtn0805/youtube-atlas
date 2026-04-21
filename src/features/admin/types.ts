@@ -154,10 +154,10 @@ export interface AdminPlaybackProgress {
   updatedAt: string;
 }
 
-export interface AdminCoinTierSummary {
+export interface AdminTierSummary {
   tierCode: string;
   displayName: string;
-  minCoinBalance: number;
+  minScore: number;
   badgeCode: string;
   titleCode: string;
   profileThemeCode: string;
@@ -174,10 +174,9 @@ export interface AdminUserGameSummary {
   calculatedTierScore: number | null;
   manualTierScoreAdjustment: number | null;
   tierScore: number | null;
-  coinBalance: number | null;
   totalAssetPoints: number | null;
-  currentCoinTier: AdminCoinTierSummary | null;
-  nextCoinTier: AdminCoinTierSummary | null;
+  currentTier: AdminTierSummary | null;
+  nextTier: AdminTierSummary | null;
   openPositionCount: number;
   closedPositionCount: number;
 }

@@ -1,26 +1,26 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import type { GameCoinTierProgress } from '../../../features/game/types';
+import type { GameTierProgress } from '../../../features/game/types';
 import { getFullscreenElement } from '../utils';
-import GameCoinTierSummary from './GameCoinTierSummary';
+import GameTierSummary from './GameTierSummary';
 import GameTierGuide from './GameTierGuide';
-import './GameDividendModal.css';
+import './GameTierModal.css';
 
-interface GameDividendModalProps {
+interface GameTierModalProps {
   highlightsContent?: ReactNode;
   isOpen: boolean;
   onClose: () => void;
   rankingContent?: ReactNode;
-  tierProgress?: GameCoinTierProgress;
+  tierProgress?: GameTierProgress;
 }
 
-export default function GameDividendModal({
+export default function GameTierModal({
   highlightsContent,
   isOpen,
   onClose,
   rankingContent,
   tierProgress,
-}: GameDividendModalProps) {
+}: GameTierModalProps) {
   const [activeTab, setActiveTab] = useState<'tier' | 'highlights' | 'ranking'>('tier');
 
   useEffect(() => {
@@ -63,10 +63,10 @@ export default function GameDividendModal({
         </div>
 
         <div className="app-shell__modal-body">
-          <div aria-label="티어 모달 탭" className="app-shell__coin-modal-tabs" role="tablist">
+          <div aria-label="티어 모달 탭" className="app-shell__tier-modal-tabs" role="tablist">
             <button
               aria-selected={activeTab === 'tier'}
-              className="app-shell__coin-modal-tab"
+              className="app-shell__tier-modal-tab"
               data-active={activeTab === 'tier'}
               onClick={() => setActiveTab('tier')}
               role="tab"
@@ -76,7 +76,7 @@ export default function GameDividendModal({
             </button>
             <button
               aria-selected={activeTab === 'highlights'}
-              className="app-shell__coin-modal-tab"
+              className="app-shell__tier-modal-tab"
               data-active={activeTab === 'highlights'}
               onClick={() => setActiveTab('highlights')}
               role="tab"
@@ -86,7 +86,7 @@ export default function GameDividendModal({
             </button>
             <button
               aria-selected={activeTab === 'ranking'}
-              className="app-shell__coin-modal-tab"
+              className="app-shell__tier-modal-tab"
               data-active={activeTab === 'ranking'}
               onClick={() => setActiveTab('ranking')}
               role="tab"
@@ -100,10 +100,10 @@ export default function GameDividendModal({
             <div className="app-shell__modal-fields" role="tabpanel">
               {tierProgress ? (
                 <section className="app-shell__modal-field app-shell__modal-field--tier">
-                  <GameCoinTierSummary
+                  <GameTierSummary
                     progress={tierProgress}
                     showLadder={false}
-                    surfaceVariant="season-coin"
+                    surfaceVariant="highlight-tier"
                     title="티어 진행 현황"
                   />
                 </section>
@@ -118,11 +118,11 @@ export default function GameDividendModal({
               </section>
             </div>
           ) : activeTab === 'highlights' ? (
-            <div className="app-shell__coin-modal-ranking" role="tabpanel">
+            <div className="app-shell__tier-modal-panel" role="tabpanel">
               {highlightsContent ?? <p className="app-shell__game-empty">하이라이트를 불러올 수 없습니다.</p>}
             </div>
           ) : (
-            <div className="app-shell__coin-modal-ranking" role="tabpanel">
+            <div className="app-shell__tier-modal-panel" role="tabpanel">
               {rankingContent ?? <p className="app-shell__game-empty">랭킹 정보를 불러올 수 없습니다.</p>}
             </div>
           )}

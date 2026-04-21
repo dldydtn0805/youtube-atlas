@@ -13,14 +13,14 @@ interface UseHomeGameUiStateOptions {
 interface UseHomeGameUiStateResult {
   activeTradeModal: 'buy' | 'sell' | null;
   buyQuantity: number;
-  closeCoinModal: () => void;
+  closeTierModal: () => void;
   closeRankHistoryModal: () => void;
   closeTradeModal: () => void;
   gameActionStatus: string | null;
   getRemainingHoldSeconds: (position: GamePosition) => number;
-  isCoinModalOpen: boolean;
+  isTierModalOpen: boolean;
   openBuyTradeModal: () => void;
-  openCoinModal: () => void;
+  openTierModal: () => void;
   openRankHistoryModal: (
     videoId: string | undefined,
     position: GamePosition | null,
@@ -45,7 +45,7 @@ export default function useHomeGameUiState({
   const [buyQuantity, setBuyQuantity] = useState(DEFAULT_GAME_QUANTITY);
   const [gameActionStatus, setGameActionStatus] = useState<string | null>(null);
   const [gameClock, setGameClock] = useState(() => Date.now());
-  const [isCoinModalOpen, setIsCoinModalOpen] = useState(false);
+  const [isTierModalOpen, setIsTierModalOpen] = useState(false);
   const [selectedRankHistoryPosition, setSelectedRankHistoryPosition] = useState<GamePosition | null>(null);
   const [selectedVideoRankHistoryVideoId, setSelectedVideoRankHistoryVideoId] = useState<string | null>(null);
   const [sellQuantity, setSellQuantity] = useState(DEFAULT_GAME_QUANTITY);
@@ -56,7 +56,7 @@ export default function useHomeGameUiState({
     }
 
     setGameActionStatus(null);
-    setIsCoinModalOpen(false);
+    setIsTierModalOpen(false);
     setSelectedRankHistoryPosition(null);
     setSelectedVideoRankHistoryVideoId(null);
   }, [authStatus]);
@@ -119,7 +119,7 @@ export default function useHomeGameUiState({
   return {
     activeTradeModal,
     buyQuantity,
-    closeCoinModal: () => setIsCoinModalOpen(false),
+    closeTierModal: () => setIsTierModalOpen(false),
     closeRankHistoryModal: () => {
       setSelectedRankHistoryPosition(null);
       setSelectedVideoRankHistoryVideoId(null);
@@ -127,9 +127,9 @@ export default function useHomeGameUiState({
     closeTradeModal: () => setActiveTradeModal(null),
     gameActionStatus,
     getRemainingHoldSeconds,
-    isCoinModalOpen,
+    isTierModalOpen,
     openBuyTradeModal: () => setActiveTradeModal('buy'),
-    openCoinModal: () => setIsCoinModalOpen(true),
+    openTierModal: () => setIsTierModalOpen(true),
     openRankHistoryModal,
     openSellTradeModal: () => setActiveTradeModal('sell'),
     selectedRankHistoryPosition,

@@ -2,7 +2,6 @@ import { fetchApi } from '../../lib/api';
 import type {
   AdminCommentCleanupRequest,
   AdminCommentCleanupResponse,
-  AdminCoinTierSummary,
   AdminDashboard,
   AdminHighlightHistoryCleanupRequest,
   AdminHighlightHistoryCleanupResponse,
@@ -13,6 +12,7 @@ import type {
   AdminTrendSnapshotHistory,
   AdminTradeHistoryCleanupRequest,
   AdminTradeHistoryCleanupResponse,
+  AdminTierSummary,
   AdminUserDetail,
   AdminUserGameSummary,
   AdminUserHighlightSummary,
@@ -21,13 +21,11 @@ import type {
   AdminWalletUpdateRequest,
 } from './types';
 
-type ApiAdminTierSummary = Omit<AdminCoinTierSummary, 'minCoinBalance'> & {
-  minCoinBalance?: number | null;
+type ApiAdminTierSummary = Omit<AdminTierSummary, 'minScore'> & {
   minScore?: number | null;
 };
 
-type ApiAdminUserGameSummary = Omit<AdminUserGameSummary, 'coinBalance' | 'currentCoinTier' | 'nextCoinTier'> & {
-  coinBalance?: number | null;
+type ApiAdminUserGameSummary = Omit<AdminUserGameSummary, 'currentTier' | 'nextTier'> & {
   currentCoinTier?: ApiAdminTierSummary | null;
   nextCoinTier?: ApiAdminTierSummary | null;
   currentTier?: ApiAdminTierSummary | null;
@@ -51,19 +49,14 @@ function normalizeNullableNumber(value: number | null | undefined) {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
-function normalizeAdminTierSummary(tier: ApiAdminTierSummary | null | undefined): AdminCoinTierSummary | null {
+function normalizeAdminTierSummary(tier: ApiAdminTierSummary | null | undefined): AdminTierSummary | null {
   if (!tier) {
     return null;
   }
 
   return {
     ...tier,
-    minCoinBalance:
-      typeof tier.minCoinBalance === 'number' && Number.isFinite(tier.minCoinBalance)
-        ? tier.minCoinBalance
-        : typeof tier.minScore === 'number' && Number.isFinite(tier.minScore)
-          ? tier.minScore
-          : 0,
+    minScore: typeof tier.minScore === 'number' && Number.isFinite(tier.minScore) ? tier.minScore : 0,
   };
 }
 
@@ -76,9 +69,8 @@ function normalizeAdminUserGameSummary(
 
   return {
     ...gameSummary,
-    coinBalance: typeof gameSummary.coinBalance === 'number' ? gameSummary.coinBalance : 0,
-    currentCoinTier: normalizeAdminTierSummary(gameSummary.currentCoinTier ?? gameSummary.currentTier),
-    nextCoinTier: normalizeAdminTierSummary(gameSummary.nextCoinTier ?? gameSummary.nextTier),
+    currentTier: normalizeAdminTierSummary(gameSummary.currentCoinTier ?? gameSummary.currentTier),
+    nextTier: normalizeAdminTierSummary(gameSummary.nextCoinTier ?? gameSummary.nextTier),
   };
 }
 

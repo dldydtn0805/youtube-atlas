@@ -3,7 +3,6 @@ export interface GameWallet {
   balancePoints: number;
   reservedPoints: number;
   realizedPnlPoints: number;
-  coinBalance: number;
   totalAssetPoints: number;
 }
 
@@ -67,11 +66,10 @@ export interface GameLeaderboardEntry {
   userId: number;
   displayName: string;
   pictureUrl: string | null;
-  currentTier: GameCoinTier;
+  currentTier: GameTier;
   highlightScore: number;
   highlightCount: number;
   topHighlightType: string | null;
-  coinBalance: number;
   totalAssetPoints: number;
   balancePoints: number;
   reservedPoints: number;
@@ -84,69 +82,25 @@ export interface GameLeaderboardEntry {
   me: boolean;
 }
 
-export interface GameCoinRank {
-  rank: number;
-  coinRatePercent: number;
-}
-
-export interface GameCoinTier {
+export interface GameTier {
   tierCode: string;
   displayName: string;
-  minCoinBalance: number;
+  minScore: number;
   badgeCode: string;
   titleCode: string;
   profileThemeCode: string;
 }
 
-export interface GameCoinTierProgress {
+export interface GameTierProgress {
   seasonId: number;
   seasonName: string;
   regionCode: string;
   highlightScore: number;
   calculatedHighlightScore?: number;
   manualTierScoreAdjustment?: number;
-  coinBalance: number;
-  currentTier: GameCoinTier;
-  nextTier: GameCoinTier | null;
-  tiers: GameCoinTier[];
-}
-
-export interface GameSeasonCoinResult {
-  seasonId: number;
-  seasonName: string;
-  regionCode: string;
-  finalCoinBalance: number;
-  finalTier: GameCoinTier;
-  finalizedAt: string;
-}
-
-export interface GameCoinPosition {
-  positionId: number;
-  videoId: string;
-  title: string;
-  thumbnailUrl: string;
-  currentRank: number | null;
-  quantity: number;
-  currentValuePoints: number | null;
-  rankEligible: boolean;
-  productionActive: boolean;
-  coinRatePercent: number;
-  holdBoostPercent: number;
-  effectiveCoinRatePercent: number;
-  estimatedCoinYield: number;
-  nextProductionInSeconds: number | null;
-  nextPayoutInSeconds: number | null;
-}
-
-export interface GameCoinOverview {
-  eligibleRankCutoff: number;
-  minimumHoldSeconds: number;
-  myCoinBalance: number;
-  myEstimatedCoinYield: number;
-  myActiveProducerCount: number;
-  myWarmingUpPositionCount: number;
-  ranks: GameCoinRank[];
-  positions: GameCoinPosition[];
+  currentTier: GameTier;
+  nextTier: GameTier | null;
+  tiers: GameTier[];
 }
 
 export interface GameHighlight {

@@ -2321,7 +2321,7 @@
   }
 
   :root[data-mobile-layout='true'] .app-shell__game-panel-overview-pages .app-shell__game-dividend--preview .app-shell__game-dividend-metrics--preview .app-shell__game-dividend-metric + .app-shell__game-dividend-metric {
-    border-top: 1px solid color-mix(in srgb, rgba(148, 163, 184, 0.14) 76%, rgb(var(--season-coin-accent-rgb)) 24%);
+    border-top: 1px solid color-mix(in srgb, rgba(148, 163, 184, 0.14) 76%, rgb(var(--highlight-tier-accent-rgb)) 24%);
   }
 
   :root[data-mobile-layout='true'] .app-shell__game-panel-overview-pages .app-shell__game-dividend--preview .app-shell__game-dividend-metrics--preview .app-shell__game-dividend-metric::before {

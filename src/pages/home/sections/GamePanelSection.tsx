@@ -1,9 +1,9 @@
 import { useCallback, type ReactNode } from 'react';
 import type { AuthStatus } from '../../../features/auth/types';
 import type {
-  GameCoinTierProgress,
   GameCurrentSeason,
   GamePosition,
+  GameTierProgress,
 } from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import type { YouTubeCategorySection } from '../../../features/youtube/types';
@@ -11,7 +11,7 @@ import { findPlaybackQueueIdForVideo } from '../utils';
 import type { OpenGameHolding } from '../gameHelpers';
 import BoldNumberText from './BoldNumberText';
 import {
-  RankingGameCoinOverview,
+  RankingGameTierOverview,
   RankingGameHistoryTab,
   RankingGamePanelShell,
   RankingGamePositionsTab,
@@ -24,7 +24,7 @@ interface GamePanelSectionProps {
   activePlaybackQueueId?: string;
   authStatus: AuthStatus;
   canShowGameActions: boolean;
-  coinTierProgress?: GameCoinTierProgress;
+  tierProgress?: GameTierProgress;
   computedWalletTotalAssetPoints: number | null;
   currentGameSeason?: GameCurrentSeason;
   currentGameSeasonUpdatedAt: number;
@@ -39,7 +39,7 @@ interface GamePanelSectionProps {
   isGameHistoryLoading: boolean;
   isCollapsed: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
-  onOpenCoinModal: () => void;
+  onOpenTierModal: () => void;
   onOpenHistoryChart: (position: GamePosition) => void;
   onOpenPositionChart: (position: GamePosition) => void;
   onOpenPositionBuyTradeModal?: (position: GamePosition) => void;
@@ -67,7 +67,7 @@ export default function GamePanelSection({
   activePlaybackQueueId,
   authStatus,
   canShowGameActions,
-  coinTierProgress,
+  tierProgress,
   computedWalletTotalAssetPoints,
   currentGameSeason,
   currentGameSeasonUpdatedAt,
@@ -82,7 +82,7 @@ export default function GamePanelSection({
   isGameHistoryLoading,
   isCollapsed,
   newChartEntriesSection,
-  onOpenCoinModal,
+  onOpenTierModal,
   onOpenHistoryChart,
   onOpenPositionChart,
   onOpenPositionBuyTradeModal,
@@ -202,11 +202,11 @@ export default function GamePanelSection({
   return (
     <RankingGamePanelShell
       activeGameTab={activeGameTab}
-      coinTierProgress={coinTierProgress}
+      tierProgress={tierProgress}
       dividendOverview={
-        <RankingGameCoinOverview
-          coinTierProgress={coinTierProgress}
-          onOpenDetails={onOpenCoinModal}
+        <RankingGameTierOverview
+          tierProgress={tierProgress}
+          onOpenDetails={onOpenTierModal}
           season={currentGameSeason}
         />
       }

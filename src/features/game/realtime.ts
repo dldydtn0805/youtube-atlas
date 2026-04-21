@@ -55,7 +55,6 @@ export function useGameRealtimeInvalidation(
           accessToken,
           includeLeaderboardPositions: true,
           regionCode,
-          seasonId: event.seasonId,
         });
       } catch {
         // Ignore malformed realtime messages so game queries keep working.
