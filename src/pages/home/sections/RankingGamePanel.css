@@ -928,26 +928,17 @@
 
 .app-shell__game-position-select {
   align-items: start;
-  background: transparent;
-  border: 0;
-  color: inherit;
-  cursor: pointer;
   display: grid;
   gap: 12px;
   grid-template-columns: 137px minmax(0, 1fr);
   min-width: 0;
-  padding: 0;
-  text-align: left;
-  width: 100%;
 }
 
-.app-shell__game-position-select:hover .app-shell__game-position-title,
-.app-shell__game-position-select:focus-visible .app-shell__game-position-title {
-  text-decoration: underline;
-}
-
-.app-shell__game-position-select:focus-visible {
-  outline: none;
+.app-shell__game-position-thumb-button {
+  align-self: stretch;
+  display: block;
+  height: 100%;
+  width: 137px;
 }
 
 .app-shell__game-position-thumb {
@@ -958,6 +949,55 @@
   min-height: 100%;
   object-fit: cover;
   width: 137px;
+}
+
+.app-shell__game-position-thumb-button,
+.app-shell__game-position-title-button,
+.app-shell__game-position-body-button,
+.app-shell__game-history-thumb-button,
+.app-shell__game-history-title-button,
+.app-shell__game-history-body-button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.app-shell__game-position-thumb-button,
+.app-shell__game-position-body-button,
+.app-shell__game-history-thumb-button,
+.app-shell__game-history-body-button {
+  cursor: pointer;
+}
+
+.app-shell__game-position-thumb-button:focus-visible,
+.app-shell__game-position-title-button:focus-visible,
+.app-shell__game-position-body-button:focus-visible,
+.app-shell__game-history-thumb-button:focus-visible,
+.app-shell__game-history-title-button:focus-visible,
+.app-shell__game-history-body-button:focus-visible {
+  outline: none;
+}
+
+.app-shell__game-position-thumb-button:focus-visible .app-shell__game-position-thumb,
+.app-shell__game-history-thumb-button:focus-visible .app-shell__game-history-thumb {
+  box-shadow: 0 0 0 2px rgba(var(--game-panel-tier-accent-rgb), 0.42);
+}
+
+.app-shell__game-position-title-button,
+.app-shell__game-history-title-button {
+  display: block;
+  max-width: 100%;
+}
+
+.app-shell__game-position-title-button:hover .app-shell__game-position-title,
+.app-shell__game-position-title-button:focus-visible .app-shell__game-position-title,
+.app-shell__game-history-title-button:hover .app-shell__game-history-title,
+.app-shell__game-history-title-button:focus-visible .app-shell__game-history-title {
+  text-decoration: underline;
 }
 
 .app-shell__game-position-copy {
@@ -998,6 +1038,12 @@
 .app-shell__game-position-body {
   display: grid;
   gap: 8px;
+}
+
+.app-shell__game-position-body-button {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
 }
 
 .app-shell__coin-boost-badge,
@@ -1152,15 +1198,15 @@
 .app-shell__game-position-side {
   align-items: center;
   display: grid;
-  gap: 8px;
+  gap: 6px;
   justify-items: end;
 }
 
 .app-shell__game-position-actions {
   align-items: center;
-  display: flex;
-  gap: 14px;
-  justify-content: end;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
 }
 
 .app-shell__game-position-action {
@@ -1172,9 +1218,9 @@
   cursor: pointer;
   display: grid;
   font: inherit;
-  gap: 7px;
+  gap: 5px;
   justify-items: center;
-  min-width: 62px;
+  min-width: 52px;
   padding: 0;
   transition:
     opacity 0.22s ease,
@@ -1197,20 +1243,20 @@
   border-radius: 999px;
   display: inline-flex;
   font-weight: 900;
-  height: 58px;
+  height: 44px;
   justify-content: center;
   line-height: 1;
-  width: 58px;
+  width: 44px;
 }
 
 .app-shell__game-position-action-icon svg {
   display: block;
-  height: 20px;
+  height: 16px;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 2.4;
-  width: 20px;
+  width: 16px;
 }
 
 .app-shell__game-position-action[data-variant='buy'] .app-shell__game-position-action-icon {
@@ -1225,7 +1271,7 @@
 
 .app-shell__game-position-action-label {
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 900;
   line-height: 1;
 }
@@ -1282,34 +1328,10 @@
 
 .app-shell__game-history-select {
   align-items: stretch;
-  background: transparent;
-  border: 0;
-  color: inherit;
-  cursor: pointer;
   display: grid;
   gap: 12px;
   grid-template-columns: 137px minmax(0, 1fr);
   min-width: 0;
-  padding: 0;
-  text-align: left;
-  width: 100%;
-}
-
-.app-shell__game-history-select:hover .app-shell__game-history-title,
-.app-shell__game-history-select:focus-visible .app-shell__game-history-title {
-  text-decoration: underline;
-}
-
-.app-shell__game-history-select:focus-visible {
-  outline: none;
-}
-
-.app-shell__game-history-select:disabled {
-  cursor: default;
-}
-
-.app-shell__game-history-select:disabled .app-shell__game-history-title {
-  text-decoration: none;
 }
 
 .app-shell__game-history-thumb {
@@ -1363,6 +1385,18 @@
 .app-shell__game-history-body {
   display: grid;
   gap: 8px;
+}
+
+.app-shell__game-history-body-button {
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.app-shell__game-history-thumb-button:disabled,
+.app-shell__game-history-body-button:disabled {
+  cursor: default;
 }
 
 .app-shell__game-history-meta {
@@ -2504,6 +2538,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  :root[data-mobile-layout='true'] .app-shell__game-position-thumb-button {
+    width: 100%;
+  }
+
   :root[data-mobile-layout='true'] .app-shell__game-position-thumb {
     aspect-ratio: 16 / 9;
     display: block;
@@ -2512,11 +2550,11 @@
     width: 100%;
   }
 
-  .app-shell__game-position-copy {
+  :root[data-mobile-layout='true'] .app-shell__game-position-copy {
     gap: 6px;
   }
 
-  .app-shell__game-position-title {
+  :root[data-mobile-layout='true'] .app-shell__game-position-title {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     display: -webkit-box;
@@ -2525,13 +2563,13 @@
     white-space: normal;
   }
 
-  .app-shell__game-position-meta,
-  .app-shell__game-position-hold {
+  :root[data-mobile-layout='true'] .app-shell__game-position-meta,
+  :root[data-mobile-layout='true'] .app-shell__game-position-hold {
     font-size: 0.8rem;
     line-height: 1.5;
   }
 
-  .app-shell__game-position-side {
+  :root[data-mobile-layout='true'] .app-shell__game-position-side {
     align-items: stretch;
     border-top: 0;
     gap: 6px;
@@ -2544,13 +2582,14 @@
     width: 100%;
   }
 
-  .app-shell__game-position-actions {
+  :root[data-mobile-layout='true'] .app-shell__game-position-actions {
     display: grid;
     gap: 8px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-items: stretch;
   }
 
-  .app-shell__game-position-action {
+  :root[data-mobile-layout='true'] .app-shell__game-position-action {
     align-items: center;
     background: var(--position-action-bg);
     border: 1px solid var(--position-action-border);
@@ -2561,51 +2600,52 @@
     justify-content: center;
     min-height: 40px;
     min-width: 0;
+    width: 100%;
   }
 
-  .app-shell__game-position-action[data-variant='buy'] {
+  :root[data-mobile-layout='true'] .app-shell__game-position-action[data-variant='buy'] {
     --position-action-bg: rgba(248, 113, 113, 0.14);
     --position-action-border: rgba(248, 113, 113, 0.2);
     --position-action-color: #b91c1c;
   }
 
-  .app-shell__game-position-action[data-variant='sell'] {
+  :root[data-mobile-layout='true'] .app-shell__game-position-action[data-variant='sell'] {
     --position-action-bg: rgba(56, 189, 248, 0.14);
     --position-action-border: rgba(56, 189, 248, 0.2);
     --position-action-color: #0e7490;
   }
 
-  :root[data-theme='dark'] .app-shell__game-position-action[data-variant='buy'] {
+  :root[data-mobile-layout='true'][data-theme='dark'] .app-shell__game-position-action[data-variant='buy'] {
     --position-action-bg: rgba(248, 113, 113, 0.16);
     --position-action-border: rgba(248, 113, 113, 0.24);
     --position-action-color: #fecaca;
   }
 
-  :root[data-theme='dark'] .app-shell__game-position-action[data-variant='sell'] {
+  :root[data-mobile-layout='true'][data-theme='dark'] .app-shell__game-position-action[data-variant='sell'] {
     --position-action-bg: rgba(56, 189, 248, 0.16);
     --position-action-border: rgba(56, 189, 248, 0.24);
     --position-action-color: #bae6fd;
   }
 
-  .app-shell__game-position-action-icon {
+  :root[data-mobile-layout='true'] .app-shell__game-position-action-icon {
     background: transparent;
     border-radius: 0;
     height: auto;
     width: auto;
   }
 
-  .app-shell__game-position-action-icon svg {
+  :root[data-mobile-layout='true'] .app-shell__game-position-action-icon svg {
     height: 16px;
     width: 16px;
   }
 
-  .app-shell__game-position-action[data-variant='buy'] .app-shell__game-position-action-icon,
-  .app-shell__game-position-action[data-variant='sell'] .app-shell__game-position-action-icon {
+  :root[data-mobile-layout='true'] .app-shell__game-position-action[data-variant='buy'] .app-shell__game-position-action-icon,
+  :root[data-mobile-layout='true'] .app-shell__game-position-action[data-variant='sell'] .app-shell__game-position-action-icon {
     background: transparent;
     color: currentColor;
   }
 
-  .app-shell__game-position-action-label {
+  :root[data-mobile-layout='true'] .app-shell__game-position-action-label {
     color: currentColor;
     font-size: 0.72rem;
   }

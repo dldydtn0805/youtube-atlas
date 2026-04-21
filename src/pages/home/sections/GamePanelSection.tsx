@@ -40,6 +40,8 @@ interface GamePanelSectionProps {
   isCollapsed: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
   onOpenCoinModal: () => void;
+  onOpenHistoryChart: (position: GamePosition) => void;
+  onOpenPositionChart: (position: GamePosition) => void;
   onOpenPositionBuyTradeModal?: (position: GamePosition) => void;
   onOpenPositionSellTradeModal?: (position: GamePosition) => void;
   onSelectGameHistoryVideo: (position: GamePosition, playbackQueueId?: string) => void | Promise<void>;
@@ -81,6 +83,8 @@ export default function GamePanelSection({
   isCollapsed,
   newChartEntriesSection,
   onOpenCoinModal,
+  onOpenHistoryChart,
+  onOpenPositionChart,
   onOpenPositionBuyTradeModal,
   onOpenPositionSellTradeModal,
   onSelectGameHistoryVideo,
@@ -133,6 +137,7 @@ export default function GamePanelSection({
       favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
       gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
       holdings={openGameHoldings}
+      onOpenPositionChart={onOpenPositionChart}
       onOpenBuyTradeModal={onOpenPositionBuyTradeModal}
       onOpenSellTradeModal={onOpenPositionSellTradeModal}
       onSelectPosition={onSelectGamePositionVideo}
@@ -147,6 +152,7 @@ export default function GamePanelSection({
       emptyMessage={historyEmptyMessage}
       historyPlaybackLoadingVideoId={historyPlaybackLoadingVideoId}
       isLoading={isGameHistoryLoading}
+      onOpenPositionChart={onOpenHistoryChart}
       onSelectPosition={(position, playbackQueueId) => {
         void onSelectGameHistoryVideo(position, playbackQueueId);
       }}

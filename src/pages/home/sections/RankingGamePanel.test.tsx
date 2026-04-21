@@ -256,6 +256,28 @@ describe('RankingGamePositionsTab', () => {
     expect(onOpenSellTradeModal).toHaveBeenCalledWith(expect.objectContaining({ id: 1, videoId: 'video-1' }));
   });
 
+  it('opens the chart from the holding title without selecting playback', () => {
+    const onOpenPositionChart = vi.fn();
+    const onSelectPosition = vi.fn();
+
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[createOpenGameHolding()]}
+        onOpenPositionChart={onOpenPositionChart}
+        onSelectPosition={onSelectPosition}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 순위 추이 차트' }));
+
+    expect(onOpenPositionChart).toHaveBeenCalledWith(expect.objectContaining({ id: 1, videoId: 'video-1' }));
+    expect(onSelectPosition).not.toHaveBeenCalled();
+  });
+
   it('disables sell action until a holding has sellable quantity', () => {
     render(
       <RankingGamePositionsTab
@@ -274,6 +296,31 @@ describe('RankingGamePositionsTab', () => {
 });
 
 describe('RankingGameHistoryTab', () => {
+  it('opens the chart from the history title without selecting playback', () => {
+    const onOpenPositionChart = vi.fn();
+    const onSelectPosition = vi.fn();
+
+    render(
+      <RankingGameHistoryTab
+        activePlaybackQueueId={HISTORY_PLAYBACK_QUEUE_ID}
+        emptyMessage={null}
+        historyPlaybackLoadingVideoId={null}
+        isLoading={false}
+        onOpenPositionChart={onOpenPositionChart}
+        onSelectPosition={onSelectPosition}
+        positions={[createGamePosition({ title: 'History position' })]}
+        resolvePlaybackQueueId={() => HISTORY_PLAYBACK_QUEUE_ID}
+        selectedPositionId={1}
+        selectedVideoId="video-1"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'History position 순위 추이 차트' }));
+
+    expect(onOpenPositionChart).toHaveBeenCalledWith(expect.objectContaining({ id: 1, videoId: 'video-1' }));
+    expect(onSelectPosition).not.toHaveBeenCalled();
+  });
+
   it('tracks the selected history row by position id when the same video appears twice', () => {
     render(
       <RankingGameHistoryTab
