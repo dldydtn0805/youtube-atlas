@@ -12,11 +12,13 @@ interface AppHeaderProps {
   currentTierName?: string | null;
   currentTierScore?: number | null;
   highlightCount?: number;
+  openPositionCount?: number;
   isDarkMode: boolean;
   isLoggingOut: boolean;
   onLogout: () => void;
   onOpenGameModal?: () => void;
   onOpenGameHistoryModal?: () => void;
+  onOpenGamePositionsModal?: () => void;
   onOpenHighlightsModal?: () => void;
   onOpenRecentPlayback?: (videoId: string) => void;
   onClearGameNotifications?: () => void;
@@ -127,11 +129,13 @@ function AppHeader({
   currentTierName,
   currentTierScore,
   highlightCount = 0,
+  openPositionCount = 0,
   isDarkMode,
   isLoggingOut,
   onLogout,
   onOpenGameModal,
   onOpenGameHistoryModal,
+  onOpenGamePositionsModal,
   onOpenHighlightsModal,
   onOpenRecentPlayback,
   onClearGameNotifications,
@@ -343,14 +347,21 @@ function AppHeader({
                     )}
                     <div className="app-shell__profile-card-identity">
                       <strong>{user.displayName || '이름 없음'}</strong>
-                      <span>{user.email}</span>
+                      <span>{`Atlas에 함께한지 ${formatAtlasDays(user.createdAt)}`}</span>
                     </div>
                   </div>
                   <div className="app-shell__profile-card-grid">
-                    <p>
-                      <span>Atlas에 함께한지</span>
-                      <strong>{formatAtlasDays(user.createdAt)}</strong>
-                    </p>
+                    <button
+                      className="app-shell__profile-card-grid-button"
+                      onClick={() => {
+                        closeProfileCard();
+                        onOpenGamePositionsModal?.();
+                      }}
+                      type="button"
+                    >
+                      <span>포지션</span>
+                      <strong>{openPositionCount}개</strong>
+                    </button>
                     <button
                       className="app-shell__profile-card-grid-button"
                       onClick={() => {

@@ -2150,6 +2150,10 @@ function HomePage() {
     setActiveGameTab('history');
     setIsGameModalOpen(true);
   }, []);
+  const handleOpenGamePositionsModal = useCallback(() => {
+    setActiveGameTab('positions');
+    setIsGameModalOpen(true);
+  }, []);
   const handleOpenTierHighlightsModal = useCallback(() => {
     setTierModalDefaultTab('highlights');
     openTierModal();
@@ -2520,11 +2524,13 @@ function HomePage() {
         currentTierName={gameTierProgress?.currentTier.displayName}
         currentTierScore={gameTierProgress?.highlightScore}
         highlightCount={gameHighlights.length}
+        openPositionCount={openGamePositions.length}
         isDarkMode={isDarkMode}
         isLoggingOut={isLoggingOut}
         onLogout={() => void logout()}
         onOpenGameModal={() => setIsGameModalOpen(true)}
         onOpenGameHistoryModal={handleOpenGameHistoryModal}
+        onOpenGamePositionsModal={handleOpenGamePositionsModal}
         onOpenHighlightsModal={handleOpenTierHighlightsModal}
         onOpenRecentPlayback={handleOpenRecentPlayback}
         onClearGameNotifications={clearGameNotifications}

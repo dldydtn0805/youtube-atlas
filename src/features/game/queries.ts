@@ -242,18 +242,69 @@ function clearNotificationsFromSeason(season: GameCurrentSeason | undefined) {
   return season?.notifications ? { ...season, notifications: [] } : season;
 }
 
+function markNotificationsAsRead(notifications: GameNotification[] | undefined, readAt: string) {
+  if (!notifications) {
+    return notifications;
+  }
+
+  return notifications.map((notification) =>
+    notification.readAt
+      ? notification
+      : {
+          ...notification,
+          readAt,
+        },
+  );
+}
+
+function markNotificationsReadInSeason(season: GameCurrentSeason | undefined, readAt: string) {
+  if (!season?.notifications) {
+    return season;
+  }
+
+  return {
+    ...season,
+    notifications: markNotificationsAsRead(season.notifications, readAt),
+  };
+}
+
 export function useMarkGameNotificationsRead(accessToken: string | null, regionCode: string) {
   const queryClient = useQueryClient();
+  const notificationsKey = gameQueryKeys.notifications(accessToken, regionCode);
+  const seasonKey = gameQueryKeys.currentSeason(accessToken, regionCode);
 
   return useMutation({
     mutationFn: () => markGameNotificationsRead(accessToken as string, regionCode),
+    onMutate: async () => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: notificationsKey }),
+        queryClient.cancelQueries({ queryKey: seasonKey }),
+      ]);
+
+      const previousNotifications = queryClient.getQueryData<GameNotification[]>(notificationsKey);
+      const previousSeason = queryClient.getQueryData<GameCurrentSeason>(seasonKey);
+      const readAt = new Date().toISOString();
+
+      queryClient.setQueryData<GameNotification[] | undefined>(notificationsKey, (notifications) =>
+        markNotificationsAsRead(notifications, readAt),
+      );
+      queryClient.setQueryData<GameCurrentSeason | undefined>(seasonKey, (season) =>
+        markNotificationsReadInSeason(season, readAt),
+      );
+
+      return { previousNotifications, previousSeason };
+    },
+    onError: (_error, _variables, context) => {
+      queryClient.setQueryData(notificationsKey, context?.previousNotifications);
+      queryClient.setQueryData(seasonKey, context?.previousSeason);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: gameQueryKeys.notifications(accessToken, regionCode),
+        queryKey: notificationsKey,
         refetchType: 'active',
       });
       queryClient.invalidateQueries({
-        queryKey: gameQueryKeys.currentSeason(accessToken, regionCode),
+        queryKey: seasonKey,
         refetchType: 'active',
       });
     },
