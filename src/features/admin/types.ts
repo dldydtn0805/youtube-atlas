@@ -114,6 +114,7 @@ export interface AdminSeasonStartingBalanceUpdateRequest {
 
 export interface AdminCommentCleanupRequest {
   deleteBefore: string;
+  userId?: number;
 }
 
 export interface AdminCommentCleanupResponse {

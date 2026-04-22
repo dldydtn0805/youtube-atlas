@@ -160,8 +160,8 @@ function parseDateTimeInput(value: string, label: string) {
   return parsedDate.toISOString();
 }
 
-function formatCommentCleanupMessage(deletedCount: number, deleteBefore: string) {
-  return `${formatNumber(deletedCount)}건의 댓글을 정리했습니다. 기준 시각: ${formatDateTime(deleteBefore)}`;
+function formatScopedCommentCleanupMessage(deletedCount: number, deleteBefore: string, userId: number | null) {
+  return `${formatCleanupScopeLabel(userId)} 기준으로 ${formatNumber(deletedCount)}건의 댓글을 정리했습니다. 기준 시각: ${formatDateTime(deleteBefore)}`;
 }
 
 function formatCleanupScopeLabel(userId: number | null) {
@@ -771,6 +771,7 @@ export default function AdminPage() {
     createdAt: '',
   });
   const [commentCleanupDraft, setCommentCleanupDraft] = useState('');
+  const [commentCleanupUserIdDraft, setCommentCleanupUserIdDraft] = useState('');
   const [highlightCleanupDraft, setHighlightCleanupDraft] = useState('');
   const [tradeHistoryCleanupDraft, setTradeHistoryCleanupDraft] = useState('');
   const [highlightCleanupUserIdDraft, setHighlightCleanupUserIdDraft] = useState('');
@@ -1180,8 +1181,10 @@ export default function AdminPage() {
   const handleCommentCleanup = () => {
     try {
       const deleteBefore = parseDateTimeInput(commentCleanupDraft, '댓글 정리 기준');
+      const userId = parseOptionalUserIdInput(commentCleanupUserIdDraft, '댓글 정리 유저 ID');
+      const targetLabel = userId === null ? '전체 유저' : `유저 #${userId}`;
       const confirmed = window.confirm(
-        `${formatDateTime(deleteBefore)} 이전 댓글을 삭제할까요? 이 작업은 되돌릴 수 없습니다.`,
+        `${targetLabel} 기준으로 ${formatDateTime(deleteBefore)} 이전 댓글을 삭제할까요? 이 작업은 되돌릴 수 없습니다.`,
       );
 
       if (!confirmed) {
@@ -1190,10 +1193,10 @@ export default function AdminPage() {
 
       setActionMessage(null);
       purgeCommentsMutation.mutate(
-        { deleteBefore },
+        userId === null ? { deleteBefore } : { deleteBefore, userId },
         {
           onSuccess: (response) => {
-            setActionMessage(formatCommentCleanupMessage(response.deletedCount, response.deleteBefore));
+            setActionMessage(formatScopedCommentCleanupMessage(response.deletedCount, response.deleteBefore, userId));
           },
           onError: (error) => {
             setActionMessage(error instanceof Error ? error.message : '댓글 정리에 실패했습니다.');
@@ -1531,9 +1534,19 @@ export default function AdminPage() {
                   value={commentCleanupDraft}
                 />
               </label>
+              <label className="admin-page__field">
+                <span>대상 유저 ID</span>
+                <input
+                  inputMode="numeric"
+                  onChange={(event) => setCommentCleanupUserIdDraft(event.target.value)}
+                  placeholder="비워두면 전체"
+                  type="text"
+                  value={commentCleanupUserIdDraft}
+                />
+              </label>
             </div>
             <p className="admin-page__muted">
-              입력한 시각보다 이전에 생성된 전체 채팅 댓글만 삭제됩니다. 미래 시각은 허용되지 않으며, 삭제 후에는 복구할 수 없습니다.
+              입력한 시각보다 이전에 생성된 전체 채팅 댓글만 삭제됩니다. 유저 ID를 비워두면 전체, 입력하면 해당 유저만 정리합니다. 미래 시각은 허용되지 않으며, 삭제 후에는 복구할 수 없습니다.
             </p>
             <div className="admin-page__action-row">
               <button
