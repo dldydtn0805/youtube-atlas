@@ -17,11 +17,11 @@ const notificationDateFormatter = new Intl.DateTimeFormat('ko-KR', {
 });
 
 function shouldHideFromNotificationsPanel(notification: GameNotification) {
-  const isCashout =
-    notification.notificationType === 'BIG_CASHOUT' ||
-    notification.notificationType === 'SMALL_CASHOUT';
+  if (notification.notificationType === 'TIER_PROMOTION') {
+    return false;
+  }
 
-  return isCashout && notification.showModal !== false;
+  return notification.showModal !== false;
 }
 
 function formatNotificationDate(value: string) {

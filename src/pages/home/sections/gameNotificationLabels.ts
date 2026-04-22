@@ -1,12 +1,9 @@
 import type { GameNotification } from '../../../features/game/types';
 import { getTierPromotionMeta } from './gameNotificationTierVisualUtils';
 
-const CASHOUT_NAMES = {
-  BIG_CASHOUT: '빅',
-  SMALL_CASHOUT: '스몰',
-} as const;
-
-const STRATEGY_NAMES = {
+const NOTIFICATION_LABELS = {
+  BIG_CASHOUT: '빅 캐시아웃',
+  SMALL_CASHOUT: '스몰 캐시아웃',
   MOONSHOT: '문샷',
   SNIPE: '스나이프',
 } as const;
@@ -16,27 +13,13 @@ export function getGameNotificationLabel(notification: GameNotification) {
     return '티어 승급 알림';
   }
 
-  if (notification.notificationType in CASHOUT_NAMES) {
-    const name = CASHOUT_NAMES[notification.notificationType as keyof typeof CASHOUT_NAMES];
+  const detail = NOTIFICATION_LABELS[notification.notificationType as keyof typeof NOTIFICATION_LABELS];
 
-    if (notification.showModal === false) {
-      return `하이라이트 포착 : ${name} 캐시아웃`;
-    }
-
-    return `매도 완료 : ${name} 캐시 아웃`;
+  if (detail) {
+    return `하이라이트 포착 : ${detail}`;
   }
 
-  if (notification.notificationType in STRATEGY_NAMES) {
-    const name = STRATEGY_NAMES[notification.notificationType as keyof typeof STRATEGY_NAMES];
-
-    if (notification.showModal === false) {
-      return `하이라이트 포착 : ${name}`;
-    }
-
-    return `하이라이트 달성 : ${name}`;
-  }
-
-  return notification.title;
+  return '하이라이트 포착';
 }
 
 export function getGameNotificationTone(notification: GameNotification) {
