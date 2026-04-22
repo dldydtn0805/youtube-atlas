@@ -1,5 +1,5 @@
 import type { GameNotification } from '../../../features/game/types';
-import { isProjectedHighlightNotification, isTierPromotionNotification } from './gameNotificationEventType';
+import { isProjectedHighlightNotification } from './gameNotificationEventType';
 import { getTierPromotionMeta } from './gameNotificationTierVisualUtils';
 
 const NOTIFICATION_LABELS = {

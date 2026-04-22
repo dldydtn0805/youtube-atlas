@@ -681,7 +681,7 @@ function HomePage() {
         videoTitle: notification?.videoTitle ?? '콘솔 테스트 영상',
         channelTitle: notification?.channelTitle ?? '테스트 채널',
         thumbnailUrl: notification?.thumbnailUrl ?? 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
-        strategyTags: notification?.strategyTags ?? [notificationType],
+        strategyTags: notification?.strategyTags ?? (notificationType === 'TIER_PROMOTION' ? [] : [notificationType]),
         highlightScore: notification?.highlightScore ?? 12_345,
         readAt: notification?.readAt ?? null,
         createdAt: notification?.createdAt ?? now,

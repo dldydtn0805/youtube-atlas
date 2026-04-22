@@ -73,7 +73,7 @@ interface Window {
   __emitGameNotificationTest?: (notification?: {
     id?: string;
     notificationEventType?: 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION';
-    notificationType?: 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE';
+    notificationType?: 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE' | 'TIER_PROMOTION';
     title?: string;
     message?: string;
     positionId?: number;
