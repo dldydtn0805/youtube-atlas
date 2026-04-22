@@ -539,6 +539,10 @@
 .app-shell__profile-card-playback-list {
   display: grid;
   gap: 10px;
+  max-height: min(36vh, 320px);
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
 }
 
 .app-shell__profile-card-playback {

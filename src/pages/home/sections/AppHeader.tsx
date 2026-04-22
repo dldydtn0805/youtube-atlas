@@ -171,7 +171,7 @@ function AppHeader({
   const playbackProgress = user?.lastPlaybackProgress ?? null;
   const recentPlaybackProgresses =
     user?.recentPlaybackProgresses && user.recentPlaybackProgresses.length > 0
-      ? user.recentPlaybackProgresses.slice(0, 5)
+      ? user.recentPlaybackProgresses
       : playbackProgress
         ? [playbackProgress]
         : [];
