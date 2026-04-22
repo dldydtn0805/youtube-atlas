@@ -1641,23 +1641,35 @@ function HomePage() {
     sellPreviewQuery.data?.quantity === normalizedSellQuantity
       ? sellPreviewQuery.data
       : undefined;
+  const [lastSuccessfulSellPreview, setLastSuccessfulSellPreview] = useState<typeof activeSellPreview>();
+  useEffect(() => {
+    if (activeTradeModal !== 'sell') {
+      setLastSuccessfulSellPreview(undefined);
+      return;
+    }
+
+    if (activeSellPreview) {
+      setLastSuccessfulSellPreview(activeSellPreview);
+    }
+  }, [activeSellPreview, activeTradeModal]);
+  const displaySellPreview = activeSellPreview ?? lastSuccessfulSellPreview;
   const isSellPreviewPending =
     debouncedSellPreviewQuantity !== normalizedSellQuantity ||
     sellPreviewQuery.isLoading ||
     sellPreviewQuery.isFetching;
   const resolvedSellSummary = useMemo(
     () =>
-      activeSellPreview
+      displaySellPreview
         ? {
-            feePoints: activeSellPreview.sellPricePoints - activeSellPreview.settledPoints,
-            grossSellPoints: activeSellPreview.sellPricePoints,
-            pnlPoints: activeSellPreview.pnlPoints,
-            quantity: activeSellPreview.quantity,
-            settledPoints: activeSellPreview.settledPoints,
-            stakePoints: activeSellPreview.stakePoints,
+            feePoints: displaySellPreview.sellPricePoints - displaySellPreview.settledPoints,
+            grossSellPoints: displaySellPreview.sellPricePoints,
+            pnlPoints: displaySellPreview.pnlPoints,
+            quantity: displaySellPreview.quantity,
+            settledPoints: displaySellPreview.settledPoints,
+            stakePoints: displaySellPreview.stakePoints,
           }
         : selectedVideoSellSummary,
-    [activeSellPreview, selectedVideoSellSummary],
+    [displaySellPreview, selectedVideoSellSummary],
   );
   const refetchCurrentChartAfterBuy = useCallback(async () => {
     const invalidations: Array<Promise<unknown>> = [];
@@ -2803,7 +2815,7 @@ function HomePage() {
         detailContent={
           <GameSellPreviewDetail
             isLoading={isSellPreviewPending}
-            preview={activeSellPreview}
+            preview={displaySellPreview}
           />
         }
         helperText={sellModalHelperText}
@@ -2836,18 +2848,22 @@ function HomePage() {
             value:
               isSellPreviewPending
                 ? '계산 중'
-                : formatHighlightScore(activeSellPreview?.projectedHighlightScore ?? 0),
+                : displaySellPreview
+                  ? formatHighlightScore(displaySellPreview.projectedHighlightScore)
+                  : '--',
           },
           {
             label: '하이라이트 점수 증가량',
             tone:
-              (activeSellPreview?.appliedHighlightScoreDelta ?? 0) > 0
+              (displaySellPreview?.appliedHighlightScoreDelta ?? 0) > 0
                 ? 'gain'
                 : 'flat',
             value:
               isSellPreviewPending
                 ? '계산 중'
-                : formatHighlightScore(activeSellPreview?.appliedHighlightScoreDelta ?? 0),
+                : displaySellPreview
+                  ? formatHighlightScore(displaySellPreview.appliedHighlightScoreDelta)
+                  : '--',
           },
           ...(typeof projectedWalletBalanceAfterSell === 'number'
             ? [{ label: '거래 후 잔액', value: formatPoints(projectedWalletBalanceAfterSell) }]
