@@ -16,10 +16,6 @@ const notificationDateFormatter = new Intl.DateTimeFormat('ko-KR', {
   timeStyle: 'short',
 });
 
-function shouldHideFromNotificationsPanel(notification: GameNotification) {
-  return false;
-}
-
 function formatNotificationDate(value: string) {
   const parsed = new Date(value);
 
@@ -45,7 +41,7 @@ function GameNotificationsPanel({
   onDelete,
   onSelect,
 }: GameNotificationsPanelProps) {
-  const visibleNotifications = notifications.filter((notification) => !shouldHideFromNotificationsPanel(notification));
+  const visibleNotifications = notifications;
 
   return (
     <div className="game-notifications">
