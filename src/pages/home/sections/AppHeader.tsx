@@ -3,6 +3,7 @@ import GoogleLoginButton from '../../../components/GoogleLoginButton/GoogleLogin
 import type { AuthStatus, AuthUser } from '../../../features/auth/types';
 import type { AchievementTitleCollection, GameNotification } from '../../../features/game/types';
 import { formatPoints } from '../gameHelpers';
+import { isTitleUnlockNotification } from './gameNotificationEventType';
 import AchievementTitleBadge from './AchievementTitleBadge';
 import AchievementTitleModal from './AchievementTitleModal';
 import GameNotificationsPanel from './GameNotificationsPanel';
@@ -468,6 +469,11 @@ function AppHeader({
                       onClear={onClearGameNotifications}
                       onDelete={onDeleteGameNotification}
                       onSelect={(notification) => {
+                        if (isTitleUnlockNotification(notification)) {
+                          openAchievementTitleModal();
+                          return;
+                        }
+
                         setIsProfileCardOpen(false);
                         onSelectGameNotification?.(notification);
                       }}

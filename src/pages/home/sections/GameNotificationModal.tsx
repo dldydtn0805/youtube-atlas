@@ -52,11 +52,11 @@ function GameNotificationModal({ notification, onClose, onOpenChart }: GameNotif
             <GameNotificationTierVisual notification={notification} />
           </div>
         ) : (
-          <img alt="" className="game-notification-modal__thumb" src={notification.thumbnailUrl} />
+          <img alt="" className="game-notification-modal__thumb" src={notification.thumbnailUrl ?? undefined} />
         )}
         <div className="game-notification-modal__body">
           <span data-tone={getGameNotificationTone(notification)}>{getGameNotificationLabel(notification)}</span>
-          <h2 id="game-notification-modal-title">{notification.videoTitle}</h2>
+          <h2 id="game-notification-modal-title">{notification.videoTitle ?? notification.title}</h2>
           <p>{notification.message}</p>
           <strong>
             {isTierPromotionNotification(notification)

@@ -76,4 +76,22 @@ describe('gameNotificationContent', () => {
   it('keeps highlight score copy for normal notifications', () => {
     expect(getGameNotificationStatus(notice({ highlightScore: 1200 }))).toBe('+1,200점');
   });
+
+  it('uses title metadata for title unlock notifications', () => {
+    const notification = notice({
+      notificationType: 'TITLE_UNLOCK',
+      notificationEventType: 'TITLE_UNLOCK',
+      title: '새 칭호 획득',
+      message: 'Atlas Seeker 칭호를 획득했습니다.',
+      videoId: null,
+      videoTitle: null,
+      thumbnailUrl: null,
+      titleDisplayName: 'Atlas Seeker',
+      titleGrade: 'RARE',
+      showModal: false,
+    });
+
+    expect(getGameNotificationHeading(notification)).toBe('Atlas Seeker');
+    expect(getGameNotificationStatus(notification)).toBe('레어 희귀도');
+  });
 });

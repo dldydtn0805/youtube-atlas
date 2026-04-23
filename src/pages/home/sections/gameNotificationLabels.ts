@@ -1,5 +1,5 @@
 import type { GameNotification } from '../../../features/game/types';
-import { isProjectedHighlightNotification } from './gameNotificationEventType';
+import { isProjectedHighlightNotification, isTitleUnlockNotification } from './gameNotificationEventType';
 import { getTierPromotionMeta } from './gameNotificationTierVisualUtils';
 
 const NOTIFICATION_LABELS = {
@@ -11,6 +11,10 @@ const NOTIFICATION_LABELS = {
 } as const;
 
 export function getGameNotificationLabel(notification: GameNotification) {
+  if (isTitleUnlockNotification(notification)) {
+    return '칭호 획득';
+  }
+
   if (notification.notificationType === 'TIER_PROMOTION') {
     return '티어 승급 알림';
   }
@@ -26,6 +30,10 @@ export function getGameNotificationLabel(notification: GameNotification) {
 }
 
 export function getGameNotificationTone(notification: GameNotification) {
+  if (isTitleUnlockNotification(notification)) {
+    return notification.titleGrade?.toLowerCase() ?? 'title';
+  }
+
   if (notification.notificationType === 'TIER_PROMOTION') {
     const tierMeta = getTierPromotionMeta(notification);
     return tierMeta ? tierMeta.tierCode.toLowerCase() : 'tier';

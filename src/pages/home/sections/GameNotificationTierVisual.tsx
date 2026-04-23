@@ -24,7 +24,7 @@ function GameNotificationTierVisual({
   const tierMeta = getTierPromotionMeta(notification);
 
   if (!tierMeta) {
-    return <img alt="" className="game-notification-tier-visual__fallback" src={notification.thumbnailUrl} />;
+    return <img alt="" className="game-notification-tier-visual__fallback" src={notification.thumbnailUrl ?? undefined} />;
   }
 
   return (

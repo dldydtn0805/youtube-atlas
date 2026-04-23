@@ -7,7 +7,7 @@ export interface GameWallet {
 }
 
 export type GameStrategyType = 'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE';
-export type GameNotificationEventType = 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION';
+export type GameNotificationEventType = 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
 export type AchievementTitleGrade = 'NORMAL' | 'RARE' | 'SUPER' | 'ULTIMATE';
 
 export interface SelectedAchievementTitle {
@@ -47,16 +47,19 @@ export interface GameCurrentSeason {
 export interface GameNotification {
   id: string;
   notificationEventType?: GameNotificationEventType;
-  notificationType: GameStrategyType | 'TIER_PROMOTION';
+  notificationType: GameStrategyType | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
   title: string;
   message: string;
-  positionId: number;
-  videoId: string;
-  videoTitle: string;
-  channelTitle: string;
-  thumbnailUrl: string;
+  positionId: number | null;
+  videoId: string | null;
+  videoTitle: string | null;
+  channelTitle: string | null;
+  thumbnailUrl: string | null;
   strategyTags: GameStrategyType[];
   highlightScore: number | null;
+  titleCode?: string | null;
+  titleDisplayName?: string | null;
+  titleGrade?: AchievementTitleGrade | null;
   readAt: string | null;
   createdAt: string;
   showModal?: boolean;

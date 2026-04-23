@@ -67,4 +67,20 @@ describe('getGameNotificationLabel', () => {
       '하이라이트 포착 : 문샷',
     );
   });
+
+  it('labels title unlock notifications distinctly', () => {
+    const notification = notice({
+      notificationEventType: 'TITLE_UNLOCK',
+      notificationType: 'TITLE_UNLOCK',
+      videoId: null,
+      videoTitle: null,
+      thumbnailUrl: null,
+      titleDisplayName: 'Atlas Seeker',
+      titleGrade: 'SUPER',
+      showModal: false,
+    });
+
+    expect(getGameNotificationLabel(notification)).toBe('칭호 획득');
+    expect(getGameNotificationTone(notification)).toBe('super');
+  });
 });

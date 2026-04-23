@@ -327,11 +327,11 @@ function logRealtimeGameNotificationDebug(
 
 function createRankHistoryPositionFromNotification(notification: GameNotification): GamePosition {
   return {
-    id: notification.positionId,
-    videoId: notification.videoId,
-    title: notification.videoTitle,
-    channelTitle: notification.channelTitle,
-    thumbnailUrl: notification.thumbnailUrl,
+    id: notification.positionId ?? 0,
+    videoId: notification.videoId ?? '',
+    title: notification.videoTitle ?? notification.title,
+    channelTitle: notification.channelTitle ?? '',
+    thumbnailUrl: notification.thumbnailUrl ?? '',
     buyRank: 0,
     currentRank: null,
     rankDiff: null,
@@ -679,17 +679,20 @@ function HomePage() {
 
     const emitGameNotificationTest = (notification?: {
       id?: string;
-      notificationEventType?: 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION';
-      notificationType?: 'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE' | 'TIER_PROMOTION';
+      notificationEventType?: 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
+      notificationType?: 'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
       title?: string;
       message?: string;
-      positionId?: number;
-      videoId?: string;
-      videoTitle?: string;
-      channelTitle?: string;
-      thumbnailUrl?: string;
+      positionId?: number | null;
+      videoId?: string | null;
+      videoTitle?: string | null;
+      channelTitle?: string | null;
+      thumbnailUrl?: string | null;
       strategyTags?: Array<'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE'>;
       highlightScore?: number | null;
+      titleCode?: string | null;
+      titleDisplayName?: string | null;
+      titleGrade?: 'NORMAL' | 'RARE' | 'SUPER' | 'ULTIMATE' | null;
       readAt?: string | null;
       createdAt?: string;
       showModal?: boolean;
@@ -699,6 +702,8 @@ function HomePage() {
       const notificationEventType = notification?.notificationEventType
         ?? (notificationType === 'TIER_PROMOTION'
           ? 'TIER_PROMOTION'
+          : notificationType === 'TITLE_UNLOCK'
+            ? 'TITLE_UNLOCK'
           : notification?.showModal === false
             ? 'PROJECTED_HIGHLIGHT'
             : 'TIER_SCORE_GAIN');
@@ -707,18 +712,25 @@ function HomePage() {
         id: notification?.id ?? `game-test-${Date.now()}-${notificationType}`,
         notificationEventType,
         notificationType,
-        title: notification?.title ?? '문샷 적중',
-        message: notification?.message ?? '테스트 소켓 알림입니다.',
-        positionId: notification?.positionId ?? 999_999,
-        videoId: notification?.videoId ?? 'test-video',
-        videoTitle: notification?.videoTitle ?? '콘솔 테스트 영상',
-        channelTitle: notification?.channelTitle ?? '테스트 채널',
-        thumbnailUrl: notification?.thumbnailUrl ?? 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
-        strategyTags: notification?.strategyTags ?? (notificationType === 'TIER_PROMOTION' ? [] : [notificationType]),
-        highlightScore: notification?.highlightScore ?? 12_345,
+        title: notification?.title ?? (notificationType === 'TITLE_UNLOCK' ? '새 칭호 획득' : '문샷 적중'),
+        message: notification?.message ?? (notificationType === 'TITLE_UNLOCK' ? 'Atlas Seeker 칭호를 획득했습니다.' : '테스트 소켓 알림입니다.'),
+        positionId: notification?.positionId ?? (notificationType === 'TITLE_UNLOCK' ? null : 999_999),
+        videoId: notification?.videoId ?? (notificationType === 'TITLE_UNLOCK' ? null : 'test-video'),
+        videoTitle: notification?.videoTitle ?? (notificationType === 'TITLE_UNLOCK' ? null : '콘솔 테스트 영상'),
+        channelTitle: notification?.channelTitle ?? (notificationType === 'TITLE_UNLOCK' ? null : '테스트 채널'),
+        thumbnailUrl: notification?.thumbnailUrl ?? (notificationType === 'TITLE_UNLOCK'
+          ? null
+          : 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg'),
+        strategyTags: notification?.strategyTags ?? (notificationType === 'TIER_PROMOTION' || notificationType === 'TITLE_UNLOCK'
+          ? []
+          : [notificationType]),
+        highlightScore: notification?.highlightScore ?? (notificationType === 'TITLE_UNLOCK' ? null : 12_345),
+        titleCode: notification?.titleCode ?? (notificationType === 'TITLE_UNLOCK' ? 'ATLAS_SEEKER' : null),
+        titleDisplayName: notification?.titleDisplayName ?? (notificationType === 'TITLE_UNLOCK' ? 'Atlas Seeker' : null),
+        titleGrade: notification?.titleGrade ?? (notificationType === 'TITLE_UNLOCK' ? 'NORMAL' : null),
         readAt: notification?.readAt ?? null,
         createdAt: notification?.createdAt ?? now,
-        showModal: notification?.showModal ?? true,
+        showModal: notification?.showModal ?? (notificationType === 'TITLE_UNLOCK' ? false : true),
       });
     };
 
@@ -1958,7 +1970,7 @@ function HomePage() {
 
       setSelectedRankHistoryOwnerUserId(null);
       setRankHistoryFocusMode('trade');
-      openRankHistoryModal(notification.videoId, matchedPosition);
+      openRankHistoryModal(notification.videoId ?? undefined, matchedPosition);
       setModalGameNotificationQueue((notifications) =>
         removeGameNotification(notifications, notification.id));
     },
@@ -2352,7 +2364,7 @@ function HomePage() {
 
       setSelectedRankHistoryOwnerUserId(null);
       setRankHistoryFocusMode('trade');
-      openRankHistoryModal(notification.videoId, matchedPosition);
+      openRankHistoryModal(notification.videoId ?? undefined, matchedPosition);
     },
     [gameHistoryPositions, openGamePositions, openRankHistoryModal],
   );

@@ -9,6 +9,10 @@ export function getGameNotificationEventType(notification: GameNotification) {
     return 'TIER_PROMOTION';
   }
 
+  if (notification.notificationType === 'TITLE_UNLOCK') {
+    return 'TITLE_UNLOCK';
+  }
+
   return notification.showModal === false ? 'PROJECTED_HIGHLIGHT' : 'TIER_SCORE_GAIN';
 }
 
@@ -22,4 +26,8 @@ export function isProjectedHighlightNotification(notification: GameNotification)
 
 export function isTierScoreGainNotification(notification: GameNotification) {
   return getGameNotificationEventType(notification) === 'TIER_SCORE_GAIN';
+}
+
+export function isTitleUnlockNotification(notification: GameNotification) {
+  return getGameNotificationEventType(notification) === 'TITLE_UNLOCK';
 }

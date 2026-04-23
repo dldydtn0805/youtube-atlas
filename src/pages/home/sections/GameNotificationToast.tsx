@@ -1,6 +1,8 @@
 import type { GameNotification } from '../../../features/game/types';
 import { getGameNotificationHeading } from './gameNotificationContent';
+import { isTitleUnlockNotification } from './gameNotificationEventType';
 import { getGameNotificationLabel, getGameNotificationTone } from './gameNotificationLabels';
+import GameNotificationMedia from './GameNotificationMedia';
 import { hasProjectedGameNotificationScore, hasResolvedGameNotificationScore } from './gameNotificationModalUtils';
 import './GameNotificationToast.css';
 
@@ -14,6 +16,7 @@ function GameNotificationToast({ notification, onDismiss }: GameNotificationToas
     return null;
   }
 
+  const hideMedia = isTitleUnlockNotification(notification);
   const hasResolvedScore = hasResolvedGameNotificationScore(notification);
   const hasProjectedScore = hasProjectedGameNotificationScore(notification);
   const heading = getGameNotificationHeading(notification);
@@ -22,15 +25,18 @@ function GameNotificationToast({ notification, onDismiss }: GameNotificationToas
     <aside
       className="game-notification-toast"
       data-projected={hasResolvedScore ? 'false' : 'true'}
+      data-title-unlock={hideMedia ? 'true' : 'false'}
       role="status"
       aria-live="polite"
     >
-      <img alt="" className="game-notification-toast__thumb" src={notification.thumbnailUrl} />
+      {hideMedia ? null : <GameNotificationMedia className="game-notification-toast__thumb" notification={notification} />}
       <div className="game-notification-toast__copy">
         <span data-tone={getGameNotificationTone(notification)}>{getGameNotificationLabel(notification)}</span>
-        <strong>{heading}</strong>
+        <strong data-title-grade={hideMedia ? (notification.titleGrade ?? 'NORMAL').toLowerCase() : undefined}>
+          {heading}
+        </strong>
         <p>{notification.message}</p>
-        {!hasResolvedScore ? (
+        {!hasResolvedScore && !hideMedia ? (
           <p className="game-notification-toast__hint">
             {hasProjectedScore ? `예상 점수 +${notification.highlightScore?.toLocaleString('ko-KR')}점` : '매도 시 점수가 확정됩니다.'}
           </p>

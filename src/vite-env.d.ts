@@ -72,17 +72,20 @@ interface Window {
   }) => void;
   __emitGameNotificationTest?: (notification?: {
     id?: string;
-    notificationEventType?: 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION';
-    notificationType?: 'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE' | 'TIER_PROMOTION';
+    notificationEventType?: 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
+    notificationType?: 'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
     title?: string;
     message?: string;
-    positionId?: number;
-    videoId?: string;
-    videoTitle?: string;
-    channelTitle?: string;
-    thumbnailUrl?: string;
+    positionId?: number | null;
+    videoId?: string | null;
+    videoTitle?: string | null;
+    channelTitle?: string | null;
+    thumbnailUrl?: string | null;
     strategyTags?: Array<'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE'>;
     highlightScore?: number | null;
+    titleCode?: string | null;
+    titleDisplayName?: string | null;
+    titleGrade?: 'NORMAL' | 'RARE' | 'SUPER' | 'ULTIMATE' | null;
     readAt?: string | null;
     createdAt?: string;
     showModal?: boolean;

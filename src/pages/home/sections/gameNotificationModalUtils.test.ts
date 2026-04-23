@@ -87,4 +87,24 @@ describe('shouldOpenGameNotificationModal', () => {
       }),
     ).toBe(true);
   });
+
+  it('keeps title unlock notifications out of the modal while treating them as resolved', () => {
+    const notification = {
+      ...baseNotification,
+      notificationEventType: 'TITLE_UNLOCK' as const,
+      notificationType: 'TITLE_UNLOCK' as const,
+      positionId: null,
+      videoId: null,
+      videoTitle: null,
+      thumbnailUrl: null,
+      highlightScore: null,
+      titleDisplayName: 'Atlas Seeker',
+      titleGrade: 'NORMAL' as const,
+      showModal: false,
+    };
+
+    expect(shouldOpenGameNotificationModal(notification)).toBe(false);
+    expect(hasResolvedGameNotificationScore(notification)).toBe(true);
+    expect(hasProjectedGameNotificationScore(notification)).toBe(false);
+  });
 });

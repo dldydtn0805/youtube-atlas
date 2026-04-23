@@ -75,6 +75,7 @@
   text-align: left;
 }
 
+
 .game-notifications__select:hover .game-notifications__score,
 .game-notifications__select:focus-visible .game-notifications__score {
   color: var(--text);
@@ -143,6 +144,22 @@
 .game-notifications__copy strong {
   color: var(--text);
   font-size: 0.76rem;
+}
+
+.game-notifications__copy strong[data-title-grade='normal'] {
+  color: #94a3b8;
+}
+
+.game-notifications__copy strong[data-title-grade='rare'] {
+  color: #60a5fa;
+}
+
+.game-notifications__copy strong[data-title-grade='super'] {
+  color: #fb7185;
+}
+
+.game-notifications__copy strong[data-title-grade='ultimate'] {
+  color: #facc15;
 }
 
 .game-notifications__message {

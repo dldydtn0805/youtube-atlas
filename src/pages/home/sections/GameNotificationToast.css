@@ -21,6 +21,11 @@
   border-color: color-mix(in srgb, var(--border) 72%, transparent);
 }
 
+.game-notification-toast[data-title-unlock='true'] {
+  border-color: color-mix(in srgb, var(--accent-primary) 24%, var(--border));
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .game-notification-toast__thumb {
   aspect-ratio: 16 / 9;
   border: 1px solid var(--surface-thumbnail-border);
@@ -93,6 +98,22 @@
   color: #f43f5e;
 }
 
+.game-notification-toast__copy span[data-tone='normal'] {
+  color: #94a3b8;
+}
+
+.game-notification-toast__copy span[data-tone='rare'] {
+  color: #60a5fa;
+}
+
+.game-notification-toast__copy span[data-tone='super'] {
+  color: #fb7185;
+}
+
+.game-notification-toast__copy span[data-tone='ultimate'] {
+  color: #facc15;
+}
+
 .game-notification-toast__copy strong,
 .game-notification-toast__copy p {
   overflow: hidden;
@@ -103,6 +124,22 @@
 .game-notification-toast__copy strong {
   color: var(--text);
   font-size: 0.84rem;
+}
+
+.game-notification-toast__copy strong[data-title-grade='normal'] {
+  color: #94a3b8;
+}
+
+.game-notification-toast__copy strong[data-title-grade='rare'] {
+  color: #60a5fa;
+}
+
+.game-notification-toast__copy strong[data-title-grade='super'] {
+  color: #fb7185;
+}
+
+.game-notification-toast__copy strong[data-title-grade='ultimate'] {
+  color: #facc15;
 }
 
 .game-notification-toast__copy p {

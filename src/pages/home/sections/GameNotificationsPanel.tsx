@@ -5,6 +5,8 @@ import {
   getGameNotificationMessage,
   getGameNotificationStatus,
 } from './gameNotificationContent';
+import { isTitleUnlockNotification } from './gameNotificationEventType';
+import GameNotificationMedia from './GameNotificationMedia';
 import { hasProjectedGameNotificationScore, hasResolvedGameNotificationScore } from './gameNotificationModalUtils';
 import './GameNotificationsPanel.css';
 
@@ -59,11 +61,13 @@ function GameNotificationsPanel({
             (() => {
               const heading = getGameNotificationHeading(notification);
               const message = getGameNotificationMessage(notification);
+              const hideMedia = isTitleUnlockNotification(notification);
 
               return (
             <article
               className="game-notifications__item"
               data-projected={hasResolvedGameNotificationScore(notification) ? 'false' : 'true'}
+              data-title-unlock={hideMedia ? 'true' : 'false'}
               key={notification.id}
             >
               <button
@@ -72,12 +76,14 @@ function GameNotificationsPanel({
                 onClick={() => onSelect?.(notification)}
                 type="button"
               >
-                <img alt="" className="game-notifications__thumb" src={notification.thumbnailUrl} />
+                {hideMedia ? null : <GameNotificationMedia className="game-notifications__thumb" notification={notification} />}
                 <div className="game-notifications__copy">
                   <span className="game-notifications__type" data-tone={getGameNotificationTone(notification)}>
                     {getGameNotificationLabel(notification)}
                   </span>
-                  <strong>{heading}</strong>
+                  <strong data-title-grade={hideMedia ? (notification.titleGrade ?? 'NORMAL').toLowerCase() : undefined}>
+                    {heading}
+                  </strong>
                   {message ? <p className="game-notifications__message">{message}</p> : null}
                   <span
                     className="game-notifications__score"
