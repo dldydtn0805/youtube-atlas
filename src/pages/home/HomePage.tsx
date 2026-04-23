@@ -1247,6 +1247,8 @@ function HomePage() {
       ? favoriteStreamerVideosError.message
       : '즐겨찾기 영상을 불러오지 못했습니다.';
   const openDistinctVideoCount = new Set(openGamePositions.map((position) => position.videoId)).size;
+  const isOpenPositionLimitReached =
+    currentGameSeason != null && openDistinctVideoCount >= currentGameSeason.maxOpenPositions;
   const buyableChartEmptyMessage = useMemo(() => {
     if (currentGameSeason && openDistinctVideoCount >= currentGameSeason.maxOpenPositions) {
       return '보유 가능한 종목 슬롯을 모두 사용 중입니다. 기존 포지션을 정리하면 다시 매수 가능한 영상이 표시됩니다.';
@@ -2655,11 +2657,12 @@ function HomePage() {
         currentTierName={gameTierProgress?.currentTier.displayName}
         currentTierScore={gameTierProgress?.highlightScore}
         highlightCount={gameHighlights.length}
+        isOpenPositionLimitReached={isOpenPositionLimitReached}
         openPositionCount={openGamePositions.length}
         isDarkMode={isDarkMode}
         isLoggingOut={isLoggingOut}
         onLogout={() => void logout()}
-        onOpenGameModal={() => setIsGameModalOpen(true)}
+        onOpenGameModal={handleOpenGamePositionsModal}
         onOpenGameHistoryModal={handleOpenGameHistoryModal}
         onOpenGamePositionsModal={handleOpenGamePositionsModal}
         onOpenHighlightsModal={handleOpenTierHighlightsModal}
@@ -2761,14 +2764,16 @@ function HomePage() {
             isManualPlaybackSaveDisabled:
               authStatus !== 'authenticated' || !selectedVideoId || isManualPlaybackSavePending,
             isMobileLayout,
+            isOpenPositionLimitReached,
             isSelectedChannelFavorited,
             currentTierCode: gameTierProgress?.currentTier.tierCode,
             currentTierName: gameTierProgress?.currentTier.displayName,
             manualPlaybackSaveButtonLabel: isManualPlaybackSavePending ? '저장 중...' : '저장',
             manualPlaybackSaveStatus: manualPlaybackSaveStatus ?? undefined,
             onManualPlaybackSave: () => void handleManualPlaybackSave(),
+            openPositionCount: openGamePositions.length,
             onNextVideo: handlePlayNextVideoWithPreview,
-            onOpenGameModal: () => setIsGameModalOpen(true),
+            onOpenGameModal: handleOpenGamePositionsModal,
             onOpenRegionModal: () => setIsRegionModalOpen(true),
             onOpenTierModal: isMobileLayout ? openTierModal : undefined,
             onOpenWalletModal: isMobileLayout ? () => setIsWalletModalOpen(true) : undefined,

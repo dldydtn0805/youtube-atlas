@@ -8,6 +8,7 @@ import {
   formatFullPoints,
   formatGameQuantity,
   formatGameOrderQuantity,
+  formatHeaderPoints,
   formatPointBalance,
   formatPoints,
   normalizeGameOrderCapacity,
@@ -29,6 +30,12 @@ describe('gameHelpers', () => {
 
   it('can still render the full point value when needed', () => {
     expect(formatFullPoints(1_234_567_890_123_456)).toBe('1,234,567,890,123,456P');
+  });
+
+  it('uses a shorter single-unit format for header balances', () => {
+    expect(formatHeaderPoints(10_023_410_000)).toBe('100억P');
+    expect(formatHeaderPoints(57_248_100)).toBe('5,724만P');
+    expect(formatHeaderPoints(34_223)).toBe('3만P');
   });
 
   it('renders coin values with the C suffix', () => {

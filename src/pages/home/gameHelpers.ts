@@ -182,6 +182,10 @@ export function formatCompactPoints(points: number) {
   return `${formatCompactKoreanNumber(points)}P`;
 }
 
+export function formatHeaderPoints(points: number) {
+  return `${formatCompactKoreanNumber(points, 1, 10_000)}P`;
+}
+
 export function formatCompactCoins(coins: number) {
   return `${formatCompactKoreanNumber(coins)}C`;
 }

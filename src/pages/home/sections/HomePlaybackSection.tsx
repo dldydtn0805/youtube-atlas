@@ -649,6 +649,8 @@ export default function HomePlaybackSection({
             headerSupplementalContent={playerStageProps.headerSupplementalContent}
             isCinematicModeActive={playerStageProps.isCinematicModeActive}
             isMobileLayout={playerStageProps.isMobileLayout}
+            isOpenPositionLimitReached={playerStageProps.isOpenPositionLimitReached}
+            openPositionCount={playerStageProps.openPositionCount}
             onOpenGameModal={playerStageProps.onOpenGameModal}
             onOpenRegionModal={playerStageProps.onOpenRegionModal}
             onOpenTierModal={playerStageProps.onOpenTierModal}

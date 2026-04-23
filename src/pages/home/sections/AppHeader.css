@@ -204,96 +204,39 @@
 }
 
 .app-shell__auth-summary-item--game {
-  --game-pill-accent-rgb: 194, 104, 50;
-  --game-pill-accent: #c26832;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, rgb(var(--game-pill-accent-rgb)) 10%, rgba(255, 255, 255, 0.96)),
-      color-mix(in srgb, rgb(var(--game-pill-accent-rgb)) 18%, rgba(255, 255, 255, 0.9))
-    ),
-    rgba(255, 244, 230, 0.94);
-  border-color: rgba(var(--game-pill-accent-rgb), 0.22);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.88),
-    0 10px 22px rgba(var(--game-pill-accent-rgb), 0.1);
+  background: #fff;
+}
+
+.app-shell__auth-summary-item--wallet {
+  max-width: 9.5rem;
 }
 
 .app-shell__auth-summary-item--game .app-shell__auth-summary-label {
-  color: color-mix(in srgb, var(--game-pill-accent) 82%, #7c2d12 18%);
+  color: #000;
+}
+
+.app-shell__auth-summary-item--game .app-shell__auth-summary-value {
+  color: #000;
 }
 
 .app-shell__auth-summary-item--game:hover {
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, rgb(var(--game-pill-accent-rgb)) 8%, rgba(255, 255, 255, 0.98)),
-      color-mix(in srgb, rgb(var(--game-pill-accent-rgb)) 20%, rgba(255, 255, 255, 0.92))
-    ),
-    rgba(255, 247, 235, 0.96);
-  border-color: rgba(var(--game-pill-accent-rgb), 0.34);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.92),
-    0 14px 24px rgba(var(--game-pill-accent-rgb), 0.14);
+  background: #fff;
 }
 
 :root[data-theme='dark'] .app-shell__auth-summary-item--game {
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, rgb(var(--game-pill-accent-rgb)) 30%, rgba(15, 23, 42, 0.96)),
-      color-mix(in srgb, rgb(var(--game-pill-accent-rgb)) 20%, rgba(2, 6, 23, 0.98))
-    ),
-    rgba(56, 24, 10, 0.94);
-  border-color: rgba(var(--game-pill-accent-rgb), 0.3);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 14px 28px rgba(0, 0, 0, 0.32);
+  background: #000;
 }
 
 :root[data-theme='dark'] .app-shell__auth-summary-item--game .app-shell__auth-summary-label {
-  color: color-mix(in srgb, var(--game-pill-accent) 70%, #f8fafc 30%);
+  color: #fff;
+}
+
+:root[data-theme='dark'] .app-shell__auth-summary-item--game .app-shell__auth-summary-value {
+  color: #fff;
 }
 
 :root[data-theme='dark'] .app-shell__auth-summary-item--game:hover {
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, rgb(var(--game-pill-accent-rgb)) 34%, rgba(15, 23, 42, 0.98)),
-      color-mix(in srgb, rgb(var(--game-pill-accent-rgb)) 24%, rgba(2, 6, 23, 0.99))
-    ),
-    rgba(68, 31, 13, 0.96);
-  border-color: rgba(var(--game-pill-accent-rgb), 0.42);
-}
-
-.app-shell__auth-summary-item--game[data-tier-code='SILVER'] {
-  --game-pill-accent-rgb: 148, 163, 184;
-  --game-pill-accent: #94a3b8;
-}
-
-.app-shell__auth-summary-item--game[data-tier-code='GOLD'] {
-  --game-pill-accent-rgb: 234, 179, 8;
-  --game-pill-accent: #eab308;
-}
-
-.app-shell__auth-summary-item--game[data-tier-code='PLATINUM'] {
-  --game-pill-accent-rgb: 20, 184, 166;
-  --game-pill-accent: #14b8a6;
-}
-
-.app-shell__auth-summary-item--game[data-tier-code='DIAMOND'] {
-  --game-pill-accent-rgb: 96, 165, 250;
-  --game-pill-accent: #60a5fa;
-}
-
-.app-shell__auth-summary-item--game[data-tier-code='MASTER'] {
-  --game-pill-accent-rgb: 168, 85, 247;
-  --game-pill-accent: #a855f7;
-}
-
-.app-shell__auth-summary-item--game[data-tier-code='LEGEND'] {
-  --game-pill-accent-rgb: 244, 63, 94;
-  --game-pill-accent: #f43f5e;
+  background: #000;
 }
 
 .app-shell__auth-summary-label {
@@ -307,6 +250,7 @@
   color: var(--text);
   font-size: 0.68rem;
   font-weight: 800;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -337,6 +281,30 @@
 
 .app-shell__auth-summary-item[data-tier-code='LEGEND'] .app-shell__auth-summary-value {
   color: #f43f5e;
+}
+
+.app-shell__auth-summary-item--game[data-tier-code] .app-shell__auth-summary-value {
+  color: #000;
+}
+
+:root[data-theme='dark'] .app-shell__auth-summary-item--game[data-tier-code] .app-shell__auth-summary-value {
+  color: #fff;
+}
+
+.app-shell__auth-summary-item--game[data-limit-reached='true'] .app-shell__auth-summary-value {
+  color: #dc2626;
+}
+
+:root[data-theme='dark'] .app-shell__auth-summary-item--game[data-limit-reached='true'] .app-shell__auth-summary-value {
+  color: #f87171;
+}
+
+.app-shell__auth-summary-item--game[data-tier-code] .app-shell__auth-summary-value {
+  color: #000;
+}
+
+:root[data-theme='dark'] .app-shell__auth-summary-item--game[data-tier-code] .app-shell__auth-summary-value {
+  color: #fff;
 }
 
 .app-shell__auth-avatar {

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import GoogleLoginButton from '../../../components/GoogleLoginButton/GoogleLoginButton';
 import type { AuthStatus, AuthUser } from '../../../features/auth/types';
 import type { AchievementTitleCollection, GameNotification } from '../../../features/game/types';
-import { formatPoints } from '../gameHelpers';
+import { formatHeaderPoints, formatPoints } from '../gameHelpers';
 import { isTitleUnlockNotification } from './gameNotificationEventType';
 import AchievementTitleBadge from './AchievementTitleBadge';
 import AchievementTitleModal from './AchievementTitleModal';
@@ -15,6 +15,7 @@ interface AppHeaderProps {
   currentTierName?: string | null;
   currentTierScore?: number | null;
   highlightCount?: number;
+  isOpenPositionLimitReached?: boolean;
   openPositionCount?: number;
   isDarkMode: boolean;
   isLoggingOut: boolean;
@@ -154,6 +155,7 @@ function AppHeader({
   currentTierName,
   currentTierScore,
   highlightCount = 0,
+  isOpenPositionLimitReached = false,
   openPositionCount = 0,
   isDarkMode,
   isLoggingOut,
@@ -184,7 +186,7 @@ function AppHeader({
   const userIdentityLabel = user?.displayName || user?.email || 'Google 계정';
   const walletSummary =
     typeof walletBalancePoints === 'number' && Number.isFinite(walletBalancePoints)
-      ? formatPoints(walletBalancePoints)
+      ? formatHeaderPoints(walletBalancePoints)
       : '집계 중';
   const tierSummary = currentTierName?.trim() || '미정';
   const tierScoreSummary =
@@ -299,8 +301,19 @@ function AppHeader({
           {authStatus === 'authenticated' && user ? (
             <div className="app-shell__auth-summary" aria-label="내 지갑 및 티어">
               <button
+                aria-label="내 게임 열기"
+                className="app-shell__auth-summary-item app-shell__auth-summary-item--button app-shell__auth-summary-item--game"
+                data-tier-code={currentTierCode ?? undefined}
+                data-limit-reached={isOpenPositionLimitReached ? 'true' : undefined}
+                onClick={onOpenGameModal}
+                type="button"
+              >
+                <span className="app-shell__auth-summary-label">포지션</span>
+                <strong className="app-shell__auth-summary-value">{openPositionCount}개</strong>
+              </button>
+              <button
                 aria-label="지갑 현황 열기"
-                className="app-shell__auth-summary-item app-shell__auth-summary-item--button"
+                className="app-shell__auth-summary-item app-shell__auth-summary-item--button app-shell__auth-summary-item--wallet"
                 onClick={onOpenWalletModal}
                 type="button"
               >
@@ -316,15 +329,6 @@ function AppHeader({
               >
                 <span className="app-shell__auth-summary-label">티어</span>
                 <strong className="app-shell__auth-summary-value">{tierSummary}</strong>
-              </button>
-              <button
-                aria-label="내 게임 열기"
-                className="app-shell__auth-summary-item app-shell__auth-summary-item--button app-shell__auth-summary-item--game"
-                data-tier-code={currentTierCode ?? undefined}
-                onClick={onOpenGameModal}
-                type="button"
-              >
-                <span className="app-shell__auth-summary-label">내 게임</span>
               </button>
             </div>
           ) : null}

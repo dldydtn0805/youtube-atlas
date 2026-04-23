@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode, RefObject } from 'react';
 import VideoPlayer, { type VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
 import type { AuthStatus } from '../../../features/auth/types';
-import { formatPoints } from '../gameHelpers';
+import { formatHeaderPoints } from '../gameHelpers';
 import type { PendingPlaybackRestore } from '../utils';
 import './PlayerStage.css';
 
@@ -30,6 +30,8 @@ interface PlayerStageHeaderProps {
   headerSupplementalContent?: ReactNode;
   isCinematicModeActive: boolean;
   isMobileLayout: boolean;
+  isOpenPositionLimitReached?: boolean;
+  openPositionCount?: number;
   onOpenGameModal?: () => void;
   onOpenRegionModal: () => void;
   onOpenTierModal?: () => void;
@@ -53,10 +55,12 @@ interface PlayerStageProps extends PlayerViewportContentProps {
   headerSupplementalContent?: ReactNode;
   isFavoriteToggleDisabled: boolean;
   isManualPlaybackSaveDisabled: boolean;
+  isOpenPositionLimitReached?: boolean;
   isSelectedChannelFavorited: boolean;
   manualPlaybackSaveButtonLabel: string;
   manualPlaybackSaveStatus?: string;
   onManualPlaybackSave: () => void;
+  openPositionCount?: number;
   onOpenGameModal?: () => void;
   onOpenRegionModal: () => void;
   onOpenTierModal?: () => void;
@@ -137,6 +141,8 @@ export function PlayerStageHeader({
   headerSupplementalContent,
   isCinematicModeActive,
   isMobileLayout,
+  isOpenPositionLimitReached = false,
+  openPositionCount = 0,
   onOpenGameModal,
   onOpenRegionModal,
   onOpenTierModal,
@@ -149,7 +155,7 @@ export function PlayerStageHeader({
 }: PlayerStageHeaderProps) {
   const walletSummary =
     typeof walletBalancePoints === 'number' && Number.isFinite(walletBalancePoints)
-      ? formatPoints(walletBalancePoints)
+      ? formatHeaderPoints(walletBalancePoints)
       : '집계 중';
   const tierSummary = currentTierName?.trim() || '미정';
 
@@ -160,7 +166,6 @@ export function PlayerStageHeader({
           <>
             <div className="app-shell__player-mobile-header-row">
               <div className="app-shell__player-title-row app-shell__player-title-row--mobile">
-                <p className="app-shell__section-eyebrow">Now Playing</p>
                 <h2 className="app-shell__section-title app-shell__section-title--mobile-player">
                   <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
                     {selectedCountryName}
@@ -177,8 +182,19 @@ export function PlayerStageHeader({
               </div>
               <div className="app-shell__player-mobile-summary" aria-label="내 게임 요약">
                 <button
+                  aria-label="내 게임 열기"
+                  className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button app-shell__player-mobile-summary-item--game"
+                  data-tier-code={currentTierCode ?? undefined}
+                  data-limit-reached={isOpenPositionLimitReached ? 'true' : undefined}
+                  onClick={onOpenGameModal}
+                  type="button"
+                >
+                  <span className="app-shell__player-mobile-summary-label">포지션</span>
+                  <span className="app-shell__player-mobile-summary-value">{openPositionCount}개</span>
+                </button>
+                <button
                   aria-label="지갑 현황 열기"
-                  className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button"
+                  className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button app-shell__player-mobile-summary-item--wallet"
                   onClick={onOpenWalletModal}
                   type="button"
                 >
@@ -194,15 +210,6 @@ export function PlayerStageHeader({
                 >
                   <span className="app-shell__player-mobile-summary-label">티어</span>
                   <span className="app-shell__player-mobile-summary-value">{tierSummary}</span>
-                </button>
-                <button
-                  aria-label="내 게임 열기"
-                  className="app-shell__player-mobile-summary-item app-shell__player-mobile-summary-item--button app-shell__player-mobile-summary-item--game"
-                  data-tier-code={currentTierCode ?? undefined}
-                  onClick={onOpenGameModal}
-                  type="button"
-                >
-                  <span className="app-shell__player-mobile-summary-label">내 게임</span>
                 </button>
               </div>
             </div>
@@ -291,11 +298,13 @@ function PlayerStage({
   isCinematicModeActive,
   isFavoriteToggleDisabled,
   isManualPlaybackSaveDisabled,
+  isOpenPositionLimitReached,
   isMobileLayout,
   isSelectedChannelFavorited,
   manualPlaybackSaveButtonLabel,
   manualPlaybackSaveStatus,
   onManualPlaybackSave,
+  openPositionCount,
   onOpenGameModal,
   onNextVideo,
   onOpenRegionModal,
@@ -362,6 +371,8 @@ function PlayerStage({
               headerSupplementalContent={headerSupplementalContent}
               isCinematicModeActive={isCinematicModeActive}
               isMobileLayout={isMobileLayout}
+              isOpenPositionLimitReached={isOpenPositionLimitReached}
+              openPositionCount={openPositionCount}
               onOpenGameModal={onOpenGameModal}
               onOpenRegionModal={onOpenRegionModal}
               onOpenTierModal={onOpenTierModal}
