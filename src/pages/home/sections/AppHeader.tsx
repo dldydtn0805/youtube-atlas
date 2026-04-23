@@ -407,7 +407,7 @@ function AppHeader({
                           type="button"
                         >
                             <span className="app-shell__profile-card-title-empty">
-                              현재 설정한 칭호 없음
+                              칭호 설정하기
                             </span>
                           </button>
                         )}
