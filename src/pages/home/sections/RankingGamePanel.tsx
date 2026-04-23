@@ -408,6 +408,7 @@ function LeaderboardRow({
         className="app-shell__game-leaderboard-item app-shell__game-leaderboard-item--button"
         data-expanded={isExpanded}
         data-me={entry.me}
+        data-tier-code={entry.currentTier.tierCode}
         onClick={() => onToggleUser(entry.userId)}
         type="button"
       >
@@ -431,13 +432,6 @@ function LeaderboardRow({
           <div className="app-shell__game-leaderboard-head">
             <div className="app-shell__game-leaderboard-identity">
               <p className="app-shell__game-leaderboard-name">{entry.displayName}</p>
-              <span
-                className="app-shell__game-leaderboard-tier"
-                data-tier-code={entry.currentTier.tierCode}
-                title={`${entry.currentTier.displayName} 티어`}
-              >
-                {entry.currentTier.displayName}
-              </span>
               {entry.selectedAchievementTitle ? (
                 <AchievementTitleBadge compact title={entry.selectedAchievementTitle} />
               ) : null}

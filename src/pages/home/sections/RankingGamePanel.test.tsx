@@ -443,6 +443,8 @@ describe('RankingGameLeaderboardTab', () => {
 
     const row = screen.getByRole('button', { name: /소몰 캐시아웃/ });
 
+    expect(row).toHaveAttribute('data-tier-code', 'PLATINUM');
+    expect(within(row).queryByText('플래티넘')).not.toBeInTheDocument();
     expect(within(row).queryByText('하이라이트 3개')).not.toBeInTheDocument();
     expect(within(row).queryByText(/실시간 수익률/)).not.toBeInTheDocument();
     expect(within(row).queryByText('스몰 캐시아웃')).not.toBeInTheDocument();
@@ -477,9 +479,13 @@ describe('RankingGameLeaderboardTab', () => {
     );
 
     const row = screen.getByRole('button', { name: /소몰 캐시아웃/ });
+    const badge = within(row).getByText('A. Sniper').closest('.app-shell__achievement-title-badge');
 
     expect(within(row).getByText('A. Sniper')).toBeInTheDocument();
-    expect(within(row).getByText('슈퍼')).toBeInTheDocument();
+    expect(badge).toHaveAttribute(
+      'title',
+      '슈퍼 Atlas Sniper: 150위 밖에서 잡은 영상이 10위 안까지 올라온 복합 하이라이트 달성자입니다.',
+    );
   });
 
   it('renders expanded leaderboard highlights with the richer card metadata', () => {
