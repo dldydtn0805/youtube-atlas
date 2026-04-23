@@ -107,4 +107,24 @@ describe('shouldOpenGameNotificationModal', () => {
     expect(hasResolvedGameNotificationScore(notification)).toBe(true);
     expect(hasProjectedGameNotificationScore(notification)).toBe(false);
   });
+
+  it('keeps title unlock notifications out of the modal even when the backend sends a mismatched event type', () => {
+    const notification = {
+      ...baseNotification,
+      notificationEventType: 'TIER_SCORE_GAIN' as const,
+      notificationType: 'TITLE_UNLOCK' as const,
+      positionId: null,
+      videoId: null,
+      videoTitle: null,
+      thumbnailUrl: null,
+      highlightScore: null,
+      titleDisplayName: 'Snipe Seeker',
+      titleGrade: 'RARE' as const,
+      showModal: false,
+    };
+
+    expect(shouldOpenGameNotificationModal(notification)).toBe(false);
+    expect(hasResolvedGameNotificationScore(notification)).toBe(true);
+    expect(hasProjectedGameNotificationScore(notification)).toBe(false);
+  });
 });

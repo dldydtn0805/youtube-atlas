@@ -7,6 +7,10 @@ import {
 } from './gameNotificationEventType';
 
 export function shouldOpenGameNotificationModal(notification: GameNotification) {
+  if (isTitleUnlockNotification(notification)) {
+    return false;
+  }
+
   return (
     notification.showModal === true ||
     isTierPromotionNotification(notification) ||

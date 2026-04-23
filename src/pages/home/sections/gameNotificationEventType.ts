@@ -1,16 +1,16 @@
 import type { GameNotification } from '../../../features/game/types';
 
 export function getGameNotificationEventType(notification: GameNotification) {
-  if (notification.notificationEventType) {
-    return notification.notificationEventType;
-  }
-
   if (notification.notificationType === 'TIER_PROMOTION') {
     return 'TIER_PROMOTION';
   }
 
   if (notification.notificationType === 'TITLE_UNLOCK') {
     return 'TITLE_UNLOCK';
+  }
+
+  if (notification.notificationEventType) {
+    return notification.notificationEventType;
   }
 
   return notification.showModal === false ? 'PROJECTED_HIGHLIGHT' : 'TIER_SCORE_GAIN';
