@@ -2658,7 +2658,7 @@ function HomePage() {
         currentTierScore={gameTierProgress?.highlightScore}
         highlightCount={gameHighlights.length}
         isOpenPositionLimitReached={isOpenPositionLimitReached}
-        openPositionCount={openGamePositions.length}
+        openPositionCount={openDistinctVideoCount}
         isDarkMode={isDarkMode}
         isLoggingOut={isLoggingOut}
         onLogout={() => void logout()}
@@ -2771,7 +2771,7 @@ function HomePage() {
             manualPlaybackSaveButtonLabel: isManualPlaybackSavePending ? '저장 중...' : '저장',
             manualPlaybackSaveStatus: manualPlaybackSaveStatus ?? undefined,
             onManualPlaybackSave: () => void handleManualPlaybackSave(),
-            openPositionCount: openGamePositions.length,
+            openPositionCount: openDistinctVideoCount,
             onNextVideo: handlePlayNextVideoWithPreview,
             onOpenGameModal: handleOpenGamePositionsModal,
             onOpenRegionModal: () => setIsRegionModalOpen(true),

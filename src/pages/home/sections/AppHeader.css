@@ -291,20 +291,20 @@
   color: #fff;
 }
 
-.app-shell__auth-summary-item--game[data-limit-reached='true'] .app-shell__auth-summary-value {
-  color: #dc2626;
-}
-
-:root[data-theme='dark'] .app-shell__auth-summary-item--game[data-limit-reached='true'] .app-shell__auth-summary-value {
-  color: #f87171;
-}
-
 .app-shell__auth-summary-item--game[data-tier-code] .app-shell__auth-summary-value {
   color: #000;
 }
 
 :root[data-theme='dark'] .app-shell__auth-summary-item--game[data-tier-code] .app-shell__auth-summary-value {
   color: #fff;
+}
+
+.app-shell__auth-summary-item--game[data-limit-reached='true'] .app-shell__auth-summary-value {
+  color: #dc2626;
+}
+
+:root[data-theme='dark'] .app-shell__auth-summary-item--game[data-limit-reached='true'] .app-shell__auth-summary-value {
+  color: #f87171;
 }
 
 .app-shell__auth-avatar {
