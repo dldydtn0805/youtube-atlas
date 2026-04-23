@@ -189,7 +189,7 @@ export function PlayerStageHeader({
                   onClick={onOpenGameModal}
                   type="button"
                 >
-                  <span className="app-shell__player-mobile-summary-label">포지션</span>
+                  <span className="app-shell__player-mobile-summary-label">내 게임</span>
                   <span className="app-shell__player-mobile-summary-value">{openPositionCount}개</span>
                 </button>
                 <button

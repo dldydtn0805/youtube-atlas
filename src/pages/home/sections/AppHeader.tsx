@@ -308,7 +308,7 @@ function AppHeader({
                 onClick={onOpenGameModal}
                 type="button"
               >
-                <span className="app-shell__auth-summary-label">포지션</span>
+                <span className="app-shell__auth-summary-label">내 게임</span>
                 <strong className="app-shell__auth-summary-value">{openPositionCount}개</strong>
               </button>
               <button
@@ -429,7 +429,7 @@ function AppHeader({
                       }}
                       type="button"
                     >
-                      <span>포지션</span>
+                      <span>내 게임</span>
                       <strong>{openPositionCount}개</strong>
                     </button>
                     <button
