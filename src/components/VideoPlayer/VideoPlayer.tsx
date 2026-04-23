@@ -4,9 +4,23 @@ import './VideoPlayer.css';
 let youtubeIframeApiPromise: Promise<void> | undefined;
 
 type YouTubePlayerWithPlaybackControls = YT.Player & {
+  getIframe?: () => HTMLIFrameElement;
   pauseVideo?: () => void;
   playVideo?: () => void;
 };
+
+const YOUTUBE_IFRAME_ALLOW_VALUE =
+  'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+
+function applyYouTubeIframePermissions(player: { getIframe?: () => HTMLIFrameElement } | null) {
+  const iframe = player?.getIframe?.();
+
+  if (!iframe) {
+    return;
+  }
+
+  iframe.allow = YOUTUBE_IFRAME_ALLOW_VALUE;
+}
 
 function loadYouTubeIframeApi() {
   if (typeof window === 'undefined') {
@@ -287,6 +301,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(function Vid
         events: {
           onReady: () => {
             isPlayerReadyRef.current = true;
+            applyYouTubeIframePermissions(playerRef.current);
             attemptPlaybackStart(playerRef.current, { scheduleRetry: true });
 
             if (restoreStartSeconds !== undefined) {

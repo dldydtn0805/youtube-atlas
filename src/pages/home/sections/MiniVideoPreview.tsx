@@ -3,6 +3,8 @@ import type { VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPla
 
 let miniVideoPreviewApiPromise: Promise<void> | undefined;
 const MINI_VIDEO_PREVIEW_LOWEST_QUALITY = 'small';
+const YOUTUBE_IFRAME_ALLOW_VALUE =
+  'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
 
 function loadMiniVideoPreviewApi() {
   if (typeof window === 'undefined') {
@@ -37,6 +39,16 @@ function loadMiniVideoPreviewApi() {
   });
 
   return miniVideoPreviewApiPromise;
+}
+
+function applyYouTubeIframePermissions(player: YT.Player) {
+  const iframe = (player as YT.Player & { getIframe?: () => HTMLIFrameElement }).getIframe?.();
+
+  if (!iframe) {
+    return;
+  }
+
+  iframe.allow = YOUTUBE_IFRAME_ALLOW_VALUE;
 }
 
 export function resetMiniVideoPreviewSingletonForTests() {
@@ -130,6 +142,7 @@ export default function MiniVideoPreview({
               setPlaybackQuality?: (quality: string) => void;
             };
 
+            applyYouTubeIframePermissions(player);
             player.mute?.();
             player.setPlaybackQuality?.(MINI_VIDEO_PREVIEW_LOWEST_QUALITY);
 
