@@ -70,10 +70,42 @@ export default function GoogleLoginButton() {
   const isLoginReady = isApiConfigured && isGoogleAuthAvailable && Boolean(googleClientId);
   const shouldRenderButton = status !== 'authenticated' && !isGoogleAuthLoading && isLoginReady;
   const isButtonReady = buttonStatus === 'ready' && !isLoggingIn;
+  const infoMessage = !isApiConfigured
+    ? '백엔드 연결 필요'
+    : status === 'loading'
+      ? '로그인 확인 중'
+      : isGoogleAuthLoading
+        ? '로그인 설정 확인 중'
+        : !isLoginReady
+          ? '로그인 설정 필요'
+          : buttonStatus === 'loading'
+            ? '로그인 준비 중'
+            : isLoggingIn
+              ? '로그인 처리 중'
+              : null;
+  const isLoadingState =
+    status === 'loading' || isGoogleAuthLoading || buttonStatus === 'loading' || isLoggingIn;
+  const statusMessage = buttonError ?? authError ?? infoMessage;
+  const isStatusError = Boolean(buttonError || authError);
 
   useEffect(() => {
     loginWithGoogleAuthorizationCodeRef.current = loginWithGoogleAuthorizationCode;
   }, [loginWithGoogleAuthorizationCode]);
+
+  useEffect(() => {
+    if (!isStatusError || !statusMessage) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setButtonError(null);
+      clearAuthError();
+    }, 3600);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [clearAuthError, isStatusError, statusMessage]);
 
   useEffect(() => {
     if (!shouldRenderButton) {
@@ -106,7 +138,7 @@ export default function GoogleLoginButton() {
         const googleOAuth = window.google?.accounts?.oauth2;
 
         if (!googleOAuth) {
-          markButtonFailure('구글 로그인 스크립트를 초기화하지 못했습니다.');
+          markButtonFailure('로그인 초기화 실패');
           return;
         }
 
@@ -114,7 +146,7 @@ export default function GoogleLoginButton() {
           callback: (response) => {
             if (response.error || !response.code) {
               setButtonError(
-                response.error_description || '구글 로그인 승인 코드를 받지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                response.error_description || '로그인에 실패했어요. 다시 시도해 주세요.',
               );
               return;
             }
@@ -131,7 +163,7 @@ export default function GoogleLoginButton() {
               return;
             }
 
-            markButtonFailure('구글 로그인 창을 열지 못했습니다. 팝업 차단 설정을 확인해 주세요.');
+            markButtonFailure('팝업 허용 후 다시 시도해 주세요');
           },
           scope: GOOGLE_AUTH_SCOPES,
           select_account: true,
@@ -140,7 +172,7 @@ export default function GoogleLoginButton() {
         setButtonStatus('ready');
       })
       .catch(() => {
-        markButtonFailure('구글 로그인 스크립트를 불러오지 못했습니다.');
+        markButtonFailure('로그인 로드 실패');
       });
 
     return () => {
@@ -159,44 +191,47 @@ export default function GoogleLoginButton() {
     codeClientRef.current.requestCode();
   };
 
-  if (!isApiConfigured) {
-    return <p className="app-shell__auth-status">백엔드 연결 후 로그인 기능을 사용할 수 있습니다.</p>;
-  }
-
-  if (status === 'loading') {
-    return <p className="app-shell__auth-status">저장된 로그인 세션을 확인하는 중입니다.</p>;
-  }
-
-  if (isGoogleAuthLoading) {
-    return <p className="app-shell__auth-status">구글 로그인 설정을 불러오는 중입니다.</p>;
-  }
-
-  if (!isLoginReady) {
-    return <p className="app-shell__auth-status">백엔드에 구글 로그인 Client ID가 아직 설정되지 않았습니다.</p>;
-  }
-
   return (
     <div className="app-shell__google-login">
       <button
+        aria-describedby={statusMessage ? 'google-login-status' : undefined}
         aria-busy={isLoggingIn}
         aria-label="Google로 로그인"
         className="app-shell__google-login-trigger"
-        disabled={!isButtonReady}
+        disabled={!isLoginReady || !isButtonReady}
         onClick={handleStartLogin}
         type="button"
       >
-        <span aria-hidden="true" className="app-shell__google-login-trigger-glyph">
-          G
-        </span>
+        {isLoadingState ? (
+          <span aria-hidden="true" className="app-shell__google-login-spinner" />
+        ) : (
+          <span aria-hidden="true" className="app-shell__google-login-trigger-glyph">
+            G
+          </span>
+        )}
       </button>
-      {buttonStatus === 'loading' ? (
-        <p className="app-shell__auth-status">구글 로그인 준비 중입니다.</p>
-      ) : null}
-      {isLoggingIn ? <p className="app-shell__auth-status">구글 계정을 확인하고 있습니다.</p> : null}
-      {buttonError || authError ? (
-        <p className="app-shell__auth-status app-shell__auth-status--error">
-          {buttonError ?? authError}
-        </p>
+      {statusMessage ? (
+        <aside
+          aria-live={isStatusError ? 'assertive' : 'polite'}
+          className={`app-shell__auth-status${isStatusError ? ' app-shell__auth-status--error' : ''}`}
+          id="google-login-status"
+          role={isStatusError ? 'alert' : 'status'}
+        >
+          <p>{statusMessage}</p>
+          {isStatusError ? (
+            <button
+              aria-label="로그인 상태 토스트 닫기"
+              className="app-shell__auth-status-close"
+              onClick={() => {
+                setButtonError(null);
+                clearAuthError();
+              }}
+              type="button"
+            >
+              닫기
+            </button>
+          ) : null}
+        </aside>
       ) : null}
     </div>
   );

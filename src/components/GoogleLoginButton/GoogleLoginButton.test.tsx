@@ -124,7 +124,7 @@ describe('GoogleLoginButton', () => {
       await flushPromises();
     });
 
-    expect(screen.getByText('구글 로그인 스크립트를 초기화하지 못했습니다.')).toBeInTheDocument();
+    expect(screen.getByText('로그인 초기화 실패')).toBeInTheDocument();
     appendChildSpy.mockRestore();
   });
 });

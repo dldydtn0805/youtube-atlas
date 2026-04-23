@@ -1,7 +1,6 @@
 .app-shell__google-login {
   align-items: center;
   display: inline-flex;
-  gap: 6px;
 }
 
 .app-shell__google-login-trigger {
@@ -38,7 +37,7 @@
 }
 
 .app-shell__google-login-trigger:disabled {
-  cursor: wait;
+  cursor: default;
   opacity: 0.7;
   transform: none;
 }
@@ -73,15 +72,82 @@
   width: 18px;
 }
 
+.app-shell__google-login-spinner {
+  animation: app-shell-google-login-spin 0.9s linear infinite;
+  border: 2px solid rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  border-top-color: rgba(66, 133, 244, 0.92);
+  display: inline-flex;
+  height: 18px;
+  width: 18px;
+}
+
 .app-shell__auth-status {
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  line-height: 1.4;
+  backdrop-filter: blur(18px);
+  align-items: center;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(248, 113, 113, 0.34);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
+  color: rgba(255, 241, 242, 0.96);
+  display: flex;
+  gap: 12px;
+  left: 50%;
   margin: 0;
-  max-width: 280px;
+  max-width: min(420px, calc(100vw - 28px));
+  padding: 10px 12px;
+  position: fixed;
   text-align: left;
+  top: 18px;
+  transform: translateX(-50%);
+  z-index: var(--layer-modal, 1500);
 }
 
 .app-shell__auth-status--error {
-  color: #d93b45;
+  background: rgba(127, 29, 29, 0.94);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #fecaca;
+}
+
+.app-shell__auth-status p {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.app-shell__auth-status-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: inherit;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 7px 10px;
+}
+
+:root[data-theme='dark'] .app-shell__auth-status {
+  background: rgba(15, 23, 42, 0.94);
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.45);
+}
+
+@keyframes app-shell-google-login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell__auth-status {
+    align-items: stretch;
+    flex-direction: column;
+    top: 12px;
+  }
+
+  .app-shell__auth-status-close {
+    align-self: flex-end;
+  }
 }
