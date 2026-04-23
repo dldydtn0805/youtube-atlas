@@ -1,0 +1,52 @@
+.app-shell__achievement-title-badge {
+  --achievement-title-rgb: 100, 116, 139;
+  align-items: center;
+  background: color-mix(in srgb, rgb(var(--achievement-title-rgb)) 10%, rgba(255, 255, 255, 0.95));
+  border: 1px solid rgba(var(--achievement-title-rgb), 0.24);
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--text) 76%, rgb(var(--achievement-title-rgb)) 24%);
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 0.67rem;
+  font-weight: 800;
+  gap: 5px;
+  line-height: 1;
+  max-width: 100%;
+  min-height: 24px;
+  min-width: 0;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.app-shell__achievement-title-badge[data-grade='RARE'] {
+  --achievement-title-rgb: 37, 99, 235;
+}
+
+.app-shell__achievement-title-badge[data-grade='SUPER'] {
+  --achievement-title-rgb: 225, 29, 72;
+  background:
+    linear-gradient(135deg, rgba(24, 24, 27, 0.96), rgba(63, 63, 70, 0.94)),
+    rgba(24, 24, 27, 0.96);
+  border-color: rgba(var(--achievement-title-rgb), 0.44);
+  color: #f8fafc;
+}
+
+.app-shell__achievement-title-badge[data-grade='ULTIMATE'] {
+  --achievement-title-rgb: 234, 179, 8;
+}
+
+.app-shell__achievement-title-badge-grade {
+  color: color-mix(in srgb, currentColor 66%, rgb(var(--achievement-title-rgb)) 34%);
+  font-size: 0.6rem;
+}
+
+.app-shell__achievement-title-badge-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:root[data-theme='dark'] .app-shell__achievement-title-badge {
+  background: color-mix(in srgb, rgb(var(--achievement-title-rgb)) 15%, rgba(24, 24, 27, 0.94));
+  border-color: rgba(var(--achievement-title-rgb), 0.32);
+  color: color-mix(in srgb, #f8fafc 82%, rgb(var(--achievement-title-rgb)) 18%);
+}

@@ -1,5 +1,6 @@
 import { fetchApi } from '../../lib/api';
 import type {
+  AchievementTitleCollection,
   CreateGamePositionInput,
   GameCurrentSeason,
   GameHighlight,
@@ -28,6 +29,7 @@ type ApiGameTierProgress = Omit<GameTierProgress, 'currentTier' | 'nextTier' | '
 
 type ApiGameLeaderboardEntry = Omit<GameLeaderboardEntry, 'currentTier'> & {
   currentTier: ApiGameTier;
+  selectedAchievementTitle?: GameLeaderboardEntry['selectedAchievementTitle'];
 };
 
 type ApiGameCurrentSeason = Omit<GameCurrentSeason, 'wallet'> & {
@@ -62,6 +64,14 @@ function normalizeGameLeaderboardEntry(entry: ApiGameLeaderboardEntry): GameLead
   return {
     ...entry,
     currentTier: normalizeGameTier(entry.currentTier),
+    selectedAchievementTitle: entry.selectedAchievementTitle ?? null,
+  };
+}
+
+function normalizeAchievementTitleCollection(collection: AchievementTitleCollection): AchievementTitleCollection {
+  return {
+    selectedTitle: collection.selectedTitle ?? null,
+    titles: Array.isArray(collection.titles) ? collection.titles : [],
   };
 }
 
@@ -103,6 +113,27 @@ export async function fetchGameLeaderboard(accessToken: string, regionCode: stri
   });
 
   return leaderboard.map(normalizeGameLeaderboardEntry);
+}
+
+export async function fetchAchievementTitles(accessToken: string) {
+  const collection = await fetchApi<AchievementTitleCollection>('/api/game/achievement-titles/me', {
+    headers: createAuthorizationHeader(accessToken),
+  });
+
+  return normalizeAchievementTitleCollection(collection);
+}
+
+export async function updateSelectedAchievementTitle(accessToken: string, titleCode: string | null) {
+  const collection = await fetchApi<AchievementTitleCollection>('/api/game/achievement-titles/me/selected', {
+    method: 'PATCH',
+    headers: {
+      ...createAuthorizationHeader(accessToken),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ titleCode }),
+  });
+
+  return normalizeAchievementTitleCollection(collection);
 }
 
 export async function fetchGameHighlights(accessToken: string, regionCode: string) {

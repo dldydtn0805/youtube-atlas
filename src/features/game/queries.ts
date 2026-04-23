@@ -1,5 +1,6 @@
 import { QueryClient, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  fetchAchievementTitles,
   fetchBuyableMarketChart,
   buyGamePosition,
   deleteGameNotification,
@@ -19,6 +20,7 @@ import {
   markGameNotificationsRead,
   sellGamePosition,
   sellGamePositions,
+  updateSelectedAchievementTitle,
 } from './api';
 import type {
   CreateGamePositionInput,
@@ -63,6 +65,7 @@ export const gameQueryKeys = {
     videoId: string | null,
     quantity: number | null,
   ) => ['game', 'sellPreview', accessToken, regionCode, positionId, videoId, quantity] as const,
+  achievementTitles: (accessToken: string | null) => ['game', 'achievementTitles', accessToken] as const,
 };
 
 interface InvalidateGameQueriesOptions {
@@ -115,6 +118,10 @@ export async function invalidateGameQueries(
         queryKey: ['game', 'positions', accessToken, regionCode],
         refetchType: 'active',
       }),
+      queryClient.invalidateQueries({
+        queryKey: gameQueryKeys.achievementTitles(accessToken),
+        refetchType: 'active',
+      }),
     );
   } else {
     invalidations.push(
@@ -148,6 +155,10 @@ export async function invalidateGameQueries(
       }),
       queryClient.invalidateQueries({
         queryKey: ['game', 'positions', accessToken],
+        refetchType: 'active',
+      }),
+      queryClient.invalidateQueries({
+        queryKey: gameQueryKeys.achievementTitles(accessToken),
         refetchType: 'active',
       }),
     );
@@ -206,6 +217,15 @@ export function useGameLeaderboard(accessToken: string | null, regionCode: strin
     queryKey: gameQueryKeys.leaderboard(accessToken, regionCode),
     queryFn: () => fetchGameLeaderboard(accessToken as string, regionCode),
     staleTime: 1000 * 15,
+  });
+}
+
+export function useAchievementTitles(accessToken: string | null, enabled = true) {
+  return useQuery({
+    enabled: enabled && Boolean(accessToken),
+    queryKey: gameQueryKeys.achievementTitles(accessToken),
+    queryFn: () => fetchAchievementTitles(accessToken as string),
+    staleTime: 1000 * 30,
   });
 }
 
@@ -390,6 +410,36 @@ export function useDeleteGameNotification(accessToken: string | null, regionCode
           queryKey: seasonKey,
           refetchType: 'active',
         }),
+      ]);
+    },
+  });
+}
+
+export function useUpdateSelectedAchievementTitle(accessToken: string | null, regionCode: string | null) {
+  const queryClient = useQueryClient();
+  const titlesKey = gameQueryKeys.achievementTitles(accessToken);
+
+  return useMutation({
+    mutationFn: (titleCode: string | null) => {
+      if (!accessToken) {
+        throw new Error('로그인이 필요합니다.');
+      }
+
+      return updateSelectedAchievementTitle(accessToken, titleCode);
+    },
+    onSuccess: async (data) => {
+      queryClient.setQueryData(titlesKey, data);
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: titlesKey,
+          refetchType: 'active',
+        }),
+        regionCode
+          ? queryClient.invalidateQueries({
+              queryKey: gameQueryKeys.leaderboard(accessToken, regionCode),
+              refetchType: 'active',
+            })
+          : Promise.resolve(),
       ]);
     },
   });

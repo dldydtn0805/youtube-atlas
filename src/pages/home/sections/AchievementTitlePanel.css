@@ -1,0 +1,65 @@
+.app-shell__achievement-title-panel {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.app-shell__achievement-title-empty,
+.app-shell__achievement-title-description {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.app-shell__achievement-title-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  min-width: 0;
+}
+
+.app-shell__achievement-title-option {
+  align-items: flex-start;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  min-width: 0;
+  padding: 10px;
+  text-align: left;
+}
+
+.app-shell__achievement-title-option[data-earned='false'] {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.app-shell__achievement-title-option[data-selected='true'] {
+  border-color: rgba(20, 184, 166, 0.46);
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.12);
+}
+
+.app-shell__achievement-title-clear {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 800;
+  justify-self: start;
+  padding: 0;
+}
+
+:root[data-theme='dark'] .app-shell__achievement-title-panel,
+:root[data-theme='dark'] .app-shell__achievement-title-option {
+  background: rgba(24, 24, 27, 0.72);
+  border-color: rgba(255, 255, 255, 0.08);
+}

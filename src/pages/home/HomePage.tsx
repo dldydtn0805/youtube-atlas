@@ -79,6 +79,7 @@ import { useAuth } from '../../features/auth/useAuth';
 import {
   invalidateGameQueries,
   gameQueryKeys,
+  useAchievementTitles,
   useBuyableMarketChart,
   useBuyGamePosition,
   useCurrentGameSeason,
@@ -96,6 +97,7 @@ import {
   useMarkGameNotificationsRead,
   useMyGamePositions,
   useSellGamePositions,
+  useUpdateSelectedAchievementTitle,
 } from '../../features/game/queries';
 import { useGameNotificationRealtime, useGameRealtimeInvalidation } from '../../features/game/realtime';
 import type {
@@ -791,6 +793,10 @@ function HomePage() {
     isError: isGameLeaderboardError,
     isLoading: isGameLeaderboardLoading,
   } = useGameLeaderboard(accessToken, selectedRegionCode, shouldLoadGame);
+  const {
+    data: achievementTitleCollection,
+  } = useAchievementTitles(accessToken, shouldLoadGame);
+  const updateSelectedAchievementTitleMutation = useUpdateSelectedAchievementTitle(accessToken, selectedRegionCode);
   const {
     data: openGamePositions = [],
     error: openGamePositionsError,
@@ -2877,8 +2883,11 @@ function HomePage() {
         defaultTab={tierModalDefaultTab}
         highlightsContent={tierModalHighlightsContent}
         isOpen={isTierModalOpen}
+        isTitleSaving={updateSelectedAchievementTitleMutation.isPending}
         onClose={closeTierModal}
+        onSelectTitle={(titleCode) => updateSelectedAchievementTitleMutation.mutate(titleCode)}
         rankingContent={tierModalRankingContent}
+        titleCollection={achievementTitleCollection}
         tierProgress={gameTierProgress}
       />
       <GameTradeModal

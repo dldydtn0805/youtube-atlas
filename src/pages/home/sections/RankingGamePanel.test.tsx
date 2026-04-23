@@ -75,6 +75,7 @@ function createLeaderboardEntry(overrides: Partial<GameLeaderboardEntry> = {}): 
       titleCode: 'title',
       profileThemeCode: 'theme',
     },
+    selectedAchievementTitle: null,
     highlightScore: 37072,
     highlightCount: 3,
     topHighlightType: 'SMALL_CASHOUT',
@@ -445,6 +446,40 @@ describe('RankingGameLeaderboardTab', () => {
     expect(within(row).queryByText('하이라이트 3개')).not.toBeInTheDocument();
     expect(within(row).queryByText(/실시간 수익률/)).not.toBeInTheDocument();
     expect(within(row).queryByText('스몰 캐시아웃')).not.toBeInTheDocument();
+  });
+
+  it('renders the selected achievement title next to the tier', () => {
+    render(
+      <RankingGameLeaderboardTab
+        entries={[
+          createLeaderboardEntry({
+            selectedAchievementTitle: {
+              code: 'ATLAS_SNIPER',
+              displayName: 'Atlas Sniper',
+              shortName: 'A. Sniper',
+              grade: 'SUPER',
+              description: '150위 밖에서 잡은 영상이 10위 안까지 올라온 복합 하이라이트 달성자입니다.',
+            },
+          }),
+        ]}
+        error={null}
+        highlights={[]}
+        highlightsError={null}
+        highlightsTitle="소몰 캐시아웃님의 하이라이트"
+        isError={false}
+        isHighlightsError={false}
+        isHighlightsLoading={false}
+        isLoading={false}
+        onSelectHighlight={vi.fn()}
+        onToggleUser={vi.fn()}
+        selectedUserId={null}
+      />,
+    );
+
+    const row = screen.getByRole('button', { name: /소몰 캐시아웃/ });
+
+    expect(within(row).getByText('A. Sniper')).toBeInTheDocument();
+    expect(within(row).getByText('슈퍼')).toBeInTheDocument();
   });
 
   it('renders expanded leaderboard highlights with the richer card metadata', () => {

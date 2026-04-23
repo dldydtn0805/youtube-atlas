@@ -8,6 +8,26 @@ export interface GameWallet {
 
 export type GameStrategyType = 'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE';
 export type GameNotificationEventType = 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION';
+export type AchievementTitleGrade = 'NORMAL' | 'RARE' | 'SUPER' | 'ULTIMATE';
+
+export interface SelectedAchievementTitle {
+  code: string;
+  displayName: string;
+  shortName: string;
+  grade: AchievementTitleGrade;
+  description: string;
+}
+
+export interface AchievementTitle extends SelectedAchievementTitle {
+  earned: boolean;
+  selected: boolean;
+  earnedAt: string | null;
+}
+
+export interface AchievementTitleCollection {
+  selectedTitle: SelectedAchievementTitle | null;
+  titles: AchievementTitle[];
+}
 
 export interface GameCurrentSeason {
   seasonId: number;
@@ -69,6 +89,7 @@ export interface GameLeaderboardEntry {
   displayName: string;
   pictureUrl: string | null;
   currentTier: GameTier;
+  selectedAchievementTitle: SelectedAchievementTitle | null;
   highlightScore: number;
   highlightCount: number;
   topHighlightType: string | null;

@@ -29,6 +29,7 @@ import {
   GAME_PORTFOLIO_QUEUE_ID,
   HISTORY_PLAYBACK_QUEUE_ID,
 } from '../utils';
+import AchievementTitleBadge from './AchievementTitleBadge';
 import GameTierSummary from './GameTierSummary';
 import GameWalletSummary from './GameWalletSummary';
 import MiniVideoPreview from './MiniVideoPreview';
@@ -437,6 +438,9 @@ function LeaderboardRow({
               >
                 {entry.currentTier.displayName}
               </span>
+              {entry.selectedAchievementTitle ? (
+                <AchievementTitleBadge compact title={entry.selectedAchievementTitle} />
+              ) : null}
             </div>
             <p className="app-shell__game-leaderboard-total" title={formatHighlightScore(entry.highlightScore)}>
               {formatHighlightScore(entry.highlightScore)}
