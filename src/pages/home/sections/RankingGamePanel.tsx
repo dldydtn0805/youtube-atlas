@@ -264,6 +264,7 @@ function mapHoldingToGamePosition(holding: OpenGameHolding): GamePosition {
     reservedForSell: holding.reservedForSell,
     scheduledSellOrderId: holding.scheduledSellOrderId,
     scheduledSellTargetRank: holding.scheduledSellTargetRank,
+    scheduledSellTriggerDirection: holding.scheduledSellTriggerDirection,
     scheduledSellQuantity: holding.scheduledSellQuantity,
   };
 }
@@ -925,8 +926,11 @@ export function RankingGamePositionsTab({
             ? calculateGameUnitPricePoints(holding.currentPricePoints, holding.quantity)
             : null;
         const positionStatusBadge = holding.chartOut ? '차트 아웃' : null;
+        const scheduledSellConditionLabel = holding.scheduledSellTriggerDirection === 'RANK_DROPS_TO'
+          ? `${formatRank(holding.scheduledSellTargetRank)} 이하`
+          : `${formatRank(holding.scheduledSellTargetRank)} 이내`;
         const sellableStatusBadge = holding.reservedForSell
-          ? `예약 ${formatGameQuantity(holding.scheduledSellQuantity)} · ${formatRank(holding.scheduledSellTargetRank)} 이내`
+          ? `예약 ${formatGameQuantity(holding.scheduledSellQuantity)} · ${scheduledSellConditionLabel}`
           : !canShowGameActions
           ? '전체 카테고리에서 매도 가능'
           : holding.sellableQuantity > 0

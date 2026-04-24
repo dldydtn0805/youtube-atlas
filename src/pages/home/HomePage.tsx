@@ -109,6 +109,7 @@ import type {
   GameNotification,
   GamePosition,
   GamePositionRankHistory,
+  ScheduledSellTriggerDirection,
 } from '../../features/game/types';
 import { fetchGamePositionRankHistory } from '../../features/game/api';
 import {
@@ -502,6 +503,8 @@ function HomePage() {
   const [activeGameTab, setActiveGameTab] = useState<'positions' | 'scheduledOrders' | 'history' | 'guide'>('positions');
   const [sellOrderMode, setSellOrderMode] = useState<'instant' | 'scheduled'>('instant');
   const [scheduledSellTargetRank, setScheduledSellTargetRank] = useState(10);
+  const [scheduledSellTriggerDirection, setScheduledSellTriggerDirection] =
+    useState<ScheduledSellTriggerDirection>('RANK_IMPROVES_TO');
   const [rankHistoryFocusMode, setRankHistoryFocusMode] = useState<'full' | 'trade'>('full');
   const [isBuyableOnlyFilterActive, setIsBuyableOnlyFilterActive] = useState(false);
   const [collapsedHomeSectionIds, setCollapsedHomeSectionIds] = useState(getInitialCollapsedHomeSectionIds);
@@ -1590,6 +1593,7 @@ function HomePage() {
     setActiveGameTab('positions');
     setSellOrderMode('instant');
     setScheduledSellTargetRank(10);
+    setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
     setHistoryPlaybackLoadingVideoId(null);
     setHistoryPlaybackVideo(null);
   }, [authStatus]);
@@ -1597,6 +1601,7 @@ function HomePage() {
   useEffect(() => {
     setSellOrderMode('instant');
     setScheduledSellTargetRank(10);
+    setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
   }, [selectedOpenPositionId, selectedVideoId]);
 
   useEffect(() => {
@@ -1940,13 +1945,17 @@ function HomePage() {
         quantity: normalizedSellQuantity,
         regionCode: currentGameSeason.regionCode,
         targetRank: normalizedTargetRank,
+        triggerDirection: scheduledSellTriggerDirection,
       });
+
+      const triggerLabel = order.triggerDirection === 'RANK_DROPS_TO' ? '이하 이탈 시' : '이내 진입 시';
 
       setActiveTradeModal(null);
       setSellOrderMode('instant');
       setScheduledSellTargetRank(10);
+      setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
       setActiveGameTab('scheduledOrders');
-      setGameActionStatus(`${order.videoTitle} 포지션을 ${formatRank(order.targetRank)} 이내 진입 시 자동 매도하도록 예약했어요.`);
+      setGameActionStatus(`${order.videoTitle} 포지션을 ${formatRank(order.targetRank)} ${triggerLabel} 자동 매도하도록 예약했어요.`);
     } catch (error) {
       if (
         error instanceof ApiRequestError &&
@@ -1966,6 +1975,7 @@ function HomePage() {
     logout,
     normalizedSellQuantity,
     scheduledSellTargetRank,
+    scheduledSellTriggerDirection,
     selectedSellPositionId,
     setActiveTradeModal,
     setGameActionStatus,
@@ -3083,7 +3093,9 @@ function HomePage() {
       <GameTradeModal
         confirmLabel={
           sellOrderMode === 'scheduled'
-            ? `${formatRank(scheduledSellTargetRank)} 이내 예약`
+            ? scheduledSellTriggerDirection === 'RANK_DROPS_TO'
+              ? `${formatRank(scheduledSellTargetRank)} 하락 방어`
+              : `${formatRank(scheduledSellTargetRank)} 상승 목표`
             : `${formatGameOrderQuantity(normalizedSellQuantity)} 매도`
         }
         currentRankLabel={formatRank(selectedVideoCurrentChartRank, { chartOut: selectedVideoIsChartOut })}
@@ -3114,17 +3126,25 @@ function HomePage() {
         }}
         onClose={closeTradeModal}
         onChangeSellOrderMode={canScheduleSellCurrentSelection ? setSellOrderMode : undefined}
+        onChangeScheduledSellTriggerDirection={setScheduledSellTriggerDirection}
         onChangeScheduledSellTargetRank={setScheduledSellTargetRank}
         onConfirm={() => {
           void (sellOrderMode === 'scheduled' ? handleCreateScheduledSellOrder() : handleSellCurrentVideo());
         }}
         quantity={normalizedSellQuantity}
         scheduledSellTargetRank={scheduledSellTargetRank}
+        scheduledSellTriggerDirection={scheduledSellTriggerDirection}
         sellOrderMode={sellOrderMode}
         summaryItems={
           sellOrderMode === 'scheduled'
             ? [
-                { label: '예약 조건', value: `${formatRank(scheduledSellTargetRank)} 이내` },
+                {
+                  label: '예약 조건',
+                  value:
+                    scheduledSellTriggerDirection === 'RANK_DROPS_TO'
+                      ? `${formatRank(scheduledSellTargetRank)} 이하 이탈`
+                      : `${formatRank(scheduledSellTargetRank)} 이내 진입`,
+                },
                 { label: '대상 수량', value: formatGameOrderQuantity(normalizedSellQuantity) },
                 { label: '현재 순위', value: formatRank(selectedVideoCurrentChartRank, { chartOut: selectedVideoIsChartOut }) },
                 { label: '처리 방식', value: '조건 도달 시 자동 매도' },

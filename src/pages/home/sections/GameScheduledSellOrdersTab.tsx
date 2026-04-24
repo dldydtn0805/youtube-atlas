@@ -32,6 +32,12 @@ function getScheduledSellStatusLabel(status: GameScheduledSellOrder['status']) {
   return '실패';
 }
 
+function getScheduledSellConditionLabel(order: GameScheduledSellOrder) {
+  return order.triggerDirection === 'RANK_DROPS_TO'
+    ? `${formatRank(order.targetRank)} 이하 이탈`
+    : `${formatRank(order.targetRank)} 이내 진입`;
+}
+
 export default function GameScheduledSellOrdersTab({
   emptyMessage = '예약 매도 주문이 아직 없습니다.',
   isCancelingOrderId = null,
@@ -69,7 +75,7 @@ export default function GameScheduledSellOrdersTab({
                 <p className="app-shell__game-position-channel">{order.channelTitle}</p>
                 <p className="app-shell__game-position-meta">
                   <span className="app-shell__game-position-meta-label">조건</span>{' '}
-                  <span>{formatRank(order.targetRank)} 이내</span>
+                  <span>{getScheduledSellConditionLabel(order)}</span>
                   {' · '}
                   <span className="app-shell__game-position-meta-label">현재</span>{' '}
                   <span>{formatRank(order.currentRank)}</span>

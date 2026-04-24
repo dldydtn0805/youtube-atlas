@@ -10,6 +10,7 @@ export type GameStrategyType = 'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BI
 export type GameNotificationEventType = 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
 export type AchievementTitleGrade = 'NORMAL' | 'RARE' | 'SUPER' | 'ULTIMATE';
 export type ScheduledSellOrderStatus = 'PENDING' | 'EXECUTED' | 'CANCELED' | 'FAILED';
+export type ScheduledSellTriggerDirection = 'RANK_IMPROVES_TO' | 'RANK_DROPS_TO';
 
 export interface SelectedAchievementTitle {
   code: string;
@@ -180,6 +181,7 @@ export interface GamePosition {
   reservedForSell?: boolean;
   scheduledSellOrderId?: number | null;
   scheduledSellTargetRank?: number | null;
+  scheduledSellTriggerDirection?: ScheduledSellTriggerDirection | null;
   scheduledSellQuantity?: number | null;
 }
 
@@ -194,6 +196,7 @@ export interface GameScheduledSellOrder {
   thumbnailUrl: string;
   regionCode: string;
   targetRank: number;
+  triggerDirection: ScheduledSellTriggerDirection;
   status: ScheduledSellOrderStatus;
   currentRank: number | null;
   buyRank: number;
@@ -257,6 +260,7 @@ export interface CreateScheduledSellOrderInput {
   regionCode: string;
   targetRank: number;
   quantity: number;
+  triggerDirection: ScheduledSellTriggerDirection;
 }
 
 export interface SellGamePreviewItem {

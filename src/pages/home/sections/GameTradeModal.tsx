@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import type { ScheduledSellTriggerDirection } from '../../../features/game/types';
 import {
   DEFAULT_GAME_QUANTITY,
   GAME_ORDER_QUANTITY_STEP,
@@ -35,11 +36,13 @@ interface GameTradeModalProps {
   mode: 'buy' | 'sell';
   onChangeQuantity: (quantity: number) => void;
   onChangeSellOrderMode?: (mode: 'instant' | 'scheduled') => void;
+  onChangeScheduledSellTriggerDirection?: (direction: ScheduledSellTriggerDirection) => void;
   onChangeScheduledSellTargetRank?: (rank: number) => void;
   onClose: () => void;
   onConfirm: () => void;
   quantity: number;
   scheduledSellTargetRank?: number;
+  scheduledSellTriggerDirection?: ScheduledSellTriggerDirection;
   sellOrderMode?: 'instant' | 'scheduled';
   summaryItems: GameTradeModalSummaryItem[];
   summaryNote?: string;
@@ -91,11 +94,13 @@ export default function GameTradeModal({
   mode,
   onChangeQuantity,
   onChangeSellOrderMode,
+  onChangeScheduledSellTriggerDirection,
   onChangeScheduledSellTargetRank,
   onClose,
   onConfirm,
   quantity,
   scheduledSellTargetRank = 10,
+  scheduledSellTriggerDirection = 'RANK_IMPROVES_TO',
   sellOrderMode = 'instant',
   summaryItems,
   summaryNote,
@@ -245,7 +250,7 @@ export default function GameTradeModal({
               </div>
             </div>
 
-            {isScheduledSellMode && onChangeScheduledSellTargetRank ? (
+            {isScheduledSellMode && onChangeScheduledSellTargetRank && onChangeScheduledSellTriggerDirection ? (
               <div className="app-shell__modal-field">
                 <div className="app-shell__section-heading">
                   <p className="app-shell__section-eyebrow">Trigger</p>
@@ -253,8 +258,10 @@ export default function GameTradeModal({
                 </div>
                 <GameScheduledSellFields
                   disabled={isSubmitting}
+                  onChangeTriggerDirection={onChangeScheduledSellTriggerDirection}
                   onChangeTargetRank={onChangeScheduledSellTargetRank}
                   targetRank={scheduledSellTargetRank}
+                  triggerDirection={scheduledSellTriggerDirection}
                 />
               </div>
             ) : null}

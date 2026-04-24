@@ -118,6 +118,7 @@ function createOpenGameHolding(overrides: Partial<OpenGameHolding> = {}): OpenGa
     reservedForSell: false,
     scheduledSellOrderId: null,
     scheduledSellTargetRank: null,
+    scheduledSellTriggerDirection: null,
     scheduledSellQuantity: 0,
     ...overrides,
   };

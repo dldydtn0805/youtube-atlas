@@ -49,6 +49,7 @@ export interface OpenGameHolding {
   reservedForSell: boolean;
   scheduledSellOrderId: number | null;
   scheduledSellTargetRank: number | null;
+  scheduledSellTriggerDirection: GamePosition['scheduledSellTriggerDirection'] | null;
   scheduledSellQuantity: number;
 }
 
@@ -506,6 +507,7 @@ export function buildOpenGameHoldings(
         reservedForSell,
         scheduledSellOrderId: position.scheduledSellOrderId ?? null,
         scheduledSellTargetRank: position.scheduledSellTargetRank ?? null,
+        scheduledSellTriggerDirection: position.scheduledSellTriggerDirection ?? null,
         scheduledSellQuantity,
       };
     })
