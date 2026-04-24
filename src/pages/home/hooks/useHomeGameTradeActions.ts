@@ -11,12 +11,10 @@ import { ApiRequestError } from '../../../lib/api';
 import {
   DEFAULT_GAME_QUANTITY,
   formatGameOrderQuantity,
-  formatPoints,
   getBuyShortfallPointsText,
   normalizeGameOrderCapacity,
   normalizeGameOrderQuantity,
 } from '../gameHelpers';
-import { formatSignedProfitRate } from '../utils';
 
 interface UseHomeGameTradeActionsOptions {
   authStatus: AuthStatus;
@@ -164,11 +162,7 @@ export default function useHomeGameTradeActions({
       void onBuySuccess?.();
       setActiveTradeModal(null);
       setBuyQuantity(DEFAULT_GAME_QUANTITY);
-      setGameActionStatus(
-        `${formatPoints(totalSelectedVideoBuyPoints ?? selectedVideoMarketEntry.currentPricePoints)}로 ${
-          selectedVideoMarketEntry.currentRank
-        }위 영상을 ${formatGameOrderQuantity(clampedBuyQuantity)} 매수했어요.`,
-      );
+      setGameActionStatus('매수 완료됐어요.');
     } catch (error) {
       if (
         error instanceof ApiRequestError &&
@@ -228,27 +222,15 @@ export default function useHomeGameTradeActions({
     try {
       tradeRequestLockRef.current = 'sell';
       setActiveTradeRequest('sell');
-      const soldPositions = await mutateSellGamePositions({
+      await mutateSellGamePositions({
         positionId: selectedOpenPositionId ?? undefined,
         quantity: clampedSellQuantity,
         regionCode: selectedRegionCode,
         videoId: selectedOpenPositionId == null ? selectedVideoId : undefined,
       });
-      const totalSettledPoints = soldPositions.reduce((sum, response) => sum + response.settledPoints, 0);
-      const totalSellPricePoints = soldPositions.reduce((sum, response) => sum + response.sellPricePoints, 0);
-      const totalPnlPoints = soldPositions.reduce((sum, response) => sum + response.pnlPoints, 0);
-      const totalStakePoints = soldPositions.reduce((sum, response) => sum + response.stakePoints, 0);
-      const totalSoldQuantity = soldPositions.reduce((sum, response) => sum + response.quantity, 0);
-      const totalFeePoints = totalSellPricePoints - totalSettledPoints;
-
       setActiveTradeModal(null);
       setSellQuantity(DEFAULT_GAME_QUANTITY);
-      setGameActionStatus(
-        `${selectedGameActionTitle} 포지션 ${formatGameOrderQuantity(totalSoldQuantity)}를 정산 ${formatPoints(totalSettledPoints)} / 수수료 ${formatPoints(totalFeePoints)} / 손익률 ${formatSignedProfitRate(
-          totalPnlPoints,
-          totalStakePoints,
-        )} 기준으로 정리했어요.`,
-      );
+      setGameActionStatus('매도 완료됐어요.');
     } catch (error) {
       if (
         error instanceof ApiRequestError &&

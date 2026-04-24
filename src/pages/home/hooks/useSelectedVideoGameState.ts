@@ -390,10 +390,13 @@ export default function useSelectedVideoGameState({
         : undefined;
   const selectedOpenHoldingLockedQuantity = selectedOpenHolding?.lockedQuantity ?? 0;
   const selectedOpenHoldingNextSellableInSeconds = selectedOpenHolding?.nextSellableInSeconds ?? null;
+  const selectedOpenHoldingReservedQuantity = selectedOpenHolding?.scheduledSellQuantity ?? 0;
   const sellModalHelperText =
     maxOrderSellQuantity > 0
-      ? selectedOpenHoldingLockedQuantity > 0 && selectedOpenHoldingNextSellableInSeconds !== null
-        ? `지금 ${formatGameOrderQuantity(maxOrderSellQuantity)} 매도 가능하고, 나머지 ${formatGameQuantity(selectedOpenHoldingLockedQuantity)}는 ${formatHoldCountdown(selectedOpenHoldingNextSellableInSeconds)} 후부터 가능합니다.`
+      ? selectedOpenHoldingReservedQuantity > 0
+        ? `지금 ${formatGameOrderQuantity(maxOrderSellQuantity)} 매도 가능하고, 나머지 ${formatGameQuantity(selectedOpenHoldingReservedQuantity)}는 예약 수량입니다.`
+        : selectedOpenHoldingLockedQuantity > 0 && selectedOpenHoldingNextSellableInSeconds !== null
+          ? `지금 ${formatGameOrderQuantity(maxOrderSellQuantity)} 매도 가능하고, 나머지 ${formatGameQuantity(selectedOpenHoldingLockedQuantity)}는 ${formatHoldCountdown(selectedOpenHoldingNextSellableInSeconds)} 후부터 가능합니다.`
         : `지금 매도 가능한 수량은 ${formatGameOrderQuantity(maxOrderSellQuantity)}입니다.`
       : selectedOpenHoldingNextSellableInSeconds !== null
         ? `지금은 최소 보유 시간이 지나지 않았습니다. ${formatHoldCountdown(selectedOpenHoldingNextSellableInSeconds)} 후부터 매도할 수 있습니다.`

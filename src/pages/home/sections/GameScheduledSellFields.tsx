@@ -4,8 +4,8 @@ interface GameScheduledSellFieldsProps {
   conditionError?: string | null;
   disabled?: boolean;
   onChangeTriggerDirection: (direction: ScheduledSellTriggerDirection) => void;
-  onChangeTargetRank: (rank: number) => void;
-  targetRank: number;
+  onChangeTargetRank: (rank: number | null) => void;
+  targetRank: number | null;
   triggerDirection: ScheduledSellTriggerDirection;
 }
 
@@ -18,6 +18,7 @@ export default function GameScheduledSellFields({
   triggerDirection,
 }: GameScheduledSellFieldsProps) {
   const isDropTrigger = triggerDirection === 'RANK_DROPS_TO';
+  const quickRanks = [10, 50, 100];
 
   return (
     <div className="app-shell__game-scheduled-sell-fields">
@@ -41,26 +42,49 @@ export default function GameScheduledSellFields({
           하락 방어
         </button>
       </div>
-      <label className="app-shell__game-scheduled-sell-label" htmlFor="game-scheduled-sell-target-rank">
-        {isDropTrigger ? '방어 순위' : '목표 순위'}
-      </label>
+      <div className="app-shell__game-scheduled-sell-header">
+        <label className="app-shell__game-scheduled-sell-label" htmlFor="game-scheduled-sell-target-rank">
+          {isDropTrigger ? '방어 순위' : '목표 순위'}
+        </label>
+        <div className="app-shell__game-scheduled-sell-quick-actions" aria-label="목표 순위 빠른 선택">
+          {quickRanks.map((rank) => (
+            <button
+              key={rank}
+              className="app-shell__game-scheduled-sell-quick-action"
+              data-active={targetRank === rank}
+              disabled={disabled}
+              onClick={() => onChangeTargetRank(rank)}
+              type="button"
+            >
+              {rank}위
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="app-shell__game-scheduled-sell-input-wrap">
-        <input
-          className="app-shell__game-scheduled-sell-input"
-          disabled={disabled}
-          id="game-scheduled-sell-target-rank"
-          inputMode="numeric"
-          min={1}
-          onChange={(event) => {
-            const nextRank = Number.parseInt(event.target.value, 10);
-            onChangeTargetRank(Number.isFinite(nextRank) ? Math.max(1, nextRank) : 1);
-          }}
-          type="number"
-          value={targetRank}
-        />
-        <span className="app-shell__game-scheduled-sell-suffix">
-          {isDropTrigger ? '위 이하로 밀리면' : '위 이내 진입 시'}
-        </span>
+        <div className="app-shell__game-scheduled-sell-input-group">
+          <input
+            className="app-shell__game-scheduled-sell-input"
+            disabled={disabled}
+            id="game-scheduled-sell-target-rank"
+            inputMode="numeric"
+            min={1}
+            onChange={(event) => {
+              if (event.target.value === '') {
+                onChangeTargetRank(null);
+                return;
+              }
+
+              const nextRank = Number.parseInt(event.target.value, 10);
+              onChangeTargetRank(Number.isFinite(nextRank) ? Math.max(1, nextRank) : null);
+            }}
+            type="number"
+            value={targetRank ?? ''}
+          />
+          <span className="app-shell__game-scheduled-sell-suffix">
+            {isDropTrigger ? '위 이하로 밀리면' : '위 이내 진입 시'}
+          </span>
+        </div>
       </div>
       <p className="app-shell__modal-field-copy">
         {isDropTrigger

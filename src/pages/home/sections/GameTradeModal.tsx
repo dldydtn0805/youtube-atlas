@@ -37,12 +37,12 @@ interface GameTradeModalProps {
   onChangeQuantity: (quantity: number) => void;
   onChangeSellOrderMode?: (mode: 'instant' | 'scheduled') => void;
   onChangeScheduledSellTriggerDirection?: (direction: ScheduledSellTriggerDirection) => void;
-  onChangeScheduledSellTargetRank?: (rank: number) => void;
+  onChangeScheduledSellTargetRank?: (rank: number | null) => void;
   onClose: () => void;
   onConfirm: () => void;
   quantity: number;
   scheduledSellConditionError?: string | null;
-  scheduledSellTargetRank?: number;
+  scheduledSellTargetRank?: number | null;
   scheduledSellTriggerDirection?: ScheduledSellTriggerDirection;
   sellOrderMode?: 'instant' | 'scheduled';
   summaryItems: GameTradeModalSummaryItem[];

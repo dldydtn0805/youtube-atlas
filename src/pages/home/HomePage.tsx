@@ -3,6 +3,7 @@ import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
 import AchievementTitleToast from './sections/AchievementTitleToast';
+import GameActionToast from './sections/GameActionToast';
 import AppHeader from './sections/AppHeader';
 import { GameSelectedVideoPriceSummary, SelectedVideoGameActionsBundle } from './sections/GameActionContent';
 import GameTierModal from './sections/GameTierModal';
@@ -502,7 +503,8 @@ function HomePage() {
   const [selectedOpenPositionId, setSelectedOpenPositionId] = useState<number | null>(null);
   const [activeGameTab, setActiveGameTab] = useState<'positions' | 'scheduledOrders' | 'history' | 'guide'>('positions');
   const [sellOrderMode, setSellOrderMode] = useState<'instant' | 'scheduled'>('instant');
-  const [scheduledSellTargetRank, setScheduledSellTargetRank] = useState(10);
+  const [isScheduledSellSubmitting, setIsScheduledSellSubmitting] = useState(false);
+  const [scheduledSellTargetRank, setScheduledSellTargetRank] = useState<number | null>(10);
   const [scheduledSellTriggerDirection, setScheduledSellTriggerDirection] =
     useState<ScheduledSellTriggerDirection>('RANK_IMPROVES_TO');
   const [rankHistoryFocusMode, setRankHistoryFocusMode] = useState<'full' | 'trade'>('full');
@@ -1478,6 +1480,7 @@ function HomePage() {
     closeTierModal,
     closeRankHistoryModal,
     closeTradeModal,
+    gameActionStatus,
     getRemainingHoldSeconds,
     isTierModalOpen,
     openTierModal,
@@ -1495,6 +1498,19 @@ function HomePage() {
     openGamePositions,
     selectedVideoId: selectedOpenPositionId != null ? `${selectedVideoId ?? ''}:${selectedOpenPositionId}` : selectedVideoId,
   });
+
+  useEffect(() => {
+    if (!gameActionStatus) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setGameActionStatus(null);
+    }, 2600);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [gameActionStatus, setGameActionStatus]);
+
   const isRankingGameCollapsed = collapsedHomeSectionIds.includes(RANKING_GAME_SECTION_ID);
   const collapsedFeaturedSectionIds = collapsedHomeSectionIds;
   const toggleCollapsedSection = useCallback((sectionId: string) => {
@@ -1927,11 +1943,15 @@ function HomePage() {
     [currentGameSeason?.wallet.balancePoints, resolvedSellSummary.settledPoints],
   );
   const scheduledSellConditionError = useMemo(() => {
-    if (
-      sellOrderMode !== 'scheduled' ||
-      typeof selectedVideoCurrentChartRank !== 'number' ||
-      !Number.isFinite(selectedVideoCurrentChartRank)
-    ) {
+    if (sellOrderMode !== 'scheduled') {
+      return null;
+    }
+
+    if (typeof scheduledSellTargetRank !== 'number' || !Number.isFinite(scheduledSellTargetRank)) {
+      return '목표 순위를 입력해 주세요.';
+    }
+
+    if (typeof selectedVideoCurrentChartRank !== 'number' || !Number.isFinite(selectedVideoCurrentChartRank)) {
       return null;
     }
 
@@ -1966,10 +1986,16 @@ function HomePage() {
       return;
     }
 
+    if (typeof scheduledSellTargetRank !== 'number' || !Number.isFinite(scheduledSellTargetRank)) {
+      setGameActionStatus('목표 순위를 입력해 주세요.');
+      return;
+    }
+
     const normalizedTargetRank = Math.max(1, Math.floor(scheduledSellTargetRank));
 
     try {
-      const order = await createScheduledSellOrderMutation.mutateAsync({
+      setIsScheduledSellSubmitting(true);
+      await createScheduledSellOrderMutation.mutateAsync({
         positionId: selectedSellPositionId,
         quantity: normalizedSellQuantity,
         regionCode: currentGameSeason.regionCode,
@@ -1977,14 +2003,12 @@ function HomePage() {
         triggerDirection: scheduledSellTriggerDirection,
       });
 
-      const triggerLabel = order.triggerDirection === 'RANK_DROPS_TO' ? '이하 이탈 시' : '이내 진입 시';
-
       setActiveTradeModal(null);
       setSellOrderMode('instant');
       setScheduledSellTargetRank(10);
       setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
       setActiveGameTab('scheduledOrders');
-      setGameActionStatus(`${order.videoTitle} 포지션을 ${formatRank(order.targetRank)} ${triggerLabel} 자동 매도하도록 예약했어요.`);
+      setGameActionStatus('매도 예약이 완료됐어요.');
     } catch (error) {
       if (
         error instanceof ApiRequestError &&
@@ -1997,6 +2021,8 @@ function HomePage() {
       setGameActionStatus(
         error instanceof Error ? error.message : '예약 매도 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       );
+    } finally {
+      setIsScheduledSellSubmitting(false);
     }
   }, [
     createScheduledSellOrderMutation,
@@ -2007,6 +2033,7 @@ function HomePage() {
     scheduledSellTargetRank,
     scheduledSellTriggerDirection,
     selectedSellPositionId,
+    setIsScheduledSellSubmitting,
     setActiveTradeModal,
     setGameActionStatus,
   ]);
@@ -2014,7 +2041,7 @@ function HomePage() {
     async (orderId: number) => {
       try {
         await cancelScheduledSellOrderMutation.mutateAsync(orderId);
-        setGameActionStatus('예약 매도 주문을 취소했어요.');
+        setGameActionStatus('예약 취소가 완료됐어요.');
       } catch (error) {
         if (
           error instanceof ApiRequestError &&
@@ -2772,16 +2799,18 @@ function HomePage() {
       </div>
     ) : null;
   const tradeActionOverlay =
-    isBuySubmitting || isSellSubmitting ? (
+    isBuySubmitting || isSellSubmitting || isScheduledSellSubmitting ? (
       <div className="app-shell__fullscreen-loading" role="status" aria-live="polite" aria-modal="true">
         <div className="app-shell__fullscreen-loading-card">
           <span className="app-shell__fullscreen-loading-spinner" aria-hidden="true" />
           <p className="app-shell__fullscreen-loading-eyebrow">Trading Order</p>
           <p className="app-shell__fullscreen-loading-title">
-            {isBuySubmitting ? '매수 처리 중' : '매도 처리 중'}
+            {isBuySubmitting ? '매수 처리 중' : isScheduledSellSubmitting ? '예약 매도 처리 중' : '매도 처리 중'}
           </p>
           <p className="app-shell__fullscreen-loading-copy">
-            주문을 서버에 반영하고 지갑과 포지션을 갱신하고 있습니다. 잠시만 기다려 주세요.
+            {isScheduledSellSubmitting
+              ? '예약 조건과 수량을 확인한 뒤 자동 매도 주문을 등록하고 있습니다. 잠시만 기다려 주세요.'
+              : '주문을 서버에 반영하고 지갑과 포지션을 갱신하고 있습니다. 잠시만 기다려 주세요.'}
           </p>
         </div>
       </div>
@@ -2995,6 +3024,10 @@ function HomePage() {
             removeGameNotification(notifications, visibleGameNotification.id));
         }}
       />
+      <GameActionToast
+        message={gameActionStatus}
+        onDismiss={() => setGameActionStatus(null)}
+      />
       <AchievementTitleToast
         message={achievementTitleToastMessage}
         onDismiss={() => setAchievementTitleToastMessage(null)}
@@ -3123,10 +3156,8 @@ function HomePage() {
       <GameTradeModal
         confirmLabel={
           sellOrderMode === 'scheduled'
-            ? scheduledSellTriggerDirection === 'RANK_DROPS_TO'
-              ? `${formatRank(scheduledSellTargetRank)} 하락 방어`
-              : `${formatRank(scheduledSellTargetRank)} 상승 목표`
-            : `${formatGameOrderQuantity(normalizedSellQuantity)} 매도`
+            ? `${formatGameOrderQuantity(normalizedSellQuantity)} 예약 매도`
+            : `${formatGameOrderQuantity(normalizedSellQuantity)} 즉시 매도`
         }
         currentRankLabel={formatRank(selectedVideoCurrentChartRank, { chartOut: selectedVideoIsChartOut })}
         detailContent={sellOrderMode === 'instant' ? (
@@ -3137,7 +3168,7 @@ function HomePage() {
         ) : null}
         helperText={sellModalHelperText}
         isOpen={isSellTradeModalOpen}
-        isSubmitting={isSellSubmitting || createScheduledSellOrderMutation.isPending}
+        isSubmitting={isSellSubmitting || isScheduledSellSubmitting}
         maxQuantity={maxSellQuantity}
         mode="sell"
         onChangeQuantity={(quantity) => {
@@ -3172,9 +3203,11 @@ function HomePage() {
                 {
                   label: '예약 조건',
                   value:
-                    scheduledSellTriggerDirection === 'RANK_DROPS_TO'
-                      ? `${formatRank(scheduledSellTargetRank)} 이하 이탈`
-                      : `${formatRank(scheduledSellTargetRank)} 이내 진입`,
+                    scheduledSellTargetRank == null
+                      ? '순위를 입력해 주세요.'
+                      : scheduledSellTriggerDirection === 'RANK_DROPS_TO'
+                        ? `${formatRank(scheduledSellTargetRank)} 이하 이탈`
+                        : `${formatRank(scheduledSellTargetRank)} 이내 진입`,
                 },
                 { label: '대상 수량', value: formatGameOrderQuantity(normalizedSellQuantity) },
                 { label: '현재 순위', value: formatRank(selectedVideoCurrentChartRank, { chartOut: selectedVideoIsChartOut }) },

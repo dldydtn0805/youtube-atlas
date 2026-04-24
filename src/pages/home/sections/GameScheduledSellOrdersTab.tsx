@@ -60,7 +60,17 @@ export default function GameScheduledSellOrdersTab({
         const isCanceling = isCancelingOrderId === order.id;
 
         return (
-          <li key={order.id} className="app-shell__game-position">
+          <li
+            key={order.id}
+            aria-busy={isCanceling}
+            className="app-shell__game-position"
+          >
+            {isCanceling ? (
+              <div className="app-shell__game-position-overlay" role="status" aria-live="polite">
+                <span className="app-shell__game-position-overlay-spinner" aria-hidden="true" />
+                <span className="app-shell__game-position-overlay-label">예약 취소 처리 중</span>
+              </div>
+            ) : null}
             <div className="app-shell__game-position-select">
               <img
                 alt=""
@@ -109,9 +119,12 @@ export default function GameScheduledSellOrdersTab({
               </div>
             </div>
             <div className="app-shell__game-position-side">
-              <div className="app-shell__game-position-actions" aria-label={`${order.videoTitle} 예약 매도`}>
+              <div
+                className="app-shell__game-position-actions app-shell__game-position-actions--scheduled"
+                aria-label={`${order.videoTitle} 예약 매도`}
+              >
                 <button
-                  className="app-shell__game-position-action"
+                  className="app-shell__game-position-action app-shell__game-position-action--scheduled"
                   data-variant="sell"
                   disabled={!canCancel || isCanceling}
                   onClick={() => onCancelOrder?.(order.id)}

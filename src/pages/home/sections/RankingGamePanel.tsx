@@ -926,12 +926,10 @@ export function RankingGamePositionsTab({
             ? calculateGameUnitPricePoints(holding.currentPricePoints, holding.quantity)
             : null;
         const positionStatusBadge = holding.chartOut ? '차트 아웃' : null;
-        const scheduledSellConditionLabel = holding.scheduledSellTriggerDirection === 'RANK_DROPS_TO'
-          ? `${formatRank(holding.scheduledSellTargetRank)} 이하`
-          : `${formatRank(holding.scheduledSellTargetRank)} 이내`;
-        const sellableStatusBadge = holding.reservedForSell
-          ? `예약 ${formatGameQuantity(holding.scheduledSellQuantity)} · ${scheduledSellConditionLabel}`
-          : !canShowGameActions
+        const reservedStatusBadge = holding.reservedForSell
+          ? `${formatGameQuantity(holding.scheduledSellQuantity)} 예약`
+          : null;
+        const sellableStatusBadge = !canShowGameActions
           ? '전체 카테고리에서 매도 가능'
           : holding.sellableQuantity > 0
             ? `${formatGameQuantity(holding.sellableQuantity)} 매도 가능`
@@ -939,12 +937,8 @@ export function RankingGamePositionsTab({
               ? `매도 대기 · ${formatHoldCountdown(holding.nextSellableInSeconds)}`
               : '아직 매도 가능 수량 없음';
         const hasDetailBadges = Boolean(
-          strategyBadges.length || holdingRankTrendBadge || positionStatusBadge || sellableStatusBadge,
+          strategyBadges.length || holdingRankTrendBadge || positionStatusBadge || reservedStatusBadge || sellableStatusBadge,
         );
-        const holdStatusText =
-          canShowGameActions && holding.sellableQuantity > 0 && holding.lockedQuantity > 0 && holding.nextSellableInSeconds !== null
-            ? `잠금 ${formatGameQuantity(holding.lockedQuantity)} · ${formatHoldCountdown(holding.nextSellableInSeconds)}`
-            : null;
         const projectedHighlightScoreValue = formatHighlightScore(holding.projectedHighlightScore);
         const projectedHighlightStateText =
           strategyBadges.length === 0 ? '아직 노리는 하이라이트 조건이 없어요.' : null;
@@ -1033,6 +1027,11 @@ export function RankingGamePositionsTab({
                               {positionStatusBadge}
                             </span>
                           ) : null}
+                          {reservedStatusBadge ? (
+                            <span className="app-shell__game-position-trend" data-tone="steady">
+                              {reservedStatusBadge}
+                            </span>
+                          ) : null}
                           {sellableStatusBadge ? (
                             <span className="app-shell__game-position-trend" data-tone="steady">
                               {sellableStatusBadge}
@@ -1091,7 +1090,6 @@ export function RankingGamePositionsTab({
                   <span className="app-shell__game-position-action-label">매도</span>
                 </button>
               </div>
-              {holdStatusText ? <span className="app-shell__game-position-hold">{holdStatusText}</span> : null}
             </div>
           </li>
         );

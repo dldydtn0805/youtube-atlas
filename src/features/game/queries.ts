@@ -33,6 +33,8 @@ import type {
   CreateGamePositionInput,
   GameCurrentSeason,
   GameNotification,
+  GamePosition,
+  GameScheduledSellOrder,
   SellGamePositionsInput,
 } from './types';
 
@@ -720,6 +722,8 @@ export function useCreateScheduledSellOrder(accessToken: string | null) {
 
 export function useCancelScheduledSellOrder(accessToken: string | null, regionCode: string) {
   const queryClient = useQueryClient();
+  const scheduledOrdersKey = gameQueryKeys.scheduledSellOrders(accessToken, regionCode);
+  const positionsKey = ['game', 'positions', accessToken, regionCode] as const;
 
   return useMutation({
     mutationFn: async (orderId: number) => {
@@ -728,6 +732,60 @@ export function useCancelScheduledSellOrder(accessToken: string | null, regionCo
       }
 
       return cancelScheduledSellOrder(accessToken, orderId);
+    },
+    onMutate: async (orderId) => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: scheduledOrdersKey }),
+        queryClient.cancelQueries({ queryKey: positionsKey }),
+      ]);
+
+      const previousOrders = queryClient.getQueryData<GameScheduledSellOrder[]>(scheduledOrdersKey);
+      const previousPositions = queryClient.getQueriesData<GamePosition[]>({ queryKey: positionsKey });
+      const targetOrder = previousOrders?.find((order) => order.id === orderId) ?? null;
+
+      if (targetOrder) {
+        queryClient.setQueryData<GameScheduledSellOrder[]>(scheduledOrdersKey, (orders) =>
+          (orders ?? []).map((order) =>
+            order.id === orderId
+              ? {
+                  ...order,
+                  canceledAt: new Date().toISOString(),
+                  failureReason: null,
+                  status: 'CANCELED',
+                  updatedAt: new Date().toISOString(),
+                }
+              : order,
+          ),
+        );
+
+        previousPositions.forEach(([queryKey]) => {
+          queryClient.setQueryData<GamePosition[]>(queryKey, (positions) =>
+            (positions ?? []).map((position) =>
+              position.id === targetOrder.positionId && position.scheduledSellOrderId === orderId
+                ? {
+                    ...position,
+                    reservedForSell: false,
+                    scheduledSellOrderId: null,
+                    scheduledSellQuantity: 0,
+                    scheduledSellTargetRank: null,
+                    scheduledSellTriggerDirection: null,
+                  }
+                : position,
+            ),
+          );
+        });
+      }
+
+      return {
+        previousOrders,
+        previousPositions,
+      };
+    },
+    onError: (_error, _orderId, context) => {
+      queryClient.setQueryData(scheduledOrdersKey, context?.previousOrders);
+      context?.previousPositions.forEach(([queryKey, positions]) => {
+        queryClient.setQueryData(queryKey, positions);
+      });
     },
     onSuccess: () => {
       void invalidateGameQueries(queryClient, {
