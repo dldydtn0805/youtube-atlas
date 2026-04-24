@@ -1926,6 +1926,30 @@ function HomePage() {
       getProjectedWalletBalance(currentGameSeason?.wallet.balancePoints, resolvedSellSummary.settledPoints),
     [currentGameSeason?.wallet.balancePoints, resolvedSellSummary.settledPoints],
   );
+  const scheduledSellConditionError = useMemo(() => {
+    if (
+      sellOrderMode !== 'scheduled' ||
+      typeof selectedVideoCurrentChartRank !== 'number' ||
+      !Number.isFinite(selectedVideoCurrentChartRank)
+    ) {
+      return null;
+    }
+
+    if (scheduledSellTriggerDirection === 'RANK_DROPS_TO') {
+      return scheduledSellTargetRank <= selectedVideoCurrentChartRank
+        ? `현재 ${formatRank(selectedVideoCurrentChartRank)}입니다. 하락 방어는 ${selectedVideoCurrentChartRank + 1}위 이하부터 설정할 수 있어요.`
+        : null;
+    }
+
+    return scheduledSellTargetRank >= selectedVideoCurrentChartRank
+      ? `현재 ${formatRank(selectedVideoCurrentChartRank)}입니다. 상승 목표는 ${selectedVideoCurrentChartRank - 1}위 이내부터 설정할 수 있어요.`
+      : null;
+  }, [
+    scheduledSellTargetRank,
+    scheduledSellTriggerDirection,
+    selectedVideoCurrentChartRank,
+    sellOrderMode,
+  ]);
   const handleCreateScheduledSellOrder = useCallback(async () => {
     if (!currentGameSeason) {
       setGameActionStatus('지금은 게임 시즌을 불러올 수 없습니다.');
@@ -1934,6 +1958,11 @@ function HomePage() {
 
     if (selectedSellPositionId == null) {
       setGameActionStatus('예약 매도는 인벤토리의 단일 포지션에서 설정할 수 있습니다.');
+      return;
+    }
+
+    if (scheduledSellConditionError) {
+      setGameActionStatus(scheduledSellConditionError);
       return;
     }
 
@@ -1974,6 +2003,7 @@ function HomePage() {
     currentGameSeason,
     logout,
     normalizedSellQuantity,
+    scheduledSellConditionError,
     scheduledSellTargetRank,
     scheduledSellTriggerDirection,
     selectedSellPositionId,
@@ -3132,6 +3162,7 @@ function HomePage() {
           void (sellOrderMode === 'scheduled' ? handleCreateScheduledSellOrder() : handleSellCurrentVideo());
         }}
         quantity={normalizedSellQuantity}
+        scheduledSellConditionError={scheduledSellConditionError}
         scheduledSellTargetRank={scheduledSellTargetRank}
         scheduledSellTriggerDirection={scheduledSellTriggerDirection}
         sellOrderMode={sellOrderMode}

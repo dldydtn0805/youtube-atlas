@@ -1,6 +1,7 @@
 import type { ScheduledSellTriggerDirection } from '../../../features/game/types';
 
 interface GameScheduledSellFieldsProps {
+  conditionError?: string | null;
   disabled?: boolean;
   onChangeTriggerDirection: (direction: ScheduledSellTriggerDirection) => void;
   onChangeTargetRank: (rank: number) => void;
@@ -9,6 +10,7 @@ interface GameScheduledSellFieldsProps {
 }
 
 export default function GameScheduledSellFields({
+  conditionError = null,
   disabled = false,
   onChangeTriggerDirection,
   onChangeTargetRank,
@@ -65,6 +67,9 @@ export default function GameScheduledSellFields({
           ? '차트 동기화 때 현재 순위가 방어 순위 밖으로 밀리면 이 포지션을 자동 매도합니다.'
           : '차트 동기화 때 현재 순위가 목표 순위 안으로 들어오면 이 포지션을 자동 매도합니다.'}
       </p>
+      {conditionError ? (
+        <p className="app-shell__game-scheduled-sell-error">{conditionError}</p>
+      ) : null}
     </div>
   );
 }

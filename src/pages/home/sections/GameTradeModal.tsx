@@ -41,6 +41,7 @@ interface GameTradeModalProps {
   onClose: () => void;
   onConfirm: () => void;
   quantity: number;
+  scheduledSellConditionError?: string | null;
   scheduledSellTargetRank?: number;
   scheduledSellTriggerDirection?: ScheduledSellTriggerDirection;
   sellOrderMode?: 'instant' | 'scheduled';
@@ -99,6 +100,7 @@ export default function GameTradeModal({
   onClose,
   onConfirm,
   quantity,
+  scheduledSellConditionError = null,
   scheduledSellTargetRank = 10,
   scheduledSellTriggerDirection = 'RANK_IMPROVES_TO',
   sellOrderMode = 'instant',
@@ -257,6 +259,7 @@ export default function GameTradeModal({
                   <h3 className="app-shell__modal-field-title">예약 조건</h3>
                 </div>
                 <GameScheduledSellFields
+                  conditionError={scheduledSellConditionError}
                   disabled={isSubmitting}
                   onChangeTriggerDirection={onChangeScheduledSellTriggerDirection}
                   onChangeTargetRank={onChangeScheduledSellTargetRank}
@@ -292,7 +295,7 @@ export default function GameTradeModal({
         <div className="app-shell__modal-footer app-shell__modal-footer--trade-actions">
           <button
             className="app-shell__modal-action"
-            disabled={isSubmitting || normalizedMaxQuantity <= 0}
+            disabled={isSubmitting || normalizedMaxQuantity <= 0 || Boolean(scheduledSellConditionError)}
             onClick={onConfirm}
             type="button"
           >
