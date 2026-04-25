@@ -1063,13 +1063,11 @@ export function RankingGamePositionsTab({
             ? `${formatGameQuantity(holding.sellableQuantity)} 매도 가능`
             : typeof holding.nextSellableInSeconds === 'number' && holding.nextSellableInSeconds > 0
               ? `매도 대기 · ${formatHoldCountdown(holding.nextSellableInSeconds)}`
-              : '아직 매도 가능 수량 없음';
+              : '매도 가능 수량 없음';
         const hasDetailBadges = Boolean(
           strategyBadges.length || holdingRankTrendBadge || positionStatusBadge || sellableStatusBadge,
         );
         const projectedHighlightScoreValue = formatHighlightScore(holding.projectedHighlightScore);
-        const projectedHighlightStateText =
-          strategyBadges.length === 0 ? '아직 노리는 하이라이트 조건이 없어요.' : null;
         const position = mapHoldingToGamePosition(holding);
         const canOpenBuyTrade = canShowGameActions && Boolean(onOpenBuyTradeModal);
         const canOpenSellTrade =
@@ -1161,9 +1159,6 @@ export function RankingGamePositionsTab({
                             </span>
                           ) : null}
                         </span>
-                        {projectedHighlightStateText ? (
-                          <p className="app-shell__game-position-detail-copy">{projectedHighlightStateText}</p>
-                        ) : null}
                       </div>
                     ) : null}
                   </div>

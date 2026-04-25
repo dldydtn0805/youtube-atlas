@@ -366,7 +366,7 @@ describe('RankingGamePositionsTab', () => {
     );
 
     expect(screen.queryByText('매도 대기 · 0초')).not.toBeInTheDocument();
-    expect(screen.getByText('아직 매도 가능 수량 없음')).toBeInTheDocument();
+    expect(screen.getByText('매도 가능 수량 없음')).toBeInTheDocument();
   });
 });
 
