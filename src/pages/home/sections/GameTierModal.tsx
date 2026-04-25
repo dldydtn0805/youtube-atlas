@@ -3,6 +3,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
@@ -346,7 +347,7 @@ export default function GameTierModal({
                 '--tier-modal-carousel-side-padding': `${TIER_MODAL_CAROUSEL_SIDE_PADDING}px`,
                 '--tier-modal-slide-width': `${slideWidth}px`,
                 transform: `translateX(${trackTranslateX}px)`,
-              }}
+              } as CSSProperties}
             >
               {carouselTabs.map((tab, index) => (
                 <div

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { GameHighlight, GameLeaderboardEntry, GamePosition } from '../../../features/game/types';
+import type { GameCurrentSeason, GameHighlight, GameLeaderboardEntry, GamePosition } from '../../../features/game/types';
 import type { OpenGameHolding } from '../gameHelpers';
 import { HISTORY_PLAYBACK_QUEUE_ID } from '../utils';
 import {
@@ -11,6 +11,8 @@ import {
   RankingGamePositionsTab,
   RankingGameSelectedVideoActions,
 } from './RankingGamePanel';
+
+type GameTab = 'positions' | 'scheduledOrders' | 'history' | 'guide';
 
 function createGamePosition(overrides: Partial<GamePosition>): GamePosition {
   return {
@@ -31,6 +33,29 @@ function createGamePosition(overrides: Partial<GamePosition>): GamePosition {
     buyCapturedAt: '2026-01-01T00:00:00.000Z',
     createdAt: '2026-01-01T00:00:00.000Z',
     closedAt: null,
+    ...overrides,
+  };
+}
+
+function createCurrentSeason(overrides: Partial<GameCurrentSeason> = {}): GameCurrentSeason {
+  return {
+    endAt: '2026-04-30T00:00:00.000Z',
+    maxOpenPositions: 3,
+    minHoldSeconds: 60,
+    rankPointMultiplier: 1,
+    regionCode: 'KR',
+    seasonId: 1,
+    seasonName: '테스트 시즌',
+    startingBalancePoints: 1000,
+    startAt: '2026-04-01T00:00:00.000Z',
+    status: 'ACTIVE',
+    wallet: {
+      balancePoints: 1000,
+      realizedPnlPoints: 0,
+      reservedPoints: 0,
+      seasonId: 1,
+      totalAssetPoints: 1000,
+    },
     ...overrides,
   };
 }
@@ -321,8 +346,8 @@ describe('RankingGamePositionsTab', () => {
 });
 
 describe('RankingGamePanelShell', () => {
-  function ControlledRankingGamePanelShell({ initialTab = 'positions' as const }) {
-    const [activeGameTab, setActiveGameTab] = useState(initialTab);
+  function ControlledRankingGamePanelShell({ initialTab = 'positions' }: { initialTab?: GameTab }) {
+    const [activeGameTab, setActiveGameTab] = useState<GameTab>(initialTab);
 
     return (
       <RankingGamePanelShell
@@ -379,6 +404,13 @@ describe('RankingGamePanelShell', () => {
     fireEvent.pointerUp(panel, { clientX: 150, clientY: 44, pointerId: 1 });
 
     expect(onSelectTab).toHaveBeenCalledWith('scheduledOrders');
+  });
+
+  it('does not animate the carousel on the initial render', () => {
+    const { container } = render(<ControlledRankingGamePanelShell initialTab="positions" />);
+    const track = container.querySelector('.app-shell__game-tab-track');
+
+    expect(track).toHaveAttribute('data-animating', 'false');
   });
 
   it('wraps from the last tab to the first tab on swipe left', () => {
@@ -590,14 +622,7 @@ describe('RankingGameLeaderboardTab', () => {
         isLoading
         onSelectHighlight={vi.fn()}
         onToggleUser={vi.fn()}
-        season={{
-          endAt: '2026-04-30T00:00:00.000Z',
-          maxOpenPositions: 3,
-          regionCode: 'KR',
-          seasonId: 1,
-          seasonName: '테스트 시즌',
-          startAt: '2026-04-01T00:00:00.000Z',
-        }}
+        season={createCurrentSeason()}
         selectedUserId={null}
       />,
     );
