@@ -6,6 +6,7 @@ import { HISTORY_PLAYBACK_QUEUE_ID } from '../utils';
 import {
   RankingGameHistoryTab,
   RankingGameLeaderboardTab,
+  RankingGamePanelShell,
   RankingGamePositionsTab,
   RankingGameSelectedVideoActions,
 } from './RankingGamePanel';
@@ -297,6 +298,66 @@ describe('RankingGamePositionsTab', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Holding Video 매도' })).toBeDisabled();
+  });
+});
+
+describe('RankingGamePanelShell', () => {
+  it('changes tabs when the panel content is swiped', () => {
+    const onSelectTab = vi.fn();
+
+    render(
+      <RankingGamePanelShell
+        activeGameTab="positions"
+        isCollapsed={false}
+        onSelectTab={onSelectTab}
+        onToggleCollapse={vi.fn()}
+        summary={{
+          computedWalletTotalAssetPoints: 1000,
+          openDistinctVideoCount: 1,
+          openPositionsBuyPoints: 100,
+          openPositionsEvaluationPoints: 120,
+          openPositionsProfitPoints: 20,
+        }}
+        tabContent={<div>인벤토리 패널</div>}
+      />,
+    );
+
+    const panel = screen.getByRole('tabpanel');
+
+    fireEvent.pointerDown(panel, { clientX: 240, clientY: 40, pointerId: 1 });
+    fireEvent.pointerMove(panel, { clientX: 150, clientY: 44, pointerId: 1 });
+    fireEvent.pointerUp(panel, { clientX: 150, clientY: 44, pointerId: 1 });
+
+    expect(onSelectTab).toHaveBeenCalledWith('scheduledOrders');
+  });
+
+  it('wraps from the last tab to the first tab on swipe left', () => {
+    const onSelectTab = vi.fn();
+
+    render(
+      <RankingGamePanelShell
+        activeGameTab="guide"
+        isCollapsed={false}
+        onSelectTab={onSelectTab}
+        onToggleCollapse={vi.fn()}
+        summary={{
+          computedWalletTotalAssetPoints: 1000,
+          openDistinctVideoCount: 1,
+          openPositionsBuyPoints: 100,
+          openPositionsEvaluationPoints: 120,
+          openPositionsProfitPoints: 20,
+        }}
+        tabContent={<div>튜토리얼 패널</div>}
+      />,
+    );
+
+    const panel = screen.getByRole('tabpanel');
+
+    fireEvent.pointerDown(panel, { clientX: 240, clientY: 40, pointerId: 2 });
+    fireEvent.pointerMove(panel, { clientX: 150, clientY: 44, pointerId: 2 });
+    fireEvent.pointerUp(panel, { clientX: 150, clientY: 44, pointerId: 2 });
+
+    expect(onSelectTab).toHaveBeenCalledWith('positions');
   });
 });
 

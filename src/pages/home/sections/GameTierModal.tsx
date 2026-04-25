@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { GameTierProgress } from '../../../features/game/types';
+import useSwipeableTabs from '../hooks/useSwipeableTabs';
 import { getFullscreenElement } from '../utils';
 import GameTierSummary from './GameTierSummary';
 import GameTierGuide from './GameTierGuide';
@@ -24,6 +25,11 @@ export default function GameTierModal({
   tierProgress,
 }: GameTierModalProps) {
   const [activeTab, setActiveTab] = useState<'tier' | 'highlights' | 'ranking'>(defaultTab);
+  const swipeHandlers = useSwipeableTabs({
+    onChange: setActiveTab,
+    order: ['tier', 'highlights', 'ranking'] as const,
+    value: activeTab,
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -99,7 +105,7 @@ export default function GameTierModal({
           </div>
 
           {activeTab === 'tier' ? (
-            <div className="app-shell__modal-fields" role="tabpanel">
+            <div className="app-shell__modal-fields app-shell__swipeable-tab-panel" role="tabpanel" {...swipeHandlers}>
               {tierProgress ? (
                 <section className="app-shell__modal-field app-shell__modal-field--tier">
                   <GameTierSummary
@@ -120,11 +126,11 @@ export default function GameTierModal({
               </section>
             </div>
           ) : activeTab === 'highlights' ? (
-            <div className="app-shell__tier-modal-panel" role="tabpanel">
+            <div className="app-shell__tier-modal-panel app-shell__swipeable-tab-panel" role="tabpanel" {...swipeHandlers}>
               {highlightsContent ?? <p className="app-shell__game-empty">하이라이트를 불러올 수 없습니다.</p>}
             </div>
           ) : (
-            <div className="app-shell__tier-modal-panel" role="tabpanel">
+            <div className="app-shell__tier-modal-panel app-shell__swipeable-tab-panel" role="tabpanel" {...swipeHandlers}>
               {rankingContent ?? <p className="app-shell__game-empty">랭킹 정보를 불러올 수 없습니다.</p>}
             </div>
           )}

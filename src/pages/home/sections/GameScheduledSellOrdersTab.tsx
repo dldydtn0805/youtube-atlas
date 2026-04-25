@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { GameScheduledSellOrder } from '../../../features/game/types';
+import useSwipeableTabs from '../hooks/useSwipeableTabs';
 import {
   formatGameOrderQuantity,
   formatGameTimestamp,
@@ -100,13 +101,18 @@ export default function GameScheduledSellOrdersTab({
 }: GameScheduledSellOrdersTabProps) {
   const [activeFilter, setActiveFilter] = useState<ScheduledSellOrderFilter>('PENDING');
   const filteredOrders = getScheduledSellOrdersByFilter(orders, activeFilter);
+  const swipeHandlers = useSwipeableTabs({
+    onChange: setActiveFilter,
+    order: ['ALL', 'PENDING', 'EXECUTED', 'CANCELED'] as const,
+    value: activeFilter,
+  });
 
   if (isLoading) {
     return <p className="app-shell__game-empty">예약 매도 주문을 불러오는 중입니다.</p>;
   }
 
   return (
-    <div className="app-shell__game-scheduled-orders">
+    <div className="app-shell__game-scheduled-orders app-shell__swipeable-tab-panel" {...swipeHandlers}>
       <div className="app-shell__game-scheduled-order-filters" aria-label="예약 주문 상태 필터" role="tablist">
         {SCHEDULED_SELL_ORDER_FILTERS.map((filter) => (
           <button

@@ -22,6 +22,7 @@ import {
   getPointTone,
   type OpenGameHolding,
 } from '../gameHelpers';
+import useSwipeableTabs from '../hooks/useSwipeableTabs';
 import { buildGameStrategyBadges, buildPositionStrategyBadges } from '../gameStrategyTags';
 import {
   calculateSellFeePoints,
@@ -478,6 +479,11 @@ export function RankingGamePanelShell({
 }: RankingGamePanelShellProps) {
   const hasDividendOverview = Boolean(dividendOverview);
   const hasSelectedVideoActions = Boolean(selectedVideoActions);
+  const swipeHandlers = useSwipeableTabs({
+    onChange: onSelectTab,
+    order: ['positions', 'scheduledOrders', 'history', 'guide'] as const,
+    value: activeGameTab,
+  });
 
   return (
     <div className="app-shell__game-panel" data-current-tier={tierProgress?.currentTier.tierCode}>
@@ -581,7 +587,7 @@ export function RankingGamePanelShell({
               튜토리얼
             </button>
           </div>
-          <div className="app-shell__game-tab-panel" role="tabpanel">
+          <div className="app-shell__game-tab-panel app-shell__swipeable-tab-panel" role="tabpanel" {...swipeHandlers}>
             {tabContent}
           </div>
         </>
