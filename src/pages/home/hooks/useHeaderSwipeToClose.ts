@@ -128,7 +128,7 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
 
       return {
         transform: dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
-        opacity: dragOffset > 0 ? 1 - easedFadeProgress * 0.42 : undefined,
+        opacity: dragOffset > 0 ? Math.max(0.25, 1 - easedFadeProgress * 0.42) : undefined,
         transition: isDragging ? 'none' : 'transform 220ms ease, opacity 220ms ease',
       };
     },
@@ -142,7 +142,7 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
       const easedFadeProgress = fadeProgress ** 1.6;
 
       return {
-        opacity: dragOffset > 0 ? 1 - easedFadeProgress * 0.78 : undefined,
+        opacity: dragOffset > 0 ? Math.max(0.25, 1 - easedFadeProgress * 0.78) : undefined,
         transition: isDragging ? 'none' : 'opacity 220ms ease',
       };
     },
