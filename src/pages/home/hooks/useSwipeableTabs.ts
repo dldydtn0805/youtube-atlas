@@ -67,7 +67,7 @@ export default function useSwipeableTabs<TTab extends string>({
       startYRef.current = event.clientY;
       lockDirectionRef.current = null;
       releaseScrollLockRef.current?.();
-      releaseScrollLockRef.current = lockSwipeScroll(event.currentTarget);
+      releaseScrollLockRef.current = null;
       if (typeof event.currentTarget.setPointerCapture === 'function') {
         event.currentTarget.setPointerCapture(event.pointerId);
       }
@@ -92,7 +92,15 @@ export default function useSwipeableTabs<TTab extends string>({
         return;
       }
 
-      if (lockDirectionRef.current === 'horizontal' && event.cancelable) {
+      if (lockDirectionRef.current !== 'horizontal') {
+        return;
+      }
+
+      if (releaseScrollLockRef.current === null) {
+        releaseScrollLockRef.current = lockSwipeScroll(event.currentTarget);
+      }
+
+      if (event.cancelable) {
         event.preventDefault();
       }
     },

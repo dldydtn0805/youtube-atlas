@@ -212,7 +212,7 @@ export default function GameTierModal({
     shouldSuppressClickRef.current = false;
     viewportWidthRef.current = event.currentTarget.clientWidth;
     releaseScrollLockRef.current?.();
-    releaseScrollLockRef.current = lockSwipeScroll(event.currentTarget);
+    releaseScrollLockRef.current = null;
     setIsTrackAnimating(false);
     if (typeof event.currentTarget.setPointerCapture === 'function') {
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -237,6 +237,10 @@ export default function GameTierModal({
 
     if (directionLockRef.current !== 'horizontal') {
       return;
+    }
+
+    if (releaseScrollLockRef.current === null) {
+      releaseScrollLockRef.current = lockSwipeScroll(event.currentTarget);
     }
 
     shouldSuppressClickRef.current = true;

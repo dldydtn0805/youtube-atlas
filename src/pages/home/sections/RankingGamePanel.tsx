@@ -607,7 +607,7 @@ export function RankingGamePanelShell({
     shouldSuppressClickRef.current = false;
     viewportWidthRef.current = event.currentTarget.clientWidth;
     releaseScrollLockRef.current?.();
-    releaseScrollLockRef.current = lockSwipeScroll(event.currentTarget);
+    releaseScrollLockRef.current = null;
     setIsTrackAnimating(false);
   };
 
@@ -633,6 +633,10 @@ export function RankingGamePanelShell({
 
     if (directionLockRef.current !== 'horizontal') {
       return;
+    }
+
+    if (releaseScrollLockRef.current === null) {
+      releaseScrollLockRef.current = lockSwipeScroll(event.currentTarget);
     }
 
     shouldSuppressClickRef.current = true;
