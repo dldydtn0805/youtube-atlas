@@ -274,6 +274,25 @@ describe('RankingGamePositionsTab', () => {
     expect(screen.queryByText('아직 보유 중인 영상이 없어요. 지금 보는 영상에서 바로 시작할 수 있습니다.')).not.toBeInTheDocument();
   });
 
+  it('shows slot capacity at the top of the inventory tab', () => {
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[createOpenGameHolding()]}
+        maxOpenPositions={3}
+        onSelectPosition={vi.fn()}
+        openDistinctVideoCount={2}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    expect(screen.getByText('2/3')).toBeInTheDocument();
+    expect(screen.getByText('남은 슬롯 1개')).toBeInTheDocument();
+    expect(screen.queryByText('인벤토리')).not.toBeInTheDocument();
+  });
+
   it('shows buy rank into current rank for open positions', () => {
     render(
       <RankingGamePositionsTab
@@ -404,7 +423,6 @@ describe('RankingGamePanelShell', () => {
         onToggleCollapse={vi.fn()}
         summary={{
           computedWalletTotalAssetPoints: 1000,
-          openDistinctVideoCount: 1,
           openPositionsBuyPoints: 100,
           openPositionsEvaluationPoints: 120,
           openPositionsProfitPoints: 20,

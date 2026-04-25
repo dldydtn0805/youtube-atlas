@@ -30,6 +30,7 @@ import {
 import { buildGameStrategyBadges } from '../gameStrategyTags';
 import { GAME_PORTFOLIO_QUEUE_ID, HISTORY_PLAYBACK_QUEUE_ID } from '../utils';
 import AchievementTitleBadge from './AchievementTitleBadge';
+import GameInventoryCapacity from './GameInventoryCapacity';
 import { RankingGameHistoryRow } from './RankingGameHistoryRow';
 import GamePanelNyanRefreshIcon from './GamePanelNyanRefreshIcon';
 import { RankingGamePositionRow } from './RankingGamePositionRow';
@@ -62,7 +63,6 @@ interface RankingGamePanelShellProps {
   selectedVideoActions?: ReactNode;
   summary: {
     computedWalletTotalAssetPoints: number | null;
-    openDistinctVideoCount: number;
     openPositionsBuyPoints: number;
     openPositionsEvaluationPoints: number;
     openPositionsProfitPoints: number;
@@ -119,10 +119,12 @@ interface RankingGamePositionsTabProps {
   gameMarketSignalsByVideoId: Record<string, VideoTrendSignal>;
   holdings: OpenGameHolding[];
   isLoading?: boolean;
+  maxOpenPositions?: number | null;
   onOpenPositionChart?: (position: GamePosition) => void;
   onOpenBuyTradeModal?: (position: GamePosition) => void;
   onOpenSellTradeModal?: (position: GamePosition) => void;
   onSelectPosition: (position: GamePosition) => void;
+  openDistinctVideoCount?: number;
   selectedPositionId?: number | null;
   trendSignalsByVideoId: Record<string, VideoTrendSignal>;
 }
@@ -173,10 +175,12 @@ function areRankingGamePositionsTabPropsEqual(
     prevProps.emptyMessage === nextProps.emptyMessage &&
     prevProps.holdings === nextProps.holdings &&
     prevProps.isLoading === nextProps.isLoading &&
+    prevProps.maxOpenPositions === nextProps.maxOpenPositions &&
     prevProps.onOpenPositionChart === nextProps.onOpenPositionChart &&
     prevProps.onOpenBuyTradeModal === nextProps.onOpenBuyTradeModal &&
     prevProps.onOpenSellTradeModal === nextProps.onOpenSellTradeModal &&
     prevProps.onSelectPosition === nextProps.onSelectPosition &&
+    prevProps.openDistinctVideoCount === nextProps.openDistinctVideoCount &&
     prevProps.selectedPositionId === nextProps.selectedPositionId
   );
 }
@@ -594,7 +598,6 @@ export function RankingGamePanelShell({
                 <GameWalletSummary
                   computedWalletTotalAssetPoints={summary.computedWalletTotalAssetPoints}
                   currentTierCode={tierProgress?.currentTier.tierCode}
-                  openDistinctVideoCount={summary.openDistinctVideoCount}
                   openPositionsBuyPoints={summary.openPositionsBuyPoints}
                   openPositionsEvaluationPoints={summary.openPositionsEvaluationPoints}
                   openPositionsProfitPoints={summary.openPositionsProfitPoints}
@@ -1013,42 +1016,61 @@ function RankingGamePositionsTabComponent({
   emptyMessage,
   holdings,
   isLoading = false,
+  maxOpenPositions = null,
   onOpenPositionChart,
   onOpenBuyTradeModal,
   onOpenSellTradeModal,
   onSelectPosition,
+  openDistinctVideoCount,
   selectedPositionId,
 }: RankingGamePositionsTabProps) {
+  const inventoryOpenCount =
+    openDistinctVideoCount ?? new Set(holdings.map((holding) => holding.videoId)).size;
+  const inventorySummary = (
+    <GameInventoryCapacity maxOpenPositions={maxOpenPositions} openDistinctVideoCount={inventoryOpenCount} />
+  );
+
   if (isLoading) {
     return (
-      <div className="app-shell__game-tab-loading-shell" data-loading>
-        <div className="app-shell__game-tab-loading-overlay" role="status" aria-live="polite">
-          <span className="app-shell__game-tab-loading-spinner" aria-hidden="true" />
-          <span className="sr-only">인벤토리 불러오는 중</span>
+      <>
+        <div className="app-shell__game-tab-loading-shell" data-loading>
+          <div className="app-shell__game-tab-loading-overlay" role="status" aria-live="polite">
+            <span className="app-shell__game-tab-loading-spinner" aria-hidden="true" />
+            <span className="sr-only">인벤토리 불러오는 중</span>
+          </div>
         </div>
-      </div>
+        {inventorySummary}
+      </>
     );
   }
 
   if (holdings.length === 0) {
-    return emptyMessage ? <p className="app-shell__game-empty app-shell__game-empty--panel-centered">{emptyMessage}</p> : null;
+    return (
+      <>
+        {emptyMessage ? <p className="app-shell__game-empty app-shell__game-empty--panel-centered">{emptyMessage}</p> : null}
+        {inventorySummary}
+      </>
+    );
   }
 
   return (
-    <ul className="app-shell__game-positions">
-      {holdings.map((holding) => (
-        <RankingGamePositionRow
-          key={holding.positionId}
-          canShowGameActions={canShowGameActions}
-          holding={holding}
-          isSelected={activePlaybackQueueId === GAME_PORTFOLIO_QUEUE_ID && holding.positionId === selectedPositionId}
-          onOpenPositionChart={onOpenPositionChart}
-          onOpenBuyTradeModal={onOpenBuyTradeModal}
-          onOpenSellTradeModal={onOpenSellTradeModal}
-          onSelectPosition={onSelectPosition}
-        />
-      ))}
-    </ul>
+    <>
+      <ul className="app-shell__game-positions">
+        {holdings.map((holding) => (
+          <RankingGamePositionRow
+            key={holding.positionId}
+            canShowGameActions={canShowGameActions}
+            holding={holding}
+            isSelected={activePlaybackQueueId === GAME_PORTFOLIO_QUEUE_ID && holding.positionId === selectedPositionId}
+            onOpenPositionChart={onOpenPositionChart}
+            onOpenBuyTradeModal={onOpenBuyTradeModal}
+            onOpenSellTradeModal={onOpenSellTradeModal}
+            onSelectPosition={onSelectPosition}
+          />
+        ))}
+      </ul>
+      {inventorySummary}
+    </>
   );
 }
 

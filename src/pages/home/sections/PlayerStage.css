@@ -1607,18 +1607,6 @@
     color: #fff;
   }
 
-  :root[data-mobile-layout='true']
-    .app-shell__player-mobile-summary-item--game[data-limit-reached='true']
-    .app-shell__player-mobile-summary-value {
-    color: #dc2626;
-  }
-
-  :root[data-theme='dark'][data-mobile-layout='true']
-    .app-shell__player-mobile-summary-item--game[data-limit-reached='true']
-    .app-shell__player-mobile-summary-value {
-    color: #f87171;
-  }
-
   :root[data-mobile-layout='true'] .app-shell__stage-meta {
     align-items: start;
     display: grid;

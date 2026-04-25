@@ -39,7 +39,6 @@ function formatWalletUpdatedLabel(updatedAt?: number) {
 interface GameWalletSummaryProps {
   computedWalletTotalAssetPoints: number | null;
   currentTierCode?: string | null;
-  openDistinctVideoCount: number;
   openPositionsBuyPoints: number;
   openPositionsEvaluationPoints: number;
   openPositionsProfitPoints: number;
@@ -50,20 +49,12 @@ interface GameWalletSummaryProps {
 export default function GameWalletSummary({
   computedWalletTotalAssetPoints,
   currentTierCode,
-  openDistinctVideoCount,
   openPositionsBuyPoints,
   openPositionsEvaluationPoints,
   openPositionsProfitPoints,
   season,
   walletUpdatedAt,
 }: GameWalletSummaryProps) {
-  const maxOpenPositions = season?.maxOpenPositions ?? null;
-  const remainingOpenSlots =
-    typeof maxOpenPositions === 'number' ? Math.max(0, maxOpenPositions - openDistinctVideoCount) : null;
-  const holdingCapacityPercent =
-    typeof maxOpenPositions === 'number' && maxOpenPositions > 0
-      ? Math.min((openDistinctVideoCount / maxOpenPositions) * 100, 100)
-      : 0;
   const profitPointsTone = getPointTone(openPositionsProfitPoints);
   const walletUpdatedLabel = season ? formatWalletUpdatedLabel(walletUpdatedAt) : null;
 
@@ -142,18 +133,6 @@ export default function GameWalletSummary({
             {season ? formatPoints(openPositionsEvaluationPoints) : '-'}
           </span>
           <span className="app-shell__game-panel-metric-meta">최신 시세 기준 평가</span>
-        </span>
-        <span className="app-shell__game-panel-metric app-shell__game-panel-metric--hero app-shell__game-panel-metric--capacity">
-          <span className="app-shell__game-panel-metric-label">보유</span>
-          <span className="app-shell__game-panel-metric-value">
-            {`${openDistinctVideoCount}/${season?.maxOpenPositions ?? '-'}`}
-          </span>
-          <span className="app-shell__game-panel-metric-meta">
-            {remainingOpenSlots !== null ? `남은 슬롯 ${remainingOpenSlots}개` : '보유 가능한 슬롯 집계 중'}
-          </span>
-          <span className="app-shell__game-panel-metric-meter" aria-hidden="true">
-            <span style={{ width: `${holdingCapacityPercent}%` }} />
-          </span>
         </span>
       </div>
     </section>

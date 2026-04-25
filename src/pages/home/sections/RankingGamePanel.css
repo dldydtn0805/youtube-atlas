@@ -1080,6 +1080,43 @@
   margin: 6px 0 0;
 }
 
+.app-shell__game-inventory-capacity {
+  background: var(--surface-strong);
+  border-radius: 16px;
+  display: grid;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+.app-shell__game-inventory-capacity-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.app-shell__game-inventory-capacity-count,
+.app-shell__game-inventory-capacity-remaining {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.app-shell__game-inventory-capacity-count {
+  justify-self: end;
+}
+
+.app-shell__game-inventory-capacity-remaining {
+  justify-self: start;
+}
+
+.app-shell__game-inventory-capacity .app-shell__game-panel-metric-meter {
+  margin-top: 0;
+  max-width: none;
+  width: 100%;
+}
+
 .app-shell__game-positions {
   contain: layout paint;
   display: grid;
@@ -2879,6 +2916,11 @@
 
   :root[data-mobile-layout='true'] .app-shell__game-panel-metric-meter {
     max-width: 140px;
+  }
+
+  :root[data-mobile-layout='true'] .app-shell__game-inventory-capacity .app-shell__game-panel-metric-meter {
+    max-width: none;
+    width: 100%;
   }
 
   :root[data-mobile-layout='true'] .app-shell__game-tabs {

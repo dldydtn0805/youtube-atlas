@@ -3163,7 +3163,6 @@ function HomePage() {
         currentTierCode={gameTierProgress?.currentTier.tierCode}
         isOpen={isWalletModalOpen}
         onClose={() => setIsWalletModalOpen(false)}
-        openDistinctVideoCount={openDistinctVideoCount}
         openPositionsBuyPoints={openPositionsBuyPoints}
         openPositionsEvaluationPoints={openPositionsEvaluationPoints}
         openPositionsProfitPoints={openPositionsProfitPoints}

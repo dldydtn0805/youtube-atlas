@@ -11,7 +11,6 @@ interface GameWalletModalProps {
   currentTierCode?: string | null;
   isOpen: boolean;
   onClose: () => void;
-  openDistinctVideoCount: number;
   openPositionsBuyPoints: number;
   openPositionsEvaluationPoints: number;
   openPositionsProfitPoints: number;
@@ -24,7 +23,6 @@ export default function GameWalletModal({
   currentTierCode,
   isOpen,
   onClose,
-  openDistinctVideoCount,
   openPositionsBuyPoints,
   openPositionsEvaluationPoints,
   openPositionsProfitPoints,
@@ -69,7 +67,6 @@ export default function GameWalletModal({
           <GameWalletSummary
             computedWalletTotalAssetPoints={computedWalletTotalAssetPoints}
             currentTierCode={currentTierCode}
-            openDistinctVideoCount={openDistinctVideoCount}
             openPositionsBuyPoints={openPositionsBuyPoints}
             openPositionsEvaluationPoints={openPositionsEvaluationPoints}
             openPositionsProfitPoints={openPositionsProfitPoints}

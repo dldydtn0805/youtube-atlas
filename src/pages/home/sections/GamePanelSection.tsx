@@ -155,10 +155,12 @@ export default function GamePanelSection({
       gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
       holdings={openGameHoldings}
       isLoading={isOpenGamePositionsLoading}
+      maxOpenPositions={currentGameSeason?.maxOpenPositions}
       onOpenPositionChart={onOpenPositionChart}
       onOpenBuyTradeModal={onOpenPositionBuyTradeModal}
       onOpenSellTradeModal={onOpenPositionSellTradeModal}
       onSelectPosition={onSelectGamePositionVideo}
+      openDistinctVideoCount={openDistinctVideoCount}
       selectedPositionId={selectedPositionId}
       trendSignalsByVideoId={trendSignalsByVideoId}
     />
@@ -237,7 +239,6 @@ export default function GamePanelSection({
       selectedVideoActions={selectedVideoActions}
       summary={{
         computedWalletTotalAssetPoints,
-        openDistinctVideoCount,
         openPositionsBuyPoints,
         openPositionsEvaluationPoints,
         openPositionsProfitPoints,
