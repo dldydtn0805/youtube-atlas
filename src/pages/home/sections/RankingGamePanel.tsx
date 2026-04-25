@@ -40,6 +40,7 @@ import {
   HISTORY_PLAYBACK_QUEUE_ID,
 } from '../utils';
 import AchievementTitleBadge from './AchievementTitleBadge';
+import GamePanelNyanRefreshIcon from './GamePanelNyanRefreshIcon';
 import GameTierSummary from './GameTierSummary';
 import GameWalletSummary from './GameWalletSummary';
 import MiniVideoPreview from './MiniVideoPreview';
@@ -706,11 +707,13 @@ export function RankingGamePanelShell({
                           data-refreshing={isRefreshing || undefined}
                           data-visible={pullDistance > 0 || isRefreshing || undefined}
                           style={{
-                            '--game-tab-pull-distance': `${Math.min(pullDistance, 72)}px`,
+                            '--game-tab-pull-distance': `${pullDistance}px`,
                             '--game-tab-pull-progress': `${pullProgress}`,
                           } as CSSProperties}
                         >
-                          <span className="app-shell__game-tab-pull-indicator-spinner" aria-hidden="true" />
+                          <span className="app-shell__game-tab-pull-indicator-spinner" aria-hidden="true">
+                            <GamePanelNyanRefreshIcon />
+                          </span>
                         </div>
                       ) : null}
                       {tabContentById[tab.id]}

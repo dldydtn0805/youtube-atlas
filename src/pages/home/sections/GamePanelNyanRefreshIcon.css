@@ -1,0 +1,10 @@
+.nyan-refresh-icon {
+  display: block;
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.16));
+  height: 100%;
+  image-rendering: pixelated;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  width: 100%;
+}

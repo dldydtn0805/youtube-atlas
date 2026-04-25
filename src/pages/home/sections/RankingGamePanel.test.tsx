@@ -451,9 +451,9 @@ describe('RankingGamePanelShell', () => {
 
       expect(onRefreshTab).not.toHaveBeenCalled();
 
-      fireEvent.wheel(panel, { deltaY: -72 });
-      fireEvent.wheel(panel, { deltaY: -72 });
-      fireEvent.wheel(panel, { deltaY: -72 });
+      Array.from({ length: 7 }).forEach(() => {
+        fireEvent.wheel(panel, { deltaY: -72 });
+      });
       vi.advanceTimersByTime(150);
 
       expect(onRefreshTab).toHaveBeenCalledWith('positions');
@@ -471,7 +471,7 @@ describe('RankingGamePanelShell', () => {
 
     Object.defineProperty(panel, 'scrollTop', { configurable: true, value: 0 });
     fireEvent.touchStart(panel, { touches: [{ clientY: 100 }] });
-    fireEvent.touchMove(panel, { touches: [{ clientY: 180 }] });
+    fireEvent.touchMove(panel, { touches: [{ clientY: 240 }] });
     fireEvent.touchEnd(panel);
 
     expect(onRefreshTab).toHaveBeenCalledWith('history');
