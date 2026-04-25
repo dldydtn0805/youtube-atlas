@@ -1926,6 +1926,24 @@ function HomePage() {
       refetchGameHistoryPositions(),
     ]);
   }, [refetchGameHistoryPositions, refetchOpenGamePositions, refetchScheduledSellOrders]);
+  const handleRefreshGameTab = useCallback(
+    async (tab: 'positions' | 'scheduledOrders' | 'history' | 'guide') => {
+      if (tab === 'positions') {
+        await refetchOpenGamePositions();
+        return;
+      }
+
+      if (tab === 'scheduledOrders') {
+        await refetchScheduledSellOrders();
+        return;
+      }
+
+      if (tab === 'history') {
+        await refetchGameHistoryPositions();
+      }
+    },
+    [refetchGameHistoryPositions, refetchOpenGamePositions, refetchScheduledSellOrders],
+  );
   const refetchGameDataAfterBuy = useCallback(async () => {
     await Promise.all([refetchCurrentChartAfterBuy(), refetchGameTradePanels()]);
   }, [refetchCurrentChartAfterBuy, refetchGameTradePanels]);
@@ -2746,6 +2764,7 @@ function HomePage() {
       onOpenTierModal={openTierModal}
       onOpenHistoryChart={handleOpenGameHistoryChart}
       onOpenPositionChart={handleOpenGamePositionChart}
+      onRefreshTab={handleRefreshGameTab}
       onOpenScheduledSellOrderChart={handleOpenScheduledSellOrderChart}
       onOpenPositionBuyTradeModal={handleOpenPositionBuyTradeModal}
       onOpenPositionSellTradeModal={handleOpenPositionSellTradeModal}

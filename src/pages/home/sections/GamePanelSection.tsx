@@ -47,6 +47,7 @@ interface GamePanelSectionProps {
   onOpenTierModal: () => void;
   onOpenHistoryChart: (position: GamePosition) => void;
   onOpenPositionChart: (position: GamePosition) => void;
+  onRefreshTab?: (tab: GameTab) => Promise<void> | void;
   onOpenScheduledSellOrderChart?: (order: GameScheduledSellOrder) => void;
   onOpenPositionBuyTradeModal?: (position: GamePosition) => void;
   onOpenPositionSellTradeModal?: (position: GamePosition) => void;
@@ -96,6 +97,7 @@ export default function GamePanelSection({
   onOpenTierModal,
   onOpenHistoryChart,
   onOpenPositionChart,
+  onRefreshTab,
   onOpenScheduledSellOrderChart,
   onOpenPositionBuyTradeModal,
   onOpenPositionSellTradeModal,
@@ -227,6 +229,7 @@ export default function GamePanelSection({
         />
       }
       isCollapsed={isCollapsed}
+      onRefreshTab={onRefreshTab}
       onSelectTab={onSelectTab}
       onToggleCollapse={onToggleCollapse}
       season={currentGameSeason}

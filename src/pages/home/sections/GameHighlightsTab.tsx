@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { GameHighlight } from '../../../features/game/types';
 import { formatPoints, formatRank, getPointTone } from '../gameHelpers';
 import { buildGameStrategyBadges } from '../gameStrategyTags';
@@ -51,6 +52,18 @@ function formatHighlightScore(score?: number | null) {
 }
 
 export default function GameHighlightsTab({ highlights, isLoading, onSelectHighlight }: GameHighlightsTabProps) {
+  const sortedHighlights = useMemo(
+    () =>
+      highlights.slice().sort((left, right) => {
+        if (left.highlightScore !== right.highlightScore) {
+          return right.highlightScore - left.highlightScore;
+        }
+
+        return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+      }),
+    [highlights],
+  );
+
   if (highlights.length === 0) {
     return (
       <div className="app-shell__game-highlights-shell" data-loading={isLoading}>
@@ -70,7 +83,7 @@ export default function GameHighlightsTab({ highlights, isLoading, onSelectHighl
   return (
     <div className="app-shell__game-highlights-shell" data-loading={isLoading}>
       <ul className="app-shell__game-highlights">
-        {highlights.map((highlight) => {
+        {sortedHighlights.map((highlight) => {
           const strategyBadges = buildGameStrategyBadges(highlight.strategyTags, highlight.highlightType);
 
           return (

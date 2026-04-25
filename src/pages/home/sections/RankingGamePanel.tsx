@@ -44,6 +44,7 @@ import GameTierSummary from './GameTierSummary';
 import GameWalletSummary from './GameWalletSummary';
 import MiniVideoPreview from './MiniVideoPreview';
 import StickySelectedVideoHeaderCopy from './StickySelectedVideoHeaderCopy';
+import useGamePanelPullToRefresh from './useGamePanelPullToRefresh';
 
 type GameTab = 'positions' | 'scheduledOrders' | 'history' | 'guide';
 
@@ -69,6 +70,7 @@ interface RankingGamePanelShellProps {
   tierProgress?: GameTierProgress;
   dividendOverview?: ReactNode;
   isCollapsed: boolean;
+  onRefreshTab?: (tab: GameTab) => Promise<void> | void;
   onSelectTab: (tab: GameTab) => void;
   onToggleCollapse: () => void;
   season?: GameCurrentSeason;
@@ -488,6 +490,7 @@ export function RankingGamePanelShell({
   tierProgress,
   dividendOverview,
   isCollapsed,
+  onRefreshTab,
   onSelectTab,
   onToggleCollapse,
   season,
@@ -503,6 +506,16 @@ export function RankingGamePanelShell({
   const [viewportWidth, setViewportWidth] = useState(1);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const skipNextActiveTabSyncRef = useRef(false);
+  const {
+    bind: pullToRefreshBind,
+    isReadyToRefresh,
+    isRefreshing,
+    pullDistance,
+  } = useGamePanelPullToRefresh({
+    activeTab: activeGameTab,
+    disabled: !onRefreshTab || activeGameTab === 'guide',
+    onRefresh: onRefreshTab,
+  });
   const carouselTabs = useMemo(
     () => [GAME_PANEL_TABS[GAME_PANEL_TABS.length - 1], ...GAME_PANEL_TABS, GAME_PANEL_TABS[0]],
     [],
@@ -679,7 +692,23 @@ export function RankingGamePanelShell({
               >
                 {carouselTabs.map((tab, index) => (
                   <div key={`${tab.id}-${index}`} className="app-shell__game-tab-slide">
-                    <div className="app-shell__game-tab-slide-panel" data-game-panel-tab={tab.id}>
+                    <div
+                      {...(tab.id === activeGameTab ? pullToRefreshBind : undefined)}
+                      className="app-shell__game-tab-slide-panel"
+                      data-game-panel-tab={tab.id}
+                    >
+                      {tab.id === activeGameTab ? (
+                        <div
+                          aria-hidden={!isRefreshing}
+                          className="app-shell__game-tab-pull-indicator"
+                          data-ready={isReadyToRefresh || undefined}
+                          data-refreshing={isRefreshing || undefined}
+                          data-visible={pullDistance > 0 || isRefreshing || undefined}
+                          style={{ '--game-tab-pull-distance': `${Math.min(pullDistance, 72)}px` } as CSSProperties}
+                        >
+                          <span className="app-shell__game-tab-pull-indicator-spinner" aria-hidden="true" />
+                        </div>
+                      ) : null}
                       {tabContentById[tab.id]}
                     </div>
                   </div>

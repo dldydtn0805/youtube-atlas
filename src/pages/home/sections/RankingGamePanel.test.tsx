@@ -371,13 +371,20 @@ describe('RankingGamePositionsTab', () => {
 });
 
 describe('RankingGamePanelShell', () => {
-  function ControlledRankingGamePanelShell({ initialTab = 'positions' }: { initialTab?: GameTab }) {
+  function ControlledRankingGamePanelShell({
+    initialTab = 'positions',
+    onRefreshTab,
+  }: {
+    initialTab?: GameTab;
+    onRefreshTab?: (tab: GameTab) => Promise<void> | void;
+  }) {
     const [activeGameTab, setActiveGameTab] = useState<GameTab>(initialTab);
 
     return (
       <RankingGamePanelShell
         activeGameTab={activeGameTab}
         isCollapsed={false}
+        onRefreshTab={onRefreshTab}
         onSelectTab={setActiveGameTab}
         onToggleCollapse={vi.fn()}
         summary={{
@@ -415,6 +422,33 @@ describe('RankingGamePanelShell', () => {
     expect(track).toBeInTheDocument();
   });
 
+  it('refetches the active tab when the user scrolls upward at the top of the panel', () => {
+    const onRefreshTab = vi.fn().mockResolvedValue(undefined);
+
+    const { container } = render(<ControlledRankingGamePanelShell initialTab="positions" onRefreshTab={onRefreshTab} />);
+    setGamePanelViewportWidth();
+    const panel = container.querySelector('[data-game-panel-tab="positions"]') as HTMLDivElement;
+
+    Object.defineProperty(panel, 'scrollTop', { configurable: true, value: 0 });
+    fireEvent.wheel(panel, { deltaY: -72 });
+
+    expect(onRefreshTab).toHaveBeenCalledWith('positions');
+  });
+
+  it('refetches the active tab when the user pulls down from the top of the panel', () => {
+    const onRefreshTab = vi.fn().mockResolvedValue(undefined);
+
+    const { container } = render(<ControlledRankingGamePanelShell initialTab="history" onRefreshTab={onRefreshTab} />);
+    setGamePanelViewportWidth();
+    const panel = container.querySelector('[data-game-panel-tab="history"]') as HTMLDivElement;
+
+    Object.defineProperty(panel, 'scrollTop', { configurable: true, value: 0 });
+    fireEvent.touchStart(panel, { touches: [{ clientY: 100 }] });
+    fireEvent.touchMove(panel, { touches: [{ clientY: 180 }] });
+    fireEvent.touchEnd(panel);
+
+    expect(onRefreshTab).toHaveBeenCalledWith('history');
+  });
 });
 
 describe('RankingGameHistoryTab', () => {
