@@ -46,7 +46,6 @@ import GameTierSummary from './GameTierSummary';
 import GameWalletSummary from './GameWalletSummary';
 import MiniVideoPreview from './MiniVideoPreview';
 import StickySelectedVideoHeaderCopy from './StickySelectedVideoHeaderCopy';
-import useRafDragOffset from '../hooks/useRafDragOffset';
 import { lockSwipeScroll } from '../hooks/swipeScrollLock';
 import { resolveSwipeDirection } from '../hooks/swipeDirection';
 
@@ -514,6 +513,7 @@ export function RankingGamePanelShell({
 }: RankingGamePanelShellProps) {
   const hasDividendOverview = Boolean(dividendOverview);
   const hasSelectedVideoActions = Boolean(selectedVideoActions);
+  const [dragOffset, setDragOffset] = useState(0);
   const [trackIndex, setTrackIndex] = useState(GAME_PANEL_TABS.findIndex((tab) => tab.id === activeGameTab) + 1);
   const [isTrackAnimating, setIsTrackAnimating] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(1);
@@ -526,7 +526,6 @@ export function RankingGamePanelShell({
   const shouldSuppressClickRef = useRef(false);
   const viewportWidthRef = useRef(0);
   const releaseScrollLockRef = useRef<(() => void) | null>(null);
-  const { dragOffset, setDragOffset } = useRafDragOffset();
   const activeIndex = GAME_PANEL_TABS.findIndex((tab) => tab.id === activeGameTab);
   const carouselTabs = useMemo(
     () => [GAME_PANEL_TABS[GAME_PANEL_TABS.length - 1], ...GAME_PANEL_TABS, GAME_PANEL_TABS[0]],
@@ -637,10 +636,7 @@ export function RankingGamePanelShell({
     }
 
     if (releaseScrollLockRef.current === null) {
-      const activePanel = event.currentTarget.querySelector<HTMLElement>(`[data-game-panel-tab="${activeGameTab}"]`);
-      releaseScrollLockRef.current = lockSwipeScroll(
-        activePanel ? [event.currentTarget, activePanel] : [event.currentTarget],
-      );
+      releaseScrollLockRef.current = lockSwipeScroll(event.currentTarget);
     }
 
     shouldSuppressClickRef.current = true;

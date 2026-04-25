@@ -5,11 +5,18 @@ interface ScrollLockSnapshot {
   touchAction: string;
 }
 
-export function lockSwipeScroll(targets: readonly HTMLElement[]) {
-  const snapshots: ScrollLockSnapshot[] = [];
+function canScroll(element: HTMLElement) {
+  const style = window.getComputedStyle(element);
 
-  targets.forEach((element, index) => {
-    if (!(element instanceof HTMLElement)) {
+  return /(auto|scroll)/.test(style.overflow + style.overflowY);
+}
+
+export function lockSwipeScroll(root: HTMLElement) {
+  const snapshots: ScrollLockSnapshot[] = [];
+  const candidates = [root, ...root.querySelectorAll<HTMLElement>('*')];
+
+  candidates.forEach((element) => {
+    if (element !== root && !canScroll(element)) {
       return;
     }
 
@@ -23,7 +30,7 @@ export function lockSwipeScroll(targets: readonly HTMLElement[]) {
     element.style.overflow = 'hidden';
     element.style.overscrollBehavior = 'none';
 
-    if (index === 0) {
+    if (element === root) {
       element.style.touchAction = 'none';
     }
   });
