@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState, type TouchEvent, type WheelEvent } from 'react';
 
-const PULL_REFRESH_TRIGGER_PX = 64;
-const MAX_PULL_DISTANCE_PX = 96;
+const PULL_REFRESH_TRIGGER_PX = 104;
+const MAX_PULL_DISTANCE_PX = 128;
 const WHEEL_REFRESH_SETTLE_MS = 120;
 const WHEEL_PULL_DELTA_FACTOR = 0.28;
 const WHEEL_PULL_DELTA_MAX = 18;

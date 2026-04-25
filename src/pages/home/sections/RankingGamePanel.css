@@ -977,17 +977,14 @@
   border-radius: 999px;
   border-top-color: rgba(217, 119, 6, 0.92);
   height: 16px;
-  opacity: calc(0.24 + var(--game-tab-pull-progress, 0) * 0.76);
+  opacity: 0;
   transition:
     opacity 0.18s ease,
     transform 0.18s ease;
-  transform:
-    rotate(calc(var(--game-tab-pull-progress, 0) * 300deg))
-    scale(calc(0.82 + var(--game-tab-pull-progress, 0) * 0.18));
+  transform: scale(0.9);
   width: 16px;
 }
 
-.app-shell__game-tab-pull-indicator[data-ready='true'] .app-shell__game-tab-pull-indicator-spinner,
 .app-shell__game-tab-pull-indicator[data-refreshing='true'] .app-shell__game-tab-pull-indicator-spinner {
   opacity: 1;
   transform: scale(1);
