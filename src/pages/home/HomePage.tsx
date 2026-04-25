@@ -111,6 +111,7 @@ import type {
   GameNotification,
   GamePosition,
   GamePositionRankHistory,
+  GameScheduledSellOrder,
   ScheduledSellTriggerDirection,
 } from '../../features/game/types';
 import { fetchGamePositionRankHistory } from '../../features/game/api';
@@ -2435,6 +2436,32 @@ function HomePage() {
     },
     [openRankHistoryModal],
   );
+  const handleOpenScheduledSellOrderChart = useCallback(
+    (order: GameScheduledSellOrder) => {
+      setSelectedRankHistoryOwnerUserId(null);
+      setRankHistoryFocusMode('trade');
+      openRankHistoryModal(order.videoId, {
+        id: order.positionId,
+        videoId: order.videoId,
+        title: order.videoTitle,
+        channelTitle: order.channelTitle,
+        thumbnailUrl: order.thumbnailUrl,
+        buyRank: order.buyRank,
+        currentRank: order.currentRank,
+        rankDiff: null,
+        quantity: order.quantity,
+        stakePoints: order.stakePoints,
+        currentPricePoints: order.sellPricePoints ?? null,
+        profitPoints: order.pnlPoints ?? null,
+        chartOut: order.currentRank == null,
+        status: order.status,
+        buyCapturedAt: order.createdAt,
+        createdAt: order.createdAt,
+        closedAt: order.executedAt ?? order.canceledAt ?? null,
+      });
+    },
+    [openRankHistoryModal],
+  );
   const handleSelectGameTab = useCallback((tab: 'positions' | 'scheduledOrders' | 'history' | 'guide') => {
     startTransition(() => {
       setActiveGameTab(tab);
@@ -2702,6 +2729,7 @@ function HomePage() {
       onOpenTierModal={openTierModal}
       onOpenHistoryChart={handleOpenGameHistoryChart}
       onOpenPositionChart={handleOpenGamePositionChart}
+      onOpenScheduledSellOrderChart={handleOpenScheduledSellOrderChart}
       onOpenPositionBuyTradeModal={handleOpenPositionBuyTradeModal}
       onOpenPositionSellTradeModal={handleOpenPositionSellTradeModal}
       onSelectGameHistoryVideo={handleSelectGameHistoryVideo}

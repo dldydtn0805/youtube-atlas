@@ -47,6 +47,7 @@ interface GamePanelSectionProps {
   onOpenTierModal: () => void;
   onOpenHistoryChart: (position: GamePosition) => void;
   onOpenPositionChart: (position: GamePosition) => void;
+  onOpenScheduledSellOrderChart?: (order: GameScheduledSellOrder) => void;
   onOpenPositionBuyTradeModal?: (position: GamePosition) => void;
   onOpenPositionSellTradeModal?: (position: GamePosition) => void;
   onCancelScheduledSellOrder?: (orderId: number) => void;
@@ -95,6 +96,7 @@ export default function GamePanelSection({
   onOpenTierModal,
   onOpenHistoryChart,
   onOpenPositionChart,
+  onOpenScheduledSellOrderChart,
   onOpenPositionBuyTradeModal,
   onOpenPositionSellTradeModal,
   onCancelScheduledSellOrder,
@@ -181,6 +183,7 @@ export default function GamePanelSection({
       isCancelingOrderId={scheduledSellOrderCancelingId}
       isLoading={isScheduledSellOrdersLoading}
       onCancelOrder={onCancelScheduledSellOrder}
+      onOpenChart={onOpenScheduledSellOrderChart}
       orders={scheduledSellOrders}
     />
   );

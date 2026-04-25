@@ -14,6 +14,7 @@ interface GameScheduledSellOrdersTabProps {
   isCancelingOrderId?: number | null;
   isLoading: boolean;
   onCancelOrder?: (orderId: number) => void;
+  onOpenChart?: (order: GameScheduledSellOrder) => void;
   orders: GameScheduledSellOrder[];
 }
 
@@ -96,6 +97,7 @@ export default function GameScheduledSellOrdersTab({
   isCancelingOrderId = null,
   isLoading,
   onCancelOrder,
+  onOpenChart,
   orders,
 }: GameScheduledSellOrdersTabProps) {
   const [activeFilter, setActiveFilter] = useState<ScheduledSellOrderFilter>('PENDING');
@@ -134,6 +136,7 @@ export default function GameScheduledSellOrdersTab({
             {filteredOrders.map((order) => {
               const canCancel = order.status === 'PENDING' && Boolean(onCancelOrder);
               const isCanceling = isCancelingOrderId === order.id;
+              const chartButtonLabel = `${order.videoTitle} 차트 보기`;
 
               return (
                 <li
@@ -157,7 +160,18 @@ export default function GameScheduledSellOrdersTab({
                   />
                   <div className="app-shell__game-position-copy">
                     <div className="app-shell__game-position-heading">
-                      <p className="app-shell__game-position-title">{order.videoTitle}</p>
+                      {onOpenChart ? (
+                        <button
+                          aria-label={chartButtonLabel}
+                          className="app-shell__game-position-title-button"
+                          onClick={() => onOpenChart(order)}
+                          type="button"
+                        >
+                          <span className="app-shell__game-position-title">{order.videoTitle}</span>
+                        </button>
+                      ) : (
+                        <p className="app-shell__game-position-title">{order.videoTitle}</p>
+                      )}
                     </div>
                     <p className="app-shell__game-position-channel">{order.channelTitle}</p>
                     <p className="app-shell__game-position-meta">
