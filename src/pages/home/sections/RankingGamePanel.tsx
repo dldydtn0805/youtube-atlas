@@ -1033,13 +1033,13 @@ function RankingGamePositionsTabComponent({
   if (isLoading) {
     return (
       <>
+        {inventorySummary}
         <div className="app-shell__game-tab-loading-shell" data-loading>
           <div className="app-shell__game-tab-loading-overlay" role="status" aria-live="polite">
             <span className="app-shell__game-tab-loading-spinner" aria-hidden="true" />
             <span className="sr-only">인벤토리 불러오는 중</span>
           </div>
         </div>
-        {inventorySummary}
       </>
     );
   }
@@ -1047,14 +1047,15 @@ function RankingGamePositionsTabComponent({
   if (holdings.length === 0) {
     return (
       <>
-        {emptyMessage ? <p className="app-shell__game-empty app-shell__game-empty--panel-centered">{emptyMessage}</p> : null}
         {inventorySummary}
+        {emptyMessage ? <p className="app-shell__game-empty app-shell__game-empty--panel-centered">{emptyMessage}</p> : null}
       </>
     );
   }
 
   return (
     <>
+      {inventorySummary}
       <ul className="app-shell__game-positions">
         {holdings.map((holding) => (
           <RankingGamePositionRow
@@ -1069,7 +1070,6 @@ function RankingGamePositionsTabComponent({
           />
         ))}
       </ul>
-      {inventorySummary}
     </>
   );
 }
