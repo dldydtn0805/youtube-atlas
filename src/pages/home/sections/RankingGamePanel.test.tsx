@@ -368,6 +368,21 @@ describe('RankingGamePositionsTab', () => {
     expect(screen.queryByText('매도 대기 · 0초')).not.toBeInTheDocument();
     expect(screen.getByText('매도 가능 수량 없음')).toBeInTheDocument();
   });
+
+  it('shows a reserved sell badge when a holding is already queued for scheduled sell', () => {
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[createOpenGameHolding({ quantity: 100, sellableQuantity: 0, reservedForSell: true, scheduledSellQuantity: 100 })]}
+        onSelectPosition={vi.fn()}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    expect(screen.getByText('1개 예약 중')).toBeInTheDocument();
+  });
 });
 
 describe('RankingGamePanelShell', () => {

@@ -1090,6 +1090,9 @@ export function RankingGamePositionsTab({
             ? calculateGameUnitPricePoints(holding.currentPricePoints, holding.quantity)
             : null;
         const positionStatusBadge = holding.chartOut ? '차트 아웃' : null;
+        const reservedSellBadge = holding.reservedForSell
+          ? `${formatGameQuantity(Math.max(holding.scheduledSellQuantity, 1))} 예약 중`
+          : null;
         const sellableStatusBadge = !canShowGameActions
           ? '전체 카테고리에서 매도 가능'
           : holding.sellableQuantity > 0
@@ -1098,7 +1101,7 @@ export function RankingGamePositionsTab({
               ? `매도 대기 · ${formatHoldCountdown(holding.nextSellableInSeconds)}`
               : '매도 가능 수량 없음';
         const hasDetailBadges = Boolean(
-          strategyBadges.length || holdingRankTrendBadge || positionStatusBadge || sellableStatusBadge,
+          strategyBadges.length || holdingRankTrendBadge || positionStatusBadge || reservedSellBadge || sellableStatusBadge,
         );
         const projectedHighlightScoreValue = formatHighlightScore(holding.projectedHighlightScore);
         const position = mapHoldingToGamePosition(holding);
@@ -1184,6 +1187,11 @@ export function RankingGamePositionsTab({
                           {positionStatusBadge ? (
                             <span className="app-shell__game-position-trend" data-tone="steady">
                               {positionStatusBadge}
+                            </span>
+                          ) : null}
+                          {reservedSellBadge ? (
+                            <span className="app-shell__game-position-trend" data-tone="info">
+                              {reservedSellBadge}
                             </span>
                           ) : null}
                           {sellableStatusBadge ? (
