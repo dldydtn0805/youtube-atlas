@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { GameTierProgress } from '../../../features/game/types';
 import GameTierModal from './GameTierModal';
@@ -40,5 +40,45 @@ describe('GameTierModal', () => {
     );
 
     expect(screen.getByRole('tab', { name: '하이라이트' })).toBeInTheDocument();
+  });
+
+  it('moves to the next tab when the modal panel is swiped left', () => {
+    render(
+      <GameTierModal
+        highlightsContent={<div>하이라이트 목록</div>}
+        isOpen
+        onClose={() => undefined}
+        rankingContent={<div>랭킹 목록</div>}
+        tierProgress={tierProgress}
+      />,
+    );
+
+    const panel = screen.getByRole('tabpanel');
+
+    fireEvent.pointerDown(panel, { clientX: 220, clientY: 32, pointerId: 1 });
+    fireEvent.pointerMove(panel, { clientX: 120, clientY: 36, pointerId: 1 });
+    fireEvent.pointerUp(panel, { clientX: 120, clientY: 36, pointerId: 1 });
+
+    expect(screen.getByText('하이라이트 목록')).toBeInTheDocument();
+  });
+
+  it('wraps from the first tab to the last tab on swipe right', () => {
+    render(
+      <GameTierModal
+        highlightsContent={<div>하이라이트 목록</div>}
+        isOpen
+        onClose={() => undefined}
+        rankingContent={<div>랭킹 목록</div>}
+        tierProgress={tierProgress}
+      />,
+    );
+
+    const panel = screen.getByRole('tabpanel');
+
+    fireEvent.pointerDown(panel, { clientX: 120, clientY: 32, pointerId: 2 });
+    fireEvent.pointerMove(panel, { clientX: 220, clientY: 36, pointerId: 2 });
+    fireEvent.pointerUp(panel, { clientX: 220, clientY: 36, pointerId: 2 });
+
+    expect(screen.getByText('랭킹 목록')).toBeInTheDocument();
   });
 });

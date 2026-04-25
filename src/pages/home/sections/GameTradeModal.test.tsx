@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import GameTradeModal, { getGameTradeQuickActions } from './GameTradeModal';
 
@@ -63,5 +63,80 @@ describe('GameTradeModal', () => {
 
     expect(screen.getByText('거래 후 잔액')).toBeInTheDocument();
     expect(screen.getByText('10,900P')).toBeInTheDocument();
+  });
+
+  it('switches to scheduled sell mode on swipe left', () => {
+    const onChangeSellOrderMode = vi.fn();
+
+    render(
+      <GameTradeModal
+        confirmLabel="매도"
+        currentRankLabel="3위"
+        helperText="테스트"
+        isOpen
+        isSubmitting={false}
+        maxQuantity={200}
+        mode="sell"
+        onChangeQuantity={vi.fn()}
+        onChangeSellOrderMode={onChangeSellOrderMode}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        quantity={100}
+        summaryItems={[{ label: '정산 금액', value: '900P' }]}
+        thumbnailUrl={null}
+        title="테스트 영상"
+        unitPointsLabel="1,000P"
+      />,
+    );
+
+    const fields = screen.getByText('수량').closest('.app-shell__modal-fields');
+
+    if (!fields) {
+      throw new Error('modal fields not found');
+    }
+
+    fireEvent.pointerDown(fields, { clientX: 220, clientY: 48, pointerId: 1 });
+    fireEvent.pointerMove(fields, { clientX: 132, clientY: 50, pointerId: 1 });
+    fireEvent.pointerUp(fields, { clientX: 132, clientY: 50, pointerId: 1 });
+
+    expect(onChangeSellOrderMode).toHaveBeenCalledWith('scheduled');
+  });
+
+  it('wraps from scheduled sell mode back to instant mode on swipe left', () => {
+    const onChangeSellOrderMode = vi.fn();
+
+    render(
+      <GameTradeModal
+        confirmLabel="매도"
+        currentRankLabel="3위"
+        helperText="테스트"
+        isOpen
+        isSubmitting={false}
+        maxQuantity={200}
+        mode="sell"
+        onChangeQuantity={vi.fn()}
+        onChangeSellOrderMode={onChangeSellOrderMode}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        quantity={100}
+        sellOrderMode="scheduled"
+        summaryItems={[{ label: '정산 금액', value: '900P' }]}
+        thumbnailUrl={null}
+        title="테스트 영상"
+        unitPointsLabel="1,000P"
+      />,
+    );
+
+    const fields = screen.getByText('수량').closest('.app-shell__modal-fields');
+
+    if (!fields) {
+      throw new Error('modal fields not found');
+    }
+
+    fireEvent.pointerDown(fields, { clientX: 220, clientY: 48, pointerId: 2 });
+    fireEvent.pointerMove(fields, { clientX: 132, clientY: 50, pointerId: 2 });
+    fireEvent.pointerUp(fields, { clientX: 132, clientY: 50, pointerId: 2 });
+
+    expect(onChangeSellOrderMode).toHaveBeenCalledWith('instant');
   });
 });
