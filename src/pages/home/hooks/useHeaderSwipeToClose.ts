@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 
-const SWIPE_CLOSE_THRESHOLD_RATIO = 0.5;
+const SWIPE_CLOSE_THRESHOLD_RATIO = 0.35;
 const MIN_SWIPE_CLOSE_THRESHOLD = 216;
 const MAX_DRAG_OFFSET_RATIO = 0.6;
 const MIN_DRAG_OFFSET = 216;
@@ -121,18 +121,31 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
   );
 
   const modalStyle = useMemo<CSSProperties>(
-    () => ({
-      transform: dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
-      transition: isDragging ? 'none' : 'transform 220ms ease',
-    }),
+    () => {
+      const fadeProgress =
+        maxDragOffsetRef.current > 0 ? Math.min(Math.max(dragOffset / maxDragOffsetRef.current, 0), 1) : 0;
+      const easedFadeProgress = fadeProgress ** 1.8;
+
+      return {
+        transform: dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
+        opacity: dragOffset > 0 ? 1 - easedFadeProgress * 0.42 : undefined,
+        transition: isDragging ? 'none' : 'transform 220ms ease, opacity 220ms ease',
+      };
+    },
     [dragOffset, isDragging],
   );
 
   const backdropStyle = useMemo<CSSProperties>(
-    () => ({
-      opacity: dragOffset > 0 ? Math.max(0.6, 1 - dragOffset / 220) : undefined,
-      transition: isDragging ? 'none' : 'opacity 220ms ease',
-    }),
+    () => {
+      const fadeProgress =
+        maxDragOffsetRef.current > 0 ? Math.min(Math.max(dragOffset / maxDragOffsetRef.current, 0), 1) : 0;
+      const easedFadeProgress = fadeProgress ** 1.6;
+
+      return {
+        opacity: dragOffset > 0 ? 1 - easedFadeProgress * 0.78 : undefined,
+        transition: isDragging ? 'none' : 'opacity 220ms ease',
+      };
+    },
     [dragOffset, isDragging],
   );
 
