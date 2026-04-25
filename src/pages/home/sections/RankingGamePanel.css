@@ -973,16 +973,17 @@
 }
 
 .app-shell__game-tab-pull-indicator-spinner {
-  animation: app-shell__game-tab-loading-spin 0.9s linear infinite;
   border: 2px solid rgba(148, 163, 184, 0.24);
   border-radius: 999px;
   border-top-color: rgba(217, 119, 6, 0.92);
   height: 16px;
-  opacity: 0.45;
+  opacity: calc(0.24 + var(--game-tab-pull-progress, 0) * 0.76);
   transition:
     opacity 0.18s ease,
     transform 0.18s ease;
-  transform: scale(0.92);
+  transform:
+    rotate(calc(var(--game-tab-pull-progress, 0) * 300deg))
+    scale(calc(0.82 + var(--game-tab-pull-progress, 0) * 0.18));
   width: 16px;
 }
 
@@ -990,6 +991,10 @@
 .app-shell__game-tab-pull-indicator[data-refreshing='true'] .app-shell__game-tab-pull-indicator-spinner {
   opacity: 1;
   transform: scale(1);
+}
+
+.app-shell__game-tab-pull-indicator[data-refreshing='true'] .app-shell__game-tab-pull-indicator-spinner {
+  animation: app-shell__game-tab-loading-spin 0.9s linear infinite;
 }
 
 .app-shell__game-scheduled-orders {

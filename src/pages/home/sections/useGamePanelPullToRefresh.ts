@@ -2,6 +2,9 @@ import { useCallback, useMemo, useRef, useState, type TouchEvent, type WheelEven
 
 const PULL_REFRESH_TRIGGER_PX = 64;
 const MAX_PULL_DISTANCE_PX = 96;
+const WHEEL_REFRESH_SETTLE_MS = 120;
+const WHEEL_PULL_DELTA_FACTOR = 0.28;
+const WHEEL_PULL_DELTA_MAX = 18;
 
 interface UseGamePanelPullToRefreshOptions<TTab extends string> {
   activeTab: TTab;
@@ -18,10 +21,15 @@ export default function useGamePanelPullToRefresh<TTab extends string>({
   const [pullDistance, setPullDistance] = useState(0);
   const touchStartYRef = useRef<number | null>(null);
   const wheelPullDistanceRef = useRef(0);
+  const wheelRefreshTimeoutRef = useRef<number | null>(null);
 
   const resetPullState = () => {
     touchStartYRef.current = null;
     wheelPullDistanceRef.current = 0;
+    if (wheelRefreshTimeoutRef.current !== null && typeof window !== 'undefined') {
+      window.clearTimeout(wheelRefreshTimeoutRef.current);
+      wheelRefreshTimeoutRef.current = null;
+    }
     setPullDistance(0);
   };
 
@@ -78,18 +86,34 @@ export default function useGamePanelPullToRefresh<TTab extends string>({
         }
 
         if (event.currentTarget.scrollTop > 0 || event.deltaY >= 0) {
-          wheelPullDistanceRef.current = 0;
+          if (wheelPullDistanceRef.current < PULL_REFRESH_TRIGGER_PX) {
+            resetPullState();
+          }
           return;
         }
 
+        const normalizedWheelDelta = Math.min(
+          Math.abs(event.deltaY) * WHEEL_PULL_DELTA_FACTOR,
+          WHEEL_PULL_DELTA_MAX,
+        );
+
         wheelPullDistanceRef.current = Math.min(
-          wheelPullDistanceRef.current + Math.abs(event.deltaY),
+          wheelPullDistanceRef.current + normalizedWheelDelta,
           MAX_PULL_DISTANCE_PX,
         );
         setPullDistance(wheelPullDistanceRef.current);
 
         if (wheelPullDistanceRef.current >= PULL_REFRESH_TRIGGER_PX) {
-          void runRefresh();
+          if (wheelRefreshTimeoutRef.current !== null && typeof window !== 'undefined') {
+            window.clearTimeout(wheelRefreshTimeoutRef.current);
+          }
+
+          if (typeof window !== 'undefined') {
+            wheelRefreshTimeoutRef.current = window.setTimeout(() => {
+              wheelRefreshTimeoutRef.current = null;
+              void runRefresh();
+            }, WHEEL_REFRESH_SETTLE_MS);
+          }
         }
       },
     }),

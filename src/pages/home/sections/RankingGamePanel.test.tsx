@@ -423,16 +423,28 @@ describe('RankingGamePanelShell', () => {
   });
 
   it('refetches the active tab when the user scrolls upward at the top of the panel', () => {
+    vi.useFakeTimers();
     const onRefreshTab = vi.fn().mockResolvedValue(undefined);
 
-    const { container } = render(<ControlledRankingGamePanelShell initialTab="positions" onRefreshTab={onRefreshTab} />);
-    setGamePanelViewportWidth();
-    const panel = container.querySelector('[data-game-panel-tab="positions"]') as HTMLDivElement;
+    try {
+      const { container } = render(<ControlledRankingGamePanelShell initialTab="positions" onRefreshTab={onRefreshTab} />);
+      setGamePanelViewportWidth();
+      const panel = container.querySelector('[data-game-panel-tab="positions"]') as HTMLDivElement;
 
-    Object.defineProperty(panel, 'scrollTop', { configurable: true, value: 0 });
-    fireEvent.wheel(panel, { deltaY: -72 });
+      Object.defineProperty(panel, 'scrollTop', { configurable: true, value: 0 });
+      fireEvent.wheel(panel, { deltaY: -72 });
 
-    expect(onRefreshTab).toHaveBeenCalledWith('positions');
+      expect(onRefreshTab).not.toHaveBeenCalled();
+
+      fireEvent.wheel(panel, { deltaY: -72 });
+      fireEvent.wheel(panel, { deltaY: -72 });
+      fireEvent.wheel(panel, { deltaY: -72 });
+      vi.advanceTimersByTime(150);
+
+      expect(onRefreshTab).toHaveBeenCalledWith('positions');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('refetches the active tab when the user pulls down from the top of the panel', () => {

@@ -598,6 +598,7 @@ export function RankingGamePanelShell({
   const slideWidth = Math.max(viewportWidth, 1);
   const slideSpan = slideWidth + GAME_PANEL_CAROUSEL_GAP;
   const trackTranslateX = -trackIndex * slideSpan;
+  const pullProgress = Math.min(pullDistance / 64, 1);
 
   return (
     <div className="app-shell__game-panel" data-current-tier={tierProgress?.currentTier.tierCode}>
@@ -704,7 +705,10 @@ export function RankingGamePanelShell({
                           data-ready={isReadyToRefresh || undefined}
                           data-refreshing={isRefreshing || undefined}
                           data-visible={pullDistance > 0 || isRefreshing || undefined}
-                          style={{ '--game-tab-pull-distance': `${Math.min(pullDistance, 72)}px` } as CSSProperties}
+                          style={{
+                            '--game-tab-pull-distance': `${Math.min(pullDistance, 72)}px`,
+                            '--game-tab-pull-progress': `${pullProgress}`,
+                          } as CSSProperties}
                         >
                           <span className="app-shell__game-tab-pull-indicator-spinner" aria-hidden="true" />
                         </div>
