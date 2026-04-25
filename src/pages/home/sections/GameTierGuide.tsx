@@ -1,5 +1,6 @@
 import './GameTierGuide.css';
 import BoldNumberText from './BoldNumberText';
+import { strategyBaseScoreCopy, strategyTagCriteriaCopy } from './gameTierGuideContent';
 
 const tierGuideItems = [
   {
@@ -8,7 +9,7 @@ const tierGuideItems = [
   },
   {
     title: '전략 태그 기준은 이렇습니다',
-    copy: '아틀라스 샷은 50위 또는 그 바깥에서 매수한 영상이 10위 안으로 진입할 때 붙는 최상위 하이라이트입니다. 문샷은 100위 바깥에서 50위 안, 스나이프는 150위 바깥에서 100위 안에 진입했을 때 붙습니다.',
+    copy: strategyTagCriteriaCopy,
   },
   {
     title: '분할 매도는 최고 기록만 반영됩니다',
@@ -20,7 +21,7 @@ const tierGuideItems = [
   },
   {
     title: '점수 계산은 태그별 기본점수 + 보너스입니다',
-    copy: '아틀라스 샷은 기본 45,000점, 문샷은 기본 15,000점, 빅 캐시아웃은 기본 5,000점, 스나이프와 스몰 캐시아웃은 기본 2,500점입니다. 여기에 순위 상승폭 × 20점, 수익률(%) × 10점이 더해지며 수익률 보너스는 최대 5,000점까지 반영됩니다.',
+    copy: strategyBaseScoreCopy,
   },
   {
     title: '큰 수익은 추가 보너스가 붙습니다',
