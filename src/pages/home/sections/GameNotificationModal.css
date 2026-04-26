@@ -44,6 +44,10 @@
   color: #8b5cf6;
 }
 
+.game-notification-modal__body span[data-tone='solar-shot'] {
+  color: #b45309;
+}
+
 .game-notification-modal__body span[data-tone='snipe'] {
   color: #14b8a6;
 }
@@ -121,7 +125,7 @@
   outline: none;
 }
 
-.game-notification-modal[data-projected='true'] .game-notification-modal__body span {
+.game-notification-modal[data-projected='true'] .game-notification-modal__body span:not([data-tone]) {
   color: var(--text-muted);
 }
 

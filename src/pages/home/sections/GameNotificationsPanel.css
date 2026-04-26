@@ -191,6 +191,10 @@
   color: #8b5cf6;
 }
 
+.game-notifications__type[data-tone='solar-shot'] {
+  color: #b45309;
+}
+
 .game-notifications__type[data-tone='snipe'] {
   color: #14b8a6;
 }

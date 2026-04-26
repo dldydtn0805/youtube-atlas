@@ -230,6 +230,7 @@ export default function GamePanelSection({
           season={currentGameSeason}
         />
       }
+      enablePullToRefresh={false}
       isCollapsed={isCollapsed}
       onRefreshTab={onRefreshTab}
       onSelectTab={onSelectTab}

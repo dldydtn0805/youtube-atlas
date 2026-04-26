@@ -55,6 +55,7 @@ interface RankingGamePanelShellProps {
   activeGameTab: GameTab;
   tierProgress?: GameTierProgress;
   dividendOverview?: ReactNode;
+  enablePullToRefresh?: boolean;
   isCollapsed: boolean;
   onRefreshTab?: (tab: GameTab) => Promise<void> | void;
   onSelectTab: (tab: GameTab) => void;
@@ -451,6 +452,7 @@ export function RankingGamePanelShell({
   activeGameTab,
   tierProgress,
   dividendOverview,
+  enablePullToRefresh = true,
   isCollapsed,
   onRefreshTab,
   onSelectTab,
@@ -475,7 +477,7 @@ export function RankingGamePanelShell({
     pullDistance,
   } = useGamePanelPullToRefresh({
     activeTab: activeGameTab,
-    disabled: !onRefreshTab || activeGameTab === 'guide',
+    disabled: !enablePullToRefresh || !onRefreshTab || activeGameTab === 'guide',
     onRefresh: onRefreshTab,
   });
   const carouselTabs = useMemo(

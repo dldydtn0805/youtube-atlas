@@ -1,10 +1,13 @@
 .app-shell__achievement-title-badge {
   --achievement-title-rgb: 100, 116, 139;
+  --achievement-title-bg: color-mix(in srgb, rgb(var(--achievement-title-rgb)) 12%, white 88%);
+  --achievement-title-border: rgba(var(--achievement-title-rgb), 0.28);
+  --achievement-title-text: color-mix(in srgb, #0f172a 82%, rgb(var(--achievement-title-rgb)) 18%);
   align-items: center;
-  background: color-mix(in srgb, rgb(var(--achievement-title-rgb)) 10%, rgba(255, 255, 255, 0.95));
-  border: 1px solid rgba(var(--achievement-title-rgb), 0.24);
+  background: var(--achievement-title-bg);
+  border: 1px solid var(--achievement-title-border);
   border-radius: 999px;
-  color: color-mix(in srgb, var(--text) 76%, rgb(var(--achievement-title-rgb)) 24%);
+  color: var(--achievement-title-text);
   display: inline-flex;
   flex-shrink: 0;
   font-size: 0.67rem;
@@ -20,19 +23,23 @@
 
 .app-shell__achievement-title-badge[data-grade='RARE'] {
   --achievement-title-rgb: 37, 99, 235;
+  --achievement-title-bg: color-mix(in srgb, rgb(var(--achievement-title-rgb)) 14%, white 86%);
+  --achievement-title-border: rgba(var(--achievement-title-rgb), 0.34);
+  --achievement-title-text: color-mix(in srgb, #172554 72%, rgb(var(--achievement-title-rgb)) 28%);
 }
 
 .app-shell__achievement-title-badge[data-grade='SUPER'] {
   --achievement-title-rgb: 225, 29, 72;
-  background:
-    linear-gradient(135deg, rgba(24, 24, 27, 0.96), rgba(63, 63, 70, 0.94)),
-    rgba(24, 24, 27, 0.96);
-  border-color: rgba(var(--achievement-title-rgb), 0.44);
-  color: #f8fafc;
+  --achievement-title-bg: linear-gradient(135deg, rgba(255, 228, 236, 0.96), rgba(255, 241, 242, 0.92));
+  --achievement-title-border: rgba(var(--achievement-title-rgb), 0.32);
+  --achievement-title-text: #9f1239;
 }
 
 .app-shell__achievement-title-badge[data-grade='ULTIMATE'] {
   --achievement-title-rgb: 234, 179, 8;
+  --achievement-title-bg: linear-gradient(135deg, rgba(254, 243, 199, 0.96), rgba(253, 230, 138, 0.92));
+  --achievement-title-border: rgba(217, 119, 6, 0.34);
+  --achievement-title-text: #78350f;
 }
 
 .app-shell__achievement-title-badge-grade {
@@ -46,7 +53,21 @@
 }
 
 :root[data-theme='dark'] .app-shell__achievement-title-badge {
-  background: color-mix(in srgb, rgb(var(--achievement-title-rgb)) 15%, rgba(24, 24, 27, 0.94));
-  border-color: rgba(var(--achievement-title-rgb), 0.32);
-  color: color-mix(in srgb, #f8fafc 82%, rgb(var(--achievement-title-rgb)) 18%);
+  --achievement-title-bg: color-mix(in srgb, rgb(var(--achievement-title-rgb)) 15%, rgba(24, 24, 27, 0.94));
+  --achievement-title-border: rgba(var(--achievement-title-rgb), 0.32);
+  --achievement-title-text: color-mix(in srgb, #f8fafc 82%, rgb(var(--achievement-title-rgb)) 18%);
+}
+
+:root[data-theme='dark'] .app-shell__achievement-title-badge[data-grade='ULTIMATE'] {
+  --achievement-title-bg: linear-gradient(135deg, rgba(120, 53, 15, 0.92), rgba(146, 64, 14, 0.88));
+  --achievement-title-border: rgba(250, 204, 21, 0.34);
+  --achievement-title-text: #fef3c7;
+}
+
+:root[data-theme='dark'] .app-shell__achievement-title-badge[data-grade='SUPER'] {
+  --achievement-title-bg:
+    linear-gradient(135deg, rgba(24, 24, 27, 0.96), rgba(63, 63, 70, 0.94)),
+    rgba(24, 24, 27, 0.96);
+  --achievement-title-border: rgba(var(--achievement-title-rgb), 0.44);
+  --achievement-title-text: #f8fafc;
 }
