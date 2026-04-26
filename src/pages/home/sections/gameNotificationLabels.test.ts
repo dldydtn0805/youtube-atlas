@@ -62,6 +62,17 @@ describe('getGameNotificationLabel', () => {
     expect(getGameNotificationTone(notification)).toBe('atlas-shot');
   });
 
+  it('labels solar shot notifications and tone distinctly', () => {
+    const notification = notice({
+      notificationType: 'SOLAR_SHOT',
+      strategyTags: ['SOLAR_SHOT', 'MOONSHOT'],
+      title: '솔라 샷 기록',
+    });
+
+    expect(getGameNotificationLabel(notification)).toBe('티어 점수 상승 : 솔라 샷');
+    expect(getGameNotificationTone(notification)).toBe('solar-shot');
+  });
+
   it('labels projected moonshots as captured highlights', () => {
     expect(getGameNotificationLabel(notice({ notificationEventType: 'PROJECTED_HIGHLIGHT', showModal: false }))).toBe(
       '하이라이트 포착 : 문샷',

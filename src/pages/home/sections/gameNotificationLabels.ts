@@ -7,6 +7,7 @@ const NOTIFICATION_LABELS = {
   BIG_CASHOUT: '빅 캐시아웃',
   SMALL_CASHOUT: '스몰 캐시아웃',
   MOONSHOT: '문샷',
+  SOLAR_SHOT: '솔라 샷',
   SNIPE: '스나이프',
 } as const;
 
@@ -49,6 +50,10 @@ export function getGameNotificationTone(notification: GameNotification) {
 
   if (notification.notificationType === 'ATLAS_SHOT') {
     return 'atlas-shot';
+  }
+
+  if (notification.notificationType === 'SOLAR_SHOT') {
+    return 'solar-shot';
   }
 
   if (notification.notificationType === 'MOONSHOT') {

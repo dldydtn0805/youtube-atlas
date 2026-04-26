@@ -699,8 +699,8 @@ describe('RankingGameLeaderboardTab', () => {
               code: 'ATLAS_SNIPER',
               displayName: 'Atlas Sniper',
               shortName: 'A. Sniper',
-              grade: 'SUPER',
-              description: '150위 밖에서 잡은 영상이 10위 안까지 올라온 복합 하이라이트 달성자입니다.',
+              grade: 'ULTIMATE',
+              description: '150위 밖에서 잡은 영상이 1위까지 올라온 전 구간 복합 하이라이트 달성자입니다.',
             },
           }),
         ]}
@@ -724,7 +724,7 @@ describe('RankingGameLeaderboardTab', () => {
     expect(within(row).getByText('Atlas Sniper')).toBeInTheDocument();
     expect(badge).toHaveAttribute(
       'title',
-      '슈퍼 Atlas Sniper: 150위 밖에서 잡은 영상이 10위 안까지 올라온 복합 하이라이트 달성자입니다.',
+      '얼티밋 Atlas Sniper: 150위 밖에서 잡은 영상이 1위까지 올라온 전 구간 복합 하이라이트 달성자입니다.',
     );
   });
 

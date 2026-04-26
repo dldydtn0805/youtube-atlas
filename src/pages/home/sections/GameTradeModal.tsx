@@ -103,7 +103,7 @@ export default function GameTradeModal({
   onConfirm,
   quantity,
   scheduledSellConditionError = null,
-  scheduledSellTargetRank = 10,
+  scheduledSellTargetRank = 100,
   scheduledSellTriggerDirection = 'RANK_IMPROVES_TO',
   sellOrderMode = 'instant',
   summaryItems,

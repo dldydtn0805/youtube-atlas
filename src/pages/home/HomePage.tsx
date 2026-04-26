@@ -506,7 +506,7 @@ function HomePage() {
   const [activeGameTab, setActiveGameTab] = useState<'positions' | 'scheduledOrders' | 'history' | 'guide'>('positions');
   const [sellOrderMode, setSellOrderMode] = useState<'instant' | 'scheduled'>('instant');
   const [isScheduledSellSubmitting, setIsScheduledSellSubmitting] = useState(false);
-  const [scheduledSellTargetRank, setScheduledSellTargetRank] = useState<number | null>(10);
+  const [scheduledSellTargetRank, setScheduledSellTargetRank] = useState<number | null>(100);
   const [scheduledSellTriggerDirection, setScheduledSellTriggerDirection] =
     useState<ScheduledSellTriggerDirection>('RANK_IMPROVES_TO');
   const [rankHistoryFocusMode, setRankHistoryFocusMode] = useState<'full' | 'trade'>('full');
@@ -693,7 +693,7 @@ function HomePage() {
     const emitGameNotificationTest = (notification?: {
       id?: string;
       notificationEventType?: 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
-      notificationType?: 'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
+      notificationType?: 'ATLAS_SHOT' | 'SOLAR_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
       title?: string;
       message?: string;
       positionId?: number | null;
@@ -701,7 +701,7 @@ function HomePage() {
       videoTitle?: string | null;
       channelTitle?: string | null;
       thumbnailUrl?: string | null;
-      strategyTags?: Array<'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE'>;
+      strategyTags?: Array<'ATLAS_SHOT' | 'SOLAR_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE'>;
       highlightScore?: number | null;
       titleCode?: string | null;
       titleDisplayName?: string | null;
@@ -1631,7 +1631,7 @@ function HomePage() {
     setSelectedOpenPositionId(null);
     setActiveGameTab('positions');
     setSellOrderMode('instant');
-    setScheduledSellTargetRank(10);
+    setScheduledSellTargetRank(100);
     setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
     setHistoryPlaybackLoadingVideoId(null);
     setHistoryPlaybackVideo(null);
@@ -1639,7 +1639,7 @@ function HomePage() {
 
   useEffect(() => {
     setSellOrderMode('instant');
-    setScheduledSellTargetRank(10);
+    setScheduledSellTargetRank(100);
     setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
   }, [selectedOpenPositionId, selectedVideoId]);
 
@@ -2057,7 +2057,7 @@ function HomePage() {
 
       setActiveTradeModal(null);
       setSellOrderMode('instant');
-      setScheduledSellTargetRank(10);
+      setScheduledSellTargetRank(100);
       setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
       setActiveGameTab('scheduledOrders');
       setGameActionStatus('매도 예약이 완료됐어요.');

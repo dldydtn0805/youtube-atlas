@@ -30,6 +30,8 @@ function getHighlightTypeLabel(type: string) {
   switch (type) {
     case 'ATLAS_SHOT':
       return '아틀라스 샷';
+    case 'SOLAR_SHOT':
+      return '솔라 샷';
     case 'MOONSHOT':
       return '문샷';
     case 'SMALL_CASHOUT':

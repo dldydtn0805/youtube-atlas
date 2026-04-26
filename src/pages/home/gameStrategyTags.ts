@@ -1,6 +1,6 @@
 import type { GameStrategyType } from '../../features/game/types';
 
-type GameStrategyTone = 'atlas-shot' | 'moonshot' | 'cashout' | 'snipe';
+type GameStrategyTone = 'atlas-shot' | 'solar-shot' | 'moonshot' | 'cashout' | 'snipe';
 type GameStrategyContext = 'highlight' | 'position';
 type PositionStrategyState = 'achieved' | 'target';
 
@@ -18,6 +18,7 @@ const STRATEGY_TONE_BY_TYPE: Record<GameStrategyType, GameStrategyTone> = {
   ATLAS_SHOT: 'atlas-shot',
   BIG_CASHOUT: 'cashout',
   MOONSHOT: 'moonshot',
+  SOLAR_SHOT: 'solar-shot',
   SMALL_CASHOUT: 'cashout',
   SNIPE: 'snipe',
 };
@@ -25,6 +26,7 @@ const STRATEGY_TONE_BY_TYPE: Record<GameStrategyType, GameStrategyTone> = {
 function isGameStrategyType(value: string): value is GameStrategyType {
   return (
     value === 'ATLAS_SHOT'
+    || value === 'SOLAR_SHOT'
     || value === 'MOONSHOT'
     || value === 'SMALL_CASHOUT'
     || value === 'BIG_CASHOUT'
@@ -36,6 +38,10 @@ function getStrategyLabel(type: GameStrategyType, context: GameStrategyContext) 
   if (context === 'position') {
     if (type === 'ATLAS_SHOT') {
       return '아틀라스 샷 노림';
+    }
+
+    if (type === 'SOLAR_SHOT') {
+      return '솔라 샷 노림';
     }
 
     if (type === 'MOONSHOT') {
@@ -55,6 +61,10 @@ function getStrategyLabel(type: GameStrategyType, context: GameStrategyContext) 
 
   if (type === 'ATLAS_SHOT') {
     return '아틀라스 샷';
+  }
+
+  if (type === 'SOLAR_SHOT') {
+    return '솔라 샷';
   }
 
   if (type === 'MOONSHOT') {

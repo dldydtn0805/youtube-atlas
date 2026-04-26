@@ -230,6 +230,10 @@ function getLeaderboardHighlightTypeLabel(type: string) {
     return '아틀라스 샷';
   }
 
+  if (type === 'SOLAR_SHOT') {
+    return '솔라 샷';
+  }
+
   if (type === 'MOONSHOT') {
     return '문샷';
   }
