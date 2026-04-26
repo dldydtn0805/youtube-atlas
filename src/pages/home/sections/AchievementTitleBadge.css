@@ -66,8 +66,8 @@
 
 :root[data-theme='dark'] .app-shell__achievement-title-badge[data-grade='SUPER'] {
   --achievement-title-bg:
-    linear-gradient(135deg, rgba(24, 24, 27, 0.96), rgba(63, 63, 70, 0.94)),
-    rgba(24, 24, 27, 0.96);
-  --achievement-title-border: rgba(var(--achievement-title-rgb), 0.44);
-  --achievement-title-text: #f8fafc;
+    linear-gradient(135deg, rgba(127, 29, 29, 0.94), rgba(159, 18, 57, 0.9)),
+    rgba(127, 29, 29, 0.92);
+  --achievement-title-border: rgba(251, 113, 133, 0.42);
+  --achievement-title-text: #ffe4e6;
 }
