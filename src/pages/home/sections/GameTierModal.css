@@ -92,7 +92,7 @@
   border-radius: 8px;
   display: grid;
   gap: 4px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   max-width: 100%;
   min-width: 0;
   padding: 4px;
@@ -111,7 +111,8 @@
   justify-content: center;
   line-height: 1;
   min-height: 38px;
-  padding: 0 14px;
+  min-width: 0;
+  padding: 0 8px;
   transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   white-space: nowrap;
 }
@@ -554,6 +555,11 @@
 
   :root[data-mobile-layout='true'] .app-shell__modal--dividend .app-shell__modal-field {
     min-width: 0;
+  }
+
+  :root[data-mobile-layout='true'] .app-shell__tier-modal-tab {
+    font-size: 0.78rem;
+    padding: 0 2px;
   }
 
   :root[data-mobile-layout='true']

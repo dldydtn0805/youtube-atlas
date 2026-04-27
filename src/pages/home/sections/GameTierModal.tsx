@@ -12,11 +12,11 @@ import useBodyScrollLock from '../hooks/useBodyScrollLock';
 import useHeaderSwipeToClose from '../hooks/useHeaderSwipeToClose';
 import { getFullscreenElement } from '../utils';
 import GameTierSummary from './GameTierSummary';
-import GameTierGuide from './GameTierGuide';
+import GameTierCriteriaPanel from './GameTierCriteriaPanel';
 import './GameTierModal.css';
 
 interface GameTierModalProps {
-  defaultTab?: 'tier' | 'highlights' | 'ranking';
+  defaultTab?: TierModalTab;
   highlightsContent?: ReactNode;
   isOpen: boolean;
   isTierProgressLoading?: boolean;
@@ -25,10 +25,11 @@ interface GameTierModalProps {
   tierProgress?: GameTierProgress;
 }
 
-type TierModalTab = 'tier' | 'highlights' | 'ranking';
+export type TierModalTab = 'tier' | 'criteria' | 'highlights' | 'ranking';
 
 const TIER_MODAL_TABS: ReadonlyArray<{ id: TierModalTab; label: string }> = [
   { id: 'tier', label: '내 카드' },
+  { id: 'criteria', label: '기준' },
   { id: 'highlights', label: '하이라이트' },
   { id: 'ranking', label: '랭킹' },
 ];
@@ -84,18 +85,11 @@ export default function GameTierModal({
           ) : null}
         </section>
       ) : null}
-
-      <section className="app-shell__modal-field">
-        <div className="app-shell__section-heading">
-          <p className="app-shell__section-eyebrow">티어 설명</p>
-          <h3 className="app-shell__modal-field-title">하이라이트 티어 기준</h3>
-        </div>
-        <GameTierGuide />
-      </section>
     </div>
   );
 
-  const tabPanels = {
+  const tabPanels: Record<TierModalTab, ReactNode> = {
+    criteria: <GameTierCriteriaPanel />,
     highlights: highlightsContent ?? (
       <p className="app-shell__game-empty app-shell__tier-modal-empty-state">하이라이트가 없습니다.</p>
     ),

@@ -6,7 +6,7 @@ import AchievementTitleToast from './sections/AchievementTitleToast';
 import GameActionToast from './sections/GameActionToast';
 import AppHeader from './sections/AppHeader';
 import { GameSelectedVideoPriceSummary, SelectedVideoGameActionsBundle } from './sections/GameActionContent';
-import GameTierModal from './sections/GameTierModal';
+import GameTierModal, { type TierModalTab } from './sections/GameTierModal';
 import GameHighlightsTab from './sections/GameHighlightsTab';
 import GamePanelModal from './sections/GamePanelModal';
 import { ChartViewModal, RegionFilterModal } from './sections/FilterPanels';
@@ -516,7 +516,7 @@ function HomePage() {
   const [historyPlaybackVideo, setHistoryPlaybackVideo] = useState<YouTubeVideoItem | null>(null);
   const [historyPlaybackLoadingVideoId, setHistoryPlaybackLoadingVideoId] = useState<string | null>(null);
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
-  const [tierModalDefaultTab, setTierModalDefaultTab] = useState<'tier' | 'highlights' | 'ranking'>('tier');
+  const [tierModalDefaultTab, setTierModalDefaultTab] = useState<TierModalTab>('tier');
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isGameIntroModalOpen, setIsGameIntroModalOpen] = useState(getInitialGameIntroModalOpen);
   const [pushedGameNotifications, setPushedGameNotifications] = useState<GameNotification[]>([]);

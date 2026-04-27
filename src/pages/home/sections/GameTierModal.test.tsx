@@ -28,10 +28,15 @@ describe('GameTierModal', () => {
     expect(screen.getAllByText('티어 카드 불러오는 중').length).toBeGreaterThan(0);
   });
 
-  it('shows highlight tier guidance in the tier modal', () => {
+  it('shows highlight tier guidance in the criteria tab', () => {
     render(<GameTierModal isOpen onClose={() => undefined} tierProgress={tierProgress} />);
 
     expect(screen.getByRole('heading', { name: '티어' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: '기준' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: '기준' }));
+
+    expect(screen.getByRole('tab', { name: '기준' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getAllByText('하이라이트 티어 기준').length).toBeGreaterThan(0);
     expect(screen.getAllByText('하이라이트 점수로 티어가 정해집니다').length).toBeGreaterThan(0);
   });
