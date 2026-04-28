@@ -45,8 +45,7 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
   const closeTimerRef = useRef<number | null>(null);
   const dragFrameRef = useRef<number | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
+  const [motionState, setMotionState] = useState<'idle' | 'dragging' | 'closing'>('idle');
 
   const clearCloseTimer = useCallback(() => {
     if (closeTimerRef.current !== null && typeof window !== 'undefined') {
@@ -95,8 +94,7 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
     dragOffsetRef.current = 0;
     pendingDragOffsetRef.current = 0;
     isSwipeCandidateRef.current = false;
-    setIsDragging(false);
-    setIsClosing(false);
+    setMotionState('idle');
     setDragOffset(0);
   }, [cancelDragFrame, clearCloseTimer]);
 
@@ -126,7 +124,7 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
       onPointerDown(event: ReactPointerEvent<HTMLElement>) {
         if (
           disabled ||
-          isClosing ||
+          motionState === 'closing' ||
           event.pointerType === 'mouse' ||
           (event.pointerType !== 'touch' && event.pointerType !== 'pen') ||
           isInteractiveTarget(event.target)
@@ -152,7 +150,7 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
           MIN_DRAG_OFFSET,
           Math.round(viewportHeight * MAX_DRAG_OFFSET_RATIO),
         );
-        setIsDragging(true);
+        setMotionState('dragging');
         setDragOffset(0);
         if (typeof event.currentTarget.setPointerCapture === 'function') {
           event.currentTarget.setPointerCapture(event.pointerId);
@@ -168,7 +166,7 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
 
         if (deltaY <= 0) {
           isSwipeCandidateRef.current = false;
-          setIsDragging(false);
+          setMotionState('idle');
           setDragOffset(0);
           dragOffsetRef.current = 0;
           pendingDragOffsetRef.current = 0;
@@ -181,7 +179,7 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
 
         if (deltaX > deltaY * 0.7) {
           isSwipeCandidateRef.current = false;
-          setIsDragging(false);
+          setMotionState('idle');
           dragOffsetRef.current = 0;
           setDragOffset(0);
           return;
@@ -222,14 +220,13 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
           clearCloseTimer();
           pointerIdRef.current = null;
           isSwipeCandidateRef.current = false;
-          setIsDragging(false);
-          setIsClosing(true);
           const viewportHeight = typeof window === 'undefined' ? MIN_CLOSE_ANIMATION_OFFSET : window.innerHeight;
           const closeOffset = Math.max(
             MIN_CLOSE_ANIMATION_OFFSET,
             Math.round(viewportHeight * 0.9),
             resolvedDragOffset + 180,
           );
+          setMotionState('closing');
           flushDragOffset(closeOffset);
           if (typeof window !== 'undefined') {
             closeTimerRef.current = window.setTimeout(() => {
@@ -245,22 +242,27 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
         resetSwipeState();
       },
     }),
-    [disabled, flushDragOffset, isClosing, onClose, resetSwipeState, scheduleDragOffset],
+    [clearCloseTimer, disabled, flushDragOffset, motionState, onClose, resetSwipeState, scheduleDragOffset],
   );
 
   const modalStyle = useMemo<CSSProperties>(
     () => {
+      const isDragging = motionState === 'dragging';
+      const isClosing = motionState === 'closing';
+
       return {
         transform: dragOffset > 0 ? `translate3d(0, ${dragOffset}px, 0)` : undefined,
         transition: isDragging ? 'none' : `transform ${CLOSE_ANIMATION_DURATION_MS}ms ease-out`,
         willChange: isDragging || isClosing ? 'transform' : undefined,
       };
     },
-    [dragOffset, isClosing, isDragging],
+    [dragOffset, motionState],
   );
 
   const backdropStyle = useMemo<CSSProperties>(
     () => {
+      const isDragging = motionState === 'dragging';
+      const isClosing = motionState === 'closing';
       const dragProgress =
         maxDragOffsetRef.current > 0 ? Math.min(Math.max(dragOffset / maxDragOffsetRef.current, 0), 1) : 0;
       const fadeProgress = getFadeProgress(dragProgress, BACKDROP_FADE_START_PROGRESS);
@@ -272,7 +274,7 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
         willChange: isDragging || isClosing ? 'opacity' : undefined,
       };
     },
-    [dragOffset, isClosing, isDragging],
+    [dragOffset, motionState],
   );
 
   return {

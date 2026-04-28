@@ -1,9 +1,9 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -11,8 +11,17 @@ import type { GameTierProgress } from '../../../features/game/types';
 import useBodyScrollLock from '../hooks/useBodyScrollLock';
 import useHeaderSwipeToClose from '../hooks/useHeaderSwipeToClose';
 import { getFullscreenElement } from '../utils';
-import GameTierSummary from './GameTierSummary';
+import GameTierModalBody from './GameTierModalBody';
+import GameTierModalTierPanel from './GameTierModalTierPanel';
 import GameTierCriteriaPanel from './GameTierCriteriaPanel';
+import {
+  TIER_MODAL_CAROUSEL_GAP,
+  TIER_MODAL_CAROUSEL_SIDE_PADDING,
+  TIER_MODAL_TABS,
+  getTierModalTabIndex,
+  getTierModalTabsBetween,
+  type TierModalTab,
+} from './gameTierModalTabs';
 import './GameTierModal.css';
 
 interface GameTierModalProps {
@@ -25,17 +34,7 @@ interface GameTierModalProps {
   tierProgress?: GameTierProgress;
 }
 
-export type TierModalTab = 'tier' | 'criteria' | 'highlights' | 'ranking';
-
-const TIER_MODAL_TABS: ReadonlyArray<{ id: TierModalTab; label: string }> = [
-  { id: 'tier', label: '내 카드' },
-  { id: 'criteria', label: '기준' },
-  { id: 'highlights', label: '하이라이트' },
-  { id: 'ranking', label: '랭킹' },
-];
-
-const TIER_MODAL_CAROUSEL_GAP = 0;
-const TIER_MODAL_CAROUSEL_SIDE_PADDING = 0;
+export type { TierModalTab } from './gameTierModalTabs';
 
 export default function GameTierModal({
   defaultTab = 'tier',
@@ -53,55 +52,40 @@ export default function GameTierModal({
   });
 
   const [activeTab, setActiveTab] = useState<TierModalTab>(defaultTab);
-  const [trackIndex, setTrackIndex] = useState(TIER_MODAL_TABS.findIndex((tab) => tab.id === defaultTab) + 1);
+  const [trackIndex, setTrackIndex] = useState(getTierModalTabIndex(defaultTab));
   const [isTrackAnimating, setIsTrackAnimating] = useState(false);
+  const [renderedTabs, setRenderedTabs] = useState<ReadonlySet<TierModalTab>>(() => new Set([defaultTab]));
   const [viewportWidth, setViewportWidth] = useState(0);
   const viewportRef = useRef<HTMLDivElement | null>(null);
-  const carouselTabs = useMemo(
-    () => [TIER_MODAL_TABS[TIER_MODAL_TABS.length - 1], ...TIER_MODAL_TABS, TIER_MODAL_TABS[0]],
-    [],
-  );
 
-  const tierPanelContent = (
-    <div className="app-shell__modal-fields">
-      {tierProgress || isTierProgressLoading ? (
-        <section
-          className="app-shell__modal-field app-shell__modal-field--tier app-shell__tier-modal-card-shell"
-          data-loading={isTierProgressLoading}
-        >
-          {tierProgress ? (
-            <GameTierSummary
-              progress={tierProgress}
-              showLadder={false}
-              surfaceVariant="highlight-tier"
-              title=""
-            />
-          ) : null}
-          {isTierProgressLoading ? (
-            <div className="app-shell__tier-modal-card-overlay" role="status" aria-live="polite">
-              <span className="app-shell__tier-modal-card-spinner" aria-hidden="true" />
-              <span className="sr-only">티어 카드 불러오는 중</span>
-            </div>
-          ) : null}
-        </section>
-      ) : null}
-    </div>
-  );
-
-  const tabPanels: Record<TierModalTab, ReactNode> = {
-    criteria: <GameTierCriteriaPanel />,
-    highlights: highlightsContent ?? (
-      <p className="app-shell__game-empty app-shell__tier-modal-empty-state">하이라이트가 없습니다.</p>
+  const tierPanelContent = useMemo(
+    () => (
+      <GameTierModalTierPanel
+        isTierProgressLoading={isTierProgressLoading}
+        tierProgress={tierProgress}
+      />
     ),
-    ranking: rankingContent ?? <p className="app-shell__game-empty">랭킹 정보를 불러올 수 없습니다.</p>,
-    tier: tierPanelContent,
-  };
+    [isTierProgressLoading, tierProgress],
+  );
+
+  const tabPanels = useMemo<Record<TierModalTab, ReactNode>>(
+    () => ({
+      criteria: <GameTierCriteriaPanel />,
+      highlights: highlightsContent ?? (
+        <p className="app-shell__game-empty app-shell__tier-modal-empty-state">하이라이트가 없습니다.</p>
+      ),
+      ranking: rankingContent ?? <p className="app-shell__game-empty">랭킹 정보를 불러올 수 없습니다.</p>,
+      tier: tierPanelContent,
+    }),
+    [highlightsContent, rankingContent, tierPanelContent],
+  );
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab(defaultTab);
-      setTrackIndex(TIER_MODAL_TABS.findIndex((tab) => tab.id === defaultTab) + 1);
+      setTrackIndex(getTierModalTabIndex(defaultTab));
       setIsTrackAnimating(false);
+      setRenderedTabs(new Set([defaultTab]));
     }
   }, [defaultTab, isOpen]);
 
@@ -132,6 +116,28 @@ export default function GameTierModal({
       });
   }, [activeTab]);
 
+  const handleSelectTab = useCallback((nextTab: TierModalTab) => {
+    const nextIndex = getTierModalTabIndex(nextTab);
+
+    if (nextIndex < 0 || nextTab === activeTab) {
+      return;
+    }
+
+    setRenderedTabs(new Set(getTierModalTabsBetween(activeTab, nextTab)));
+    setIsTrackAnimating(true);
+    setActiveTab(nextTab);
+    setTrackIndex(nextIndex);
+  }, [activeTab]);
+
+  const handleTrackTransitionEnd = useCallback(() => {
+    setIsTrackAnimating(false);
+    setRenderedTabs(new Set([activeTab]));
+  }, [activeTab]);
+
+  const slideWidth = Math.max(viewportWidth - TIER_MODAL_CAROUSEL_SIDE_PADDING * 2, 0);
+  const slideSpan = slideWidth + TIER_MODAL_CAROUSEL_GAP;
+  const trackTranslateX = TIER_MODAL_CAROUSEL_SIDE_PADDING - trackIndex * slideSpan;
+
   if (
     !isOpen ||
     typeof document === 'undefined' ||
@@ -142,34 +148,6 @@ export default function GameTierModal({
 
   const portalTarget = getFullscreenElement();
   const container = portalTarget instanceof HTMLElement ? portalTarget : document.body;
-  const handleSelectTab = (nextTab: TierModalTab) => {
-    const nextIndex = TIER_MODAL_TABS.findIndex((tab) => tab.id === nextTab);
-
-    if (nextIndex < 0) {
-      return;
-    }
-
-    setIsTrackAnimating(true);
-    setActiveTab(nextTab);
-    setTrackIndex(nextIndex + 1);
-  };
-
-  const handleTrackTransitionEnd = () => {
-    if (trackIndex === 0) {
-      setIsTrackAnimating(false);
-      setTrackIndex(TIER_MODAL_TABS.length);
-      return;
-    }
-
-    if (trackIndex === TIER_MODAL_TABS.length + 1) {
-      setIsTrackAnimating(false);
-      setTrackIndex(1);
-    }
-  };
-
-  const slideWidth = Math.max(viewportWidth - TIER_MODAL_CAROUSEL_SIDE_PADDING * 2, 0);
-  const slideSpan = slideWidth + TIER_MODAL_CAROUSEL_GAP;
-  const trackTranslateX = TIER_MODAL_CAROUSEL_SIDE_PADDING - trackIndex * slideSpan;
 
   return createPortal(
     <div
@@ -203,56 +181,18 @@ export default function GameTierModal({
           </button>
         </div>
 
-        <div className="app-shell__modal-body">
-          <div aria-label="티어 모달 탭" className="app-shell__tier-modal-tabs" role="tablist">
-            {TIER_MODAL_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                aria-selected={activeTab === tab.id}
-                className="app-shell__tier-modal-tab"
-                data-active={activeTab === tab.id}
-                onClick={() => handleSelectTab(tab.id)}
-                role="tab"
-                type="button"
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          <div
-            ref={viewportRef}
-            className="app-shell__tier-modal-carousel"
-            role="tabpanel"
-          >
-            <div
-              className="app-shell__tier-modal-track"
-              data-animating={isTrackAnimating}
-              onTransitionEnd={handleTrackTransitionEnd}
-              style={{
-                '--tier-modal-carousel-gap': `${TIER_MODAL_CAROUSEL_GAP}px`,
-                '--tier-modal-carousel-side-padding': `${TIER_MODAL_CAROUSEL_SIDE_PADDING}px`,
-                '--tier-modal-slide-width': `${slideWidth}px`,
-                transform: `translateX(${trackTranslateX}px)`,
-              } as CSSProperties}
-            >
-              {carouselTabs.map((tab, index) => (
-                <div
-                  key={`${tab.id}-${index}`}
-                  aria-hidden={activeTab !== tab.id}
-                  className="app-shell__tier-modal-slide"
-                  data-active={activeTab === tab.id}
-                >
-                  <div
-                    className="app-shell__tier-modal-panel"
-                    data-tier-modal-panel={tab.id}
-                  >
-                    {tabPanels[tab.id]}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <GameTierModalBody
+          activeTab={activeTab}
+          carouselTabs={TIER_MODAL_TABS}
+          isTrackAnimating={isTrackAnimating}
+          onSelectTab={handleSelectTab}
+          onTrackTransitionEnd={handleTrackTransitionEnd}
+          renderedTabs={renderedTabs}
+          slideWidth={slideWidth}
+          tabPanels={tabPanels}
+          trackTranslateX={trackTranslateX}
+          viewportRef={viewportRef}
+        />
       </section>
     </div>,
     container,

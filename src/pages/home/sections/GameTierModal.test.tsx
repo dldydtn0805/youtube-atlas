@@ -71,6 +71,33 @@ describe('GameTierModal', () => {
     expect(screen.getByRole('tab', { name: '하이라이트' })).toHaveAttribute('aria-selected', 'true');
   });
 
+  it('unmounts inactive panel content after tab transitions settle', () => {
+    render(
+      <GameTierModal
+        highlightsContent={<div>무거운 하이라이트 목록</div>}
+        isOpen
+        onClose={() => undefined}
+        rankingContent={<div>무거운 랭킹 목록</div>}
+        tierProgress={tierProgress}
+      />,
+    );
+
+    expect(screen.queryByText('무거운 하이라이트 목록')).not.toBeInTheDocument();
+    expect(screen.queryByText('무거운 랭킹 목록')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: '하이라이트' }));
+
+    expect(screen.getByText('무거운 하이라이트 목록')).toBeInTheDocument();
+
+    const track = document.querySelector('.app-shell__tier-modal-track');
+
+    expect(track).not.toBeNull();
+
+    fireEvent.transitionEnd(track as Element);
+
+    expect(screen.queryByText('무거운 랭킹 목록')).not.toBeInTheDocument();
+  });
+
   it('still clicks buttons inside a panel', () => {
     const onPanelButtonClick = vi.fn();
 
