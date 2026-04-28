@@ -1,5 +1,5 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { useQueries, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
 import AchievementTitleToast from './sections/AchievementTitleToast';
@@ -22,28 +22,22 @@ import HomePlaybackSection from './sections/HomePlaybackSection';
 import { RankingGameLeaderboardTab } from './sections/RankingGamePanel';
 import StickySelectedVideoControls from './sections/StickySelectedVideoControls';
 import TrendTicker from './sections/TrendTicker';
-import { shouldOpenGameNotificationModal } from './sections/gameNotificationModalUtils';
-import {
-  enqueueGameNotification,
-  removeGameNotification,
-} from './sections/gameNotificationQueueUtils';
 import {
   buildOpenGameHoldings,
   formatGameOrderQuantity,
   formatPoints,
   formatRank,
   getPointTone,
-  normalizeGameOrderCapacity,
-  normalizeGameOrderQuantity,
   SELL_FEE_RATE_LABEL,
   summarizeGamePositions,
 } from './gameHelpers';
 import useAppPreferences from './hooks/useAppPreferences';
 import useHomeChartViewState from './hooks/useHomeChartViewState';
-import useDebouncedValue from './hooks/useDebouncedValue';
-import useHomeGameTradeActions from './hooks/useHomeGameTradeActions';
 import useHomeGameUiState from './hooks/useHomeGameUiState';
 import useHomePlaybackState from './hooks/useHomePlaybackState';
+import useHomeGameNotifications from './hooks/useHomeGameNotifications';
+import useHomeRankHistory from './hooks/useHomeRankHistory';
+import useHomeTradeFlow from './hooks/useHomeTradeFlow';
 import useHomeTrendSections from './hooks/useHomeTrendSections';
 import useLogoutOnUnauthorized from './hooks/useLogoutOnUnauthorized';
 import useSelectedVideoGameState from './hooks/useSelectedVideoGameState';
@@ -80,7 +74,6 @@ import {
 } from '../../constants/videoCategories';
 import { useAuth } from '../../features/auth/useAuth';
 import {
-  invalidateGameQueries,
   gameQueryKeys,
   useAchievementTitles,
   useBuyableMarketChart,
@@ -88,40 +81,24 @@ import {
   useCancelScheduledSellOrder,
   useCreateScheduledSellOrder,
   useCurrentGameSeason,
-  useDeleteGameNotification,
-  useDeleteGameNotifications,
   useGameTierProgress,
   useGameHighlights,
   useGameLeaderboard,
   useGameLeaderboardHighlights,
-  useGameLeaderboardPositionRankHistory,
   useGameMarket,
-  useGameNotifications,
-  useGamePositionRankHistory,
-  useGameSellPreview,
-  useMarkGameNotificationsRead,
   useMyGamePositions,
   useScheduledSellOrders,
   useSellGamePositions,
   useUpdateSelectedAchievementTitle,
 } from '../../features/game/queries';
-import { useGameNotificationRealtime, useGameRealtimeInvalidation } from '../../features/game/realtime';
-import type {
-  GameHighlight,
-  GameNotification,
-  GamePosition,
-  GamePositionRankHistory,
-  GameScheduledSellOrder,
-  ScheduledSellTriggerDirection,
-} from '../../features/game/types';
-import { fetchGamePositionRankHistory } from '../../features/game/api';
+import { useGameRealtimeInvalidation } from '../../features/game/realtime';
+import type { GamePosition } from '../../features/game/types';
 import {
   useFavoriteStreamerVideos,
   useFavoriteStreamers,
   useToggleFavoriteStreamer,
 } from '../../features/favorites/queries';
-import { useVideoRankHistory } from '../../features/trending/queries';
-import type { VideoRankHistory, VideoTrendSignal } from '../../features/trending/types';
+import type { VideoTrendSignal } from '../../features/trending/types';
 import { fetchVideoById } from '../../features/youtube/api';
 import { useMusicTopVideos, usePopularVideosByCategory, useVideoCategories } from '../../features/youtube/queries';
 import type { YouTubeVideoItem } from '../../features/youtube/types';
@@ -145,7 +122,6 @@ function formatHighlightScore(score: number) {
 }
 const MAX_CHART_ITEM_COUNT = 200;
 const MAX_SORT_PREFETCH_PAGE_COUNT = 10;
-const SELL_PREVIEW_DEBOUNCE_MS = 300;
 const CHART_SORT_OPTIONS: Array<{ id: ChartSortMode; label: string }> = [
   { id: 'popular-desc', label: '순위 높은 순' },
   { id: 'popular-asc', label: '순위 낮은 순' },
@@ -156,18 +132,6 @@ const CHART_SORT_OPTIONS: Array<{ id: ChartSortMode; label: string }> = [
   { id: 'rank-up', label: '랭킹 상승 순' },
   { id: 'rank-down', label: '랭킹 하락 순' },
 ];
-
-function getProjectedWalletBalance(currentBalancePoints?: number | null, deltaPoints?: number | null) {
-  if (typeof currentBalancePoints !== 'number' || !Number.isFinite(currentBalancePoints)) {
-    return null;
-  }
-
-  if (typeof deltaPoints !== 'number' || !Number.isFinite(deltaPoints)) {
-    return null;
-  }
-
-  return currentBalancePoints + deltaPoints;
-}
 
 function hasNextPageFromFetchResult(result: unknown) {
   if (!result || typeof result !== 'object' || !('data' in result)) {
@@ -250,108 +214,12 @@ async function fetchRemainingChartPages(
   }
 }
 
-function mergeRankHistories(
-  positionHistory?: GamePositionRankHistory,
-  videoHistory?: VideoRankHistory,
-): GamePositionRankHistory | VideoRankHistory | undefined {
-  if (!positionHistory) {
-    return videoHistory;
-  }
-
-  if (!videoHistory || videoHistory.videoId !== positionHistory.videoId) {
-    return positionHistory;
-  }
-
-  const latestPositionCapturedAt = positionHistory.points.at(-1)?.capturedAt ?? positionHistory.latestCapturedAt;
-  const trailingVideoPoints = videoHistory.points
-    .filter((point) => !latestPositionCapturedAt || new Date(point.capturedAt).getTime() > new Date(latestPositionCapturedAt).getTime())
-    .map((point) => ({
-      ...point,
-      buyPoint: false,
-      sellPoint: false,
-    }));
-
-  if (trailingVideoPoints.length === 0) {
-    return positionHistory;
-  }
-
-  return {
-    ...positionHistory,
-    latestCapturedAt: videoHistory.latestCapturedAt,
-    latestChartOut: videoHistory.latestChartOut,
-    latestRank: videoHistory.latestRank,
-    points: [...positionHistory.points, ...trailingVideoPoints],
-  };
-}
-
 function getInitialGameIntroModalOpen() {
   if (typeof window === 'undefined') {
     return false;
   }
 
   return window.localStorage.getItem(GAME_INTRO_MODAL_DISMISSED_STORAGE_KEY) !== 'true';
-}
-
-function mergeGameNotifications(...groups: Array<GameNotification[] | undefined>) {
-  const notificationsById = new Map<string, GameNotification>();
-
-  groups.flatMap((group) => group ?? []).forEach((notification) => {
-    if (!notificationsById.has(notification.id)) {
-      notificationsById.set(notification.id, notification);
-    }
-  });
-
-  return [...notificationsById.values()]
-    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
-    .slice(0, 20);
-}
-
-function logRealtimeGameNotificationDebug(
-  notification: GameNotification,
-  currentNotifications: GameNotification[],
-) {
-  if (!import.meta.env.DEV) {
-    return;
-  }
-
-  const duplicatedNotification = currentNotifications.find(
-    (currentNotification) => currentNotification.id === notification.id,
-  );
-
-  console.info('[game-notification] incoming', {
-    id: notification.id,
-    notificationEventType: notification.notificationEventType ?? null,
-    notificationType: notification.notificationType,
-    createdAt: notification.createdAt,
-    title: notification.title,
-    videoTitle: notification.videoTitle,
-    duplicatedWithExistingId: Boolean(duplicatedNotification),
-    duplicatedNotificationEventType: duplicatedNotification?.notificationEventType ?? null,
-    duplicatedNotificationType: duplicatedNotification?.notificationType ?? null,
-    currentNotificationIds: currentNotifications.map((currentNotification) => currentNotification.id),
-  });
-}
-
-function createRankHistoryPositionFromNotification(notification: GameNotification): GamePosition {
-  return {
-    id: notification.positionId ?? 0,
-    videoId: notification.videoId ?? '',
-    title: notification.videoTitle ?? notification.title,
-    channelTitle: notification.channelTitle ?? '',
-    thumbnailUrl: notification.thumbnailUrl ?? '',
-    buyRank: 0,
-    currentRank: null,
-    rankDiff: null,
-    quantity: 0,
-    stakePoints: 0,
-    currentPricePoints: null,
-    profitPoints: null,
-    chartOut: false,
-    status: 'CLOSED',
-    buyCapturedAt: notification.createdAt,
-    createdAt: notification.createdAt,
-    closedAt: notification.createdAt,
-  };
 }
 
 function mapMusicTrendSignalsByVideoId(
@@ -397,78 +265,6 @@ function mapMusicTrendSignalsByVideoId(
   );
 }
 
-function mergeMultiplePositionHistories(
-  positionHistories: GamePositionRankHistory[],
-  videoHistory?: VideoRankHistory,
-): GamePositionRankHistory | VideoRankHistory | undefined {
-  if (positionHistories.length === 0) {
-    return videoHistory;
-  }
-
-  const sortedHistories = [...positionHistories].sort(
-    (left, right) => new Date(left.buyCapturedAt).getTime() - new Date(right.buyCapturedAt).getTime(),
-  );
-  const dedupeMergedPoints = (
-    points: GamePositionRankHistory['points'],
-  ): GamePositionRankHistory['points'] => {
-    const uniquePoints = new Map<string, GamePositionRankHistory['points'][number]>();
-
-    for (const point of points) {
-      const key = `${point.runId}:${point.capturedAt}:${point.buyPoint ? 'b' : 'n'}:${point.sellPoint ? 's' : 'n'}`;
-      uniquePoints.set(key, point);
-    }
-
-    return Array.from(uniquePoints.values()).sort(
-      (left, right) => new Date(left.capturedAt).getTime() - new Date(right.capturedAt).getTime(),
-    );
-  };
-  const [firstHistory, ...restHistories] = sortedHistories;
-  let mergedHistory = firstHistory;
-
-  for (const nextHistory of restHistories) {
-    const latestCapturedAt = mergedHistory.points.at(-1)?.capturedAt ?? mergedHistory.latestCapturedAt;
-    const nextBuyCapturedAt = nextHistory.buyCapturedAt;
-    const gapVideoPoints =
-      videoHistory?.points
-        .filter((point) => {
-          const capturedAt = new Date(point.capturedAt).getTime();
-          const latestCapturedTime = latestCapturedAt ? new Date(latestCapturedAt).getTime() : null;
-          const nextBuyCapturedTime = nextBuyCapturedAt ? new Date(nextBuyCapturedAt).getTime() : null;
-
-          return (
-            (latestCapturedTime === null || capturedAt > latestCapturedTime) &&
-            (nextBuyCapturedTime === null || capturedAt < nextBuyCapturedTime)
-          );
-        })
-        .map((point) => ({
-          ...point,
-          buyPoint: false,
-          sellPoint: false,
-        })) ?? [];
-    const trailingPoints = nextHistory.points.filter(
-      (point) => !latestCapturedAt || new Date(point.capturedAt).getTime() > new Date(latestCapturedAt).getTime(),
-    );
-
-    mergedHistory = {
-      ...mergedHistory,
-      closedAt: nextHistory.closedAt,
-      latestCapturedAt: nextHistory.latestCapturedAt,
-      latestChartOut: nextHistory.latestChartOut,
-      latestRank: nextHistory.latestRank,
-      positionId: nextHistory.positionId,
-      sellRank: nextHistory.sellRank,
-      status: nextHistory.status,
-      points: dedupeMergedPoints(
-        gapVideoPoints.length > 0 || trailingPoints.length > 0
-          ? [...mergedHistory.points, ...gapVideoPoints, ...trailingPoints]
-          : mergedHistory.points,
-      ),
-    };
-  }
-
-  return mergeRankHistories(mergedHistory, videoHistory);
-}
-
 function getInitialCollapsedHomeSectionIds() {
   if (typeof window === 'undefined') {
     return [] as string[];
@@ -504,12 +300,6 @@ function HomePage() {
   const { accessToken, applyCurrentUser, isLoggingOut, logout, refreshCurrentUser, status: authStatus, user } = useAuth();
   const [selectedOpenPositionId, setSelectedOpenPositionId] = useState<number | null>(null);
   const [activeGameTab, setActiveGameTab] = useState<'positions' | 'scheduledOrders' | 'history' | 'guide'>('positions');
-  const [sellOrderMode, setSellOrderMode] = useState<'instant' | 'scheduled'>('instant');
-  const [isScheduledSellSubmitting, setIsScheduledSellSubmitting] = useState(false);
-  const [scheduledSellTargetRank, setScheduledSellTargetRank] = useState<number | null>(100);
-  const [scheduledSellTriggerDirection, setScheduledSellTriggerDirection] =
-    useState<ScheduledSellTriggerDirection>('RANK_IMPROVES_TO');
-  const [rankHistoryFocusMode, setRankHistoryFocusMode] = useState<'full' | 'trade'>('full');
   const [isBuyableOnlyFilterActive, setIsBuyableOnlyFilterActive] = useState(false);
   const [collapsedHomeSectionIds, setCollapsedHomeSectionIds] = useState(getInitialCollapsedHomeSectionIds);
   const [selectedLeaderboardUserId, setSelectedLeaderboardUserId] = useState<number | null>(null);
@@ -519,9 +309,6 @@ function HomePage() {
   const [tierModalDefaultTab, setTierModalDefaultTab] = useState<TierModalTab>('tier');
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isGameIntroModalOpen, setIsGameIntroModalOpen] = useState(getInitialGameIntroModalOpen);
-  const [pushedGameNotifications, setPushedGameNotifications] = useState<GameNotification[]>([]);
-  const [modalGameNotificationQueue, setModalGameNotificationQueue] = useState<GameNotification[]>([]);
-  const [visibleGameNotificationQueue, setVisibleGameNotificationQueue] = useState<GameNotification[]>([]);
   const [isRegionModalOpen, setIsRegionModalOpen] = useState(false);
   const [isChartViewModalOpen, setIsChartViewModalOpen] = useState(false);
   const [pendingRegionTopVideoSelection, setPendingRegionTopVideoSelection] = useState<string | null>(null);
@@ -529,7 +316,6 @@ function HomePage() {
   const [selectedChartView, setSelectedChartView] = useState<ChartViewMode>('popular');
   const [chartSortMode, setChartSortMode] = useState<ChartSortMode>('popular-desc');
   const [sortPrefetchStatus, setSortPrefetchStatus] = useState<string | null>(null);
-  const [selectedRankHistoryOwnerUserId, setSelectedRankHistoryOwnerUserId] = useState<number | null>(null);
   const chartSortOptions = useMemo(
     () =>
       authStatus === 'authenticated'
@@ -565,12 +351,6 @@ function HomePage() {
       setChartSortMode('popular-desc');
     }
   }, [authStatus, chartSortMode]);
-
-  useEffect(() => {
-    setPushedGameNotifications([]);
-    setModalGameNotificationQueue([]);
-    setVisibleGameNotificationQueue([]);
-  }, [user?.id]);
 
   const [achievementTitleToastMessage, setAchievementTitleToastMessage] = useState<string | null>(null);
 
@@ -632,27 +412,6 @@ function HomePage() {
   }));
   const shouldLoadGame = isApiConfigured && authStatus === 'authenticated';
   useGameRealtimeInvalidation(accessToken, selectedRegionCode, shouldLoadGame);
-  const modalGameNotification = modalGameNotificationQueue[0] ?? null;
-  const visibleGameNotification = visibleGameNotificationQueue[0] ?? null;
-  const handleRealtimeGameNotification = useCallback((notification: GameNotification) => {
-    setPushedGameNotifications((currentNotifications) => {
-      logRealtimeGameNotificationDebug(notification, currentNotifications);
-      return mergeGameNotifications([notification], currentNotifications);
-    });
-    setVisibleGameNotificationQueue((currentQueue) =>
-      enqueueGameNotification(currentQueue, notification));
-
-    if (shouldOpenGameNotificationModal(notification)) {
-      setModalGameNotificationQueue((currentQueue) =>
-        enqueueGameNotification(currentQueue, notification));
-    }
-  }, []);
-  useGameNotificationRealtime(
-    accessToken,
-    selectedRegionCode,
-    handleRealtimeGameNotification,
-    shouldLoadGame,
-  );
 
   const {
     data: currentGameSeason,
@@ -660,11 +419,6 @@ function HomePage() {
     isLoading: isCurrentGameSeasonLoading,
     dataUpdatedAt: currentGameSeasonUpdatedAt,
   } = useCurrentGameSeason(accessToken, selectedRegionCode, shouldLoadGame);
-  const {
-    data: fetchedGameNotifications = [],
-    isFetching: isGameNotificationsFetching,
-    refetch: refetchGameNotifications,
-  } = useGameNotifications(accessToken, selectedRegionCode, false);
   const {
     data: gameMarket = [],
     error: gameMarketError,
@@ -685,122 +439,6 @@ function HomePage() {
     isLoading: isGameTierProgressLoading,
   } = useGameTierProgress(accessToken, selectedRegionCode, shouldLoadGame);
 
-  useEffect(() => {
-    if (!import.meta.env.DEV || typeof window === 'undefined') {
-      return;
-    }
-
-    const emitGameNotificationTest = (notification?: {
-      id?: string;
-      notificationEventType?: 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
-      notificationType?: 'ATLAS_SHOT' | 'SOLAR_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
-      title?: string;
-      message?: string;
-      positionId?: number | null;
-      videoId?: string | null;
-      videoTitle?: string | null;
-      channelTitle?: string | null;
-      thumbnailUrl?: string | null;
-      strategyTags?: Array<'ATLAS_SHOT' | 'SOLAR_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE'>;
-      highlightScore?: number | null;
-      titleCode?: string | null;
-      titleDisplayName?: string | null;
-      titleGrade?: 'NORMAL' | 'RARE' | 'SUPER' | 'ULTIMATE' | null;
-      readAt?: string | null;
-      createdAt?: string;
-      showModal?: boolean;
-    }) => {
-      const now = new Date().toISOString();
-      const notificationType = notification?.notificationType ?? 'MOONSHOT';
-      const notificationEventType = notification?.notificationEventType
-        ?? (notificationType === 'TIER_PROMOTION'
-          ? 'TIER_PROMOTION'
-          : notificationType === 'TITLE_UNLOCK'
-            ? 'TITLE_UNLOCK'
-          : notification?.showModal === false
-            ? 'PROJECTED_HIGHLIGHT'
-            : 'TIER_SCORE_GAIN');
-
-      handleRealtimeGameNotification({
-        id: notification?.id ?? `game-test-${Date.now()}-${notificationType}`,
-        notificationEventType,
-        notificationType,
-        title: notification?.title ?? (notificationType === 'TITLE_UNLOCK' ? '새 칭호 획득' : '문샷 적중'),
-        message: notification?.message ?? (notificationType === 'TITLE_UNLOCK' ? 'Atlas Seeker 칭호를 획득했습니다.' : '테스트 소켓 알림입니다.'),
-        positionId: notification?.positionId ?? (notificationType === 'TITLE_UNLOCK' ? null : 999_999),
-        videoId: notification?.videoId ?? (notificationType === 'TITLE_UNLOCK' ? null : 'test-video'),
-        videoTitle: notification?.videoTitle ?? (notificationType === 'TITLE_UNLOCK' ? null : '콘솔 테스트 영상'),
-        channelTitle: notification?.channelTitle ?? (notificationType === 'TITLE_UNLOCK' ? null : '테스트 채널'),
-        thumbnailUrl: notification?.thumbnailUrl ?? (notificationType === 'TITLE_UNLOCK'
-          ? null
-          : 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg'),
-        strategyTags: notification?.strategyTags ?? (notificationType === 'TIER_PROMOTION' || notificationType === 'TITLE_UNLOCK'
-          ? []
-          : [notificationType]),
-        highlightScore: notification?.highlightScore ?? (notificationType === 'TITLE_UNLOCK' ? null : 12_345),
-        titleCode: notification?.titleCode ?? (notificationType === 'TITLE_UNLOCK' ? 'ATLAS_SEEKER' : null),
-        titleDisplayName: notification?.titleDisplayName ?? (notificationType === 'TITLE_UNLOCK' ? 'Atlas Seeker' : null),
-        titleGrade: notification?.titleGrade ?? (notificationType === 'TITLE_UNLOCK' ? 'NORMAL' : null),
-        readAt: notification?.readAt ?? null,
-        createdAt: notification?.createdAt ?? now,
-        showModal: notification?.showModal ?? (notificationType === 'TITLE_UNLOCK' ? false : true),
-      });
-    };
-
-    window.__emitGameRealtimeTest = (event) => {
-      const regionCode = event?.regionCode ?? selectedRegionCode;
-
-      void invalidateGameQueries(queryClient, {
-        accessToken,
-        includeLeaderboardPositions: true,
-        regionCode,
-      });
-    };
-    window.__emitGameNotificationTest = emitGameNotificationTest;
-    window.__emitToastOnlyGameNotificationTest = () => {
-      emitGameNotificationTest({
-        message: '토스트 전용 하이라이트 포착 테스트입니다.',
-        notificationEventType: 'PROJECTED_HIGHLIGHT',
-        notificationType: 'MOONSHOT',
-        showModal: false,
-        title: '하이라이트 포착',
-      });
-    };
-    window.__emitModalGameNotificationTest = (kind = 'tier-score') => {
-      if (kind === 'tier-promotion') {
-        emitGameNotificationTest({
-          message: '티어 승급 모달 테스트입니다.',
-          notificationEventType: 'TIER_PROMOTION',
-          notificationType: 'TIER_PROMOTION',
-          showModal: false,
-          strategyTags: [],
-          title: '티어 승급',
-        });
-        return;
-      }
-
-      emitGameNotificationTest({
-        message: '티어 점수 상승 모달 테스트입니다.',
-        notificationEventType: 'TIER_SCORE_GAIN',
-        notificationType: 'MOONSHOT',
-        showModal: false,
-        title: '티어 점수 상승',
-      });
-    };
-
-    return () => {
-      delete window.__emitGameRealtimeTest;
-      delete window.__emitGameNotificationTest;
-      delete window.__emitToastOnlyGameNotificationTest;
-      delete window.__emitModalGameNotificationTest;
-    };
-  }, [
-    accessToken,
-    currentGameSeason?.seasonId,
-    handleRealtimeGameNotification,
-    queryClient,
-    selectedRegionCode,
-  ]);
   const gameMarketSignalsByVideoId = useMemo(
     () =>
       Object.fromEntries(
@@ -888,97 +526,26 @@ function HomePage() {
     error: gameHighlightsError,
     isLoading: isGameHighlightsLoading,
   } = useGameHighlights(accessToken, selectedRegionCode, shouldLoadGame);
-  const markGameNotificationsReadMutation = useMarkGameNotificationsRead(accessToken, selectedRegionCode);
-  const deleteGameNotificationsMutation = useDeleteGameNotifications(accessToken, selectedRegionCode);
-  const deleteGameNotificationMutation = useDeleteGameNotification(accessToken, selectedRegionCode);
-  const gameNotifications = useMemo(
-    () => mergeGameNotifications(
-      pushedGameNotifications,
-      fetchedGameNotifications,
-      currentGameSeason?.notifications,
-    ),
-    [currentGameSeason?.notifications, fetchedGameNotifications, pushedGameNotifications],
-  );
-  const clearGameNotifications = useCallback(async () => {
-    if (!accessToken || gameNotifications.length === 0) {
-      return;
-    }
-
-    const previousPushedNotifications = pushedGameNotifications;
-    const previousModalNotificationQueue = modalGameNotificationQueue;
-    const previousVisibleNotificationQueue = visibleGameNotificationQueue;
-    setPushedGameNotifications([]);
-    setModalGameNotificationQueue([]);
-    setVisibleGameNotificationQueue([]);
-
-    try {
-      await deleteGameNotificationsMutation.mutateAsync();
-    } catch (error) {
-      setPushedGameNotifications(previousPushedNotifications);
-      setModalGameNotificationQueue(previousModalNotificationQueue);
-      setVisibleGameNotificationQueue(previousVisibleNotificationQueue);
-      throw error;
-    }
-  }, [
+  const {
+    clearGameNotifications,
+    deleteGameNotification,
+    dismissModalGameNotification,
+    dismissVisibleGameNotification,
+    gameNotifications,
+    hasUnreadGameNotifications,
+    isGameNotificationsFetching,
+    modalGameNotification,
+    removeModalGameNotification,
+    refreshGameNotifications,
+    visibleGameNotification,
+  } = useHomeGameNotifications({
     accessToken,
-    deleteGameNotificationsMutation,
-    gameNotifications.length,
-    modalGameNotificationQueue,
-    pushedGameNotifications,
-    visibleGameNotificationQueue,
-  ]);
-  const deleteGameNotification = useCallback(async (notificationId: string) => {
-    if (!accessToken) {
-      return;
-    }
-
-    const previousPushedNotifications = pushedGameNotifications;
-    const previousModalNotificationQueue = modalGameNotificationQueue;
-    const previousVisibleNotificationQueue = visibleGameNotificationQueue;
-    setPushedGameNotifications((notifications) =>
-      notifications.filter((notification) => notification.id !== notificationId),
-    );
-    setModalGameNotificationQueue((notifications) =>
-      removeGameNotification(notifications, notificationId));
-    setVisibleGameNotificationQueue((notifications) =>
-      removeGameNotification(notifications, notificationId));
-
-    try {
-      await deleteGameNotificationMutation.mutateAsync(notificationId);
-    } catch (error) {
-      setPushedGameNotifications(previousPushedNotifications);
-      setModalGameNotificationQueue(previousModalNotificationQueue);
-      setVisibleGameNotificationQueue(previousVisibleNotificationQueue);
-      throw error;
-    }
-  }, [
-    accessToken,
-    deleteGameNotificationMutation,
-    modalGameNotificationQueue,
-    pushedGameNotifications,
-    visibleGameNotificationQueue,
-  ]);
-  const refreshGameNotifications = useCallback(async () => {
-    if (!accessToken) {
-      return;
-    }
-
-    await refetchGameNotifications();
-    setPushedGameNotifications([]);
-    setModalGameNotificationQueue([]);
-    setVisibleGameNotificationQueue([]);
-
-    void markGameNotificationsReadMutation.mutateAsync().catch(() => {
-      // The notification list should remain usable even if read marking fails.
-    });
-  }, [
-    accessToken,
-    markGameNotificationsReadMutation,
-    refetchGameNotifications,
-  ]);
-  const hasUnreadGameNotifications = gameNotifications.some(
-    (notification) => !notification.readAt,
-  );
+    queryClient,
+    resetKey: user?.id ?? null,
+    seasonNotifications: currentGameSeason?.notifications,
+    selectedRegionCode,
+    shouldLoadGame,
+  });
 
   const {
     evaluationPoints: openPositionsEvaluationPoints,
@@ -1544,71 +1111,6 @@ function HomePage() {
     );
   }, []);
 
-  const isForeignSelectedRankHistory =
-    selectedRankHistoryOwnerUserId !== null && selectedRankHistoryOwnerUserId !== user?.id;
-  const {
-    data: mySelectedPositionRankHistory,
-    error: mySelectedPositionRankHistoryError,
-    isLoading: isMyPositionRankHistoryLoading,
-  } = useGamePositionRankHistory(
-    accessToken,
-    selectedRankHistoryPosition?.id ?? null,
-    shouldLoadGame &&
-      Boolean(selectedRankHistoryPosition) &&
-      !isForeignSelectedRankHistory,
-  );
-  const {
-    data: leaderboardSelectedPositionRankHistory,
-    error: leaderboardSelectedPositionRankHistoryError,
-    isLoading: isLeaderboardPositionRankHistoryLoading,
-  } = useGameLeaderboardPositionRankHistory(
-    accessToken,
-    isForeignSelectedRankHistory ? selectedRankHistoryOwnerUserId : null,
-    selectedRankHistoryPosition?.id ?? null,
-    selectedRegionCode,
-    shouldLoadGame && Boolean(selectedRankHistoryPosition) && isForeignSelectedRankHistory,
-  );
-  const selectedPositionRankHistory = isForeignSelectedRankHistory
-    ? leaderboardSelectedPositionRankHistory
-    : mySelectedPositionRankHistory;
-  const selectedPositionRankHistoryError = isForeignSelectedRankHistory
-    ? leaderboardSelectedPositionRankHistoryError
-    : mySelectedPositionRankHistoryError;
-  const isPositionRankHistoryLoading = isForeignSelectedRankHistory
-    ? isLeaderboardPositionRankHistoryLoading
-    : isMyPositionRankHistoryLoading;
-  const relatedRankHistoryPositions = useMemo(
-    () =>
-      selectedRankHistoryPosition?.videoId
-        ? gameHistoryPositions
-            .filter((position) => position.videoId === selectedRankHistoryPosition.videoId)
-            .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime())
-        : [],
-    [gameHistoryPositions, selectedRankHistoryPosition],
-  );
-  const relatedPositionRankHistoryQueries = useQueries({
-    queries: relatedRankHistoryPositions.map((position) => ({
-      enabled:
-        shouldLoadGame &&
-        Boolean(accessToken) &&
-        Boolean(selectedRankHistoryPosition) &&
-        !isForeignSelectedRankHistory &&
-        position.id !== selectedRankHistoryPosition?.id,
-      queryKey: gameQueryKeys.positionRankHistory(accessToken, position.id),
-      queryFn: () => fetchGamePositionRankHistory(accessToken as string, position.id),
-      staleTime: 1000 * 15,
-    })),
-  });
-  const {
-    data: selectedVideoRankHistory,
-    error: selectedVideoRankHistoryError,
-    isLoading: isVideoRankHistoryLoading,
-  } = useVideoRankHistory(
-    currentGameSeason?.regionCode ?? VIDEO_GAME_REGION_CODE,
-    selectedRankHistoryPosition?.videoId ?? selectedVideoRankHistoryVideoId ?? undefined,
-    isApiConfigured && Boolean(selectedRankHistoryPosition?.videoId ?? selectedVideoRankHistoryVideoId),
-  );
-
   useLogoutOnUnauthorized(favoriteStreamersError, logout);
   useLogoutOnUnauthorized(favoriteStreamerVideosError, logout);
   useLogoutOnUnauthorized(currentGameSeasonError, logout);
@@ -1621,7 +1123,6 @@ function HomePage() {
   useLogoutOnUnauthorized(gameHistoryPositionsError, logout);
   useLogoutOnUnauthorized(gameHighlightsError, logout);
   useLogoutOnUnauthorized(selectedLeaderboardHighlightsError, logout);
-  useLogoutOnUnauthorized(selectedPositionRankHistoryError, logout);
 
   useEffect(() => {
     if (authStatus === 'authenticated') {
@@ -1630,18 +1131,9 @@ function HomePage() {
 
     setSelectedOpenPositionId(null);
     setActiveGameTab('positions');
-    setSellOrderMode('instant');
-    setScheduledSellTargetRank(100);
-    setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
     setHistoryPlaybackLoadingVideoId(null);
     setHistoryPlaybackVideo(null);
   }, [authStatus]);
-
-  useEffect(() => {
-    setSellOrderMode('instant');
-    setScheduledSellTargetRank(100);
-    setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
-  }, [selectedOpenPositionId, selectedVideoId]);
 
   useEffect(() => {
     if (selectedOpenPositionId == null) {
@@ -1806,70 +1298,12 @@ function HomePage() {
   const selectedSellPositionId = useMemo(
     () =>
       selectedOpenPositionId != null &&
-      openGamePositions.some((position) => position.id === selectedOpenPositionId)
+        openGamePositions.some((position) => position.id === selectedOpenPositionId)
         ? selectedOpenPositionId
         : null,
     [openGamePositions, selectedOpenPositionId],
   );
   const canScheduleSellCurrentSelection = selectedSellPositionId != null;
-  const debouncedSellPreviewQuantity = useDebouncedValue(normalizedSellQuantity, SELL_PREVIEW_DEBOUNCE_MS);
-  const sellPreviewRequest = useMemo(
-    () =>
-      debouncedSellPreviewQuantity > 0
-        ? {
-            positionId: selectedSellPositionId ?? undefined,
-            quantity: debouncedSellPreviewQuantity,
-            regionCode: selectedRegionCode,
-            videoId: selectedSellPositionId == null ? selectedVideoId : undefined,
-          }
-        : null,
-    [debouncedSellPreviewQuantity, selectedRegionCode, selectedSellPositionId, selectedVideoId],
-  );
-  const sellPreviewQuery = useGameSellPreview(
-    accessToken,
-    sellPreviewRequest,
-    activeTradeModal === 'sell' && sellOrderMode === 'instant' && maxSellQuantity > 0,
-  );
-  const activeSellPreview =
-    debouncedSellPreviewQuantity === normalizedSellQuantity &&
-    sellPreviewQuery.data?.quantity === normalizedSellQuantity
-      ? sellPreviewQuery.data
-      : undefined;
-  const [lastSuccessfulSellPreview, setLastSuccessfulSellPreview] = useState<typeof activeSellPreview>();
-  useEffect(() => {
-    if (activeTradeModal !== 'sell' || sellOrderMode !== 'instant') {
-      setLastSuccessfulSellPreview(undefined);
-      return;
-    }
-
-    if (activeSellPreview) {
-      setLastSuccessfulSellPreview(activeSellPreview);
-    }
-  }, [activeSellPreview, activeTradeModal, sellOrderMode]);
-  const displaySellPreview = activeSellPreview ?? lastSuccessfulSellPreview;
-  useEffect(() => {
-    if (sellOrderMode === 'scheduled' && !canScheduleSellCurrentSelection) {
-      setSellOrderMode('instant');
-    }
-  }, [canScheduleSellCurrentSelection, sellOrderMode]);
-  const isSellPreviewPending =
-    debouncedSellPreviewQuantity !== normalizedSellQuantity ||
-    sellPreviewQuery.isLoading ||
-    sellPreviewQuery.isFetching;
-  const resolvedSellSummary = useMemo(
-    () =>
-      displaySellPreview
-        ? {
-            feePoints: displaySellPreview.sellPricePoints - displaySellPreview.settledPoints,
-            grossSellPoints: displaySellPreview.sellPricePoints,
-            pnlPoints: displaySellPreview.pnlPoints,
-            quantity: displaySellPreview.quantity,
-            settledPoints: displaySellPreview.settledPoints,
-            stakePoints: displaySellPreview.stakePoints,
-          }
-        : selectedVideoSellSummary,
-    [displaySellPreview, selectedVideoSellSummary],
-  );
   const refetchCurrentChartAfterBuy = useCallback(async () => {
     const invalidations: Array<Promise<unknown>> = [];
 
@@ -1949,15 +1383,39 @@ function HomePage() {
   }, [refetchCurrentChartAfterBuy, refetchGameTradePanels]);
 
   const {
+    closeTradeModal: closeTradeModalFromFlow,
+    displaySellPreview,
     handleBuyCurrentVideo,
+    handleBuyQuantityChange,
+    handleCreateScheduledSellOrder,
     handleSellCurrentVideo,
+    handleSellQuantityChange,
     isBuySubmitting,
+    isBuyTradeModalOpen,
+    isScheduledSellSubmitting,
+    isSellPreviewPending,
     isSellSubmitting,
+    isSellTradeModalOpen,
     openBuyTradeModal,
     openSellTradeModal,
-  } = useHomeGameTradeActions({
+    projectedWalletBalanceAfterBuy,
+    projectedWalletBalanceAfterSell,
+    resolvedSellSummary,
+    scheduledSellConditionError,
+    scheduledSellTargetRank,
+    scheduledSellTriggerDirection,
+    sellOrderMode,
+    sellTradeUnitPointsLabel,
+    setScheduledSellTargetRank,
+    setScheduledSellTriggerDirection,
+    setSellOrderMode,
+  } = useHomeTradeFlow({
+    accessToken,
+    activeTradeModal,
     authStatus,
     buyQuantity,
+    closeTradeModal,
+    createScheduledSellOrder: createScheduledSellOrderMutation.mutateAsync,
     currentGameSeason,
     currentGameSeasonError,
     gameSeasonRegionMismatch,
@@ -1966,131 +1424,27 @@ function HomePage() {
     maxSellQuantity,
     mutateBuyGamePosition: buyGamePositionMutation.mutateAsync,
     mutateSellGamePositions: sellGamePositionsMutation.mutateAsync,
+    normalizedSellQuantity,
     onBuySuccess: refetchGameDataAfterBuy,
     onSellSuccess: refetchGameTradePanels,
-    selectedOpenPositionId: selectedSellPositionId,
+    onScheduledSellSuccess: refetchGameTradePanels,
+    selectedOpenPositionId,
+    selectedSellPositionId,
     selectedGameActionTitle,
+    selectedRegionCode,
+    selectedVideoCurrentChartRank,
     selectedVideoId,
     selectedVideoMarketEntry,
-    selectedRegionCode,
+    selectedVideoSellSummary,
+    selectedVideoUnitPricePoints,
     sellQuantity,
+    setActiveGameTab,
     setActiveTradeModal,
     setBuyQuantity,
     setGameActionStatus,
     setSellQuantity,
     totalSelectedVideoBuyPoints,
   });
-
-  const projectedWalletBalanceAfterBuy = useMemo(
-    () =>
-      getProjectedWalletBalance(
-        currentGameSeason?.wallet.balancePoints,
-        -(totalSelectedVideoBuyPoints ?? (selectedVideoUnitPricePoints ?? 0)),
-      ),
-    [currentGameSeason?.wallet.balancePoints, selectedVideoUnitPricePoints, totalSelectedVideoBuyPoints],
-  );
-  const projectedWalletBalanceAfterSell = useMemo(
-    () =>
-      getProjectedWalletBalance(currentGameSeason?.wallet.balancePoints, resolvedSellSummary.settledPoints),
-    [currentGameSeason?.wallet.balancePoints, resolvedSellSummary.settledPoints],
-  );
-  const scheduledSellConditionError = useMemo(() => {
-    if (sellOrderMode !== 'scheduled') {
-      return null;
-    }
-
-    if (typeof scheduledSellTargetRank !== 'number' || !Number.isFinite(scheduledSellTargetRank)) {
-      return '목표 순위를 입력해 주세요.';
-    }
-
-    if (typeof selectedVideoCurrentChartRank !== 'number' || !Number.isFinite(selectedVideoCurrentChartRank)) {
-      return null;
-    }
-
-    if (scheduledSellTriggerDirection === 'RANK_DROPS_TO') {
-      return scheduledSellTargetRank <= selectedVideoCurrentChartRank
-        ? `현재 ${formatRank(selectedVideoCurrentChartRank)}입니다. 하락 방어는 ${selectedVideoCurrentChartRank + 1}위 이하부터 설정할 수 있어요.`
-        : null;
-    }
-
-    return scheduledSellTargetRank >= selectedVideoCurrentChartRank
-      ? `현재 ${formatRank(selectedVideoCurrentChartRank)}입니다. 상승 목표는 ${selectedVideoCurrentChartRank - 1}위 이내부터 설정할 수 있어요.`
-      : null;
-  }, [
-    scheduledSellTargetRank,
-    scheduledSellTriggerDirection,
-    selectedVideoCurrentChartRank,
-    sellOrderMode,
-  ]);
-  const handleCreateScheduledSellOrder = useCallback(async () => {
-    if (!currentGameSeason) {
-      setGameActionStatus('지금은 게임 시즌을 불러올 수 없습니다.');
-      return;
-    }
-
-    if (selectedSellPositionId == null) {
-      setGameActionStatus('예약 매도는 인벤토리의 단일 포지션에서 설정할 수 있습니다.');
-      return;
-    }
-
-    if (scheduledSellConditionError) {
-      setGameActionStatus(scheduledSellConditionError);
-      return;
-    }
-
-    if (typeof scheduledSellTargetRank !== 'number' || !Number.isFinite(scheduledSellTargetRank)) {
-      setGameActionStatus('목표 순위를 입력해 주세요.');
-      return;
-    }
-
-    const normalizedTargetRank = Math.max(1, Math.floor(scheduledSellTargetRank));
-
-    try {
-      setIsScheduledSellSubmitting(true);
-      await createScheduledSellOrderMutation.mutateAsync({
-        positionId: selectedSellPositionId,
-        quantity: normalizedSellQuantity,
-        regionCode: currentGameSeason.regionCode,
-        targetRank: normalizedTargetRank,
-        triggerDirection: scheduledSellTriggerDirection,
-      });
-
-      setActiveTradeModal(null);
-      setSellOrderMode('instant');
-      setScheduledSellTargetRank(100);
-      setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
-      setActiveGameTab('scheduledOrders');
-      setGameActionStatus('매도 예약이 완료됐어요.');
-      void refetchGameTradePanels();
-    } catch (error) {
-      if (
-        error instanceof ApiRequestError &&
-        (error.code === 'unauthorized' || error.code === 'session_expired')
-      ) {
-        void logout();
-        return;
-      }
-
-      setGameActionStatus(
-        error instanceof Error ? error.message : '예약 매도 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-      );
-    } finally {
-      setIsScheduledSellSubmitting(false);
-    }
-  }, [
-    createScheduledSellOrderMutation,
-    currentGameSeason,
-    logout,
-    normalizedSellQuantity,
-    refetchGameTradePanels,
-    scheduledSellConditionError,
-    scheduledSellTargetRank,
-    scheduledSellTriggerDirection,
-    selectedSellPositionId,
-    setIsScheduledSellSubmitting,
-    setActiveTradeModal,
-    setGameActionStatus,
-  ]);
   const handleCancelScheduledSellOrder = useCallback(
     async (orderId: number) => {
       try {
@@ -2177,21 +1531,6 @@ function HomePage() {
       sortedNewChartEntriesSection,
       sortedRealtimeSurgingSection,
     ],
-  );
-  const handleOpenGameNotificationChart = useCallback(
-    (notification: GameNotification) => {
-      const matchedPosition =
-        openGamePositions.find((position) => position.id === notification.positionId) ??
-        gameHistoryPositions.find((position) => position.id === notification.positionId) ??
-        createRankHistoryPositionFromNotification(notification);
-
-      setSelectedRankHistoryOwnerUserId(null);
-      setRankHistoryFocusMode('trade');
-      openRankHistoryModal(notification.videoId ?? undefined, matchedPosition);
-      setModalGameNotificationQueue((notifications) =>
-        removeGameNotification(notifications, notification.id));
-    },
-    [gameHistoryPositions, openGamePositions, openRankHistoryModal],
   );
   const headerTrendTicker = useMemo(
     () => {
@@ -2455,48 +1794,6 @@ function HomePage() {
     },
     [handleSelectVideoWithPreview, scrollToPlayerStage, setGameActionStatus],
   );
-  const handleOpenGamePositionChart = useCallback(
-    (position: GamePosition) => {
-      setSelectedRankHistoryOwnerUserId(null);
-      setRankHistoryFocusMode('trade');
-      openRankHistoryModal(position.videoId, position);
-    },
-    [openRankHistoryModal],
-  );
-  const handleOpenGameHistoryChart = useCallback(
-    (position: GamePosition) => {
-      setSelectedRankHistoryOwnerUserId(null);
-      setRankHistoryFocusMode('trade');
-      openRankHistoryModal(position.videoId, position);
-    },
-    [openRankHistoryModal],
-  );
-  const handleOpenScheduledSellOrderChart = useCallback(
-    (order: GameScheduledSellOrder) => {
-      setSelectedRankHistoryOwnerUserId(null);
-      setRankHistoryFocusMode('trade');
-      openRankHistoryModal(order.videoId, {
-        id: order.positionId,
-        videoId: order.videoId,
-        title: order.videoTitle,
-        channelTitle: order.channelTitle,
-        thumbnailUrl: order.thumbnailUrl,
-        buyRank: order.buyRank,
-        currentRank: order.currentRank,
-        rankDiff: null,
-        quantity: order.quantity,
-        stakePoints: order.stakePoints,
-        currentPricePoints: order.sellPricePoints ?? null,
-        profitPoints: order.pnlPoints ?? null,
-        chartOut: order.currentRank == null,
-        status: order.status,
-        buyCapturedAt: order.createdAt,
-        createdAt: order.createdAt,
-        closedAt: order.executedAt ?? order.canceledAt ?? null,
-      });
-    },
-    [openRankHistoryModal],
-  );
   const handleSelectGameTab = useCallback((tab: 'positions' | 'scheduledOrders' | 'history' | 'guide') => {
     startTransition(() => {
       setActiveGameTab(tab);
@@ -2528,83 +1825,6 @@ function HomePage() {
     setTierModalDefaultTab('tier');
     openTierModal();
   }, [openTierModal]);
-  const handleSelectGameHighlight = useCallback(
-    (highlight: GameHighlight) => {
-      setSelectedRankHistoryOwnerUserId(null);
-      setRankHistoryFocusMode('trade');
-      openRankHistoryModal(highlight.videoId, {
-        id: highlight.positionId,
-        videoId: highlight.videoId,
-        title: highlight.videoTitle,
-        channelTitle: highlight.channelTitle,
-        thumbnailUrl: highlight.thumbnailUrl,
-        buyRank: highlight.buyRank,
-        currentRank: highlight.highlightRank,
-        rankDiff: highlight.rankDiff,
-        quantity: highlight.quantity,
-        stakePoints: highlight.stakePoints,
-        currentPricePoints: highlight.currentPricePoints,
-        profitPoints: highlight.profitPoints,
-        chartOut: false,
-        status: highlight.status,
-        buyCapturedAt: highlight.createdAt,
-        createdAt: highlight.createdAt,
-        closedAt: highlight.status === 'OPEN' ? null : highlight.createdAt,
-      });
-    },
-    [openRankHistoryModal],
-  );
-  const handleSelectLeaderboardHighlight = useCallback(
-    (highlight: GameHighlight) => {
-      setSelectedRankHistoryOwnerUserId(selectedLeaderboardUserId);
-      setRankHistoryFocusMode('trade');
-      openRankHistoryModal(highlight.videoId, {
-        id: highlight.positionId,
-        videoId: highlight.videoId,
-        title: highlight.videoTitle,
-        channelTitle: highlight.channelTitle,
-        thumbnailUrl: highlight.thumbnailUrl,
-        buyRank: highlight.buyRank,
-        currentRank: highlight.highlightRank,
-        rankDiff: highlight.rankDiff,
-        quantity: highlight.quantity,
-        stakePoints: highlight.stakePoints,
-        currentPricePoints: highlight.currentPricePoints,
-        profitPoints: highlight.profitPoints,
-        chartOut: false,
-        status: highlight.status,
-        buyCapturedAt: highlight.createdAt,
-        createdAt: highlight.createdAt,
-        closedAt: highlight.status === 'OPEN' ? null : highlight.createdAt,
-      });
-    },
-    [openRankHistoryModal, selectedLeaderboardUserId],
-  );
-  const handleSelectGameNotification = useCallback(
-    (notification: GameNotification) => {
-      const matchedPosition =
-        openGamePositions.find((position) => position.id === notification.positionId) ??
-        gameHistoryPositions.find((position) => position.id === notification.positionId) ??
-        createRankHistoryPositionFromNotification(notification);
-
-      setSelectedRankHistoryOwnerUserId(null);
-      setRankHistoryFocusMode('trade');
-      openRankHistoryModal(notification.videoId ?? undefined, matchedPosition);
-    },
-    [gameHistoryPositions, openGamePositions, openRankHistoryModal],
-  );
-  const handleOpenSelectedVideoRankHistory = useCallback(() => {
-    setSelectedRankHistoryOwnerUserId(null);
-    setRankHistoryFocusMode('full');
-    openRankHistoryModal(
-      selectedVideoId,
-      selectedVideoHistoryTargetPosition,
-    );
-  }, [
-    openRankHistoryModal,
-    selectedVideoHistoryTargetPosition,
-    selectedVideoId,
-  ]);
   const positionsEmptyMessage = currentGameSeason
     ? canShowGameActions
       ? '아직 보유 중인 영상이 없어요. 지금 보는 영상에서 바로 시작할 수 있습니다.'
@@ -2656,11 +1876,37 @@ function HomePage() {
       sellActionTitle={sellActionTitle}
     />
   );
-  const handleCloseRankHistoryModal = useCallback(() => {
-    setRankHistoryFocusMode('full');
-    setSelectedRankHistoryOwnerUserId(null);
-    closeRankHistoryModal();
-  }, [closeRankHistoryModal]);
+  const {
+    handleCloseRankHistory,
+    handleOpenGameHistoryChart,
+    handleOpenGameNotificationChart: handleOpenGameNotificationRankChart,
+    handleOpenGamePositionChart,
+    handleOpenScheduledSellOrderChart,
+    handleOpenSelectedVideoRankHistory,
+    handleSelectGameHighlight,
+    handleSelectGameNotification,
+    handleSelectLeaderboardHighlight,
+    isRankHistoryModalOpen,
+    isVisibleRankHistoryLoading,
+    rankHistoryFocusMode,
+    visibleRankHistory,
+    visibleRankHistoryError,
+  } = useHomeRankHistory({
+    accessToken,
+    closeRankHistoryModal,
+    gameHistoryPositions,
+    openGamePositions,
+    openRankHistoryModal,
+    removeModalGameNotification,
+    selectedRankHistoryPosition,
+    selectedRegionCode: currentGameSeason?.regionCode ?? VIDEO_GAME_REGION_CODE,
+    selectedVideoHistoryTargetPosition,
+    selectedVideoId,
+    selectedVideoRankHistoryVideoId,
+    shouldLoadGame: isApiConfigured && Boolean(selectedRankHistoryPosition?.videoId ?? selectedVideoRankHistoryVideoId),
+    userId: user?.id,
+  });
+  useLogoutOnUnauthorized(visibleRankHistoryError, logout);
   const gameActionContent = (
     <SelectedVideoGameActionsBundle
       buyActionTitle={buyActionTitle}
@@ -2720,7 +1966,7 @@ function HomePage() {
       isHighlightsError={isSelectedLeaderboardHighlightsError}
       isHighlightsLoading={isSelectedLeaderboardHighlightsLoading}
       isLoading={isGameLeaderboardLoading}
-      onSelectHighlight={handleSelectLeaderboardHighlight}
+      onSelectHighlight={(highlight) => handleSelectLeaderboardHighlight(highlight, selectedLeaderboardUserId)}
       onToggleUser={(userId) =>
         setSelectedLeaderboardUserId((currentUserId) => (currentUserId === userId ? null : userId))
       }
@@ -2792,45 +2038,6 @@ function HomePage() {
       trendSignalsByVideoId={chartTrendSignalsByVideoId}
     />
   );
-  const isRankHistoryModalOpen = Boolean(selectedRankHistoryPosition || selectedVideoRankHistoryVideoId);
-  const relatedPositionRankHistories = useMemo(
-    () =>
-      relatedPositionRankHistoryQueries
-        .map((query) => query.data)
-        .filter((history): history is GamePositionRankHistory => Boolean(history)),
-    [relatedPositionRankHistoryQueries],
-  );
-  const relatedPositionRankHistoryError = relatedPositionRankHistoryQueries.find((query) => query.error)?.error;
-  const isRelatedPositionRankHistoryLoading = relatedPositionRankHistoryQueries.some((query) => query.isLoading);
-  const mergedRankHistory = useMemo(
-    () =>
-      mergeMultiplePositionHistories(
-        selectedPositionRankHistory
-          ? [selectedPositionRankHistory, ...relatedPositionRankHistories]
-          : relatedPositionRankHistories,
-        selectedVideoRankHistory,
-      ),
-    [relatedPositionRankHistories, selectedPositionRankHistory, selectedVideoRankHistory],
-  );
-  const visibleRankHistory = rankHistoryFocusMode === 'trade'
-    ? selectedPositionRankHistory
-    : mergedRankHistory;
-  const visibleRankHistoryError =
-    rankHistoryFocusMode === 'trade'
-      ? selectedPositionRankHistoryError
-      : selectedPositionRankHistoryError instanceof Error
-        ? selectedPositionRankHistoryError
-        : relatedPositionRankHistoryError instanceof Error
-          ? relatedPositionRankHistoryError
-          : selectedVideoRankHistoryError;
-  const isVisibleRankHistoryLoading =
-    rankHistoryFocusMode === 'trade'
-      ? isPositionRankHistoryLoading
-      : isPositionRankHistoryLoading || isRelatedPositionRankHistoryLoading || isVideoRankHistoryLoading;
-  const isBuyTradeModalOpen =
-    activeTradeModal === 'buy' && Boolean(selectedVideoId) && Boolean(selectedVideoMarketEntry);
-  const isSellTradeModalOpen =
-    activeTradeModal === 'sell' && Boolean(selectedVideoId) && selectedVideoOpenPositionCount > 0;
   const isAnyModalOpen =
     isGameIntroModalOpen ||
     Boolean(modalGameNotification) ||
@@ -3088,14 +2295,7 @@ function HomePage() {
       </main>
       <GameNotificationToast
         notification={visibleGameNotification}
-        onDismiss={() => {
-          if (!visibleGameNotification) {
-            return;
-          }
-
-          setVisibleGameNotificationQueue((notifications) =>
-            removeGameNotification(notifications, visibleGameNotification.id));
-        }}
+        onDismiss={dismissVisibleGameNotification}
       />
       <GameActionToast
         message={gameActionStatus}
@@ -3107,15 +2307,8 @@ function HomePage() {
       />
       <GameNotificationModal
         notification={modalGameNotification}
-        onClose={() => {
-          if (!modalGameNotification) {
-            return;
-          }
-
-          setModalGameNotificationQueue((notifications) =>
-            removeGameNotification(notifications, modalGameNotification.id));
-        }}
-        onOpenChart={handleOpenGameNotificationChart}
+        onClose={dismissModalGameNotification}
+        onOpenChart={handleOpenGameNotificationRankChart}
       />
       <GameIntroModal
         isOpen={isGameIntroModalOpen}
@@ -3137,7 +2330,7 @@ function HomePage() {
         history={visibleRankHistory}
         isLoading={isVisibleRankHistoryLoading}
         isOpen={isRankHistoryModalOpen}
-        onClose={handleCloseRankHistoryModal}
+        onClose={handleCloseRankHistory}
         position={selectedRankHistoryPosition}
         videoFallback={
           resolvedSelectedVideo
@@ -3196,21 +2389,8 @@ function HomePage() {
         isSubmitting={isBuySubmitting}
         maxQuantity={maxBuyQuantity}
         mode="buy"
-        onChangeQuantity={(quantity) => {
-          const normalizedMaxBuyQuantity = normalizeGameOrderCapacity(maxBuyQuantity);
-
-          if (normalizedMaxBuyQuantity > 0 && quantity <= 0) {
-            setBuyQuantity(normalizedMaxBuyQuantity);
-            return;
-          }
-
-          setBuyQuantity(
-            normalizedMaxBuyQuantity > 0
-              ? Math.min(normalizeGameOrderQuantity(quantity), normalizedMaxBuyQuantity)
-              : normalizeGameOrderQuantity(quantity),
-          );
-        }}
-        onClose={closeTradeModal}
+        onChangeQuantity={handleBuyQuantityChange}
+        onClose={closeTradeModalFromFlow}
         onConfirm={() => void handleBuyCurrentVideo()}
         quantity={normalizedBuyQuantity}
         summaryItems={[
@@ -3244,21 +2424,8 @@ function HomePage() {
         isSubmitting={isSellSubmitting || isScheduledSellSubmitting}
         maxQuantity={maxSellQuantity}
         mode="sell"
-        onChangeQuantity={(quantity) => {
-          const normalizedMaxSellQuantity = normalizeGameOrderCapacity(maxSellQuantity);
-
-          if (normalizedMaxSellQuantity > 0 && quantity <= 0) {
-            setSellQuantity(normalizedMaxSellQuantity);
-            return;
-          }
-
-          setSellQuantity(
-            normalizedMaxSellQuantity > 0
-              ? Math.min(normalizeGameOrderQuantity(quantity), normalizedMaxSellQuantity)
-              : normalizeGameOrderQuantity(quantity),
-          );
-        }}
-        onClose={closeTradeModal}
+        onChangeQuantity={handleSellQuantityChange}
+        onClose={closeTradeModalFromFlow}
         onChangeSellOrderMode={canScheduleSellCurrentSelection ? setSellOrderMode : undefined}
         onChangeScheduledSellTriggerDirection={setScheduledSellTriggerDirection}
         onChangeScheduledSellTargetRank={setScheduledSellTargetRank}
@@ -3330,7 +2497,7 @@ function HomePage() {
         }
         thumbnailUrl={selectedVideoTradeThumbnailUrl}
         title={selectedGameActionTitle}
-        unitPointsLabel={formatPoints(selectedVideoUnitPricePoints ?? resolvedSellSummary.settledPoints ?? 0)}
+        unitPointsLabel={sellTradeUnitPointsLabel}
       />
       {buyableVideoSearchOverlay && fullscreenOverlayContainer
         ? createPortal(buyableVideoSearchOverlay, fullscreenOverlayContainer)
