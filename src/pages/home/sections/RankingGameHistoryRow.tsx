@@ -95,18 +95,15 @@ function RankingGameHistoryRowComponent({
               <p className="app-shell__game-history-title">{position.title}</p>
             </button>
           </div>
-          <button
+          <div
             className="app-shell__game-history-body-button"
-            disabled={isLoadingHistoryPlayback}
-            onClick={() => onSelectPosition(position, playbackQueueId)}
             title={
               isLoadingHistoryPlayback
                 ? '영상 정보를 다시 불러오는 중입니다.'
                 : isSelectable
-                  ? '이 영상을 플레이어에서 엽니다.'
-                  : '영상 정보를 다시 불러와 플레이어에서 엽니다.'
+                  ? '썸네일을 누르면 플레이어에서 엽니다.'
+                  : '썸네일을 누르면 영상 정보를 다시 불러와 플레이어에서 엽니다.'
             }
-            type="button"
           >
             <p className="app-shell__game-history-channel">{position.channelTitle}</p>
             {isLoadingHistoryPlayback ? (
@@ -160,7 +157,7 @@ function RankingGameHistoryRowComponent({
                 </div>
               </div>
             </div>
-          </button>
+          </div>
         </div>
       </div>
     </li>

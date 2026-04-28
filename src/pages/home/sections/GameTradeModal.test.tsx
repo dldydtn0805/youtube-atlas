@@ -125,6 +125,52 @@ describe('GameTradeModal', () => {
   });
 
   it('closes when the modal header is swiped down on touch', () => {
+    vi.useFakeTimers();
+    const onClose = vi.fn();
+    try {
+      render(
+        <GameTradeModal
+          confirmLabel="매도"
+          currentRankLabel="3위"
+          helperText="테스트"
+          isOpen
+          isSubmitting={false}
+          maxQuantity={200}
+          mode="sell"
+          onChangeQuantity={vi.fn()}
+          onClose={onClose}
+          onConfirm={vi.fn()}
+          quantity={100}
+          summaryItems={[{ label: '정산 금액', value: '900P' }]}
+          thumbnailUrl={null}
+          title="테스트 영상"
+          unitPointsLabel="1,000P"
+        />,
+      );
+
+      const header = document.querySelector('.app-shell__modal-header');
+      const modal = document.querySelector('.app-shell__modal');
+
+      expect(header).not.toBeNull();
+      expect(modal).not.toBeNull();
+
+      fireEvent.pointerDown(header as Element, { clientX: 40, clientY: 20, pointerId: 1, pointerType: 'touch' });
+      fireEvent.pointerMove(header as Element, { clientX: 56, clientY: 460, pointerId: 1, pointerType: 'touch' });
+      fireEvent.pointerUp(header as Element, { clientX: 56, clientY: 460, pointerId: 1, pointerType: 'touch' });
+      vi.advanceTimersByTime(16);
+
+      expect(onClose).not.toHaveBeenCalled();
+      expect((modal as HTMLElement).style.transform).toContain('translate3d');
+
+      vi.advanceTimersByTime(220);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not close when the modal header is only dragged a short distance on touch', () => {
     const onClose = vi.fn();
     render(
       <GameTradeModal
@@ -150,14 +196,122 @@ describe('GameTradeModal', () => {
 
     expect(header).not.toBeNull();
 
-    fireEvent.pointerDown(header as Element, { clientX: 40, clientY: 20, pointerId: 1, pointerType: 'touch' });
-    fireEvent.pointerMove(header as Element, { clientX: 56, clientY: 460, pointerId: 1, pointerType: 'touch' });
-    fireEvent.pointerUp(header as Element, { clientX: 56, clientY: 460, pointerId: 1, pointerType: 'touch' });
+    fireEvent.pointerDown(header as Element, { clientX: 40, clientY: 20, pointerId: 4, pointerType: 'touch' });
+    fireEvent.pointerMove(header as Element, { clientX: 52, clientY: 150, pointerId: 4, pointerType: 'touch' });
+    fireEvent.pointerUp(header as Element, { clientX: 52, clientY: 150, pointerId: 4, pointerType: 'touch' });
 
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('closes when the modal header is dragged down with a mouse', () => {
+  it('returns to the original position when the modal is opened again', () => {
+    vi.useFakeTimers();
+    const { rerender } = render(
+      <GameTradeModal
+        confirmLabel="매도"
+        currentRankLabel="3위"
+        helperText="테스트"
+        isOpen
+        isSubmitting={false}
+        maxQuantity={200}
+        mode="sell"
+        onChangeQuantity={vi.fn()}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        quantity={100}
+        summaryItems={[{ label: '정산 금액', value: '900P' }]}
+        thumbnailUrl={null}
+        title="테스트 영상"
+        unitPointsLabel="1,000P"
+      />,
+    );
+
+    const header = document.querySelector('.app-shell__modal-header');
+
+    expect(header).not.toBeNull();
+
+    rerender(
+      <GameTradeModal
+        confirmLabel="매도"
+        currentRankLabel="3위"
+        helperText="테스트"
+        isOpen={false}
+        isSubmitting={false}
+        maxQuantity={200}
+        mode="sell"
+        onChangeQuantity={vi.fn()}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        quantity={100}
+        summaryItems={[{ label: '정산 금액', value: '900P' }]}
+        thumbnailUrl={null}
+        title="테스트 영상"
+        unitPointsLabel="1,000P"
+      />,
+    );
+
+    rerender(
+      <GameTradeModal
+        confirmLabel="매도"
+        currentRankLabel="3위"
+        helperText="테스트"
+        isOpen
+        isSubmitting={false}
+        maxQuantity={200}
+        mode="sell"
+        onChangeQuantity={vi.fn()}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        quantity={100}
+        summaryItems={[{ label: '정산 금액', value: '900P' }]}
+        thumbnailUrl={null}
+        title="테스트 영상"
+        unitPointsLabel="1,000P"
+      />,
+    );
+
+    const reopenedModal = document.querySelector('.app-shell__modal');
+
+    expect(reopenedModal).not.toBeNull();
+    expect((reopenedModal as HTMLElement).style.transform).toBe('');
+    vi.useRealTimers();
+  });
+
+  it('slides the modal down without fading it while dragging down on touch', () => {
+    vi.useFakeTimers();
+    render(
+      <GameTradeModal
+        confirmLabel="매도"
+        currentRankLabel="3위"
+        helperText="테스트"
+        isOpen
+        isSubmitting={false}
+        maxQuantity={200}
+        mode="sell"
+        onChangeQuantity={vi.fn()}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        quantity={100}
+        summaryItems={[{ label: '정산 금액', value: '900P' }]}
+        thumbnailUrl={null}
+        title="테스트 영상"
+        unitPointsLabel="1,000P"
+      />,
+    );
+
+    const header = document.querySelector('.app-shell__modal-header');
+    const modal = document.querySelector('.app-shell__modal');
+
+    expect(header).not.toBeNull();
+    expect(modal).not.toBeNull();
+
+    fireEvent.pointerDown(header as Element, { clientX: 40, clientY: 20, pointerId: 3, pointerType: 'touch' });
+    fireEvent.pointerMove(header as Element, { clientX: 56, clientY: 220, pointerId: 3, pointerType: 'touch' });
+
+    expect((modal as HTMLElement).style.opacity).toBe('');
+    vi.useRealTimers();
+  });
+
+  it('does not close when the modal header is dragged down with a mouse', () => {
     const onClose = vi.fn();
     render(
       <GameTradeModal
@@ -187,6 +341,6 @@ describe('GameTradeModal', () => {
     fireEvent.pointerMove(header as Element, { clientX: 56, clientY: 460, pointerId: 2, pointerType: 'mouse' });
     fireEvent.pointerUp(header as Element, { clientX: 56, clientY: 460, pointerId: 2, pointerType: 'mouse' });
 
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

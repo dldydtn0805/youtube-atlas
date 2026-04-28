@@ -139,11 +139,7 @@ function RankingGamePositionRowComponent({
               <p className="app-shell__game-position-title">{holding.title}</p>
             </button>
           </div>
-          <button
-            className="app-shell__game-position-body-button"
-            onClick={() => onSelectPosition(position)}
-            type="button"
-          >
+          <div className="app-shell__game-position-body-button">
             <p className="app-shell__game-position-channel">{holding.channelTitle}</p>
             <div className="app-shell__game-position-body">
               <p className="app-shell__game-position-meta">
@@ -204,7 +200,7 @@ function RankingGamePositionRowComponent({
                 </div>
               ) : null}
             </div>
-          </button>
+          </div>
         </div>
       </div>
       <div className="app-shell__game-position-side">

@@ -91,25 +91,35 @@ describe('GameTierModal', () => {
   });
 
   it('closes when the modal header is swiped down on touch', () => {
+    vi.useFakeTimers();
     const onClose = vi.fn();
-    render(
-      <GameTierModal
-        highlightsContent={<div>하이라이트 목록</div>}
-        isOpen
-        onClose={onClose}
-        rankingContent={<div>랭킹 목록</div>}
-        tierProgress={tierProgress}
-      />,
-    );
 
-    const header = document.querySelector('.app-shell__modal-header');
+    try {
+      render(
+        <GameTierModal
+          highlightsContent={<div>하이라이트 목록</div>}
+          isOpen
+          onClose={onClose}
+          rankingContent={<div>랭킹 목록</div>}
+          tierProgress={tierProgress}
+        />,
+      );
 
-    expect(header).not.toBeNull();
+      const header = document.querySelector('.app-shell__modal-header');
 
-    fireEvent.pointerDown(header as Element, { clientX: 64, clientY: 20, pointerId: 4, pointerType: 'touch' });
-    fireEvent.pointerMove(header as Element, { clientX: 78, clientY: 460, pointerId: 4, pointerType: 'touch' });
-    fireEvent.pointerUp(header as Element, { clientX: 78, clientY: 460, pointerId: 4, pointerType: 'touch' });
+      expect(header).not.toBeNull();
 
-    expect(onClose).toHaveBeenCalledTimes(1);
+      fireEvent.pointerDown(header as Element, { clientX: 64, clientY: 20, pointerId: 4, pointerType: 'touch' });
+      fireEvent.pointerMove(header as Element, { clientX: 78, clientY: 460, pointerId: 4, pointerType: 'touch' });
+      fireEvent.pointerUp(header as Element, { clientX: 78, clientY: 460, pointerId: 4, pointerType: 'touch' });
+
+      expect(onClose).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(220);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

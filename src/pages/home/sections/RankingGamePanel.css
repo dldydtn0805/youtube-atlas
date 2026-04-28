@@ -1232,9 +1232,9 @@
 
 .app-shell__game-position-thumb-button,
 .app-shell__game-position-title-button,
-.app-shell__game-position-body-button,
 .app-shell__game-history-thumb-button,
 .app-shell__game-history-title-button,
+.app-shell__game-position-body-button,
 .app-shell__game-history-body-button {
   background: transparent;
   border: 0;
@@ -1247,18 +1247,16 @@
 }
 
 .app-shell__game-position-thumb-button,
-.app-shell__game-position-body-button,
 .app-shell__game-history-thumb-button,
-.app-shell__game-history-body-button {
+.app-shell__game-history-title-button,
+.app-shell__game-position-title-button {
   cursor: pointer;
 }
 
 .app-shell__game-position-thumb-button:focus-visible,
 .app-shell__game-position-title-button:focus-visible,
-.app-shell__game-position-body-button:focus-visible,
 .app-shell__game-history-thumb-button:focus-visible,
-.app-shell__game-history-title-button:focus-visible,
-.app-shell__game-history-body-button:focus-visible {
+.app-shell__game-history-title-button:focus-visible {
   outline: none;
 }
 
@@ -1709,14 +1707,12 @@
 }
 
 .app-shell__game-history-body-button {
-  cursor: pointer;
   display: grid;
   gap: 8px;
   min-width: 0;
 }
 
-.app-shell__game-history-thumb-button:disabled,
-.app-shell__game-history-body-button:disabled {
+.app-shell__game-history-thumb-button:disabled {
   cursor: default;
 }
 
