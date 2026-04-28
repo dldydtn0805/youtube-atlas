@@ -9,7 +9,8 @@ import { GameSelectedVideoPriceSummary, SelectedVideoGameActionsBundle } from '.
 import GameTierModal, { type TierModalTab } from './sections/GameTierModal';
 import GameHighlightsTab from './sections/GameHighlightsTab';
 import GamePanelModal from './sections/GamePanelModal';
-import { ChartViewModal, RegionFilterModal } from './sections/FilterPanels';
+import ChartViewModal from './sections/ChartViewModal';
+import { RegionFilterModal } from './sections/FilterPanels';
 import GamePanelSection from './sections/GamePanelSection';
 import GameRankHistoryModal from './sections/GameRankHistoryModal';
 import GameSellPreviewDetail from './sections/GameSellPreviewDetail';
@@ -268,6 +269,8 @@ function HomePage() {
   const [selectedChartView, setSelectedChartView] = useState<ChartViewMode>('popular');
   const [chartSortMode, setChartSortMode] = useState<ChartSortMode>('popular-desc');
   const [sortPrefetchStatus, setSortPrefetchStatus] = useState<string | null>(null);
+  const openChartViewModal = useCallback(() => setIsChartViewModalOpen(true), []);
+  const closeChartViewModal = useCallback(() => setIsChartViewModalOpen(false), []);
   const chartSortOptions = useMemo(
     () =>
       authStatus === 'authenticated'
@@ -1019,12 +1022,6 @@ function HomePage() {
     setIsRegionModalOpen(false);
   }
 
-  function handleSelectChartViewFromModal(viewId: string, triggerElement?: HTMLButtonElement) {
-    handleSelectChartView(viewId, triggerElement);
-    handleSelectTopVideoForChartView(viewId as ChartViewMode);
-    setIsChartViewModalOpen(false);
-  }
-
   const openGameHoldings = useMemo(
     () => buildOpenGameHoldings(openGamePositions, getRemainingHoldSeconds),
     [getRemainingHoldSeconds, openGamePositions],
@@ -1398,6 +1395,13 @@ function HomePage() {
       sortedRealtimeSurgingSection,
       sortedFilteredMusicChartSection,
     ],
+  );
+  const handleSelectChartViewFromModal = useCallback(
+    (viewId: string, triggerElement?: HTMLButtonElement) => {
+      handleSelectChartView(viewId, triggerElement);
+      handleSelectTopVideoForChartView(viewId as ChartViewMode);
+    },
+    [handleSelectChartView, handleSelectTopVideoForChartView],
   );
 
   const handlePlayNextVideoWithPreview = useCallback(() => {
@@ -2054,7 +2058,7 @@ function HomePage() {
             onOpenRegionModal: () => setIsRegionModalOpen(true),
             onOpenTierModal: isMobileLayout ? openTierModal : undefined,
             onOpenWalletModal: isMobileLayout ? () => setIsWalletModalOpen(true) : undefined,
-            onOpenViewModal: () => setIsChartViewModalOpen(true),
+            onOpenViewModal: openChartViewModal,
             onPlaybackRestoreApplied: handlePlaybackRestoreApplied,
             onPlaybackStateChange: handlePlaybackStateChange,
             onPreviousVideo: handlePlayPreviousVideoWithPreview,
@@ -2189,7 +2193,7 @@ function HomePage() {
       </GamePanelModal>
       <ChartViewModal
         isOpen={isChartViewModalOpen}
-        onClose={() => setIsChartViewModalOpen(false)}
+        onClose={closeChartViewModal}
         onSelectView={handleSelectChartViewFromModal}
         selectedViewId={effectiveChartView}
         viewOptions={chartViewOptions}

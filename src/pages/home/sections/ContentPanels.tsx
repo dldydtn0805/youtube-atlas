@@ -6,8 +6,9 @@ import type { FavoriteStreamer } from '../../../features/favorites/types';
 import type { GameMarketVideo } from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features/youtube/types';
-import { QuickViewButtons, type ViewOption } from './FilterPanels';
 import type { ChartSortMode } from '../types';
+import QuickViewButtons from './QuickViewButtons';
+import type { ViewOption } from './filterPanelTypes';
 import './ContentPanels.css';
 
 interface ChartSortOption {

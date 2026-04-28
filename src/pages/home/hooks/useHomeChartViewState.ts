@@ -158,7 +158,7 @@ export default function useHomeChartViewState({
           disabled: !musicChartSection,
         },
       ] satisfies ChartViewOption[],
-    [authStatus, buyableChartSection, isTrendRegionSelected, musicChartSection],
+    [authStatus, isTrendRegionSelected, musicChartSection],
   );
 
   useEffect(() => {
@@ -426,7 +426,6 @@ export default function useHomeChartViewState({
     }),
     [
       buyableChartSection?.categoryId,
-      buyableChartEmptyMessage,
       buyableFavoriteChartSection?.categoryId,
       displaySelectedPlaybackSection?.categoryId,
       favoriteFeaturedSection,
