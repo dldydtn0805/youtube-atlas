@@ -6,6 +6,8 @@ const TOUCH_MAX_SWIPE_CLOSE_THRESHOLD = 252;
 const MAX_DRAG_OFFSET_RATIO = 0.6;
 const MIN_DRAG_OFFSET = 216;
 const INTERACTIVE_TARGET_SELECTOR = 'button, a, input, textarea, select, label';
+const BACKDROP_FADE_START_PROGRESS = 0.08;
+const MIN_BACKDROP_OPACITY = 0.18;
 const TOUCH_VISIBLE_DRAG_CLOSE_THRESHOLD = 188;
 const CLOSE_ANIMATION_DURATION_MS = 220;
 const MIN_CLOSE_ANIMATION_OFFSET = 360;
@@ -21,6 +23,14 @@ function isInteractiveTarget(target: EventTarget | null) {
 
 function clampDragOffset(offset: number) {
   return Math.max(0, offset);
+}
+
+function getFadeProgress(progress: number, fadeStartProgress: number) {
+  if (progress <= fadeStartProgress) {
+    return 0;
+  }
+
+  return Math.min((progress - fadeStartProgress) / (1 - fadeStartProgress), 1);
 }
 
 export default function useHeaderSwipeToClose({ disabled = false, onClose }: HeaderSwipeToCloseOptions) {
@@ -250,10 +260,19 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
   );
 
   const backdropStyle = useMemo<CSSProperties>(
-    () => ({
-      transition: isDragging ? 'none' : `opacity ${CLOSE_ANIMATION_DURATION_MS}ms ease-out`,
-    }),
-    [isDragging],
+    () => {
+      const dragProgress =
+        maxDragOffsetRef.current > 0 ? Math.min(Math.max(dragOffset / maxDragOffsetRef.current, 0), 1) : 0;
+      const fadeProgress = getFadeProgress(dragProgress, BACKDROP_FADE_START_PROGRESS);
+      const easedFadeProgress = fadeProgress ** 2;
+
+      return {
+        opacity: dragOffset > 0 ? Math.max(MIN_BACKDROP_OPACITY, 1 - easedFadeProgress * 0.82) : undefined,
+        transition: isDragging ? 'none' : `opacity ${CLOSE_ANIMATION_DURATION_MS}ms ease-out`,
+        willChange: isDragging || isClosing ? 'opacity' : undefined,
+      };
+    },
+    [dragOffset, isClosing, isDragging],
   );
 
   return {
