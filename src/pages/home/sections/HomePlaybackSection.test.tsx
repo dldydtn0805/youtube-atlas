@@ -14,30 +14,46 @@ vi.mock('../../../components/CommentSection/CommentSection', () => ({
 vi.mock('./PlayerStage', () => ({
   PlayerStageHeader: () => <div data-testid="player-stage-header">Now Playing</div>,
   PlayerViewportContent: ({
+    isVideoPlayerDocked,
     playerViewportRef,
+    videoPlayerDockStyle,
   }: {
+    isVideoPlayerDocked?: boolean;
     playerViewportRef: React.RefObject<HTMLDivElement | null>;
-  }) => <div ref={playerViewportRef} data-testid="player-viewport" />,
+    videoPlayerDockStyle?: React.CSSProperties;
+  }) => (
+    <div ref={playerViewportRef} data-testid="player-viewport">
+      {isVideoPlayerDocked ? <div data-testid="video-player-dock-style" style={videoPlayerDockStyle} /> : null}
+    </div>
+  ),
   default: ({
     communityContent,
     isVideoPlayerDocked,
     playerSectionRef,
+    playerStageRef,
     renderViewportInline,
+    videoPlayerDockStyle,
     playerViewportRef,
     topContent,
   }: {
     communityContent?: React.ReactNode;
     isVideoPlayerDocked?: boolean;
     playerSectionRef: React.RefObject<HTMLElement | null>;
+    playerStageRef: React.RefObject<HTMLDivElement | null>;
     renderViewportInline?: boolean;
+    videoPlayerDockStyle?: React.CSSProperties;
     playerViewportRef: React.RefObject<HTMLDivElement | null>;
     topContent?: React.ReactNode;
   }) => (
-    <div data-testid="player-stage">
+    <div ref={playerStageRef} data-testid="player-stage">
       <div data-testid="player-dock-state">{isVideoPlayerDocked ? 'docked' : 'undocked'}</div>
       {topContent}
       <section ref={playerSectionRef} data-testid="player-section" />
-      {renderViewportInline !== false ? <div ref={playerViewportRef} data-testid="player-viewport" /> : null}
+      {renderViewportInline !== false ? (
+        <div ref={playerViewportRef} data-testid="player-viewport">
+          {isVideoPlayerDocked ? <div data-testid="video-player-dock-style" style={videoPlayerDockStyle} /> : null}
+        </div>
+      ) : null}
       {communityContent}
     </div>
   ),
@@ -669,6 +685,20 @@ describe('HomePlaybackSection', () => {
     flushAnimationFrames();
 
     await expandCollapsedStickyPanel();
+    vi.spyOn(screen.getByText('Dock Slot'), 'getBoundingClientRect').mockImplementation(
+      () =>
+        ({
+          bottom: 460,
+          height: 90,
+          left: 24,
+          right: 184,
+          top: 370,
+          width: 160,
+          x: 24,
+          y: 370,
+          toJSON: () => ({}),
+        }) as DOMRect,
+    );
 
     expect(screen.getByTestId('player-dock-state')).toHaveTextContent('undocked');
 
@@ -692,6 +722,35 @@ describe('HomePlaybackSection', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('player-dock-state')).toHaveTextContent('docked');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('video-player-dock-style')).toHaveStyle({
+        height: '90px',
+        left: '24px',
+        top: '370px',
+        transform: 'translateY(0)',
+        transition: 'none',
+        width: '160px',
+      });
+    });
+
+    flushAnimationFrames();
+    setWindowScrollY(120);
+    window.dispatchEvent(new Event('scroll'));
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-selected-video-slot')).toHaveAttribute(
+        'data-scroll-hidden',
+        'true',
+      );
+    });
+
+    expect(screen.getByTestId('video-player-dock-style')).toHaveStyle({
+      opacity: '0',
+      pointerEvents: 'none',
+      transform: 'translateY(calc(100% + 20px))',
     });
   });
 
@@ -807,6 +866,189 @@ describe('HomePlaybackSection', () => {
 
     await waitFor(() => {
       expect(stickySlot).toHaveAttribute('data-scroll-hidden', 'false');
+    });
+  });
+
+  it('hides the desktop selected video panel while scrolling down and restores it when scrolling up', async () => {
+    render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={
+          {
+            isCinematicModeActive: false,
+            isMobileLayout: false,
+            playerSectionRef: createRef<HTMLElement>(),
+            playerStageRef: createRef<HTMLDivElement>(),
+            playerViewportRef: createRef<HTMLDivElement>(),
+          } as never
+        }
+        stickySelectedVideoContent={<div>Selected video actions</div>}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-selected-video-slot')).toHaveAttribute(
+        'data-scroll-hidden',
+        'false',
+      );
+    });
+
+    const stickySlot = document.querySelector('.app-shell__sticky-selected-video-slot');
+
+    setWindowScrollY(120);
+    window.dispatchEvent(new Event('scroll'));
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(stickySlot).toHaveAttribute('data-scroll-hidden', 'true');
+    });
+
+    setWindowScrollY(40);
+    window.dispatchEvent(new Event('scroll'));
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(stickySlot).toHaveAttribute('data-scroll-hidden', 'false');
+    });
+  });
+
+  it('hides the cinematic selected video panel while scrolling down and restores it when scrolling up', async () => {
+    render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={
+          {
+            isCinematicModeActive: true,
+            isMobileLayout: false,
+            playerSectionRef: createRef<HTMLElement>(),
+            playerStageRef: createRef<HTMLDivElement>(),
+            playerViewportRef: createRef<HTMLDivElement>(),
+          } as never
+        }
+        stickySelectedVideoContent={<div>Selected video actions</div>}
+      />,
+    );
+
+    const playerViewport = screen.getByTestId('player-viewport');
+
+    vi.spyOn(playerViewport, 'getBoundingClientRect').mockImplementation(
+      () =>
+        ({
+          bottom: 0,
+          height: 0,
+          left: 0,
+          right: 0,
+          top: 0,
+          width: 0,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        }) as DOMRect,
+    );
+
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-selected-video-slot')).toHaveAttribute(
+        'data-scroll-hidden',
+        'false',
+      );
+    });
+
+    const playerStage = screen.getByTestId('player-stage');
+    const stickySlot = document.querySelector('.app-shell__sticky-selected-video-slot');
+
+    playerStage.scrollTop = 120;
+    fireEvent.scroll(playerStage);
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(stickySlot).toHaveAttribute('data-scroll-hidden', 'true');
+    });
+
+    playerStage.scrollTop = 40;
+    fireEvent.scroll(playerStage);
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(stickySlot).toHaveAttribute('data-scroll-hidden', 'false');
+    });
+  });
+
+  it('keeps the cinematic selected video panel hidden when it first appears during downward scroll', async () => {
+    render(
+      <HomePlaybackSection
+        chartPanelProps={{} as never}
+        communityPanelProps={{} as never}
+        filterBarProps={{} as never}
+        playerStageProps={
+          {
+            isCinematicModeActive: true,
+            isMobileLayout: false,
+            playerSectionRef: createRef<HTMLElement>(),
+            playerStageRef: createRef<HTMLDivElement>(),
+            playerViewportRef: createRef<HTMLDivElement>(),
+          } as never
+        }
+        stickySelectedVideoContent={<div>Selected video actions</div>}
+      />,
+    );
+
+    const playerViewport = screen.getByTestId('player-viewport');
+    const getPlayerViewportRect = vi.spyOn(playerViewport, 'getBoundingClientRect');
+
+    getPlayerViewportRect.mockImplementation(
+      () =>
+        ({
+          bottom: 320,
+          height: 180,
+          left: 0,
+          right: 320,
+          top: 140,
+          width: 320,
+          x: 0,
+          y: 140,
+          toJSON: () => ({}),
+        }) as DOMRect,
+    );
+
+    flushAnimationFrames();
+
+    expect(document.querySelector('.app-shell__sticky-selected-video-slot')).toBeNull();
+
+    const playerStage = screen.getByTestId('player-stage');
+
+    playerStage.scrollTop = 120;
+    fireEvent.scroll(playerStage);
+    flushAnimationFrames();
+
+    getPlayerViewportRect.mockImplementation(
+      () =>
+        ({
+          bottom: 0,
+          height: 180,
+          left: 0,
+          right: 320,
+          top: -180,
+          width: 320,
+          x: 0,
+          y: -180,
+          toJSON: () => ({}),
+        }) as DOMRect,
+    );
+
+    fireEvent.scroll(playerStage);
+    flushAnimationFrames();
+
+    await waitFor(() => {
+      expect(document.querySelector('.app-shell__sticky-selected-video-slot')).toHaveAttribute(
+        'data-scroll-hidden',
+        'true',
+      );
     });
   });
 

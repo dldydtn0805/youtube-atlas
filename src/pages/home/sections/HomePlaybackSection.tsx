@@ -1,4 +1,14 @@
-import { useEffect, useRef, useState, type CSSProperties, type ComponentProps, type ReactNode, type RefObject } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ComponentProps,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { createPortal } from 'react-dom';
 import CommentSection from '../../../components/CommentSection/CommentSection';
 import { ChartPanel } from './ContentPanels';
@@ -6,8 +16,9 @@ import type { FilterBarProps } from './FilterPanels';
 import PlayerStage, { PlayerStageHeader, PlayerViewportContent } from './PlayerStage';
 import StickySelectedVideoHeaderCopy from './StickySelectedVideoHeaderCopy';
 import StickySelectedVideoControls from './StickySelectedVideoControls';
+import { readTranslateOffset } from './stickyDockGeometry';
 import { getFullscreenElement } from '../utils';
-import useMobileStickyAutoHide from './useMobileStickyAutoHide';
+import useStickyAutoHide from './useStickyAutoHide';
 import './HomePlaybackSection.css';
 
 const STICKY_SELECTED_VIDEO_TOP_OFFSET = 12;
@@ -89,6 +100,7 @@ export default function HomePlaybackSection({
   const [isMobilePlayerStageStickyEnabled, setIsMobilePlayerStageStickyEnabled] = useState(
     getInitialMobilePlayerStageStickyEnabled,
   );
+  const [isDesktopDockTransitionReady, setIsDesktopDockTransitionReady] = useState(false);
   const lastSelectedVideoIdRef = useRef<string | undefined>(playerStageProps.selectedVideoId);
   const desktopPlayerDockSlotRef = useRef<HTMLDivElement | null>(null);
   const [desktopDockStyle, setDesktopDockStyle] = useState<{
@@ -99,14 +111,17 @@ export default function HomePlaybackSection({
     width: number;
   } | null>(null);
   const [mobileStickyBottomOffset, setMobileStickyBottomOffset] = useState(0);
-  const isMobileStickySelectedVideoScrollHidden = useMobileStickyAutoHide(
-    playerStageProps.isMobileLayout &&
-      !playerStageProps.isCinematicModeActive &&
-      Boolean(stickySelectedVideoContent) &&
-      isStickySelectedVideoVisible,
+  const stickySelectedVideoScrollRefs = useMemo(
+    () => [playerStageProps.playerStageRef as RefObject<HTMLElement | null>],
+    [playerStageProps.playerStageRef],
   );
+  const isStickySelectedVideoScrollHidden = useStickyAutoHide(
+    Boolean(stickySelectedVideoContent),
+    stickySelectedVideoScrollRefs,
+  );
+  const hasDesktopDockStyle = Boolean(desktopDockStyle);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!playerStageProps.isCinematicModeActive) {
       setIsStickySelectedVideoVisible(Boolean(stickySelectedVideoContent));
       return;
@@ -387,6 +402,10 @@ export default function HomePlaybackSection({
 
       const dockRect = dockSlot.getBoundingClientRect();
       const viewportRect = playerViewport.getBoundingClientRect();
+      const dockFrame = dockSlot.closest('.app-shell__sticky-selected-video-frame');
+      const dockFrameOffset = dockFrame instanceof HTMLElement
+        ? readTranslateOffset(dockFrame)
+        : { x: 0, y: 0 };
 
       if (dockRect.width <= 0 || dockRect.height <= 0 || viewportRect.height <= 0) {
         setDesktopDockStyle(null);
@@ -397,8 +416,8 @@ export default function HomePlaybackSection({
         const nextStyle = {
           dockHeight: dockRect.height,
           height: viewportRect.height,
-          left: dockRect.left,
-          top: dockRect.top,
+          left: dockRect.left - dockFrameOffset.x,
+          top: dockRect.top - dockFrameOffset.y,
           width: dockRect.width,
         };
 
@@ -426,7 +445,7 @@ export default function HomePlaybackSection({
       animationFrameId = window.requestAnimationFrame(updateDesktopDockStyle);
     };
 
-    scheduleDesktopDockStyleUpdate();
+    syncDesktopDockStyle();
     window.addEventListener('resize', scheduleDesktopDockStyleUpdate);
     scrollTarget.addEventListener('scroll', scheduleDesktopDockStyleUpdate, { passive: true });
 
@@ -447,6 +466,23 @@ export default function HomePlaybackSection({
     playerStageProps.selectedVideoId,
     stickySelectedVideoContent,
   ]);
+
+  useEffect(() => {
+    if (!hasDesktopDockStyle || typeof window === 'undefined') {
+      setIsDesktopDockTransitionReady(false);
+      return;
+    }
+
+    setIsDesktopDockTransitionReady(false);
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      setIsDesktopDockTransitionReady(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [hasDesktopDockStyle]);
 
   const handleScrollToTop = () => {
     if (typeof window === 'undefined') {
@@ -533,7 +569,7 @@ export default function HomePlaybackSection({
       <div
         className="app-shell__sticky-selected-video-slot"
         data-cinematic={playerStageProps.isCinematicModeActive}
-        data-scroll-hidden={isMobileStickySelectedVideoScrollHidden ? 'true' : 'false'}
+        data-scroll-hidden={isStickySelectedVideoScrollHidden ? 'true' : 'false'}
         style={
           playerStageProps.isMobileLayout
             ? ({
@@ -612,12 +648,21 @@ export default function HomePlaybackSection({
     fullscreenElement instanceof HTMLElement
       ? createPortal(stickySelectedVideoSlot, fullscreenElement)
       : stickySelectedVideoSlot;
+  const dockHiddenTransform = playerStageProps.isCinematicModeActive
+    ? 'translateY(calc(-100% - 20px))'
+    : 'translateY(calc(100% + 20px))';
   const videoPlayerDockStyle: CSSProperties | undefined = desktopDockStyle
     ? {
         height: `${desktopDockStyle.dockHeight}px`,
         left: `${desktopDockStyle.left}px`,
+        opacity: isStickySelectedVideoScrollHidden ? 0 : 1,
+        pointerEvents: isStickySelectedVideoScrollHidden ? 'none' : undefined,
         position: 'fixed',
         top: `${desktopDockStyle.top}px`,
+        transform: isStickySelectedVideoScrollHidden ? dockHiddenTransform : 'translateY(0)',
+        transition: isDesktopDockTransitionReady ? 'opacity 160ms ease, transform 180ms ease' : 'none',
+        visibility: isStickySelectedVideoScrollHidden && !isDesktopDockTransitionReady ? 'hidden' : undefined,
+        willChange: 'opacity, transform',
         width: `${desktopDockStyle.width}px`,
       }
     : undefined;
