@@ -164,7 +164,6 @@ export default function useHomeGameTradeActions({
       void onBuySuccess?.();
       setActiveTradeModal(null);
       setBuyQuantity(DEFAULT_GAME_QUANTITY);
-      setGameActionStatus('매수 완료됐어요.');
     } catch (error) {
       if (
         error instanceof ApiRequestError &&
@@ -232,7 +231,6 @@ export default function useHomeGameTradeActions({
       });
       setActiveTradeModal(null);
       setSellQuantity(DEFAULT_GAME_QUANTITY);
-      setGameActionStatus('매도 완료됐어요.');
       void onSellSuccess?.();
     } catch (error) {
       if (

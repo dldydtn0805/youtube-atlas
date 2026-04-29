@@ -262,6 +262,7 @@ function HomePage() {
   const [historyPlaybackVideo, setHistoryPlaybackVideo] = useState<YouTubeVideoItem | null>(null);
   const [historyPlaybackLoadingVideoId, setHistoryPlaybackLoadingVideoId] = useState<string | null>(null);
   const [tradeTargetVideoId, setTradeTargetVideoId] = useState<string | null>(null);
+  const [tradeTargetPositionId, setTradeTargetPositionId] = useState<number | null>(null);
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
   const [tierModalDefaultTab, setTierModalDefaultTab] = useState<TierModalTab>('tier');
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
@@ -894,6 +895,7 @@ function HomePage() {
     }
 
     setTradeTargetVideoId(null);
+    setTradeTargetPositionId(null);
   }, [activeTradeModal]);
 
   useEffect(() => {
@@ -1235,7 +1237,7 @@ function HomePage() {
     openGameHoldings,
     openGamePositions,
     resolvedSelectedVideo: tradeTargetVideo,
-    selectedOpenPositionId: null,
+    selectedOpenPositionId: tradeTargetPositionId,
     selectedCategoryId,
     selectedCategoryLabel: selectedChartViewOption.label,
     selectedCountryName,
@@ -1291,7 +1293,12 @@ function HomePage() {
         : null,
     [openGamePositions, selectedOpenPositionId],
   );
-  const tradeSelectedSellPositionId = isTradeTargetActive ? null : selectedSellPositionId;
+  const tradeTargetSellPositionId =
+    tradeTargetPositionId != null &&
+      openGamePositions.some((position) => position.id === tradeTargetPositionId && position.videoId === tradeTargetVideoId)
+      ? tradeTargetPositionId
+      : null;
+  const tradeSelectedSellPositionId = isTradeTargetActive ? tradeTargetSellPositionId : selectedSellPositionId;
   const canScheduleSellCurrentSelection = tradeSelectedSellPositionId != null;
   const refetchCurrentChartAfterBuy = useCallback(async () => {
     const invalidations: Array<Promise<unknown>> = [];
@@ -1439,7 +1446,6 @@ function HomePage() {
       try {
         await cancelScheduledSellOrderMutation.mutateAsync(orderId);
         await refetchGameTradePanels();
-        setGameActionStatus('예약 취소가 완료됐어요.');
       } catch (error) {
         if (
           error instanceof ApiRequestError &&
@@ -1496,6 +1502,7 @@ function HomePage() {
   const handleOpenVideoCardBuyTradeModal = useCallback(
     (videoId: string) => {
       setTradeTargetVideoId(videoId);
+      setTradeTargetPositionId(null);
       setActiveTradeModal('buy');
     },
     [setActiveTradeModal],
@@ -1503,6 +1510,7 @@ function HomePage() {
   const handleOpenVideoCardSellTradeModal = useCallback(
     (videoId: string) => {
       setTradeTargetVideoId(videoId);
+      setTradeTargetPositionId(null);
       setActiveTradeModal('sell');
     },
     [setActiveTradeModal],
@@ -1774,17 +1782,19 @@ function HomePage() {
   );
   const handleOpenPositionBuyTradeModal = useCallback(
     (position: GamePosition) => {
-      handleSelectGamePositionVideo(position);
-      window.setTimeout(openBuyTradeModal, 0);
+      setTradeTargetVideoId(position.videoId);
+      setTradeTargetPositionId(position.id);
+      setActiveTradeModal('buy');
     },
-    [handleSelectGamePositionVideo, openBuyTradeModal],
+    [setActiveTradeModal],
   );
   const handleOpenPositionSellTradeModal = useCallback(
     (position: GamePosition) => {
-      handleSelectGamePositionVideo(position);
-      window.setTimeout(openSellTradeModal, 0);
+      setTradeTargetVideoId(position.videoId);
+      setTradeTargetPositionId(position.id);
+      setActiveTradeModal('sell');
     },
-    [handleSelectGamePositionVideo, openSellTradeModal],
+    [setActiveTradeModal],
   );
   const handleSelectGameHistoryVideo = useCallback(
     async (position: GamePosition) => {

@@ -306,7 +306,6 @@ export default function useHomeTradeFlow({
       setScheduledSellTargetRank(100);
       setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
       setActiveGameTab('scheduledOrders');
-      setGameActionStatus('매도 예약이 완료됐어요.');
       void onScheduledSellSuccess?.();
     } catch (error) {
       if (
