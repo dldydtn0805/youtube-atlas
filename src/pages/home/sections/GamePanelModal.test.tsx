@@ -17,6 +17,7 @@ describe('GamePanelModal', () => {
       const innerScroll = screen.getByTestId('inner-scroll');
 
       fireEvent.touchStart(innerScroll, { touches: [{ clientX: 40, clientY: 20, identifier: 1 }] });
+      fireEvent.touchMove(innerScroll, { touches: [{ clientX: 42, clientY: 90, identifier: 1 }] });
       fireEvent.touchMove(innerScroll, { touches: [{ clientX: 48, clientY: 450, identifier: 1 }] });
       fireEvent.touchEnd(innerScroll, { changedTouches: [{ clientX: 48, clientY: 450, identifier: 1 }] });
 
@@ -51,6 +52,7 @@ describe('GamePanelModal', () => {
       const inventoryItem = screen.getByTestId('inventory-item');
 
       fireEvent.touchStart(inventoryItem, { touches: [{ clientX: 40, clientY: 20, identifier: 1 }] });
+      fireEvent.touchMove(inventoryItem, { touches: [{ clientX: 42, clientY: 90, identifier: 1 }] });
       fireEvent.touchMove(inventoryItem, { touches: [{ clientX: 48, clientY: 450, identifier: 1 }] });
       fireEvent.touchEnd(inventoryItem, { changedTouches: [{ clientX: 48, clientY: 450, identifier: 1 }] });
 
@@ -87,6 +89,39 @@ describe('GamePanelModal', () => {
       expect(modal).not.toBeNull();
       expect(modal?.style.transform).toBe('');
       expect(onClose).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps the modal still while a body pull passes the close distance', () => {
+    vi.useFakeTimers();
+    const onClose = vi.fn();
+
+    try {
+      render(
+        <GamePanelModal isOpen onClose={onClose}>
+          <button data-testid="inventory-item" type="button">
+            인벤토리 항목
+          </button>
+        </GamePanelModal>,
+      );
+
+      const inventoryItem = screen.getByTestId('inventory-item');
+      const modal = document.querySelector('.app-shell__modal') as HTMLElement | null;
+
+      fireEvent.touchStart(inventoryItem, { touches: [{ clientX: 40, clientY: 20, identifier: 1 }] });
+      fireEvent.touchMove(inventoryItem, { touches: [{ clientX: 42, clientY: 220, identifier: 1 }] });
+      vi.advanceTimersByTime(16);
+
+      expect(modal).not.toBeNull();
+      expect(modal?.style.transform).toBe('');
+      expect(onClose).not.toHaveBeenCalled();
+
+      fireEvent.touchEnd(inventoryItem, { changedTouches: [{ clientX: 42, clientY: 220, identifier: 1 }] });
+      vi.advanceTimersByTime(220);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }

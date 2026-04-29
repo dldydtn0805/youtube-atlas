@@ -199,6 +199,7 @@ describe('GameTradeModal', () => {
       expect(body).not.toBeNull();
 
       fireEvent.touchStart(body as Element, { touches: [{ clientX: 40, clientY: 20, identifier: 1 }] });
+      fireEvent.touchMove(body as Element, { touches: [{ clientX: 42, clientY: 90, identifier: 1 }] });
       fireEvent.touchMove(body as Element, { touches: [{ clientX: 48, clientY: 450, identifier: 1 }] });
       fireEvent.touchEnd(body as Element, { changedTouches: [{ clientX: 48, clientY: 450, identifier: 1 }] });
 
