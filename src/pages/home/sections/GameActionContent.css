@@ -70,7 +70,8 @@
   padding: 0 7px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px),
+  (max-width: 1024px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
   :root[data-mobile-layout='true'] .app-shell__game-selected-summary-line {
     font-size: 0.68rem;
     line-height: 1.35;

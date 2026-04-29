@@ -1100,15 +1100,15 @@
 }
 
 @media (min-width: 769px) {
-  .app-shell__game-tier-ladder {
+  :root:not([data-mobile-layout='true']) .app-shell__game-tier-ladder {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 
-  .app-shell__game-tier-ladder > .app-shell__game-tier-step {
+  :root:not([data-mobile-layout='true']) .app-shell__game-tier-ladder > .app-shell__game-tier-step {
     grid-column: span 3;
   }
 
-  .app-shell__game-tier-ladder > .app-shell__game-tier-step:nth-child(n + 5) {
+  :root:not([data-mobile-layout='true']) .app-shell__game-tier-ladder > .app-shell__game-tier-step:nth-child(n + 5) {
     grid-column: span 4;
   }
 }

@@ -10,10 +10,12 @@ describe('useAppPreferences', () => {
   const originalFullscreenElementDescriptor = Object.getOwnPropertyDescriptor(document, 'fullscreenElement');
 
   let fullscreenElement: Element | null = null;
+  let primaryPointer: 'coarse' | 'fine' = 'fine';
 
   beforeEach(() => {
     window.localStorage.clear();
     fullscreenElement = null;
+    primaryPointer = 'fine';
 
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,
@@ -35,13 +37,32 @@ describe('useAppPreferences', () => {
     });
 
     window.matchMedia = vi.fn().mockImplementation((query: string) => {
-      const maxWidthMatch = query.match(/max-width:\s*(\d+)px/);
-      const minHeightMatch = query.match(/min-height:\s*(\d+)px/);
-      const isViewportQuery = Boolean(maxWidthMatch || minHeightMatch);
-      const matches = isViewportQuery
-        ? (maxWidthMatch ? window.innerWidth <= Number(maxWidthMatch[1]) : true) &&
-          (minHeightMatch ? window.innerHeight >= Number(minHeightMatch[1]) : true)
-        : false;
+      const matches = query.split(',').some((mediaPart) => {
+        const maxWidthMatch = mediaPart.match(/max-width:\s*(\d+)px/);
+        const minHeightMatch = mediaPart.match(/min-height:\s*(\d+)px/);
+        const maxHeightMatch = mediaPart.match(/max-height:\s*(\d+)px/);
+        const isLandscapeQuery = mediaPart.includes('orientation: landscape');
+        const isPointerCoarseQuery = mediaPart.includes('pointer: coarse');
+        const isViewportQuery = Boolean(
+          maxWidthMatch ||
+          minHeightMatch ||
+          maxHeightMatch ||
+          isLandscapeQuery ||
+          isPointerCoarseQuery
+        );
+
+        if (!isViewportQuery) {
+          return false;
+        }
+
+        return (
+          (maxWidthMatch ? window.innerWidth <= Number(maxWidthMatch[1]) : true) &&
+          (minHeightMatch ? window.innerHeight >= Number(minHeightMatch[1]) : true) &&
+          (maxHeightMatch ? window.innerHeight <= Number(maxHeightMatch[1]) : true) &&
+          (isLandscapeQuery ? window.innerWidth > window.innerHeight : true) &&
+          (isPointerCoarseQuery ? primaryPointer === 'coarse' : true)
+        );
+      });
 
       return {
         addEventListener: vi.fn(),
@@ -157,7 +178,28 @@ describe('useAppPreferences', () => {
     expect(window.localStorage.getItem('youtube-atlas-theme-mode')).toBe('dark');
   });
 
-  it('does not enable mobile layout when the viewport height is too short', () => {
+  it('keeps mobile layout on coarse mobile landscape viewports', () => {
+    primaryPointer = 'coarse';
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 932,
+      writable: true,
+    });
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      value: 430,
+      writable: true,
+    });
+
+    const playerSectionRef = createRef<HTMLElement>();
+    const playerStageRef = createRef<HTMLDivElement>();
+
+    const { result } = renderHook(() => useAppPreferences({ playerSectionRef, playerStageRef }));
+
+    expect(result.current.isMobileLayout).toBe(true);
+  });
+
+  it('does not enable mobile layout when a non-touch viewport height is too short', () => {
     Object.defineProperty(window, 'innerHeight', {
       configurable: true,
       value: 420,

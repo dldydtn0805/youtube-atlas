@@ -275,7 +275,8 @@
   transform: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px),
+  (max-width: 1024px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
   :root[data-mobile-layout='true'] .video-player__frame {
     border: 0;
     border-radius: 20px;

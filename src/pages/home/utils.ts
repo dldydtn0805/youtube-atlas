@@ -12,14 +12,21 @@ import type {
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../features/youtube/types';
 import type { ChartSortMode } from './types';
 
+export {
+  MOBILE_BREAKPOINT,
+  MOBILE_LANDSCAPE_MAX_HEIGHT,
+  MOBILE_LANDSCAPE_MAX_WIDTH,
+  MOBILE_LAYOUT_MEDIA_QUERY,
+  MOBILE_MIN_HEIGHT,
+  getInitialIsMobileLayout,
+} from './viewport';
+
 export const DEFAULT_REGION_CODE = 'US';
 export const DEFAULT_CATEGORY_ID = ALL_VIDEO_CATEGORY_ID;
 export const GAME_PORTFOLIO_QUEUE_ID = 'game-portfolio';
 export const GAME_HIGHLIGHTS_QUEUE_ID = 'game-highlights';
 export const GAME_LEADERBOARD_HIGHLIGHTS_QUEUE_ID = 'game-leaderboard-highlights';
 export const SCHEDULED_SELL_ORDERS_QUEUE_ID = 'scheduled-sell-orders';
-export const MOBILE_BREAKPOINT = 768;
-export const MOBILE_MIN_HEIGHT = 500;
 export const NEW_CHART_ENTRIES_QUEUE_ID = 'new-chart-entries';
 export const REALTIME_SURGING_QUEUE_ID = 'realtime-surging';
 export const TOP_RANK_RISERS_QUEUE_ID = 'top-rank-risers';
@@ -104,14 +111,6 @@ export function getInitialThemeMode(): ThemeMode {
   }
 
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
-export function getInitialIsMobileLayout() {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  return window.innerWidth <= MOBILE_BREAKPOINT && window.innerHeight >= MOBILE_MIN_HEIGHT;
 }
 
 type FullscreenCapableElement = HTMLElement & {

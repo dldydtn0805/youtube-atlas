@@ -64,7 +64,8 @@
   line-height: 1.4;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px),
+  (max-width: 1024px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
   :root[data-mobile-layout='true'] .app-shell__game-intro-list {
     gap: 12px;
     padding-left: 18px;

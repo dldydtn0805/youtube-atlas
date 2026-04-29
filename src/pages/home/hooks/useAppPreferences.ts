@@ -1,11 +1,12 @@
 import { useEffect, useState, type RefObject } from 'react';
 import {
-  MOBILE_BREAKPOINT,
-  MOBILE_MIN_HEIGHT,
+  MOBILE_LAYOUT_MEDIA_QUERY,
+  getInitialIsMobileLayout,
+} from '../viewport';
+import {
   exitElementFullscreen,
   getFullscreenElement,
   getInitialCinematicMode,
-  getInitialIsMobileLayout,
   getInitialRegionCode,
   getInitialThemeMode,
   persistCinematicMode,
@@ -36,9 +37,7 @@ function useAppPreferences({ playerSectionRef, playerStageRef }: UseAppPreferenc
       return;
     }
 
-    const mediaQuery = window.matchMedia(
-      `(max-width: ${MOBILE_BREAKPOINT}px) and (min-height: ${MOBILE_MIN_HEIGHT}px)`,
-    );
+    const mediaQuery = window.matchMedia(MOBILE_LAYOUT_MEDIA_QUERY);
     const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
       setIsMobileLayout(event.matches);
     };

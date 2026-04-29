@@ -64,7 +64,8 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px),
+  (max-width: 1024px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
   .app-shell__modal--achievement-title {
     max-height: calc(100dvh - 24px);
   }

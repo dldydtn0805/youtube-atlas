@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { VideoTrendSignal } from '../../../features/trending/types';
+import { MOBILE_LAYOUT_MEDIA_QUERY } from '../viewport';
 import { getFullscreenElement } from '../utils';
 
 interface TrendTickerProps {
@@ -15,7 +16,6 @@ const DROPDOWN_GAP_PX = 10;
 const DROPDOWN_WIDTH_PX = 420;
 const TICKER_ITEM_HEIGHT_REM = 1.4;
 const VIEWPORT_MARGIN_PX = 16;
-const MOBILE_BREAKPOINT_PX = 768;
 const MOBILE_DROPDOWN_MAX_HEIGHT_RATIO = 0.6;
 
 function formatTickerDelta(signal: VideoTrendSignal) {
@@ -121,7 +121,8 @@ export default function TrendTicker({
         : Math.max(VIEWPORT_MARGIN_PX, buttonRect.top - estimatedHeight - DROPDOWN_GAP_PX);
       const availableHeight = canOpenBelow ? availableBelow : availableAbove;
       const mobileMaxHeight = Math.floor(window.innerHeight * MOBILE_DROPDOWN_MAX_HEIGHT_RATIO);
-      const maxHeight = window.innerWidth <= MOBILE_BREAKPOINT_PX
+      const isMobileViewport = window.matchMedia(MOBILE_LAYOUT_MEDIA_QUERY).matches;
+      const maxHeight = isMobileViewport
         ? Math.min(availableHeight, mobileMaxHeight)
         : availableHeight;
 
