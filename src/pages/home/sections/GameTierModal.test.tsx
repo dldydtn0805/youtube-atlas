@@ -3,6 +3,36 @@ import { describe, expect, it, vi } from 'vitest';
 import type { GameTierProgress } from '../../../features/game/types';
 import GameTierModal from './GameTierModal';
 
+const tiers: GameTierProgress['tiers'] = [
+  {
+    badgeCode: 'BRONZE',
+    displayName: '브론즈',
+    inventorySlots: 5,
+    minScore: 0,
+    profileThemeCode: 'BRONZE',
+    tierCode: 'BRONZE',
+    titleCode: 'BRONZE',
+  },
+  {
+    badgeCode: 'SILVER',
+    displayName: '실버',
+    inventorySlots: 7,
+    minScore: 5000,
+    profileThemeCode: 'SILVER',
+    tierCode: 'SILVER',
+    titleCode: 'SILVER',
+  },
+  {
+    badgeCode: 'GOLD',
+    displayName: '골드',
+    inventorySlots: 9,
+    minScore: 15000,
+    profileThemeCode: 'GOLD',
+    tierCode: 'GOLD',
+    titleCode: 'GOLD',
+  },
+];
+
 const tierProgress: GameTierProgress = {
   currentTier: {
     badgeCode: 'BRONZE',
@@ -18,7 +48,7 @@ const tierProgress: GameTierProgress = {
   regionCode: 'KR',
   seasonId: 1,
   seasonName: '테스트 시즌',
-  tiers: [],
+  tiers,
 };
 
 describe('GameTierModal', () => {
@@ -27,6 +57,15 @@ describe('GameTierModal', () => {
 
     expect(screen.getAllByRole('status').length).toBeGreaterThan(0);
     expect(screen.getAllByText('티어 카드 불러오는 중').length).toBeGreaterThan(0);
+  });
+
+  it('does not force carousel slides to zero width before measurement', () => {
+    render(<GameTierModal isOpen onClose={() => undefined} tierProgress={tierProgress} />);
+
+    const track = document.querySelector<HTMLElement>('.app-shell__tier-modal-track');
+
+    expect(track).not.toBeNull();
+    expect(track?.style.getPropertyValue('--tier-modal-slide-width')).toBe('');
   });
 
   it('shows highlight tier guidance in the criteria tab', () => {
@@ -38,7 +77,13 @@ describe('GameTierModal', () => {
     fireEvent.click(screen.getByRole('tab', { name: '기준' }));
 
     expect(screen.getByRole('tab', { name: '기준' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getAllByText('하이라이트 티어 기준').length).toBeGreaterThan(0);
+    expect(screen.queryByText('하이라이트 티어 기준')).not.toBeInTheDocument();
+    expect(screen.getByText('티어별 점수 기준은 이렇습니다')).toBeInTheDocument();
+    expect(
+      Array.from(document.querySelectorAll('.app-shell__tier-guide-copy')).some((element) => (
+        element.textContent?.includes('실버 5,000점 이상')
+      )),
+    ).toBe(true);
     expect(screen.getAllByText('하이라이트 점수로 티어가 정해집니다').length).toBeGreaterThan(0);
   });
 

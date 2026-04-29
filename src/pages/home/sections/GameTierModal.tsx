@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -70,14 +71,14 @@ export default function GameTierModal({
 
   const tabPanels = useMemo<Record<TierModalTab, ReactNode>>(
     () => ({
-      criteria: <GameTierCriteriaPanel />,
+      criteria: <GameTierCriteriaPanel tierProgress={tierProgress} />,
       highlights: highlightsContent ?? (
         <p className="app-shell__game-empty app-shell__tier-modal-empty-state">하이라이트가 없습니다.</p>
       ),
       ranking: rankingContent ?? <p className="app-shell__game-empty">랭킹 정보를 불러올 수 없습니다.</p>,
       tier: tierPanelContent,
     }),
-    [highlightsContent, rankingContent, tierPanelContent],
+    [highlightsContent, rankingContent, tierPanelContent, tierProgress],
   );
 
   useEffect(() => {
@@ -89,22 +90,52 @@ export default function GameTierModal({
     }
   }, [defaultTab, isOpen]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const viewport = viewportRef.current;
 
-    if (!viewport || typeof window === 'undefined') {
+    if (!isOpen || !viewport || typeof window === 'undefined') {
       return;
     }
 
+    let animationFrameId: number | null = null;
+
     const syncViewportWidth = () => {
-      setViewportWidth(viewport.clientWidth);
+      const nextViewportWidth = viewport.clientWidth;
+
+      if (nextViewportWidth > 0) {
+        setViewportWidth((currentViewportWidth) => (
+          currentViewportWidth === nextViewportWidth ? currentViewportWidth : nextViewportWidth
+        ));
+      }
     };
 
+    const scheduleViewportWidthSync = () => {
+      if (animationFrameId !== null) {
+        return;
+      }
+
+      animationFrameId = window.requestAnimationFrame(() => {
+        animationFrameId = null;
+        syncViewportWidth();
+      });
+    };
+
+    const resizeObserver = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(scheduleViewportWidthSync);
+
     syncViewportWidth();
-    window.addEventListener('resize', syncViewportWidth);
+    scheduleViewportWidthSync();
+    resizeObserver?.observe(viewport);
+    window.addEventListener('resize', scheduleViewportWidthSync);
 
     return () => {
-      window.removeEventListener('resize', syncViewportWidth);
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', scheduleViewportWidthSync);
     };
   }, [isOpen]);
 

@@ -1,15 +1,14 @@
 import GameTierGuide from './GameTierGuide';
+import type { GameTierProgress } from '../../../features/game/types';
 
-export default function GameTierCriteriaPanel() {
+interface GameTierCriteriaPanelProps {
+  tierProgress?: GameTierProgress;
+}
+
+export default function GameTierCriteriaPanel({ tierProgress }: GameTierCriteriaPanelProps) {
   return (
     <div className="app-shell__modal-fields">
-      <section className="app-shell__modal-field">
-        <div className="app-shell__section-heading">
-          <p className="app-shell__section-eyebrow">티어 설명</p>
-          <h3 className="app-shell__modal-field-title">하이라이트 티어 기준</h3>
-        </div>
-        <GameTierGuide />
-      </section>
+      <GameTierGuide tiers={tierProgress?.tiers} />
     </div>
   );
 }

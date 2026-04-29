@@ -63,7 +63,7 @@ const GameTierModalBody = memo(function GameTierModalBody({
           style={{
             '--tier-modal-carousel-gap': `${TIER_MODAL_CAROUSEL_GAP}px`,
             '--tier-modal-carousel-side-padding': `${TIER_MODAL_CAROUSEL_SIDE_PADDING}px`,
-            '--tier-modal-slide-width': `${slideWidth}px`,
+            ...(slideWidth > 0 ? { '--tier-modal-slide-width': `${slideWidth}px` } : {}),
             transform: `translate3d(${trackTranslateX}px, 0, 0)`,
           } as CSSProperties}
         >

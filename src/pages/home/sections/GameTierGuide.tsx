@@ -1,6 +1,7 @@
 import './GameTierGuide.css';
 import BoldNumberText from './BoldNumberText';
 import { strategyBaseScoreCopy, strategyTagCriteriaCopy } from './gameTierGuideContent';
+import type { GameTier } from '../../../features/game/types';
 
 const tierGuideItems = [
   {
@@ -29,11 +30,36 @@ const tierGuideItems = [
   },
 ];
 
-export default function GameTierGuide() {
+function formatScore(score: number) {
+  return `${score.toLocaleString('ko-KR')}점`;
+}
+
+function getTierThresholdCopy(tiers: GameTier[]) {
+  return [...tiers]
+    .sort((left, right) => left.minScore - right.minScore)
+    .map((tier) => `${tier.displayName} ${formatScore(tier.minScore)} 이상`)
+    .join(', ');
+}
+
+interface GameTierGuideProps {
+  tiers?: GameTier[];
+}
+
+export default function GameTierGuide({ tiers = [] }: GameTierGuideProps) {
+  const guideItems = tiers.length > 0
+    ? [
+      ...tierGuideItems,
+      {
+        title: '티어별 점수 기준은 이렇습니다',
+        copy: `기준은 ${getTierThresholdCopy(tiers)}입니다.`,
+      },
+    ]
+    : tierGuideItems;
+
   return (
     <div className="app-shell__tier-guide" aria-label="하이라이트 티어 설명">
       <ol className="app-shell__tier-guide-list">
-        {tierGuideItems.map((item) => (
+        {guideItems.map((item) => (
           <li key={item.title} className="app-shell__tier-guide-item">
             <strong className="app-shell__tier-guide-title">{item.title}</strong>
             <p className="app-shell__tier-guide-copy">
