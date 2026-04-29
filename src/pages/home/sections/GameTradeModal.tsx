@@ -65,6 +65,13 @@ export function getGameTradeQuickActions(maxQuantity: number): GameTradeQuickAct
 
   [
     {
+      label: '10%',
+      quantity: Math.max(
+        GAME_ORDER_QUANTITY_STEP,
+        Math.ceil(normalizedMaxQuantity * 0.1 / GAME_ORDER_QUANTITY_STEP) * GAME_ORDER_QUANTITY_STEP,
+      ),
+    },
+    {
       label: '25%',
       quantity: Math.max(
         GAME_ORDER_QUANTITY_STEP,

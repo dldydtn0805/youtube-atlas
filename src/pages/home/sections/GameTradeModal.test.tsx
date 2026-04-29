@@ -9,6 +9,7 @@ describe('GameTradeModal', () => {
       { label: '50%', quantity: 100 },
       { label: '100%', quantity: 200 },
     ]);
+    expect(getGameTradeQuickActions(1000)[0]).toEqual({ label: '10%', quantity: 100 });
   });
 
   it('renders whole-share quantity guidance in the modal', () => {
