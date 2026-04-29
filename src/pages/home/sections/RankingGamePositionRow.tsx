@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import type { GamePosition } from '../../../features/game/types';
 import {
   calculateGameUnitPricePoints,
@@ -118,7 +119,7 @@ function RankingGamePositionRowComponent({
     <li className="app-shell__game-position" data-selected={isSelected}>
       <div className="app-shell__game-position-select">
         <button
-          className="app-shell__game-position-thumb-button"
+          className="app-shell__game-position-thumb-button thumbnail-play-overlay-host thumbnail-play-overlay-host--sm"
           onClick={() => onSelectPosition(position)}
           type="button"
         >
@@ -128,6 +129,7 @@ function RankingGamePositionRowComponent({
             loading="lazy"
             src={holding.thumbnailUrl}
           />
+          <ThumbnailPlayOverlay />
         </button>
         <div className="app-shell__game-position-copy">
           <div className="app-shell__game-position-heading">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import type { GameScheduledSellOrder } from '../../../features/game/types';
 import {
   formatGameOrderQuantity,
@@ -8,8 +9,10 @@ import {
   formatRank,
   getPointTone,
 } from '../gameHelpers';
+import { SCHEDULED_SELL_ORDERS_QUEUE_ID } from '../utils';
 
 interface GameScheduledSellOrdersTabProps {
+  activePlaybackQueueId?: string;
   emptyMessage?: string | null;
   isCancelingOrderId?: number | null;
   isLoading: boolean;
@@ -17,6 +20,8 @@ interface GameScheduledSellOrdersTabProps {
   onOpenChart?: (order: GameScheduledSellOrder) => void;
   onSelectOrderVideo?: (order: GameScheduledSellOrder) => void;
   orders: GameScheduledSellOrder[];
+  selectedPositionId?: number | null;
+  selectedVideoId?: string;
 }
 
 type ScheduledSellOrderFilter = 'ALL' | 'PENDING' | 'EXECUTED' | 'CANCELED';
@@ -94,6 +99,7 @@ function getScheduledSellEmptyMessage(filter: ScheduledSellOrderFilter, defaultM
 }
 
 export default function GameScheduledSellOrdersTab({
+  activePlaybackQueueId,
   emptyMessage = '예약 매도 주문이 아직 없습니다.',
   isCancelingOrderId = null,
   isLoading,
@@ -101,6 +107,8 @@ export default function GameScheduledSellOrdersTab({
   onOpenChart,
   onSelectOrderVideo,
   orders,
+  selectedPositionId,
+  selectedVideoId,
 }: GameScheduledSellOrdersTabProps) {
   const [activeFilter, setActiveFilter] = useState<ScheduledSellOrderFilter>('PENDING');
   const filteredOrders = getScheduledSellOrdersByFilter(orders, activeFilter);
@@ -141,6 +149,10 @@ export default function GameScheduledSellOrdersTab({
               const chartButtonLabel = `${order.videoTitle} 차트 보기`;
               const handleOpenChart = () => onOpenChart?.(order);
               const handleSelectOrderVideo = () => onSelectOrderVideo?.(order);
+              const isSelected =
+                activePlaybackQueueId === SCHEDULED_SELL_ORDERS_QUEUE_ID &&
+                order.positionId === selectedPositionId &&
+                order.videoId === selectedVideoId;
 
               return (
                 <li
@@ -148,6 +160,7 @@ export default function GameScheduledSellOrdersTab({
                   aria-busy={isCanceling}
                   className="app-shell__game-position"
                   data-scheduled-status={order.status}
+                  data-selected={isSelected}
                 >
                   {isCanceling ? (
                     <div className="app-shell__game-position-overlay" role="status" aria-live="polite">
@@ -159,7 +172,7 @@ export default function GameScheduledSellOrdersTab({
                   {onSelectOrderVideo ? (
                     <button
                       aria-label={`${order.videoTitle} 재생`}
-                      className="app-shell__game-position-thumb-button"
+                      className="app-shell__game-position-thumb-button thumbnail-play-overlay-host thumbnail-play-overlay-host--sm"
                       onClick={handleSelectOrderVideo}
                       title="이 영상을 플레이어에서 엽니다."
                       type="button"
@@ -170,6 +183,7 @@ export default function GameScheduledSellOrdersTab({
                         loading="lazy"
                         src={order.thumbnailUrl}
                       />
+                      <ThumbnailPlayOverlay />
                     </button>
                   ) : (
                     <img

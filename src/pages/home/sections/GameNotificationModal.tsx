@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import type { GameNotification } from '../../../features/game/types';
 import { formatPoints } from '../gameHelpers';
 import useBodyScrollLock from '../hooks/useBodyScrollLock';
@@ -64,7 +65,10 @@ function GameNotificationModal({ notification, onClose, onOpenChart }: GameNotif
             <GameNotificationTierVisual notification={notification} />
           </div>
         ) : (
-          <img alt="" className="game-notification-modal__thumb" src={notification.thumbnailUrl ?? undefined} />
+          <span className="thumbnail-play-overlay-host thumbnail-play-overlay-host--block">
+            <img alt="" className="game-notification-modal__thumb" src={notification.thumbnailUrl ?? undefined} />
+            <ThumbnailPlayOverlay />
+          </span>
         )}
         <div className="game-notification-modal__body" {...bodySwipeHandlers}>
           <span data-tone={getGameNotificationTone(notification)}>{getGameNotificationLabel(notification)}</span>

@@ -38,6 +38,30 @@ describe('GameTradeModal', () => {
     expect(screen.getByText(/1개 단위로만 주문할 수 있습니다/)).toBeInTheDocument();
   });
 
+  it('renders the shared play overlay on the modal thumbnail', () => {
+    render(
+      <GameTradeModal
+        confirmLabel="매수"
+        currentRankLabel="1위"
+        helperText="테스트"
+        isOpen
+        isSubmitting={false}
+        maxQuantity={100}
+        mode="buy"
+        onChangeQuantity={vi.fn()}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        quantity={100}
+        summaryItems={[{ label: '수량', value: '1개' }]}
+        thumbnailUrl="https://example.com/thumb.jpg"
+        title="테스트 영상"
+        unitPointsLabel="100P"
+      />,
+    );
+
+    expect(document.body.querySelector('.thumbnail-play-overlay')).toBeInTheDocument();
+  });
+
   it('renders projected balance summary items in the modal', () => {
     render(
       <GameTradeModal

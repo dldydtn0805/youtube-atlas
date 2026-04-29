@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import GoogleLoginButton from '../../../components/GoogleLoginButton/GoogleLoginButton';
+import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import type { AuthStatus, AuthUser } from '../../../features/auth/types';
 import type { AchievementTitleCollection, GameNotification } from '../../../features/game/types';
 import { formatHeaderPoints, formatPoints } from '../gameHelpers';
@@ -496,7 +497,7 @@ function AppHeader({
                               typeof onOpenRecentPlayback === 'function' ? (
                                 <button
                                   aria-label={`${recentPlaybackProgress.videoTitle ?? recentPlaybackProgress.videoId} 영상으로 이동`}
-                                  className="app-shell__profile-card-playback-thumb-button"
+                                  className="app-shell__profile-card-playback-thumb-button thumbnail-play-overlay-host"
                                   onClick={() => {
                                     setIsProfileCardOpen(false);
                                     onOpenRecentPlayback(recentPlaybackProgress.videoId);
@@ -508,6 +509,7 @@ function AppHeader({
                                     className="app-shell__profile-card-playback-thumb"
                                     src={recentPlaybackProgress.thumbnailUrl}
                                   />
+                                  <ThumbnailPlayOverlay />
                                 </button>
                               ) : (
                                 <img

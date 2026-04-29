@@ -93,6 +93,22 @@ describe('VideoList', () => {
     );
   });
 
+  it('renders a visual play overlay on the thumbnail button', () => {
+    const { container } = render(
+      <VideoList
+        hasNextPage={false}
+        isError={false}
+        isFetchingNextPage={false}
+        isLoading={false}
+        onLoadMore={vi.fn()}
+        onSelectVideo={vi.fn()}
+        section={baseSection}
+      />,
+    );
+
+    expect(container.querySelector('.thumbnail-play-overlay')).toBeInTheDocument();
+  });
+
   it('shows a static playing badge for the selected video card', () => {
     const { container } = render(
       <VideoList

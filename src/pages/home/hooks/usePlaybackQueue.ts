@@ -17,6 +17,7 @@ interface UsePlaybackQueueOptions {
   preferredInitialPlaybackSection?: YouTubeCategorySection;
   preferredInitialPlaybackSectionLoading?: boolean;
   preferredInitialPlaybackSectionSelectionKey?: string | null;
+  preserveSelectedVideoWhenQueueChanges?: boolean;
   realtimeSurgingSection?: YouTubeCategorySection;
   restoredPlaybackVideo?: YouTubeVideoItem;
   scrollToPlayerTop: () => void;
@@ -39,6 +40,7 @@ function usePlaybackQueue({
   preferredInitialPlaybackSection,
   preferredInitialPlaybackSectionLoading = false,
   preferredInitialPlaybackSectionSelectionKey,
+  preserveSelectedVideoWhenQueueChanges = false,
   realtimeSurgingSection,
   restoredPlaybackVideo,
   scrollToPlayerTop,
@@ -269,23 +271,34 @@ function usePlaybackQueue({
             selectedSection: matchedSelectedSection,
           });
     const hasSelectedVideoInQueue = queueItems.some((item) => item.id === selectedVideoId);
+    const shouldKeepMissingSelectedVideo =
+      preserveSelectedVideoWhenQueueChanges &&
+      Boolean(selectedVideoId) &&
+      !shouldAutoSelectNextAvailableRef.current;
 
     if (fallbackItems.length === 0) {
       if (!isWaitingForSelectedCategoryQueue) {
         shouldAutoSelectNextAvailableRef.current = false;
       }
 
-      setSelectedVideoId(undefined);
+      if (!shouldKeepMissingSelectedVideo) {
+        setSelectedVideoId(undefined);
+      }
       return;
     }
 
     if (!hasSelectedVideoInQueue) {
       const shouldAutoSelectFallback =
-        Boolean(selectedVideoId) ||
+        (!shouldKeepMissingSelectedVideo && Boolean(selectedVideoId)) ||
         shouldAutoSelectNextAvailableRef.current ||
-        autoSelectFirstVideoWhenEmpty;
+        (!selectedVideoId && autoSelectFirstVideoWhenEmpty);
 
-      if (queueItems.length === 0 && fallbackQueueId && activePlaybackQueueId !== fallbackQueueId) {
+      if (
+        !shouldKeepMissingSelectedVideo &&
+        queueItems.length === 0 &&
+        fallbackQueueId &&
+        activePlaybackQueueId !== fallbackQueueId
+      ) {
         setActivePlaybackQueueId(fallbackQueueId);
       }
 
@@ -308,6 +321,7 @@ function usePlaybackQueue({
     preferredInitialPlaybackSection,
     preferredInitialPlaybackSectionLoading,
     preferredInitialPlaybackSectionSelectionKey,
+    preserveSelectedVideoWhenQueueChanges,
     realtimeSurgingSection,
     restoredPlaybackVideo,
     selectedCategoryQueueId,

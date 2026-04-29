@@ -186,6 +186,7 @@ export default function GamePanelSection({
   );
   const scheduledOrdersContent = (
     <GameScheduledSellOrdersTab
+      activePlaybackQueueId={activePlaybackQueueId}
       isCancelingOrderId={scheduledSellOrderCancelingId}
       isLoading={isScheduledSellOrdersLoading}
       onCancelOrder={onCancelScheduledSellOrder}
@@ -198,6 +199,8 @@ export default function GamePanelSection({
           : undefined
       }
       orders={scheduledSellOrders}
+      selectedPositionId={selectedPositionId}
+      selectedVideoId={selectedVideoId}
     />
   );
   const guideContent = (

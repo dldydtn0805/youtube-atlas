@@ -10,6 +10,7 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import type { VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
 import type {
   GameCurrentSeason,
@@ -283,7 +284,7 @@ function LeaderboardHighlightList({
               {onSelectHighlightVideo ? (
                 <button
                   aria-label={`${highlight.videoTitle} 재생`}
-                  className="app-shell__game-leaderboard-position-thumb-button"
+                  className="app-shell__game-leaderboard-position-thumb-button thumbnail-play-overlay-host thumbnail-play-overlay-host--sm"
                   onClick={() => onSelectHighlightVideo(highlight)}
                   type="button"
                 >
@@ -293,6 +294,7 @@ function LeaderboardHighlightList({
                     loading="lazy"
                     src={highlight.thumbnailUrl}
                   />
+                  <ThumbnailPlayOverlay />
                 </button>
               ) : (
                 <img

@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { YouTubeCategorySection, YouTubeVideoItem } from '../../features/youtube/types';
 import { formatCompactCount, getFallbackNewBadge, getVideoTrendBadges } from '../../features/trending/presentation';
 import type { VideoTrendSignal } from '../../features/trending/types';
+import ThumbnailPlayOverlay from '../ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import VideoCardTradeActions, { type VideoCardTradeActionState } from './VideoCardTradeActions';
 import './VideoList.css';
 
@@ -293,7 +294,7 @@ function VideoList({
                   </div>
                   <button
                     aria-label={`${item.snippet.title} 재생`}
-                    className="video-card__thumbnail-button"
+                    className="video-card__thumbnail-button thumbnail-play-overlay-host"
                     onClick={(event) => handleSelectVideo(event.currentTarget)}
                     type="button"
                   >
@@ -303,6 +304,7 @@ function VideoList({
                       src={item.snippet.thumbnails.high.url}
                       alt=""
                     />
+                    <ThumbnailPlayOverlay />
                   </button>
                   <button
                     aria-label={onOpenChart ? `${item.snippet.title} 차트 보기` : undefined}

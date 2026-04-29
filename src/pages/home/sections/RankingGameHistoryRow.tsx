@@ -1,4 +1,5 @@
 import { memo, type RefObject } from 'react';
+import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import type { GamePosition } from '../../../features/game/types';
 import { formatGameTimestamp, formatMaybePoints, formatPoints, formatRank, getPointTone } from '../gameHelpers';
 import { calculateSellFeePoints, formatSignedProfitRate } from '../utils';
@@ -66,7 +67,7 @@ function RankingGameHistoryRowComponent({
     >
       <div className="app-shell__game-history-select">
         <button
-          className="app-shell__game-history-thumb-button"
+          className="app-shell__game-history-thumb-button thumbnail-play-overlay-host thumbnail-play-overlay-host--sm"
           disabled={isLoadingHistoryPlayback}
           onClick={() => onSelectPosition(position, playbackQueueId)}
           title={
@@ -84,6 +85,7 @@ function RankingGameHistoryRowComponent({
             loading="lazy"
             src={position.thumbnailUrl}
           />
+          <ThumbnailPlayOverlay />
         </button>
         <div className="app-shell__game-history-copy">
           <div className="app-shell__game-history-heading">

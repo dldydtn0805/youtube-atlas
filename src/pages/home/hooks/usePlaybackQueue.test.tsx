@@ -470,4 +470,79 @@ describe('usePlaybackQueue', () => {
       expect(result.current.selectedVideoId).toBe('video-buyable');
     });
   });
+
+  it('keeps a selected extra-section video when that queue refreshes without it', async () => {
+    const setSelectedCategoryId = vi.fn();
+    let buyableSection = createSection('buyable-market', ['video-buyable', 'video-next']);
+
+    const { result, rerender } = renderHook(() =>
+      usePlaybackQueue({
+        extraPlaybackSections: [buyableSection],
+        favoriteStreamerVideoSection: undefined,
+        isMobileLayout: false,
+        preserveSelectedVideoWhenQueueChanges: true,
+        realtimeSurgingSection: undefined,
+        restoredPlaybackVideo: undefined,
+        scrollToPlayerTop: vi.fn(),
+        selectedCategoryId: '0',
+        selectedSection: createSection(getCategoryPlaybackQueueId('0'), ['video-top']),
+        setSelectedCategoryId,
+        sortedVideoCategories,
+      }),
+    );
+
+    act(() => {
+      result.current.handleSelectVideo('video-buyable', buyableSection.categoryId);
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedVideoId).toBe('video-buyable');
+    });
+
+    buyableSection = createSection('buyable-market', ['video-next']);
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.activePlaybackQueueId).toBe(buyableSection.categoryId);
+      expect(result.current.selectedVideoId).toBe('video-buyable');
+    });
+  });
+
+  it('keeps a selected portfolio video when the portfolio queue refreshes empty', async () => {
+    const setSelectedCategoryId = vi.fn();
+    let portfolioSection = createSection(GAME_PORTFOLIO_QUEUE_ID, ['video-owned']);
+
+    const { result, rerender } = renderHook(() =>
+      usePlaybackQueue({
+        favoriteStreamerVideoSection: undefined,
+        gamePortfolioSection: portfolioSection,
+        isMobileLayout: false,
+        preserveSelectedVideoWhenQueueChanges: true,
+        realtimeSurgingSection: undefined,
+        restoredPlaybackVideo: undefined,
+        scrollToPlayerTop: vi.fn(),
+        selectedCategoryId: '0',
+        selectedSection: createSection(getCategoryPlaybackQueueId('0'), ['video-top']),
+        setSelectedCategoryId,
+        sortedVideoCategories,
+      }),
+    );
+
+    act(() => {
+      result.current.handleSelectVideo('video-owned', GAME_PORTFOLIO_QUEUE_ID);
+    });
+
+    await waitFor(() => {
+      expect(result.current.activePlaybackQueueId).toBe(GAME_PORTFOLIO_QUEUE_ID);
+      expect(result.current.selectedVideoId).toBe('video-owned');
+    });
+
+    portfolioSection = createSection(GAME_PORTFOLIO_QUEUE_ID, []);
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.activePlaybackQueueId).toBe(GAME_PORTFOLIO_QUEUE_ID);
+      expect(result.current.selectedVideoId).toBe('video-owned');
+    });
+  });
 });

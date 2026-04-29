@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import type { ScheduledSellTriggerDirection } from '../../../features/game/types';
 import useBodyScrollLock from '../hooks/useBodyScrollLock';
 import useHeaderSwipeToClose from '../hooks/useHeaderSwipeToClose';
@@ -173,7 +174,12 @@ export default function GameTradeModal({
 
         <div className="app-shell__modal-body" {...bodySwipeHandlers}>
           <div className="app-shell__game-trade-modal-head">
-            {thumbnailUrl ? <img alt="" className="app-shell__game-trade-modal-thumb" src={thumbnailUrl} /> : null}
+            {thumbnailUrl ? (
+              <span className="thumbnail-play-overlay-host thumbnail-play-overlay-host--block thumbnail-play-overlay-host--xl">
+                <img alt="" className="app-shell__game-trade-modal-thumb" src={thumbnailUrl} />
+                <ThumbnailPlayOverlay />
+              </span>
+            ) : null}
             <div className="app-shell__game-trade-modal-copy">
               <p className="app-shell__game-trade-modal-title">{title}</p>
               <p className="app-shell__game-trade-modal-meta">

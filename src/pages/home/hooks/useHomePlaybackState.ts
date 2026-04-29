@@ -147,6 +147,7 @@ export default function useHomePlaybackState({
     preferredInitialPlaybackSection,
     preferredInitialPlaybackSectionLoading,
     preferredInitialPlaybackSectionSelectionKey,
+    preserveSelectedVideoWhenQueueChanges: true,
     realtimeSurgingSection,
     restoredPlaybackVideo,
     scrollToPlayerTop,

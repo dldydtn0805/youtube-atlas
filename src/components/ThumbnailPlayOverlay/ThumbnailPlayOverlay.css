@@ -1,0 +1,63 @@
+.thumbnail-play-overlay-host {
+  --thumbnail-play-accent: var(--video-list-tier-accent, var(--brand-primary, #14b8a6));
+  overflow: hidden;
+  position: relative;
+}
+
+.thumbnail-play-overlay-host--block {
+  display: block;
+  line-height: 0;
+}
+
+.thumbnail-play-overlay-host--sm {
+  border-radius: 12px;
+}
+
+.thumbnail-play-overlay-host--lg {
+  border-radius: 16px;
+}
+
+.thumbnail-play-overlay-host--xl {
+  border-radius: 18px;
+}
+
+.thumbnail-play-overlay {
+  background: rgba(15, 23, 42, 0.28);
+  border-radius: inherit;
+  display: grid;
+  inset: 0;
+  opacity: 0;
+  place-items: center;
+  pointer-events: none;
+  position: absolute;
+  transition: opacity 0.18s ease;
+}
+
+.thumbnail-play-overlay__icon {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 999px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+  display: inline-flex;
+  height: 46px;
+  justify-content: center;
+  width: 46px;
+}
+
+.thumbnail-play-overlay__icon::before {
+  border-bottom: 10px solid transparent;
+  border-left: 15px solid color-mix(in srgb, var(--text) 76%, var(--thumbnail-play-accent) 24%);
+  border-top: 10px solid transparent;
+  content: '';
+  margin-left: 4px;
+}
+
+.thumbnail-play-overlay-host:hover .thumbnail-play-overlay,
+.thumbnail-play-overlay-host:focus-visible .thumbnail-play-overlay,
+.thumbnail-play-overlay-host:focus-within .thumbnail-play-overlay {
+  opacity: 1;
+}
+
+.thumbnail-play-overlay-host:disabled .thumbnail-play-overlay {
+  opacity: 0;
+}

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import type { GameHighlight } from '../../../features/game/types';
 import { formatPoints, formatRank, getPointTone } from '../gameHelpers';
 import { buildGameStrategyBadges } from '../gameStrategyTags';
@@ -102,11 +103,12 @@ export default function GameHighlightsTab({
                 {onSelectHighlightVideo ? (
                   <button
                     aria-label={`${highlight.videoTitle} 재생`}
-                    className="app-shell__game-highlight-thumb-button"
+                    className="app-shell__game-highlight-thumb-button thumbnail-play-overlay-host thumbnail-play-overlay-host--sm"
                     onClick={() => onSelectHighlightVideo(highlight)}
                     type="button"
                   >
                     <img alt="" className="app-shell__game-highlight-thumb" loading="lazy" src={highlight.thumbnailUrl} />
+                    <ThumbnailPlayOverlay />
                   </button>
                 ) : (
                   <img alt="" className="app-shell__game-highlight-thumb" loading="lazy" src={highlight.thumbnailUrl} />
