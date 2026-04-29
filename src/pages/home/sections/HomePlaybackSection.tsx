@@ -12,7 +12,6 @@ import './HomePlaybackSection.css';
 
 const STICKY_SELECTED_VIDEO_TOP_OFFSET = 12;
 const STICKY_SELECTED_VIDEO_COLLAPSED_STORAGE_KEY = 'youtube-atlas-sticky-selected-video-collapsed';
-export const MOBILE_PLAYER_STAGE_STICKY_ENABLED_STORAGE_KEY = 'youtube-atlas-mobile-player-stage-sticky-enabled';
 const MOBILE_STICKY_BOTTOM_OFFSET_CSS_VAR = '--app-mobile-visual-viewport-bottom-offset';
 
 interface StickySelectedVideoControls {
@@ -62,13 +61,7 @@ function getInitialStickySelectedVideoCollapsed(isMobileLayout: boolean) {
 }
 
 function getInitialMobilePlayerStageStickyEnabled() {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  const storedValue = window.localStorage.getItem(MOBILE_PLAYER_STAGE_STICKY_ENABLED_STORAGE_KEY);
-
-  return storedValue === 'true';
+  return false;
 }
 
 export default function HomePlaybackSection({
@@ -324,17 +317,6 @@ export default function HomePlaybackSection({
       isStickySelectedVideoCollapsed ? 'true' : 'false',
     );
   }, [isStickySelectedVideoCollapsed]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    window.localStorage.setItem(
-      MOBILE_PLAYER_STAGE_STICKY_ENABLED_STORAGE_KEY,
-      isMobilePlayerStageStickyEnabled ? 'true' : 'false',
-    );
-  }, [isMobilePlayerStageStickyEnabled]);
 
   useEffect(() => {
     if (playerStageProps.isMobileLayout) {

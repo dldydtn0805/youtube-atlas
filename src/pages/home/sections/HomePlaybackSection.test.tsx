@@ -1,7 +1,7 @@
 import { createRef } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import HomePlaybackSection, { MOBILE_PLAYER_STAGE_STICKY_ENABLED_STORAGE_KEY } from './HomePlaybackSection';
+import HomePlaybackSection from './HomePlaybackSection';
 
 vi.mock('./ContentPanels', () => ({
   ChartPanel: () => <div data-testid="chart-panel" />,
@@ -695,7 +695,7 @@ describe('HomePlaybackSection', () => {
     });
   });
 
-  it('starts with the mobile player stage sticky shell disabled and remembers the preference', async () => {
+  it('starts with the mobile player stage sticky shell disabled and does not persist the preference', async () => {
     const playerStageProps = {
       isCinematicModeActive: false,
       isMobileLayout: true,
@@ -739,7 +739,7 @@ describe('HomePlaybackSection', () => {
     await waitFor(() => {
       expect(document.querySelector('.app-shell__mobile-player-stage-sticky-shell')?.getAttribute('data-sticky-enabled')).toBe('true');
     });
-    expect(window.localStorage.getItem(MOBILE_PLAYER_STAGE_STICKY_ENABLED_STORAGE_KEY)).toBe('true');
+    expect(window.localStorage.getItem('youtube-atlas-mobile-player-stage-sticky-enabled')).toBeNull();
 
     unmount();
 
@@ -761,9 +761,9 @@ describe('HomePlaybackSection', () => {
     flushAnimationFrames();
 
     await waitFor(() => {
-      expect(screen.getByText('상단 스티키 켜짐')).toBeInTheDocument();
+      expect(screen.getByText('상단 스티키 꺼짐')).toBeInTheDocument();
     });
-    expect(document.querySelector('.app-shell__mobile-player-stage-sticky-shell')?.getAttribute('data-sticky-enabled')).toBe('true');
+    expect(document.querySelector('.app-shell__mobile-player-stage-sticky-shell')?.getAttribute('data-sticky-enabled')).toBe('false');
   });
 
   it('hides the mobile selected video panel while scrolling down and restores it when scrolling up', async () => {
@@ -872,7 +872,6 @@ describe('HomePlaybackSection', () => {
     const scrollTo = vi.fn();
 
     vi.stubGlobal('scrollTo', scrollTo);
-    window.localStorage.setItem(MOBILE_PLAYER_STAGE_STICKY_ENABLED_STORAGE_KEY, 'false');
 
     const playerStageProps = {
       isCinematicModeActive: false,

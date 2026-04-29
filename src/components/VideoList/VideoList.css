@@ -545,3 +545,9 @@
     margin-left: auto;
   }
 }
+
+@media (max-width: 640px) {
+  :root[data-mobile-layout='true'] .video-list__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
