@@ -80,10 +80,8 @@ function clampDragOffset(offset: number) {
   return Math.max(0, offset);
 }
 
-function preventCancelableDefault(event: { cancelable?: boolean; preventDefault: () => void }) {
-  if (event.cancelable) {
-    event.preventDefault();
-  }
+function preventDefault(event: { preventDefault: () => void }) {
+  event.preventDefault();
 }
 
 function getFadeProgress(progress: number, fadeStartProgress: number) {
@@ -240,7 +238,7 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
     }
 
     if (deltaY < 10) {
-      preventCancelableDefault(event);
+      preventDefault(event);
       return;
     }
 
@@ -252,7 +250,7 @@ export default function useHeaderSwipeToClose({ disabled = false, onClose }: Hea
     const nextDragOffset = Math.min(clampDragOffset(deltaY * 0.92), maxDragOffsetRef.current);
     scheduleDragOffset(nextDragOffset);
 
-    preventCancelableDefault(event);
+    preventDefault(event);
   }, [cancelSwipe, scheduleDragOffset]);
 
   const shouldCloseSwipe = useCallback((clientX: number, clientY: number) => {

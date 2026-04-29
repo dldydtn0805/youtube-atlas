@@ -160,7 +160,22 @@
   }
 
   :root[data-mobile-layout='true'] .app-shell__sticky-selected-video-frame .app-shell__game-panel-actions {
+    background: rgba(255, 255, 255, 0.94);
     border-radius: 14px;
+    border-color: rgba(148, 163, 184, 0.34);
+    box-shadow:
+      0 16px 40px rgba(15, 23, 42, 0.16),
+      0 0 0 1px rgba(255, 255, 255, 0.88) inset;
+  }
+
+  :root[data-theme='dark'][data-mobile-layout='true'] .app-shell__sticky-selected-video-frame .app-shell__game-panel-actions {
+    background:
+      linear-gradient(180deg, rgba(20, 20, 20, 0.97), rgba(8, 8, 8, 0.94)),
+      rgba(10, 10, 10, 0.92);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow:
+      0 18px 44px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.07) inset;
   }
 
   :root[data-mobile-layout='true'] .app-shell__sticky-selected-video-frame .app-shell__game-panel-actions-utility {
