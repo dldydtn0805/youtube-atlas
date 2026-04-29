@@ -1,15 +1,17 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const fetchRealtimeSurging = vi.fn();
 const fetchNewChartEntries = vi.fn();
+const fetchTopRankRisers = vi.fn();
 const fetchVideoTrendSignals = vi.fn();
 
 vi.mock('./api', () => ({
   fetchNewChartEntries,
   fetchRealtimeSurging,
+  fetchTopRankRisers,
   fetchVideoTrendSignals,
 }));
 
@@ -32,6 +34,7 @@ describe('useVideoTrendSignals', () => {
   afterEach(() => {
     fetchNewChartEntries.mockReset();
     fetchRealtimeSurging.mockReset();
+    fetchTopRankRisers.mockReset();
     fetchVideoTrendSignals.mockReset();
   });
 
@@ -78,6 +81,63 @@ describe('useVideoTrendSignals', () => {
 
     await waitFor(() => {
       expect(fetchVideoTrendSignals).toHaveBeenCalledWith('KR', '0', ['video-1']);
+    });
+  });
+
+  it('only requests missing trend signals while loading an expanded video id set', async () => {
+    let resolveNextSignals: (value: Record<string, { categoryId: string; currentRank: number }>) => void = () => {};
+    const nextSignals = new Promise<Record<string, { categoryId: string; currentRank: number }>>((resolve) => {
+      resolveNextSignals = resolve;
+    });
+
+    fetchVideoTrendSignals.mockImplementation((_, __, videoIds: string[]) => {
+      if (videoIds.includes('video-2')) {
+        return nextSignals;
+      }
+
+      return Promise.resolve({
+        'video-1': {
+          categoryId: '0',
+          currentRank: 4,
+        },
+      });
+    });
+
+    const { useVideoTrendSignals } = await import('./queries');
+
+    const { result, rerender } = renderHook(
+      ({ videoIds }) => useVideoTrendSignals('KR', '0', videoIds),
+      {
+        initialProps: { videoIds: ['video-1'] },
+        wrapper: createWrapper(),
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.data?.['video-1']?.currentRank).toBe(4);
+    });
+
+    rerender({ videoIds: ['video-1', 'video-2'] });
+
+    await waitFor(() => {
+      expect(fetchVideoTrendSignals).toHaveBeenLastCalledWith('KR', '0', ['video-2']);
+    });
+
+    expect(result.current.data?.['video-1']?.currentRank).toBe(4);
+    expect(result.current.isFetching).toBe(true);
+
+    await act(async () => {
+      resolveNextSignals({
+        'video-2': {
+          categoryId: '0',
+          currentRank: 51,
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.data?.['video-1']?.currentRank).toBe(4);
+      expect(result.current.data?.['video-2']?.currentRank).toBe(51);
     });
   });
 

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsVideoTrendSignals } from '../../constants/videoCategories';
 import {
   fetchNewChartEntries,
@@ -7,6 +7,29 @@ import {
   fetchVideoRankHistory,
   fetchVideoTrendSignals,
 } from './api';
+import type { VideoTrendSignal } from './types';
+
+function mergeCachedTrendSignals(
+  entries: Array<[unknown, Record<string, VideoTrendSignal> | undefined]>,
+  videoIds: string[],
+) {
+  const videoIdSet = new Set(videoIds);
+  const cachedSignals: Record<string, VideoTrendSignal> = {};
+
+  for (const [, signals] of entries) {
+    if (!signals) {
+      continue;
+    }
+
+    for (const [videoId, signal] of Object.entries(signals)) {
+      if (videoIdSet.has(videoId)) {
+        cachedSignals[videoId] = signal;
+      }
+    }
+  }
+
+  return cachedSignals;
+}
 
 export function useVideoTrendSignals(
   regionCode: string | undefined,
@@ -14,13 +37,38 @@ export function useVideoTrendSignals(
   videoIds: string[],
   enabled = true,
 ) {
+  const queryClient = useQueryClient();
   const normalizedVideoIds = [...new Set(videoIds)].filter(Boolean).sort();
   const isSupportedCategory = supportsVideoTrendSignals(categoryId, regionCode);
 
   return useQuery({
     enabled: enabled && Boolean(regionCode) && isSupportedCategory && normalizedVideoIds.length > 0,
     queryKey: ['videoTrendSignals', regionCode, categoryId, normalizedVideoIds],
-    queryFn: () => fetchVideoTrendSignals(regionCode as string, categoryId as string, normalizedVideoIds),
+    queryFn: async () => {
+      const cachedSignals = mergeCachedTrendSignals(
+        queryClient.getQueriesData<Record<string, VideoTrendSignal>>({
+          queryKey: ['videoTrendSignals', regionCode, categoryId],
+        }),
+        normalizedVideoIds,
+      );
+      const missingVideoIds = normalizedVideoIds.filter((videoId) => !cachedSignals[videoId]);
+
+      if (missingVideoIds.length === 0) {
+        return cachedSignals;
+      }
+
+      const fetchedSignals = await fetchVideoTrendSignals(
+        regionCode as string,
+        categoryId as string,
+        missingVideoIds,
+      );
+
+      return {
+        ...cachedSignals,
+        ...fetchedSignals,
+      };
+    },
+    placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 10,
   });
 }
