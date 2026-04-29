@@ -18,6 +18,7 @@ import type {
   GamePosition,
   GameTierProgress,
 } from '../../../features/game/types';
+import { getGameInventorySlotLimit } from '../../../features/game/inventory';
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import {
   formatPercent,
@@ -120,8 +121,8 @@ interface RankingGamePositionsTabProps {
   favoriteTrendSignalsByVideoId: Record<string, VideoTrendSignal>;
   gameMarketSignalsByVideoId: Record<string, VideoTrendSignal>;
   holdings: OpenGameHolding[];
+  currentGameSeason?: GameCurrentSeason;
   isLoading?: boolean;
-  maxOpenPositions?: number | null;
   onOpenPositionChart?: (position: GamePosition) => void;
   onOpenBuyTradeModal?: (position: GamePosition) => void;
   onOpenSellTradeModal?: (position: GamePosition) => void;
@@ -176,8 +177,8 @@ function areRankingGamePositionsTabPropsEqual(
     prevProps.canShowGameActions === nextProps.canShowGameActions &&
     prevProps.emptyMessage === nextProps.emptyMessage &&
     prevProps.holdings === nextProps.holdings &&
+    prevProps.currentGameSeason === nextProps.currentGameSeason &&
     prevProps.isLoading === nextProps.isLoading &&
-    prevProps.maxOpenPositions === nextProps.maxOpenPositions &&
     prevProps.onOpenPositionChart === nextProps.onOpenPositionChart &&
     prevProps.onOpenBuyTradeModal === nextProps.onOpenBuyTradeModal &&
     prevProps.onOpenSellTradeModal === nextProps.onOpenSellTradeModal &&
@@ -1060,8 +1061,8 @@ function RankingGamePositionsTabComponent({
   canShowGameActions,
   emptyMessage,
   holdings,
+  currentGameSeason,
   isLoading = false,
-  maxOpenPositions = null,
   onOpenPositionChart,
   onOpenBuyTradeModal,
   onOpenSellTradeModal,
@@ -1071,8 +1072,13 @@ function RankingGamePositionsTabComponent({
 }: RankingGamePositionsTabProps) {
   const inventoryOpenCount =
     openDistinctVideoCount ?? new Set(holdings.map((holding) => holding.videoId)).size;
+  const maxOpenPositions = currentGameSeason ? getGameInventorySlotLimit(currentGameSeason) : null;
   const inventorySummary = (
-    <GameInventoryCapacity maxOpenPositions={maxOpenPositions} openDistinctVideoCount={inventoryOpenCount} />
+    <GameInventoryCapacity
+      currentGameSeason={currentGameSeason}
+      maxOpenPositions={maxOpenPositions}
+      openDistinctVideoCount={inventoryOpenCount}
+    />
   );
 
   if (isLoading) {

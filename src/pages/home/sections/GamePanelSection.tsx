@@ -156,8 +156,8 @@ export default function GamePanelSection({
       favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
       gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
       holdings={openGameHoldings}
+      currentGameSeason={currentGameSeason}
       isLoading={isOpenGamePositionsLoading}
-      maxOpenPositions={currentGameSeason?.maxOpenPositions}
       onOpenPositionChart={onOpenPositionChart}
       onOpenBuyTradeModal={onOpenPositionBuyTradeModal}
       onOpenSellTradeModal={onOpenPositionSellTradeModal}

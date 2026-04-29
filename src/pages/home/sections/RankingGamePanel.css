@@ -1096,6 +1096,13 @@
   justify-content: space-between;
 }
 
+.app-shell__game-inventory-capacity-next {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
 .app-shell__game-inventory-capacity-count,
 .app-shell__game-inventory-capacity-remaining {
   color: var(--text-muted);

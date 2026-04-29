@@ -366,7 +366,9 @@ export default function GameTierSummary({
                 data-tier-code={tier.tierCode}
               >
                 <span className="app-shell__game-tier-step-name">{tier.displayName}</span>
-                <span className="app-shell__game-tier-step-value">{formatScore(tier.minScore)}</span>
+                <span className="app-shell__game-tier-step-value">
+                  {`${formatScore(tier.minScore)} · ${tier.inventorySlots}칸`}
+                </span>
               </li>
             );
           })}

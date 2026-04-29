@@ -49,6 +49,7 @@ export interface GameCurrentSeason {
   minHoldSeconds: number;
   maxOpenPositions: number;
   rankPointMultiplier: number;
+  inventorySlots: GameInventorySlots;
   wallet: GameWallet;
   notifications?: GameNotification[];
 }
@@ -124,6 +125,16 @@ export interface GameTier {
   badgeCode: string;
   titleCode: string;
   profileThemeCode: string;
+  inventorySlots: number;
+}
+
+export interface GameInventorySlots {
+  baseSlots: number;
+  totalSlots: number;
+  maxSlots: number;
+  currentTier: GameTier | null;
+  nextTier: GameTier | null;
+  tiers: GameTier[];
 }
 
 export interface GameTierProgress {

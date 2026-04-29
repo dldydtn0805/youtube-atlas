@@ -7,6 +7,7 @@ const tierProgress: GameTierProgress = {
   currentTier: {
     badgeCode: 'BRONZE',
     displayName: '브론즈',
+    inventorySlots: 5,
     minScore: 0,
     profileThemeCode: 'BRONZE',
     tierCode: 'BRONZE',

@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
 import type { FavoriteStreamer } from '../../../features/favorites/types';
+import {
+  getGameInventoryNextTierText,
+  getGameInventorySlotLimit,
+} from '../../../features/game/inventory';
 import type { GameCurrentSeason, GameMarketVideo, GamePosition } from '../../../features/game/types';
 import { getPrimaryVideoTrendBadge, getVideoTrendBadges, type VideoTrendBadge } from '../../../features/trending/presentation';
 import type { VideoTrendSignal } from '../../../features/trending/types';
@@ -303,8 +307,9 @@ export default function useSelectedVideoGameState({
   const selectedVideoAlreadyOwned = selectedVideoOpenPositionsForVideo.length > 0;
   const openDistinctVideoCount = new Set(openGamePositions.map((position) => position.videoId)).size;
   const remainingOpenPositionSlots = currentGameSeason
-    ? Math.max(0, currentGameSeason.maxOpenPositions - openDistinctVideoCount)
+    ? Math.max(0, getGameInventorySlotLimit(currentGameSeason) - openDistinctVideoCount)
     : 0;
+  const nextInventoryTierText = getGameInventoryNextTierText(currentGameSeason);
   const maxBuyQuantity =
     currentGameSeason && selectedVideoUnitPricePoints
       ? Math.max(
@@ -429,7 +434,9 @@ export default function useSelectedVideoGameState({
         ? buyModalRemainingPointsText ?? '이 영상은 보유 포인트가 허용하는 만큼 계속 추가 매수할 수 있습니다.'
         : buyModalRemainingPointsText ??
           `새 영상은 남은 종목 슬롯 ${remainingOpenPositionSlots}개 안에서, 보유 포인트가 허용하는 만큼 매수할 수 있습니다.`
-      : buyModalShortfallPointsText ?? selectedVideoMarketEntry?.buyBlockedReason ?? '지금은 추가 매수할 수 없습니다.';
+      : buyModalShortfallPointsText ??
+        selectedVideoMarketEntry?.buyBlockedReason ??
+        (nextInventoryTierText ? `${nextInventoryTierText}으로 늘릴 수 있습니다.` : '지금은 추가 매수할 수 없습니다.');
   const currentVideoGameHelperText =
     !canShowGameActions
       ? '매수/매도는 전체 카테고리에서만 가능합니다.'

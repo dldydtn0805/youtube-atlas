@@ -91,6 +91,7 @@ import {
   useSellGamePositions,
   useUpdateSelectedAchievementTitle,
 } from '../../features/game/queries';
+import { getGameInventorySlotLimit } from '../../features/game/inventory';
 import { useGameRealtimeInvalidation } from '../../features/game/realtime';
 import type { GameHighlight, GamePosition, GameScheduledSellOrder } from '../../features/game/types';
 import {
@@ -1090,7 +1091,7 @@ function HomePage() {
     return quantityByVideoId;
   }, [openGameHoldings]);
   const remainingOpenPositionSlotsForCards = currentGameSeason
-    ? Math.max(0, currentGameSeason.maxOpenPositions - openGamePositionQuantityByVideoId.size)
+    ? Math.max(0, getGameInventorySlotLimit(currentGameSeason) - openGamePositionQuantityByVideoId.size)
     : 0;
   const getVideoCardTradeActionState = useCallback(
     (item: YouTubeVideoItem) => {

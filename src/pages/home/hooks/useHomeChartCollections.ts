@@ -7,6 +7,7 @@ import {
   type VideoCategory,
 } from '../../../constants/videoCategories';
 import type { AuthStatus } from '../../../features/auth/types';
+import { getGameInventorySlotLimit } from '../../../features/game/inventory';
 import type { GameCurrentSeason, GameMarketVideo, GamePosition } from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features/youtube/types';
@@ -381,11 +382,12 @@ export default function useHomeChartCollections({
       ? favoriteStreamerVideosError.message
       : '즐겨찾기 영상을 불러오지 못했습니다.';
   const openDistinctVideoCount = new Set(openGamePositions.map((position) => position.videoId)).size;
+  const inventorySlotLimit = getGameInventorySlotLimit(currentGameSeason);
   const isOpenPositionLimitReached =
-    currentGameSeason != null && openDistinctVideoCount >= currentGameSeason.maxOpenPositions;
+    currentGameSeason != null && openDistinctVideoCount >= inventorySlotLimit;
   const buyableChartEmptyMessage = useMemo(() => {
-    if (currentGameSeason && openDistinctVideoCount >= currentGameSeason.maxOpenPositions) {
-      return '보유 가능한 종목 슬롯을 모두 사용 중입니다. 기존 포지션을 정리하면 다시 매수 가능한 영상이 표시됩니다.';
+    if (currentGameSeason && openDistinctVideoCount >= inventorySlotLimit) {
+      return '현재 티어의 인벤토리 슬롯을 모두 사용 중입니다. 티어를 올리거나 기존 포지션을 정리하면 다시 매수 가능한 영상이 표시됩니다.';
     }
 
     if (
@@ -396,7 +398,7 @@ export default function useHomeChartCollections({
     }
 
     return '지금 바로 매수 가능한 영상이 없습니다.';
-  }, [currentGameSeason, gameMarket, openDistinctVideoCount]);
+  }, [currentGameSeason, gameMarket, inventorySlotLimit, openDistinctVideoCount]);
 
   return {
     buyableChartEmptyMessage,

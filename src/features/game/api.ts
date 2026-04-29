@@ -19,8 +19,15 @@ import type {
 } from './types';
 import type { YouTubeCategorySection } from '../youtube/types';
 
-type ApiGameTier = Omit<GameTier, 'minScore'> & {
+type ApiGameTier = Omit<GameTier, 'minScore' | 'inventorySlots'> & {
   minScore?: number | null;
+  inventorySlots?: number | null;
+};
+
+type ApiGameInventorySlots = Omit<GameCurrentSeason['inventorySlots'], 'currentTier' | 'nextTier' | 'tiers'> & {
+  currentTier?: ApiGameTier | null;
+  nextTier?: ApiGameTier | null;
+  tiers?: ApiGameTier[] | null;
 };
 
 type ApiGameTierProgress = Omit<GameTierProgress, 'currentTier' | 'nextTier' | 'tiers'> & {
@@ -34,7 +41,8 @@ type ApiGameLeaderboardEntry = Omit<GameLeaderboardEntry, 'currentTier'> & {
   selectedAchievementTitle?: GameLeaderboardEntry['selectedAchievementTitle'];
 };
 
-type ApiGameCurrentSeason = Omit<GameCurrentSeason, 'wallet'> & {
+type ApiGameCurrentSeason = Omit<GameCurrentSeason, 'wallet' | 'inventorySlots'> & {
+  inventorySlots?: ApiGameInventorySlots | null;
   wallet: GameCurrentSeason['wallet'];
 };
 
@@ -51,6 +59,10 @@ function normalizeGameTier(tier: ApiGameTier): GameTier {
   return {
     ...tier,
     minScore: typeof tier.minScore === 'number' && Number.isFinite(tier.minScore) ? tier.minScore : 0,
+    inventorySlots:
+      typeof tier.inventorySlots === 'number' && Number.isFinite(tier.inventorySlots)
+        ? tier.inventorySlots
+        : 5,
   };
 }
 
@@ -64,7 +76,20 @@ function normalizeGameTierProgress(progress: ApiGameTierProgress): GameTierProgr
 }
 
 function normalizeGameCurrentSeason(season: ApiGameCurrentSeason): GameCurrentSeason {
-  return season;
+  const fallbackSlots = Math.max(0, season.maxOpenPositions);
+  const inventorySlots = season.inventorySlots;
+
+  return {
+    ...season,
+    inventorySlots: {
+      baseSlots: inventorySlots?.baseSlots ?? fallbackSlots,
+      totalSlots: inventorySlots?.totalSlots ?? fallbackSlots,
+      maxSlots: inventorySlots?.maxSlots ?? fallbackSlots,
+      currentTier: inventorySlots?.currentTier ? normalizeGameTier(inventorySlots.currentTier) : null,
+      nextTier: inventorySlots?.nextTier ? normalizeGameTier(inventorySlots.nextTier) : null,
+      tiers: (inventorySlots?.tiers ?? []).map(normalizeGameTier),
+    },
+  };
 }
 
 function normalizeGameLeaderboardEntry(entry: ApiGameLeaderboardEntry): GameLeaderboardEntry {

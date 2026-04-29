@@ -49,6 +49,14 @@ function createCurrentSeason(overrides: Partial<GameCurrentSeason> = {}): GameCu
     startingBalancePoints: 1000,
     startAt: '2026-04-01T00:00:00.000Z',
     status: 'ACTIVE',
+    inventorySlots: {
+      baseSlots: 5,
+      currentTier: null,
+      maxSlots: 20,
+      nextTier: null,
+      tiers: [],
+      totalSlots: 3,
+    },
     wallet: {
       balancePoints: 1000,
       realizedPnlPoints: 0,
@@ -99,6 +107,7 @@ function createLeaderboardEntry(overrides: Partial<GameLeaderboardEntry> = {}): 
       displayName: '플래티넘',
       minScore: 1000,
       badgeCode: 'badge',
+      inventorySlots: 12,
       titleCode: 'title',
       profileThemeCode: 'theme',
     },
@@ -281,7 +290,7 @@ describe('RankingGamePositionsTab', () => {
         favoriteTrendSignalsByVideoId={{}}
         gameMarketSignalsByVideoId={{}}
         holdings={[createOpenGameHolding()]}
-        maxOpenPositions={3}
+        currentGameSeason={createCurrentSeason()}
         onSelectPosition={vi.fn()}
         openDistinctVideoCount={2}
         trendSignalsByVideoId={{}}
@@ -291,6 +300,49 @@ describe('RankingGamePositionsTab', () => {
     expect(screen.getByText('2/3')).toBeInTheDocument();
     expect(screen.getByText('남은 슬롯 1개')).toBeInTheDocument();
     expect(screen.queryByText('인벤토리')).not.toBeInTheDocument();
+  });
+
+  it('shows the next tier inventory slot reward', () => {
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        currentGameSeason={createCurrentSeason({
+          inventorySlots: {
+            baseSlots: 5,
+            currentTier: {
+              badgeCode: 'season-bronze',
+              displayName: '브론즈',
+              inventorySlots: 5,
+              minScore: 0,
+              profileThemeCode: 'bronze',
+              tierCode: 'BRONZE',
+              titleCode: 'bronze-investor',
+            },
+            maxSlots: 20,
+            nextTier: {
+              badgeCode: 'season-silver',
+              displayName: '실버',
+              inventorySlots: 7,
+              minScore: 5000,
+              profileThemeCode: 'silver',
+              tierCode: 'SILVER',
+              titleCode: 'silver-investor',
+            },
+            tiers: [],
+            totalSlots: 5,
+          },
+          maxOpenPositions: 5,
+        })}
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[createOpenGameHolding()]}
+        onSelectPosition={vi.fn()}
+        openDistinctVideoCount={5}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    expect(screen.getByText('실버 달성 시 7칸')).toBeInTheDocument();
   });
 
   it('shows buy rank into current rank for open positions', () => {
