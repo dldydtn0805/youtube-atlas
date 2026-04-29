@@ -15,6 +15,7 @@ import { useGameNotificationRealtime } from '../../../features/game/realtime';
 
 type GameNotificationType =
   | 'ATLAS_SHOT'
+  | 'GALAXY_SHOT'
   | 'SOLAR_SHOT'
   | 'MOONSHOT'
   | 'SMALL_CASHOUT'
@@ -40,7 +41,7 @@ interface GameNotificationTestPayload {
   videoTitle?: string | null;
   channelTitle?: string | null;
   thumbnailUrl?: string | null;
-  strategyTags?: Array<'ATLAS_SHOT' | 'SOLAR_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE'>;
+  strategyTags?: Array<'ATLAS_SHOT' | 'GALAXY_SHOT' | 'SOLAR_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE'>;
   highlightScore?: number | null;
   titleCode?: string | null;
   titleDisplayName?: string | null;

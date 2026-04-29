@@ -62,6 +62,17 @@ describe('getGameNotificationLabel', () => {
     expect(getGameNotificationTone(notification)).toBe('atlas-shot');
   });
 
+  it('labels galaxy shot notifications and tone distinctly', () => {
+    const notification = notice({
+      notificationType: 'GALAXY_SHOT',
+      strategyTags: ['GALAXY_SHOT', 'SOLAR_SHOT'],
+      title: '갤럭시 샷 기록',
+    });
+
+    expect(getGameNotificationLabel(notification)).toBe('티어 점수 상승 : 갤럭시 샷');
+    expect(getGameNotificationTone(notification)).toBe('galaxy-shot');
+  });
+
   it('labels solar shot notifications and tone distinctly', () => {
     const notification = notice({
       notificationType: 'SOLAR_SHOT',

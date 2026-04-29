@@ -6,7 +6,14 @@ export interface GameWallet {
   totalAssetPoints: number;
 }
 
-export type GameStrategyType = 'ATLAS_SHOT' | 'SOLAR_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE';
+export type GameStrategyType =
+  | 'ATLAS_SHOT'
+  | 'GALAXY_SHOT'
+  | 'SOLAR_SHOT'
+  | 'MOONSHOT'
+  | 'SMALL_CASHOUT'
+  | 'BIG_CASHOUT'
+  | 'SNIPE';
 export type GameNotificationEventType = 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
 export type AchievementTitleGrade = 'NORMAL' | 'RARE' | 'SUPER' | 'ULTIMATE';
 export type ScheduledSellOrderStatus = 'PENDING' | 'EXECUTED' | 'CANCELED' | 'FAILED';

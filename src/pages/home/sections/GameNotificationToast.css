@@ -58,6 +58,10 @@
   color: #8b5cf6;
 }
 
+.game-notification-toast__copy span[data-tone='galaxy-shot'] {
+  color: #db2777;
+}
+
 .game-notification-toast__copy span[data-tone='solar-shot'] {
   color: #b45309;
 }

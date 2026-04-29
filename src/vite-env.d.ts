@@ -73,7 +73,7 @@ interface Window {
   __emitGameNotificationTest?: (notification?: {
     id?: string;
     notificationEventType?: 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
-    notificationType?: 'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
+    notificationType?: 'ATLAS_SHOT' | 'GALAXY_SHOT' | 'SOLAR_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE' | 'TIER_PROMOTION' | 'TITLE_UNLOCK';
     title?: string;
     message?: string;
     positionId?: number | null;
@@ -81,7 +81,7 @@ interface Window {
     videoTitle?: string | null;
     channelTitle?: string | null;
     thumbnailUrl?: string | null;
-    strategyTags?: Array<'ATLAS_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE'>;
+    strategyTags?: Array<'ATLAS_SHOT' | 'GALAXY_SHOT' | 'SOLAR_SHOT' | 'MOONSHOT' | 'SMALL_CASHOUT' | 'BIG_CASHOUT' | 'SNIPE'>;
     highlightScore?: number | null;
     titleCode?: string | null;
     titleDisplayName?: string | null;

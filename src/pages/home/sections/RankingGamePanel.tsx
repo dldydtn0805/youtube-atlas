@@ -232,6 +232,10 @@ function getLeaderboardHighlightTypeLabel(type: string) {
     return '아틀라스 샷';
   }
 
+  if (type === 'GALAXY_SHOT') {
+    return '갤럭시 샷';
+  }
+
   if (type === 'SOLAR_SHOT') {
     return '솔라 샷';
   }

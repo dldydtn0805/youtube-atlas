@@ -44,6 +44,10 @@
   color: #8b5cf6;
 }
 
+.game-notification-modal__body span[data-tone='galaxy-shot'] {
+  color: #db2777;
+}
+
 .game-notification-modal__body span[data-tone='solar-shot'] {
   color: #b45309;
 }

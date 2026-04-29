@@ -7,6 +7,11 @@
   gap: 12px;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.app-shell__modal-body--achievement-title::-webkit-scrollbar {
+  display: none;
 }
 
 .app-shell__achievement-title-saving {
