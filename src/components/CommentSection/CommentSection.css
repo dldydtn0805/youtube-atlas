@@ -185,46 +185,69 @@
 .comment-message__meta {
   align-items: center;
   display: inline-flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
   padding: 0 4px;
 }
 
-.comment-message__author {
+.comment-message__identity {
+  align-items: center;
   color: var(--text);
+  display: inline-flex;
   font-size: 0.7rem;
+  line-height: 1.2;
+  max-width: min(100%, 260px);
+  min-width: 0;
 }
 
-.comment-message__author[data-tier-code] {
+.comment-message__identity[data-tier-code] {
   color: var(--comment-author-tier-color, var(--text));
-  font-weight: 800;
 }
 
-.comment-message__author[data-tier-code='BRONZE'] {
+.comment-message__identity[data-tier-code='BRONZE'] {
   --comment-author-tier-color: #c26832;
 }
 
-.comment-message__author[data-tier-code='SILVER'] {
+.comment-message__identity[data-tier-code='SILVER'] {
   --comment-author-tier-color: #94a3b8;
 }
 
-.comment-message__author[data-tier-code='GOLD'] {
+.comment-message__identity[data-tier-code='GOLD'] {
   --comment-author-tier-color: #eab308;
 }
 
-.comment-message__author[data-tier-code='PLATINUM'] {
+.comment-message__identity[data-tier-code='PLATINUM'] {
   --comment-author-tier-color: #14b8a6;
 }
 
-.comment-message__author[data-tier-code='DIAMOND'] {
+.comment-message__identity[data-tier-code='DIAMOND'] {
   --comment-author-tier-color: #60a5fa;
 }
 
-.comment-message__author[data-tier-code='MASTER'] {
+.comment-message__identity[data-tier-code='MASTER'] {
   --comment-author-tier-color: #a855f7;
 }
 
-.comment-message__author[data-tier-code='LEGEND'] {
+.comment-message__identity[data-tier-code='LEGEND'] {
   --comment-author-tier-color: #f43f5e;
+}
+
+.comment-message__author {
+  flex: 0 1 auto;
+  font-weight: 800;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comment-message__title-name {
+  flex: 0 1 auto;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .comment-message__date {

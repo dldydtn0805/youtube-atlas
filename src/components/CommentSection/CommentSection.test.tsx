@@ -12,7 +12,16 @@ const authenticatedUser = {
   email: 'atlas@example.com',
   id: 7,
   pictureUrl: null,
+  selectedTitle: null,
 };
+
+const selectedTitle = {
+  code: 'atlas_sniper',
+  description: '랭크를 날카롭게 읽는 유저',
+  displayName: 'Atlas Sniper',
+  grade: 'RARE',
+  shortName: 'A. Sniper',
+} as const;
 
 vi.mock('../../lib/api', () => ({
   isApiConfigured: true,
@@ -393,6 +402,7 @@ describe('CommentSection', () => {
           created_at: '2026-03-22T00:00:00.000Z',
           current_tier_code: 'GOLD',
           id: 1,
+          selectedAchievementTitle: selectedTitle,
           user_id: 8,
           video_id: 'global',
         },
@@ -408,7 +418,10 @@ describe('CommentSection', () => {
 
     render(<CommentSection regionCode="KR" />);
 
-    expect(screen.getByText('Gold User')).toHaveAttribute('data-tier-code', 'GOLD');
+    const identity = screen.getByText('Gold User').closest('.comment-message__identity');
+
+    expect(identity).toHaveAttribute('data-tier-code', 'GOLD');
+    expect(identity).toHaveTextContent('Gold User, Atlas Sniper');
   });
 
   it('falls back to the current user tier for own messages without tier data', () => {
@@ -420,6 +433,7 @@ describe('CommentSection', () => {
         email: 'atlas@example.com',
         id: 7,
         pictureUrl: null,
+        selectedTitle,
       },
     });
     useCommentsMock.mockReturnValue({
@@ -445,7 +459,10 @@ describe('CommentSection', () => {
 
     render(<CommentSection currentTierCode="DIAMOND" regionCode="KR" />);
 
-    expect(screen.getByText('나')).toHaveAttribute('data-tier-code', 'DIAMOND');
+    const identity = screen.getByText('나').closest('.comment-message__identity');
+
+    expect(identity).toHaveAttribute('data-tier-code', 'DIAMOND');
+    expect(identity).toHaveTextContent('나, Atlas Sniper');
   });
 
   it('hides trade system messages from the chat list', () => {

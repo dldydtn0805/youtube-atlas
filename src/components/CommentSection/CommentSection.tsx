@@ -15,6 +15,8 @@ import {
 import { getChatParticipantId } from '../../features/comments/participant';
 import type { ChatMessage } from '../../features/comments/types';
 import CommentPresenceBadge from './CommentPresenceBadge';
+import CommentAuthorTitleText from './CommentAuthorTitleText';
+import { getChatAuthorTitle } from './chatAchievementTitle';
 import { getChatAuthorTierCode } from './chatTier';
 import './CommentSection.css';
 
@@ -490,6 +492,10 @@ function CommentSection({
             message,
             ownMessage ? currentTierCode : undefined,
           );
+          const authorTitle = getChatAuthorTitle(
+            message,
+            ownMessage ? user?.selectedTitle : undefined,
+          );
 
           if (systemMessage) {
             const systemToneClassName = getSystemMessageVariant(message);
@@ -512,9 +518,10 @@ function CommentSection({
               className={`comment-message ${ownMessage ? 'comment-message--own' : ''}`}
             >
               <div className="comment-message__meta">
-                <strong className="comment-message__author" data-tier-code={authorTierCode}>
-                  {ownMessage ? '나' : message.author}
-                </strong>
+                <span className="comment-message__identity" data-tier-code={authorTierCode}>
+                  <strong className="comment-message__author">{ownMessage ? '나' : message.author}</strong>
+                  {authorTitle ? <CommentAuthorTitleText title={authorTitle} /> : null}
+                </span>
                 <time className="comment-message__date" dateTime={message.created_at}>
                   {formatMessageDate(message.created_at)}
                 </time>

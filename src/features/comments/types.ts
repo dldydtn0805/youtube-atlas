@@ -1,3 +1,5 @@
+import type { SelectedAchievementTitle } from '../game/types';
+
 interface ChatMessageTier {
   tierCode?: string | null;
   tier_code?: string | null;
@@ -15,6 +17,10 @@ export interface ChatMessage {
   currentTier?: ChatMessageTier | null;
   currentTierCode?: string | null;
   current_tier_code?: string | null;
+  selectedAchievementTitle?: SelectedAchievementTitle | null;
+  selectedTitle?: SelectedAchievementTitle | null;
+  selected_achievement_title?: SelectedAchievementTitle | null;
+  selected_title?: SelectedAchievementTitle | null;
   tier?: ChatMessageTier | null;
   tierCode?: string | null;
   tier_code?: string | null;
