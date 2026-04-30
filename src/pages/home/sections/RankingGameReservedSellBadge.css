@@ -21,7 +21,7 @@
   overscroll-behavior: contain;
   padding: 6px;
   position: fixed;
-  width: 280px;
+  width: max-content;
   z-index: calc(var(--layer-modal-backdrop, 1400) + 80);
 }
 
@@ -36,7 +36,6 @@
   font: inherit;
   gap: 3px;
   max-width: 100%;
-  min-width: min(220px, 100%);
   padding: 8px;
   text-align: left;
 }

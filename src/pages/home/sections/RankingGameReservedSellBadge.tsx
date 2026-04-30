@@ -25,7 +25,6 @@ interface RankingGameReservedSellBadgeProps {
 const RESERVED_SELL_MENU_GAP_PX = 6;
 const RESERVED_SELL_MENU_MARGIN_PX = 8;
 const RESERVED_SELL_MENU_MIN_HEIGHT_PX = 96;
-const RESERVED_SELL_MENU_WIDTH_PX = 280;
 
 function buildFallbackScheduledSellOrder(
   holding: OpenGameHolding,
@@ -126,10 +125,8 @@ export default function RankingGameReservedSellBadge({
         return;
       }
 
-      const menuWidth = Math.min(
-        RESERVED_SELL_MENU_WIDTH_PX,
-        window.innerWidth - RESERVED_SELL_MENU_MARGIN_PX * 2,
-      );
+      const maxMenuWidth = window.innerWidth - RESERVED_SELL_MENU_MARGIN_PX * 2;
+      const menuWidth = Math.min(menuRef.current?.offsetWidth ?? maxMenuWidth, maxMenuWidth);
       const menuHeight = menuRef.current?.offsetHeight ?? RESERVED_SELL_MENU_MIN_HEIGHT_PX;
       const availableAbove = Math.max(
         0,
@@ -163,10 +160,10 @@ export default function RankingGameReservedSellBadge({
 
       setMenuStyle({
         left,
+        maxWidth: maxMenuWidth,
         maxHeight,
         top,
         visibility: 'visible',
-        width: menuWidth,
       });
     };
 
