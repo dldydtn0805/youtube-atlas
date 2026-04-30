@@ -84,6 +84,11 @@ describe('GameTierModal', () => {
         element.textContent?.includes('실버 5,000점 이상')
       )),
     ).toBe(true);
+    expect(
+      Array.from(document.querySelectorAll('.app-shell__tier-guide-copy')).some((element) => (
+        element.textContent?.includes('30,000P면 약 24점')
+      )),
+    ).toBe(true);
     expect(screen.getAllByText('하이라이트 점수로 티어가 정해집니다').length).toBeGreaterThan(0);
   });
 

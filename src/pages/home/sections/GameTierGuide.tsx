@@ -1,6 +1,6 @@
 import './GameTierGuide.css';
 import BoldNumberText from './BoldNumberText';
-import { strategyBaseScoreCopy, strategyTagCriteriaCopy } from './gameTierGuideContent';
+import { profitBonusCopy, strategyBaseScoreCopy, strategyTagCriteriaCopy } from './gameTierGuideContent';
 import type { GameTier } from '../../../features/game/types';
 
 const tierGuideItems = [
@@ -26,7 +26,7 @@ const tierGuideItems = [
   },
   {
     title: '큰 수익은 추가 보너스가 붙습니다',
-    copy: '수익금이 5,000P를 넘기면 추가 점수가 붙습니다. 예를 들어 수익금이 30,000P면 약 119점, 100,000P면 약 231점이 더해집니다. 수익금 추가 보너스는 전략 종류와 상관없이 최대 15,000점까지만 반영됩니다.',
+    copy: profitBonusCopy,
   },
 ];
 

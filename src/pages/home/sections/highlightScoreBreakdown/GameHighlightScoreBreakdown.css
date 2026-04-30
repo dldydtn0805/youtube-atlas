@@ -1,0 +1,36 @@
+.game-highlight-score-breakdown {
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  display: grid;
+  gap: 6px;
+  padding-top: 6px;
+}
+
+.game-highlight-score-breakdown__total,
+.game-highlight-score-breakdown__row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+.game-highlight-score-breakdown__total {
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.game-highlight-score-breakdown__list {
+  display: grid;
+  gap: 4px;
+}
+
+.game-highlight-score-breakdown__row {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.game-highlight-score-breakdown__row strong,
+.game-highlight-score-breakdown__row b {
+  color: var(--text);
+}

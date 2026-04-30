@@ -3,6 +3,7 @@ import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/Thumb
 import type { GameHighlight } from '../../../features/game/types';
 import { formatPoints, formatRank, getPointTone } from '../gameHelpers';
 import { buildGameStrategyBadges } from '../gameStrategyTags';
+import GameHighlightScoreBreakdown from './highlightScoreBreakdown/GameHighlightScoreBreakdown';
 import './GameHighlightsTab.css';
 
 interface GameHighlightsTabProps {
@@ -158,6 +159,9 @@ export default function GameHighlightsTab({
                     </span>
                     <p className="app-shell__game-highlight-detail-copy">{highlight.description}</p>
                   </div>
+                  <GameHighlightScoreBreakdown
+                    breakdown={highlight.scoreBreakdown}
+                  />
                 </div>
                 </button>
               </article>

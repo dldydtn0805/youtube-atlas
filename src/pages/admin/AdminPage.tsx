@@ -116,6 +116,21 @@ function formatDateTimeInput(value: string | null | undefined) {
   return localDate.toISOString().slice(0, 16);
 }
 
+function formatCleanupDateTimeInput(value: string | null | undefined) {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const latestAllowed = new Date(Date.now() - 60_000);
+  const cleanupDate = date.getTime() > latestAllowed.getTime() ? latestAllowed : date;
+  return formatDateTimeInput(cleanupDate.toISOString());
+}
+
 function createDefaultSnapshotRange() {
   const end = new Date();
   const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
@@ -175,16 +190,16 @@ function formatHighlightCleanupMessage(deletedCount: number, deleteBefore: strin
 function formatTradeHistoryCleanupMessage(
   deletedPositionCount: number,
   deletedLedgerCount: number,
-  deletedCoinPayoutCount: number,
   deletedDividendPayoutCount: number,
+  deletedScheduledSellOrderCount: number,
   deleteBefore: string,
   userId: number | null,
 ) {
   return [
     `${formatCleanupScopeLabel(userId)} 기준으로 ${formatNumber(deletedPositionCount)}건의 거래내역을 정리했습니다.`,
     `원장 ${formatNumber(deletedLedgerCount)}건`,
-    `코인 지급 ${formatNumber(deletedCoinPayoutCount)}건`,
     `배당 지급 ${formatNumber(deletedDividendPayoutCount)}건`,
+    `예약 매도 ${formatNumber(deletedScheduledSellOrderCount)}건`,
     `기준 시각: ${formatDateTime(deleteBefore)}`,
   ].join(' ');
 }
@@ -863,7 +878,7 @@ export default function AdminPage() {
     const activeSeasonEndAt = getDashboardActiveSeasons(dashboardQuery.data)[0]?.endAt;
 
     if (activeSeasonEndAt) {
-      setTradeHistoryCleanupDraft(formatDateTimeInput(activeSeasonEndAt));
+      setTradeHistoryCleanupDraft(formatCleanupDateTimeInput(activeSeasonEndAt));
     }
   }, [tradeHistoryCleanupDraft, dashboardQuery.data]);
 
@@ -875,7 +890,7 @@ export default function AdminPage() {
     const activeSeasonEndAt = getDashboardActiveSeasons(dashboardQuery.data)[0]?.endAt;
 
     if (activeSeasonEndAt) {
-      setHighlightCleanupDraft(formatDateTimeInput(activeSeasonEndAt));
+      setHighlightCleanupDraft(formatCleanupDateTimeInput(activeSeasonEndAt));
     }
   }, [highlightCleanupDraft, dashboardQuery.data]);
 
@@ -1230,8 +1245,8 @@ export default function AdminPage() {
               formatTradeHistoryCleanupMessage(
                 response.deletedPositionCount,
                 response.deletedLedgerCount,
-                response.deletedCoinPayoutCount,
                 response.deletedDividendPayoutCount,
+                response.deletedScheduledSellOrderCount,
                 response.deleteBefore,
                 userId,
               ),
@@ -1588,7 +1603,7 @@ export default function AdminPage() {
               </label>
             </div>
             <p className="admin-page__muted">
-              입력한 시각보다 이전에 종료된 거래내역만 삭제됩니다. 유저 ID를 비워두면 전체, 입력하면 해당 유저만 정리합니다. 보유 중인 포지션은 유지되며, 연결된 원장·코인 지급·배당 지급 기록은 함께 제거됩니다.
+              입력한 시각보다 이전에 종료된 거래내역만 삭제됩니다. 유저 ID를 비워두면 전체, 입력하면 해당 유저만 정리합니다. 보유 중인 포지션은 유지되며, 연결된 원장·배당 지급·예약 매도 기록은 함께 제거됩니다.
             </p>
             <div className="admin-page__action-row">
               <button

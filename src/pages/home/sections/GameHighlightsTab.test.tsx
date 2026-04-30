@@ -59,6 +59,45 @@ describe('GameHighlightsTab', () => {
     ]);
   });
 
+  it('renders the tier score breakdown when the backend includes it', () => {
+    render(
+      <GameHighlightsTab
+        highlights={[
+          createHighlight({
+            highlightScore: 5_360,
+            scoreBreakdown: {
+              totalScore: 5_360,
+              strategyScores: [
+                {
+                  strategyType: 'SNIPE',
+                  baseScore: 5_000,
+                  rankDiff: 8,
+                  rankDiffMultiplier: 20,
+                  rankDiffBonus: 160,
+                  profitRatePercent: 20,
+                  profitRateMultiplier: 10,
+                  maxProfitRateBonus: 5_000,
+                  profitRateBonus: 200,
+                  profitPoints: 100,
+                  minProfitPointsForBonus: 5_000,
+                  maxProfitPointsBonus: 15_000,
+                  profitPointsBonus: 0,
+                  totalScore: 5_360,
+                },
+              ],
+            },
+          }),
+        ]}
+        isLoading={false}
+        onSelectHighlight={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText('티어 점수 산식')).toHaveTextContent('스나이프');
+    expect(screen.getByLabelText('티어 점수 산식')).toHaveTextContent('기본 +5,000점');
+    expect(screen.getByLabelText('티어 점수 산식')).toHaveTextContent('순위 +160점');
+  });
+
   it('selects the highlight video from the thumbnail without opening the chart', () => {
     const highlight = createHighlight();
     const onSelectHighlight = vi.fn();

@@ -149,6 +149,28 @@ export interface GameTierProgress {
   tiers: GameTier[];
 }
 
+export interface GameHighlightStrategyScore {
+  strategyType: GameStrategyType;
+  baseScore: number;
+  rankDiff: number | null;
+  rankDiffMultiplier: number;
+  rankDiffBonus: number;
+  profitRatePercent: number | null;
+  profitRateMultiplier: number;
+  maxProfitRateBonus: number;
+  profitRateBonus: number;
+  profitPoints: number | null;
+  minProfitPointsForBonus: number;
+  maxProfitPointsBonus: number;
+  profitPointsBonus: number;
+  totalScore: number;
+}
+
+export interface GameHighlightScoreBreakdown {
+  totalScore: number;
+  strategyScores: GameHighlightStrategyScore[];
+}
+
 export interface GameHighlight {
   id: string;
   highlightType: string;
@@ -170,6 +192,7 @@ export interface GameHighlight {
   profitRatePercent: number | null;
   strategyTags?: GameStrategyType[];
   highlightScore: number;
+  scoreBreakdown?: GameHighlightScoreBreakdown | null;
   status: string;
   createdAt: string;
 }

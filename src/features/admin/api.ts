@@ -37,8 +37,8 @@ type ApiAdminUserDetail = Omit<AdminUserDetail, 'activeSeasonGame' | 'activeSeas
   activeSeasonGames?: ApiAdminUserGameSummary[];
 };
 
-type ApiAdminTradeHistoryCleanupResponse = Omit<AdminTradeHistoryCleanupResponse, 'deletedCoinPayoutCount'> & {
-  deletedCoinPayoutCount?: number | null;
+type ApiAdminTradeHistoryCleanupResponse = Omit<AdminTradeHistoryCleanupResponse, 'deletedScheduledSellOrderCount'> & {
+  deletedScheduledSellOrderCount?: number | null;
 };
 
 function createAuthorizationHeader(accessToken: string) {
@@ -155,7 +155,7 @@ export async function purgeAdminTradeHistory(
 
   return {
     ...response,
-    deletedCoinPayoutCount: normalizeNullableNumber(response.deletedCoinPayoutCount),
+    deletedScheduledSellOrderCount: normalizeNullableNumber(response.deletedScheduledSellOrderCount),
   };
 }
 

@@ -144,8 +144,8 @@ export interface AdminTradeHistoryCleanupResponse {
   deletedAt: string;
   deletedPositionCount: number;
   deletedLedgerCount: number;
-  deletedCoinPayoutCount: number;
   deletedDividendPayoutCount: number;
+  deletedScheduledSellOrderCount: number;
 }
 
 export interface AdminPlaybackProgress {
