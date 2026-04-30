@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommentSubmissionError } from '../../features/comments/spam';
 import CommentSection from './CommentSection';
@@ -7,6 +7,12 @@ import CommentSection from './CommentSection';
 const useCommentsMock = vi.fn();
 const useCreateCommentMock = vi.fn();
 const useAuthMock = vi.fn();
+const authenticatedUser = {
+  displayName: 'Atlas User',
+  email: 'atlas@example.com',
+  id: 7,
+  pictureUrl: null,
+};
 
 vi.mock('../../lib/api', () => ({
   isApiConfigured: true,
@@ -57,9 +63,10 @@ describe('CommentSection', () => {
       },
     });
     useAuthMock.mockReturnValue({
+      accessToken: 'access-token-1',
       logout: vi.fn(),
-      status: 'anonymous',
-      user: null,
+      status: 'authenticated',
+      user: authenticatedUser,
     });
   });
 
@@ -95,6 +102,29 @@ describe('CommentSection', () => {
 
     expect(mutateAsync).toHaveBeenCalledTimes(1);
     expect(textarea).toHaveValue('');
+  });
+
+  it('shows a read-only chat notice for anonymous users', async () => {
+    const mutateAsync = vi.fn();
+
+    useAuthMock.mockReturnValue({
+      accessToken: null,
+      logout: vi.fn(),
+      status: 'anonymous',
+      user: null,
+    });
+    useCreateCommentMock.mockReturnValue({
+      isPending: false,
+      mutateAsync,
+    });
+
+    render(<CommentSection videoId="video-1" videoTitle="Test video" />);
+
+    expect(screen.queryByPlaceholderText('메시지를 입력하세요.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '보내기' })).not.toBeInTheDocument();
+    expect(screen.getByText('로그인 후 채팅 참여 가능')).toBeInTheDocument();
+    expect(screen.getByText('지금은 채팅을 읽을 수만 있어요.')).toBeInTheDocument();
+    expect(mutateAsync).not.toHaveBeenCalled();
   });
 
   it('sends a fallback message based on the video title when the input is empty', async () => {
@@ -307,9 +337,11 @@ describe('CommentSection', () => {
 
     render(<CommentSection />);
 
-    expect(screen.getByLabelText('참여 2명')).toBeInTheDocument();
-    expect(screen.getByText('Atlas User')).toBeInTheDocument();
-    expect(screen.getByText('익명 #nt-2')).toBeInTheDocument();
+    const presencePanel = screen.getByLabelText('참여 2명');
+
+    expect(presencePanel).toBeInTheDocument();
+    expect(within(presencePanel).getByText('Atlas User')).toBeInTheDocument();
+    expect(within(presencePanel).getByText('익명 #nt-2')).toBeInTheDocument();
   });
 
   it('marks messages from the authenticated user as own even when the client id differs', () => {
@@ -349,6 +381,71 @@ describe('CommentSection', () => {
     expect(screen.getByText('나')).toBeInTheDocument();
     expect(screen.getByText('다른 기기에서 보낸 메시지')).toBeInTheDocument();
     expect(screen.getByText(/3\. 22\. .*9:00/)).toBeInTheDocument();
+  });
+
+  it('marks author nicknames with the message tier code', () => {
+    useCommentsMock.mockReturnValue({
+      data: [
+        {
+          author: 'Gold User',
+          client_id: 'client-gold',
+          content: '골드 티어 메시지',
+          created_at: '2026-03-22T00:00:00.000Z',
+          current_tier_code: 'GOLD',
+          id: 1,
+          user_id: 8,
+          video_id: 'global',
+        },
+      ],
+      error: null,
+      isError: false,
+      isLoading: false,
+    });
+    useCreateCommentMock.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+
+    render(<CommentSection regionCode="KR" />);
+
+    expect(screen.getByText('Gold User')).toHaveAttribute('data-tier-code', 'GOLD');
+  });
+
+  it('falls back to the current user tier for own messages without tier data', () => {
+    useAuthMock.mockReturnValue({
+      logout: vi.fn(),
+      status: 'authenticated',
+      user: {
+        displayName: 'Atlas User',
+        email: 'atlas@example.com',
+        id: 7,
+        pictureUrl: null,
+      },
+    });
+    useCommentsMock.mockReturnValue({
+      data: [
+        {
+          author: 'Atlas User',
+          client_id: 'other-device-client',
+          content: '내 티어 색 메시지',
+          created_at: '2026-03-22T00:00:00.000Z',
+          id: 1,
+          user_id: 7,
+          video_id: 'global',
+        },
+      ],
+      error: null,
+      isError: false,
+      isLoading: false,
+    });
+    useCreateCommentMock.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+
+    render(<CommentSection currentTierCode="DIAMOND" regionCode="KR" />);
+
+    expect(screen.getByText('나')).toHaveAttribute('data-tier-code', 'DIAMOND');
   });
 
   it('hides trade system messages from the chat list', () => {

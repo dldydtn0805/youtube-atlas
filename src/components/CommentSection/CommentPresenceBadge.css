@@ -17,6 +17,11 @@
   transform: translateY(-4px);
   transition: opacity .16s ease, transform .16s ease;
   z-index: 4;
+  scrollbar-width: none;
+}
+
+.chat-presence__panel::-webkit-scrollbar {
+  display: none;
 }
 
 .chat-presence:hover .chat-presence__panel,

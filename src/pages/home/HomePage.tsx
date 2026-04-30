@@ -2317,6 +2317,8 @@ function HomePage() {
             trendSignalsByVideoId: activeChartTrendSignalsByVideoId,
           }}
           communityPanelProps={{
+            currentTierCode: gameTierProgress?.currentTier.tierCode,
+            regionCode: selectedRegionCode,
             videoId: selectedVideoId,
             videoTitle: resolvedSelectedVideo?.snippet.title,
           }}

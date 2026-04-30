@@ -15,10 +15,13 @@ import {
 import { getChatParticipantId } from '../../features/comments/participant';
 import type { ChatMessage } from '../../features/comments/types';
 import CommentPresenceBadge from './CommentPresenceBadge';
+import { getChatAuthorTierCode } from './chatTier';
 import './CommentSection.css';
 
 interface CommentSectionProps {
+  currentTierCode?: string | null;
   hideHeader?: boolean;
+  regionCode?: string | null;
   videoId?: string;
   videoTitle?: string;
 }
@@ -133,9 +136,14 @@ function getFallbackMessageContent(videoTitle?: string) {
   return `${normalizedTitle || '이 영상'} ${randomSuffix}`;
 }
 
-function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSectionProps) {
+function CommentSection({
+  currentTierCode,
+  hideHeader = false,
+  regionCode,
+  videoId,
+  videoTitle,
+}: CommentSectionProps) {
   const { accessToken, logout, status, user } = useAuth();
-  const [author, setAuthor] = useState('');
   const [content, setContent] = useState('');
   const [cooldownEndsAt, setCooldownEndsAt] = useState<number | null>(null);
   const [submissionError, setSubmissionError] = useState<CommentSubmissionError | null>(null);
@@ -145,18 +153,23 @@ function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSect
   const messageInputRef = useRef<HTMLTextAreaElement | null>(null);
   const cooldownDeadlineByVideoRef = useRef<Record<string, number>>({});
   const recentMessagesByVideoRef = useRef<Record<string, RecentCommentSnapshot[]>>({});
-  const commentsQuery = useComments(videoId, isApiConfigured, { accessToken, participantId });
+  const commentsQuery = useComments(videoId, isApiConfigured, { accessToken, participantId, regionCode });
   const chatPresence = commentsQuery.presenceQuery?.data;
   const activeParticipantCount = chatPresence?.active_count;
   const createCommentMutation = useCreateComment();
   const remainingCooldownMs = getRemainingDurationMs(cooldownEndsAt);
   const remainingCooldownSeconds = Math.ceil(remainingCooldownMs / 1000);
   const isCooldownActive = remainingCooldownMs > 0;
-  const isSubmitDisabled = createCommentMutation.isPending || isCooldownActive;
   const isAuthenticated = status === 'authenticated' && Boolean(user);
+  const isSubmitDisabled = !isAuthenticated || createCommentMutation.isPending || isCooldownActive;
   const feedbackMessage = isCooldownActive
     ? formatCooldownFeedback(remainingCooldownSeconds)
     : submissionError?.message;
+  const submitButtonLabel = createCommentMutation.isPending
+    ? '전송 중'
+    : isCooldownActive
+      ? `${remainingCooldownSeconds}초 대기`
+      : '보내기';
   const visibleMessages = (commentsQuery.data ?? []).filter((message) => !isTradeSystemMessage(message));
 
   useEffect(() => {
@@ -238,6 +251,10 @@ function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSect
   }
 
   async function submitMessage() {
+    if (!isAuthenticated) {
+      return;
+    }
+
     if (isCooldownActive) {
       return;
     }
@@ -269,9 +286,10 @@ function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSect
 
     try {
       await createCommentMutation.mutateAsync({
-        author: isAuthenticated ? user?.displayName ?? '' : author,
+        author: user?.displayName ?? '',
         content: submittedContent,
         clientId: participantId,
+        regionCode,
         videoId: GLOBAL_CHAT_ROOM_ID,
       });
 
@@ -315,14 +333,6 @@ function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSect
     }
 
     void submitMessage();
-  }
-
-  function handleAuthorChange(value: string) {
-    setAuthor(value);
-
-    if (submissionError && !isCooldownActive) {
-      setSubmissionError(null);
-    }
   }
 
   function handleContentChange(value: string) {
@@ -372,7 +382,7 @@ function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSect
     );
   }
 
-  const composerContent = (
+  const composerContent = isAuthenticated && user ? (
     <form
       ref={composerRef}
       className="comment-composer"
@@ -380,38 +390,6 @@ function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSect
       onFocusCapture={handleComposerFocusCapture}
       onSubmit={handleSubmit}
     >
-      <div className="comment-composer__top">
-        {isAuthenticated && user ? (
-          <div className="comment-composer__identity">
-            {user.pictureUrl ? (
-              <img
-                alt={`${user.displayName} 프로필`}
-                className="comment-composer__avatar"
-                src={user.pictureUrl}
-              />
-            ) : (
-              <span
-                aria-hidden="true"
-                className="comment-composer__avatar comment-composer__avatar--fallback"
-              >
-                {(user.displayName || user.email).slice(0, 1).toUpperCase()}
-              </span>
-            )}
-            <div className="comment-composer__identity-copy">
-              <strong>{user.displayName || user.email}</strong>
-            </div>
-          </div>
-        ) : (
-          <input
-            className="comment-composer__name"
-            maxLength={30}
-            onChange={(event) => handleAuthorChange(event.target.value)}
-            placeholder="닉네임 (비워두면 익명)"
-            type="text"
-            value={author}
-          />
-        )}
-      </div>
       <div className="comment-composer__bottom">
         <textarea
           ref={messageInputRef}
@@ -424,15 +402,22 @@ function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSect
           value={content}
         />
         <button
+          aria-label={submitButtonLabel}
           className="comment-composer__submit"
           disabled={isSubmitDisabled}
+          title={submitButtonLabel}
           type="submit"
         >
-          {createCommentMutation.isPending
-            ? '전송 중...'
-            : isCooldownActive
-              ? `${remainingCooldownSeconds}초 대기`
-              : '보내기'}
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path
+              d="M12 19V5M12 5l-5 5M12 5l5 5"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.15"
+            />
+          </svg>
         </button>
       </div>
       <div className="comment-composer__footer">
@@ -455,11 +440,18 @@ function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSect
         <span className="comment-composer__counter">{content.length}/500</span>
       </div>
     </form>
+  ) : (
+    <div className="comment-composer-mobile-notice" role="note">
+      <strong className="comment-composer-mobile-notice__title">로그인 후 채팅 참여 가능</strong>
+      <span className="comment-composer-mobile-notice__copy">
+        지금은 채팅을 읽을 수만 있어요.
+      </span>
+    </div>
   );
   return (
     <section
       className={`comment-section ${hideHeader ? 'comment-section--body-only' : ''}`}
-      aria-label="실시간 익명 채팅"
+      aria-label="실시간 채팅"
     >
       {hideHeader ? null : (
         <header className="comment-section__header">
@@ -487,11 +479,17 @@ function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSect
           </p>
         ) : null}
         {!commentsQuery.isLoading && !commentsQuery.isError && commentsQuery.data?.length === 0 ? (
-          <p className="comment-section__status">아직 대화가 없습니다. 첫 메시지를 보내보세요.</p>
+          <p className="comment-section__status">
+            {isAuthenticated ? '아직 대화가 없습니다. 첫 메시지를 보내보세요.' : '아직 대화가 없습니다.'}
+          </p>
         ) : null}
         {visibleMessages.map((message) => {
           const ownMessage = isOwnMessage(message, participantId, user?.id);
           const systemMessage = isSystemMessage(message);
+          const authorTierCode = getChatAuthorTierCode(
+            message,
+            ownMessage ? currentTierCode : undefined,
+          );
 
           if (systemMessage) {
             const systemToneClassName = getSystemMessageVariant(message);
@@ -514,7 +512,7 @@ function CommentSection({ hideHeader = false, videoId, videoTitle }: CommentSect
               className={`comment-message ${ownMessage ? 'comment-message--own' : ''}`}
             >
               <div className="comment-message__meta">
-                <strong className="comment-message__author">
+                <strong className="comment-message__author" data-tier-code={authorTierCode}>
                   {ownMessage ? '나' : message.author}
                 </strong>
                 <time className="comment-message__date" dateTime={message.created_at}>

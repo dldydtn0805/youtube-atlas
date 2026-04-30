@@ -100,6 +100,8 @@ interface FavoriteVideosPanelProps {
 }
 
 interface CommunityPanelProps {
+  currentTierCode?: string | null;
+  regionCode?: string | null;
   selectedVideoId?: string;
   selectedVideoTitle?: string;
 }
@@ -319,7 +321,12 @@ export const FavoriteVideosPanel = memo(function FavoriteVideosPanel({
   );
 });
 
-export const CommunityPanel = memo(function CommunityPanel({ selectedVideoId, selectedVideoTitle }: CommunityPanelProps) {
+export const CommunityPanel = memo(function CommunityPanel({
+  currentTierCode,
+  regionCode,
+  selectedVideoId,
+  selectedVideoTitle,
+}: CommunityPanelProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
@@ -344,7 +351,14 @@ export const CommunityPanel = memo(function CommunityPanel({ selectedVideoId, se
           </div>
         </div>
       </div>
-      {isCollapsed ? null : <CommentSection videoId={selectedVideoId} videoTitle={selectedVideoTitle} />}
+      {isCollapsed ? null : (
+        <CommentSection
+          currentTierCode={currentTierCode}
+          regionCode={regionCode}
+          videoId={selectedVideoId}
+          videoTitle={selectedVideoTitle}
+        />
+      )}
     </section>
   );
 });

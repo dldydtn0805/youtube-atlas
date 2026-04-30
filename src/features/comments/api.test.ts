@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const AUTH_SESSION_STORAGE_KEY = 'youtube-atlas-auth-session';
+
 function createMockResponse(body: unknown, status = 200) {
   return {
     ok: status >= 200 && status < 300,
@@ -8,10 +10,33 @@ function createMockResponse(body: unknown, status = 200) {
   } as Response;
 }
 
+function writeStoredAuthSession(accessToken = 'access-token-1') {
+  window.localStorage.setItem(
+    AUTH_SESSION_STORAGE_KEY,
+    JSON.stringify({
+      accessToken,
+      expiresAt: '2026-03-23T00:00:00.000Z',
+      tokenType: 'Bearer',
+      user: {
+        commentCount: 0,
+        createdAt: '2026-03-22T00:00:00.000Z',
+        displayName: 'Atlas User',
+        email: 'atlas@example.com',
+        favoriteCount: 0,
+        id: 7,
+        lastLoginAt: '2026-03-22T00:00:00.000Z',
+        pictureUrl: null,
+        tradeCount: 0,
+      },
+    }),
+  );
+}
+
 describe('createComment', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.com');
+    window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
   });
 
   afterEach(() => {
@@ -21,6 +46,7 @@ describe('createComment', () => {
   });
 
   it('normalizes message content before posting it to the backend', async () => {
+    writeStoredAuthSession();
     const { createComment } = await import('./api');
     const fetchMock = vi.fn().mockResolvedValue(
       createMockResponse({
@@ -39,12 +65,16 @@ describe('createComment', () => {
       author: ' ',
       clientId: 'client-1',
       content: '  hello   world  ',
+      regionCode: 'KR',
       videoId: 'video-1',
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example.com/api/comments',
       expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer access-token-1',
+        }),
         method: 'POST',
       }),
     );
@@ -54,10 +84,31 @@ describe('createComment', () => {
       author: '익명',
       clientId: 'client-1',
       content: 'hello world',
+      regionCode: 'KR',
     });
   });
 
+  it('rejects anonymous comment creation before calling the backend', async () => {
+    const { createComment } = await import('./api');
+    const fetchMock = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      createComment({
+        author: '',
+        clientId: 'client-1',
+        content: 'hello world',
+        videoId: 'video-1',
+      }),
+    ).rejects.toMatchObject({
+      code: 'auth',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('maps cooldown API errors into a typed submission error', async () => {
+    writeStoredAuthSession();
     const { createComment } = await import('./api');
     vi.stubGlobal(
       'fetch',
@@ -88,6 +139,7 @@ describe('createComment', () => {
   });
 
   it('maps duplicate API errors into a typed submission error', async () => {
+    writeStoredAuthSession();
     const { createComment } = await import('./api');
     vi.stubGlobal(
       'fetch',
@@ -114,6 +166,17 @@ describe('createComment', () => {
       code: 'duplicate',
       message: '같은 메시지는 30초 후에 다시 보낼 수 있어요.',
     });
+  });
+
+  it('requests comments for the selected game region', async () => {
+    const { fetchComments } = await import('./api');
+    const fetchMock = vi.fn().mockResolvedValue(createMockResponse([]));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchComments('KR');
+
+    expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/api/comments?regionCode=KR', undefined);
   });
 
   it('posts the current chat participant id when syncing presence identity', async () => {

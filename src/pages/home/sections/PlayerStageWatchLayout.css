@@ -16,6 +16,7 @@
 }
 
 .app-shell__watch-layout[data-active='true'] {
+  --app-watch-player-height: 75dvh;
   --app-watch-viewport-height: calc(100dvh - 88px);
   --app-watch-chat-height: clamp(420px, calc(95dvh - 84px), var(--app-watch-viewport-height));
   align-items: stretch;
@@ -68,8 +69,8 @@
 .app-shell__watch-layout[data-active='true'] .app-shell__watch-primary {
   display: grid;
   gap: 16px;
-  grid-template-rows: minmax(0, 1fr) auto;
-  height: var(--app-watch-viewport-height);
+  grid-template-rows: minmax(0, var(--app-watch-player-height)) auto;
+  height: auto;
   min-height: 0;
 }
 
@@ -103,7 +104,7 @@
 
 .app-shell__watch-layout[data-active='true'] .comment-section--body-only {
   box-sizing: border-box;
-  grid-template-rows: minmax(0, 80fr) minmax(132px, 15fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   height: 100%;
   max-height: 100%;
   min-height: 0;
@@ -124,8 +125,7 @@
   max-width: 100%;
   min-height: 0;
   overflow-x: hidden;
-  padding-right: 30px;
-  scrollbar-gutter: stable;
+  padding-right: 22px;
   width: 100%;
 }
 
@@ -134,10 +134,21 @@
   min-width: 0;
 }
 
+.app-shell__watch-layout[data-active='true'] .comment-composer__textarea {
+  min-height: 42px;
+  padding: 11px 42px 11px 14px;
+}
+
 .app-shell__watch-layout[data-active='true'] .comment-composer__submit {
-  min-width: 86px;
-  padding: 0 14px;
-  white-space: nowrap;
+  height: 28px;
+  min-width: 0;
+  padding: 0;
+  width: 28px;
+}
+
+.app-shell__watch-layout[data-active='true'] .comment-composer__submit svg {
+  height: 13px;
+  width: 13px;
 }
 
 @media (max-width: 1360px) {
@@ -148,11 +159,6 @@
 
   .app-shell__watch-layout[data-active='true'] .app-shell__watch-primary {
     max-width: 100%;
-  }
-
-  .app-shell__watch-layout[data-active='true'] .comment-composer__submit {
-    min-width: 78px;
-    padding: 0 12px;
   }
 
   :root:not([data-mobile-layout='true'])

@@ -1,3 +1,8 @@
+interface ChatMessageTier {
+  tierCode?: string | null;
+  tier_code?: string | null;
+}
+
 export interface ChatMessage {
   id: number;
   video_id: string;
@@ -7,6 +12,12 @@ export interface ChatMessage {
   content: string;
   client_id: string;
   user_id?: number | null;
+  currentTier?: ChatMessageTier | null;
+  currentTierCode?: string | null;
+  current_tier_code?: string | null;
+  tier?: ChatMessageTier | null;
+  tierCode?: string | null;
+  tier_code?: string | null;
   created_at: string;
 }
 
@@ -25,4 +36,5 @@ export interface SendMessageInput {
   author: string;
   content: string;
   clientId: string;
+  regionCode?: string | null;
 }

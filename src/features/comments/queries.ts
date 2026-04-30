@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   COMMENTS_PRESENCE_TOPIC,
@@ -17,12 +17,16 @@ import type { ChatMessage, ChatPresence, SendMessageInput } from './types';
 
 const SAME_COMMENT_TIME_WINDOW_MS = 10_000;
 
-const commentsQueryKey = ['comments', 'global'] as const;
 const commentsPresenceQueryKey = ['comments', 'presence'] as const;
 
 interface UseCommentsOptions {
   accessToken?: string | null;
   participantId?: string | null;
+  regionCode?: string | null;
+}
+
+function commentsQueryKey(regionCode?: string | null) {
+  return ['comments', 'global', regionCode ?? 'all'] as const;
 }
 
 function isSameCommentEvent(current: ChatMessage, next: ChatMessage) {
@@ -66,11 +70,16 @@ export function mergeComment(existing: ChatMessage[] = [], nextComment: ChatMess
 
 export function useComments(_videoId?: string, enabled = true, options: UseCommentsOptions = {}) {
   const queryClient = useQueryClient();
-  const { accessToken, participantId } = options;
+  const { accessToken, participantId, regionCode } = options;
+  const activeRegionCode = regionCode ?? null;
+  const activeCommentsQueryKey = useMemo(
+    () => commentsQueryKey(activeRegionCode),
+    [activeRegionCode],
+  );
   const commentsQuery = useQuery({
     enabled,
-    queryKey: commentsQueryKey,
-    queryFn: fetchComments,
+    queryKey: activeCommentsQueryKey,
+    queryFn: () => fetchComments(activeRegionCode),
   });
   const presenceQuery = useQuery({
     enabled,
@@ -101,7 +110,7 @@ export function useComments(_videoId?: string, enabled = true, options: UseComme
       try {
         const nextComment = JSON.parse(messageBody) as ChatMessage;
 
-        queryClient.setQueryData<ChatMessage[]>(commentsQueryKey, (current = []) =>
+        queryClient.setQueryData<ChatMessage[]>(activeCommentsQueryKey, (current = []) =>
           mergeComment(current, nextComment),
         );
       } catch {
@@ -131,7 +140,7 @@ export function useComments(_videoId?: string, enabled = true, options: UseComme
       unsubscribePresence();
       unsubscribeConnection();
     };
-  }, [accessToken, enabled, participantId, queryClient]);
+  }, [accessToken, activeCommentsQueryKey, enabled, participantId, queryClient]);
 
   return {
     ...commentsQuery,
@@ -148,8 +157,8 @@ export function useCreateComment() {
 
   return useMutation({
     mutationFn: (input: SendMessageInput) => createComment(input),
-    onSuccess: (comment) => {
-      queryClient.setQueryData<ChatMessage[]>(commentsQueryKey, (current = []) =>
+    onSuccess: (comment, input) => {
+      queryClient.setQueryData<ChatMessage[]>(commentsQueryKey(input.regionCode), (current = []) =>
         mergeComment(current, comment),
       );
     },

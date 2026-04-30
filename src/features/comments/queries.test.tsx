@@ -161,6 +161,32 @@ describe('comments queries', () => {
     expect(client?.connectHeaders).toMatchObject({ 'x-participant-id': expect.any(String) });
   });
 
+  it('fetches comments for the selected region', async () => {
+    const { useComments } = await import('./queries');
+    const { fetchComments } = await import('./api');
+
+    function HookHarness() {
+      useComments(undefined, true, { regionCode: 'KR' });
+      return null;
+    }
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    render(<HookHarness />, {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(fetchComments).toHaveBeenCalledWith('KR');
+    });
+  });
+
   it('reuses a single realtime client across multiple mounted comment hooks', async () => {
     const { useComments } = await import('./queries');
 

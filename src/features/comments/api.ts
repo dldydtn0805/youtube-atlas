@@ -10,8 +10,15 @@ import {
 const COMMENTS_TOPIC = '/topic/comments';
 const COMMENTS_PRESENCE_TOPIC = '/topic/comments/presence';
 
-export async function fetchComments(): Promise<ChatMessage[]> {
-  return fetchApi<ChatMessage[]>('/api/comments');
+export async function fetchComments(regionCode?: string | null): Promise<ChatMessage[]> {
+  const params = new URLSearchParams();
+
+  if (regionCode) {
+    params.set('regionCode', regionCode);
+  }
+
+  const queryString = params.toString();
+  return fetchApi<ChatMessage[]>(`/api/comments${queryString ? `?${queryString}` : ''}`);
 }
 
 export async function fetchCommentPresence(): Promise<ChatPresence> {
@@ -44,9 +51,11 @@ export async function createComment(input: SendMessageInput): Promise<ChatMessag
     throw new CommentSubmissionError('validation');
   }
 
-  if (accessToken) {
-    headers.Authorization = `Bearer ${accessToken}`;
+  if (!accessToken) {
+    throw new CommentSubmissionError('auth');
   }
+
+  headers.Authorization = `Bearer ${accessToken}`;
 
   try {
     return await fetchApi<ChatMessage>('/api/comments', {
@@ -56,6 +65,7 @@ export async function createComment(input: SendMessageInput): Promise<ChatMessag
         author,
         clientId: input.clientId,
         content,
+        regionCode: input.regionCode,
       }),
     });
   } catch (error) {
