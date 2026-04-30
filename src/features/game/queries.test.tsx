@@ -379,4 +379,59 @@ describe('game queries optimistic mutations', () => {
       }),
     ]);
   });
+
+  it('keeps the remaining split reservation after canceling one scheduled order', async () => {
+    const queryClient = createQueryClient();
+    const wrapper = createWrapper(queryClient);
+    const deferred = createDeferred<GameScheduledSellOrder>();
+    cancelScheduledSellOrderMock.mockReturnValue(deferred.promise);
+
+    queryClient.setQueryData(gameQueryKeys.scheduledSellOrders('token-1', 'KR'), [
+      createScheduledOrder({ id: 11, quantity: 4, targetRank: 3 }),
+      createScheduledOrder({ id: 12, quantity: 3, targetRank: 5 }),
+    ]);
+    queryClient.setQueryData(
+      [...gameQueryKeys.positions('token-1', 'KR', 'OPEN'), null],
+      [
+        createOpenPosition({
+          reservedForSell: true,
+          scheduledSellOrderId: 11,
+          scheduledSellQuantity: 7,
+          scheduledSellTargetRank: 3,
+          scheduledSellTriggerDirection: 'RANK_IMPROVES_TO',
+        }),
+      ],
+    );
+
+    const { result } = renderHook(() => useCancelScheduledSellOrder('token-1', 'KR'), { wrapper });
+
+    act(() => {
+      result.current.mutate(11);
+    });
+
+    await waitFor(() => {
+      expect(queryClient.getQueryData<GameScheduledSellOrder[]>(gameQueryKeys.scheduledSellOrders('token-1', 'KR'))).toEqual([
+        expect.objectContaining({
+          id: 11,
+          status: 'CANCELED',
+        }),
+        expect.objectContaining({
+          id: 12,
+          status: 'PENDING',
+        }),
+      ]);
+      expect(queryClient.getQueryData<GamePosition[]>([...gameQueryKeys.positions('token-1', 'KR', 'OPEN'), null])).toEqual([
+        expect.objectContaining({
+          id: 1,
+          reservedForSell: true,
+          scheduledSellOrderId: 12,
+          scheduledSellQuantity: 3,
+          scheduledSellTargetRank: 5,
+          scheduledSellTriggerDirection: 'RANK_IMPROVES_TO',
+        }),
+      ]);
+    });
+
+    deferred.resolve(createScheduledOrder({ id: 11, status: 'CANCELED' }));
+  });
 });

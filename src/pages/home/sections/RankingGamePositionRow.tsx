@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
-import type { GamePosition } from '../../../features/game/types';
+import type { GamePosition, GameScheduledSellOrder } from '../../../features/game/types';
 import {
   calculateGameUnitPricePoints,
   formatGameQuantity,
@@ -18,11 +18,13 @@ interface RankingGamePositionRowProps {
   canShowGameActions: boolean;
   holding: OpenGameHolding;
   isSelected: boolean;
+  onCancelScheduledSellOrder?: (orderId: number) => void;
   onOpenPositionChart?: (position: GamePosition) => void;
   onOpenBuyTradeModal?: (position: GamePosition) => void;
   onOpenSellTradeModal?: (position: GamePosition) => void;
-  onOpenScheduledSellOrder?: (holding: OpenGameHolding) => void;
   onSelectPosition: (position: GamePosition) => void;
+  scheduledSellOrderCancelingId?: number | null;
+  scheduledSellOrders?: GameScheduledSellOrder[];
 }
 
 function formatHighlightScore(score?: number | null) {
@@ -86,11 +88,13 @@ function RankingGamePositionRowComponent({
   canShowGameActions,
   holding,
   isSelected,
+  onCancelScheduledSellOrder,
   onOpenPositionChart,
   onOpenBuyTradeModal,
   onOpenSellTradeModal,
-  onOpenScheduledSellOrder,
   onSelectPosition,
+  scheduledSellOrderCancelingId,
+  scheduledSellOrders,
 }: RankingGamePositionRowProps) {
   const holdingRankTrendBadge = getHoldingRankDiffBadge(holding);
   const strategyBadges = buildPositionStrategyBadges(holding.achievedStrategyTags, holding.targetStrategyTags);
@@ -208,7 +212,9 @@ function RankingGamePositionRowComponent({
                     ) : null}
                     <RankingGameReservedSellBadge
                       holding={holding}
-                      onOpenScheduledSellOrder={onOpenScheduledSellOrder}
+                      isCancelingOrderId={scheduledSellOrderCancelingId}
+                      onCancelScheduledSellOrder={onCancelScheduledSellOrder}
+                      scheduledSellOrders={scheduledSellOrders}
                     />
                     {sellableStatusBadge ? (
                       <span className="app-shell__game-position-trend" data-tone="steady">
@@ -278,11 +284,13 @@ function areRankingGamePositionRowPropsEqual(
     prevProps.canShowGameActions === nextProps.canShowGameActions &&
     prevProps.holding === nextProps.holding &&
     prevProps.isSelected === nextProps.isSelected &&
+    prevProps.onCancelScheduledSellOrder === nextProps.onCancelScheduledSellOrder &&
     prevProps.onOpenPositionChart === nextProps.onOpenPositionChart &&
     prevProps.onOpenBuyTradeModal === nextProps.onOpenBuyTradeModal &&
     prevProps.onOpenSellTradeModal === nextProps.onOpenSellTradeModal &&
-    prevProps.onOpenScheduledSellOrder === nextProps.onOpenScheduledSellOrder &&
-    prevProps.onSelectPosition === nextProps.onSelectPosition
+    prevProps.onSelectPosition === nextProps.onSelectPosition &&
+    prevProps.scheduledSellOrderCancelingId === nextProps.scheduledSellOrderCancelingId &&
+    prevProps.scheduledSellOrders === nextProps.scheduledSellOrders
   );
 }
 

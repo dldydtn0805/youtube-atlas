@@ -1,7 +1,13 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { GameCurrentSeason, GameHighlight, GameLeaderboardEntry, GamePosition } from '../../../features/game/types';
+import type {
+  GameCurrentSeason,
+  GameHighlight,
+  GameLeaderboardEntry,
+  GamePosition,
+  GameScheduledSellOrder,
+} from '../../../features/game/types';
 import type { OpenGameHolding } from '../gameHelpers';
 import { HISTORY_PLAYBACK_QUEUE_ID } from '../utils';
 import {
@@ -156,6 +162,37 @@ function createOpenGameHolding(overrides: Partial<OpenGameHolding> = {}): OpenGa
     scheduledSellTargetRank: null,
     scheduledSellTriggerDirection: null,
     scheduledSellQuantity: 0,
+    ...overrides,
+  };
+}
+
+function createScheduledSellOrder(overrides: Partial<GameScheduledSellOrder> = {}): GameScheduledSellOrder {
+  return {
+    buyRank: 15,
+    canceledAt: null,
+    channelTitle: 'Channel',
+    createdAt: '2026-04-24T00:00:00.000Z',
+    currentRank: 12,
+    executedAt: null,
+    failureReason: null,
+    id: 11,
+    pnlPoints: null,
+    positionId: 1,
+    quantity: 100,
+    regionCode: 'KR',
+    seasonId: 1,
+    sellPricePoints: null,
+    settledPoints: null,
+    stakePoints: 5000,
+    status: 'PENDING',
+    targetRank: 10,
+    thumbnailUrl: 'https://example.com/a.jpg',
+    triggeredAt: null,
+    triggerDirection: 'RANK_IMPROVES_TO',
+    updatedAt: '2026-04-24T00:00:00.000Z',
+    userId: 1,
+    videoId: 'video-1',
+    videoTitle: 'Holding Video',
     ...overrides,
   };
 }
@@ -477,9 +514,9 @@ describe('RankingGamePositionsTab', () => {
     expect(screen.getByText('1개 예약 중')).toBeInTheDocument();
   });
 
-  it('opens the queued scheduled order from the reserved sell badge', () => {
+  it('opens a fallback cancel menu from the reserved sell badge', () => {
     const onOpenPositionChart = vi.fn();
-    const onOpenScheduledSellOrder = vi.fn();
+    const onCancelScheduledSellOrder = vi.fn();
 
     render(
       <RankingGamePositionsTab
@@ -495,22 +532,124 @@ describe('RankingGamePositionsTab', () => {
             sellableQuantity: 0,
           }),
         ]}
+        onCancelScheduledSellOrder={onCancelScheduledSellOrder}
         onOpenPositionChart={onOpenPositionChart}
-        onOpenScheduledSellOrder={onOpenScheduledSellOrder}
         onSelectPosition={vi.fn()}
         trendSignalsByVideoId={{}}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 예약 매도 대기열로 이동' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 예약 매도 취소' }));
 
-    expect(onOpenScheduledSellOrder).toHaveBeenCalledWith(
-      expect.objectContaining({
-        positionId: 1,
-        scheduledSellOrderId: 11,
-      }),
-    );
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(onCancelScheduledSellOrder).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Holding Video 예약 주문 11 취소' }));
+
+    expect(onCancelScheduledSellOrder).toHaveBeenCalledWith(11);
     expect(onOpenPositionChart).not.toHaveBeenCalled();
+  });
+
+  it('cancels a loaded scheduled order even before the holding has the scheduled order id', () => {
+    const onCancelScheduledSellOrder = vi.fn();
+
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[
+          createOpenGameHolding({
+            quantity: 100,
+            reservedForSell: true,
+            scheduledSellOrderId: null,
+            scheduledSellQuantity: 100,
+            sellableQuantity: 0,
+          }),
+        ]}
+        onCancelScheduledSellOrder={onCancelScheduledSellOrder}
+        onSelectPosition={vi.fn()}
+        scheduledSellOrders={[createScheduledSellOrder({ id: 22 })]}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 예약 매도 취소' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Holding Video 예약 주문 22 취소' }));
+
+    expect(onCancelScheduledSellOrder).toHaveBeenCalledWith(22);
+  });
+
+  it('lets the user cancel a specific scheduled order when a holding has multiple reservations', () => {
+    const onOpenPositionChart = vi.fn();
+    const onCancelScheduledSellOrder = vi.fn();
+
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[
+          createOpenGameHolding({
+            quantity: 200,
+            reservedForSell: true,
+            scheduledSellOrderId: 11,
+            scheduledSellQuantity: 200,
+            sellableQuantity: 0,
+          }),
+        ]}
+        onCancelScheduledSellOrder={onCancelScheduledSellOrder}
+        onOpenPositionChart={onOpenPositionChart}
+        onSelectPosition={vi.fn()}
+        scheduledSellOrders={[
+          createScheduledSellOrder({ id: 11, targetRank: 10 }),
+          createScheduledSellOrder({ id: 12, targetRank: 5 }),
+        ]}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 예약 매도 취소' }));
+
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(onCancelScheduledSellOrder).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Holding Video 예약 주문 12 취소' }));
+
+    expect(onCancelScheduledSellOrder).toHaveBeenCalledWith(12);
+    expect(onOpenPositionChart).not.toHaveBeenCalled();
+  });
+
+  it('keeps the reservation controls visible when pending orders remain after position summary changes', () => {
+    const onCancelScheduledSellOrder = vi.fn();
+
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[
+          createOpenGameHolding({
+            quantity: 200,
+            reservedForSell: false,
+            scheduledSellOrderId: null,
+            scheduledSellQuantity: 0,
+            sellableQuantity: 100,
+          }),
+        ]}
+        onCancelScheduledSellOrder={onCancelScheduledSellOrder}
+        onSelectPosition={vi.fn()}
+        scheduledSellOrders={[createScheduledSellOrder({ id: 12, quantity: 100 })]}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    expect(screen.getByText('1개 예약 중')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 예약 매도 취소' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Holding Video 예약 주문 12 취소' }));
+
+    expect(onCancelScheduledSellOrder).toHaveBeenCalledWith(12);
   });
 });
 

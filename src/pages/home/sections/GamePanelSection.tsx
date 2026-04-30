@@ -52,7 +52,6 @@ interface GamePanelSectionProps {
   onOpenScheduledSellOrderChart?: (order: GameScheduledSellOrder) => void;
   onOpenPositionBuyTradeModal?: (position: GamePosition) => void;
   onOpenPositionSellTradeModal?: (position: GamePosition) => void;
-  onOpenScheduledSellOrder?: (holding: OpenGameHolding) => void;
   onCancelScheduledSellOrder?: (orderId: number) => void;
   onSelectGameHistoryVideo: (position: GamePosition, playbackQueueId?: string) => void | Promise<void>;
   onSelectGamePositionVideo: (position: GamePosition) => void;
@@ -106,7 +105,6 @@ export default function GamePanelSection({
   onOpenScheduledSellOrderChart,
   onOpenPositionBuyTradeModal,
   onOpenPositionSellTradeModal,
-  onOpenScheduledSellOrder,
   onCancelScheduledSellOrder,
   onSelectGameHistoryVideo,
   onSelectGamePositionVideo,
@@ -164,12 +162,14 @@ export default function GamePanelSection({
       holdings={openGameHoldings}
       currentGameSeason={currentGameSeason}
       isLoading={isOpenGamePositionsLoading}
+      onCancelScheduledSellOrder={onCancelScheduledSellOrder}
       onOpenPositionChart={onOpenPositionChart}
       onOpenBuyTradeModal={onOpenPositionBuyTradeModal}
       onOpenSellTradeModal={onOpenPositionSellTradeModal}
-      onOpenScheduledSellOrder={onOpenScheduledSellOrder}
       onSelectPosition={onSelectGamePositionVideo}
       openDistinctVideoCount={openDistinctVideoCount}
+      scheduledSellOrderCancelingId={scheduledSellOrderCancelingId}
+      scheduledSellOrders={scheduledSellOrders}
       selectedPositionId={selectedPositionId}
       trendSignalsByVideoId={trendSignalsByVideoId}
     />

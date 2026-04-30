@@ -28,6 +28,7 @@ interface GameScheduledSellOrdersTabProps {
 
 export interface ScheduledSellOrderFocusRequest {
   orderId: number;
+  positionId?: number;
   requestId: number;
 }
 
@@ -110,6 +111,23 @@ function getScheduledSellFocusFilter(status: GameScheduledSellOrder['status']): 
   return status === 'FAILED' ? 'ALL' : status;
 }
 
+function getFocusedScheduledSellOrder(
+  orders: GameScheduledSellOrder[],
+  request?: ScheduledSellOrderFocusRequest | null,
+) {
+  if (!request) {
+    return null;
+  }
+
+  return (
+    orders.find((order) => order.id === request.orderId) ??
+    (typeof request.positionId === 'number'
+      ? orders.find((order) => order.status === 'PENDING' && order.positionId === request.positionId)
+      : undefined) ??
+    null
+  );
+}
+
 function scrollScheduledOrderIntoView(orderElement: HTMLElement) {
   const scrollContainer = orderElement.closest<HTMLElement>('.app-shell__game-tab-slide-panel');
 
@@ -118,6 +136,28 @@ function scrollScheduledOrderIntoView(orderElement: HTMLElement) {
   }
 
   scrollContainer.scrollTop = Math.max(0, orderElement.offsetTop - SCHEDULED_SELL_FOCUS_SCROLL_OFFSET);
+}
+
+function scheduleScheduledOrderScroll(orderElement: HTMLElement) {
+  if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+    scrollScheduledOrderIntoView(orderElement);
+    return undefined;
+  }
+
+  let nextAnimationFrameId: number | null = null;
+  const animationFrameId = window.requestAnimationFrame(() => {
+    nextAnimationFrameId = window.requestAnimationFrame(() => {
+      scrollScheduledOrderIntoView(orderElement);
+    });
+  });
+
+  return () => {
+    window.cancelAnimationFrame(animationFrameId);
+
+    if (nextAnimationFrameId != null) {
+      window.cancelAnimationFrame(nextAnimationFrameId);
+    }
+  };
 }
 
 export default function GameScheduledSellOrdersTab({
@@ -137,7 +177,8 @@ export default function GameScheduledSellOrdersTab({
   const [activeFilter, setActiveFilter] = useState<ScheduledSellOrderFilter>('PENDING');
   const activeFilterRef = useRef(activeFilter);
   const focusedOrderRef = useRef<HTMLLIElement | null>(null);
-  const focusedOrderId = focusedOrderRequest?.orderId ?? null;
+  const focusedOrder = getFocusedScheduledSellOrder(orders, focusedOrderRequest);
+  const focusedOrderId = focusedOrder?.id ?? focusedOrderRequest?.orderId ?? null;
   const filteredOrders = getScheduledSellOrdersByFilter(orders, activeFilter);
 
   useEffect(() => {
@@ -149,7 +190,7 @@ export default function GameScheduledSellOrdersTab({
       return;
     }
 
-    const focusedOrder = orders.find((order) => order.id === focusedOrderRequest.orderId);
+    const focusedOrder = getFocusedScheduledSellOrder(orders, focusedOrderRequest);
     const currentFilter = activeFilterRef.current;
     const focusFilter = focusedOrder ? getScheduledSellFocusFilter(focusedOrder.status) : null;
 
@@ -169,16 +210,7 @@ export default function GameScheduledSellOrdersTab({
       return;
     }
 
-    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
-      scrollScheduledOrderIntoView(focusedOrder);
-      return;
-    }
-
-    const animationFrameId = window.requestAnimationFrame(() => {
-      scrollScheduledOrderIntoView(focusedOrder);
-    });
-
-    return () => window.cancelAnimationFrame(animationFrameId);
+    return scheduleScheduledOrderScroll(focusedOrder);
   }, [activeFilter, focusedOrderId, focusedOrderRequest?.requestId, isActive, orders]);
 
   return (

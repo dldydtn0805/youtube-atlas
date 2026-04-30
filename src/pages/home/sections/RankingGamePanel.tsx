@@ -17,6 +17,7 @@ import type {
   GameHighlight,
   GameLeaderboardEntry,
   GamePosition,
+  GameScheduledSellOrder,
   GameTierProgress,
 } from '../../../features/game/types';
 import { getGameInventorySlotLimit } from '../../../features/game/inventory';
@@ -125,12 +126,14 @@ interface RankingGamePositionsTabProps {
   holdings: OpenGameHolding[];
   currentGameSeason?: GameCurrentSeason;
   isLoading?: boolean;
+  onCancelScheduledSellOrder?: (orderId: number) => void;
   onOpenPositionChart?: (position: GamePosition) => void;
   onOpenBuyTradeModal?: (position: GamePosition) => void;
   onOpenSellTradeModal?: (position: GamePosition) => void;
-  onOpenScheduledSellOrder?: (holding: OpenGameHolding) => void;
   onSelectPosition: (position: GamePosition) => void;
   openDistinctVideoCount?: number;
+  scheduledSellOrderCancelingId?: number | null;
+  scheduledSellOrders?: GameScheduledSellOrder[];
   selectedPositionId?: number | null;
   trendSignalsByVideoId: Record<string, VideoTrendSignal>;
 }
@@ -182,12 +185,14 @@ function areRankingGamePositionsTabPropsEqual(
     prevProps.holdings === nextProps.holdings &&
     prevProps.currentGameSeason === nextProps.currentGameSeason &&
     prevProps.isLoading === nextProps.isLoading &&
+    prevProps.onCancelScheduledSellOrder === nextProps.onCancelScheduledSellOrder &&
     prevProps.onOpenPositionChart === nextProps.onOpenPositionChart &&
     prevProps.onOpenBuyTradeModal === nextProps.onOpenBuyTradeModal &&
     prevProps.onOpenSellTradeModal === nextProps.onOpenSellTradeModal &&
-    prevProps.onOpenScheduledSellOrder === nextProps.onOpenScheduledSellOrder &&
     prevProps.onSelectPosition === nextProps.onSelectPosition &&
     prevProps.openDistinctVideoCount === nextProps.openDistinctVideoCount &&
+    prevProps.scheduledSellOrderCancelingId === nextProps.scheduledSellOrderCancelingId &&
+    prevProps.scheduledSellOrders === nextProps.scheduledSellOrders &&
     prevProps.selectedPositionId === nextProps.selectedPositionId
   );
 }
@@ -1068,12 +1073,14 @@ function RankingGamePositionsTabComponent({
   holdings,
   currentGameSeason,
   isLoading = false,
+  onCancelScheduledSellOrder,
   onOpenPositionChart,
   onOpenBuyTradeModal,
   onOpenSellTradeModal,
-  onOpenScheduledSellOrder,
   onSelectPosition,
   openDistinctVideoCount,
+  scheduledSellOrderCancelingId,
+  scheduledSellOrders = [],
   selectedPositionId,
 }: RankingGamePositionsTabProps) {
   const inventoryOpenCount =
@@ -1121,11 +1128,13 @@ function RankingGamePositionsTabComponent({
             canShowGameActions={canShowGameActions}
             holding={holding}
             isSelected={activePlaybackQueueId === GAME_PORTFOLIO_QUEUE_ID && holding.positionId === selectedPositionId}
+            onCancelScheduledSellOrder={onCancelScheduledSellOrder}
             onOpenPositionChart={onOpenPositionChart}
             onOpenBuyTradeModal={onOpenBuyTradeModal}
             onOpenSellTradeModal={onOpenSellTradeModal}
-            onOpenScheduledSellOrder={onOpenScheduledSellOrder}
             onSelectPosition={onSelectPosition}
+            scheduledSellOrderCancelingId={scheduledSellOrderCancelingId}
+            scheduledSellOrders={scheduledSellOrders}
           />
         ))}
       </ul>

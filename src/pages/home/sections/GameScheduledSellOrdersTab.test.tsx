@@ -517,6 +517,28 @@ describe('GameScheduledSellOrdersTab', () => {
     await waitFor(() => expect(scrollContainer.scrollTop).toBe(108));
   });
 
+  it('keeps focus by position when the scheduled order id changes', async () => {
+    const pendingOrder = createScheduledSellOrder({ id: 44, positionId: 10 });
+
+    render(
+      <div className="app-shell__game-tab-slide-panel">
+        <GameScheduledSellOrdersTab
+          focusedOrderRequest={{ orderId: -123, positionId: 10, requestId: 1 }}
+          isLoading={false}
+          orders={[pendingOrder]}
+        />
+      </div>,
+    );
+
+    const scrollContainer = document.querySelector('.app-shell__game-tab-slide-panel') as HTMLDivElement;
+    Object.defineProperty(scrollContainer, 'scrollTop', { configurable: true, writable: true, value: 0 });
+    const focusedRow = screen.getByText('대기 주문').closest('li');
+    Object.defineProperty(focusedRow, 'offsetTop', { configurable: true, value: 120 });
+
+    expect(focusedRow).toHaveAttribute('data-focused', 'true');
+    await waitFor(() => expect(scrollContainer.scrollTop).toBe(108));
+  });
+
   it('shows a failed order reason when one is provided', async () => {
     const user = userEvent.setup();
 

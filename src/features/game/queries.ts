@@ -286,6 +286,33 @@ function buildOptimisticScheduledSellOrder(
   } satisfies GameScheduledSellOrder;
 }
 
+function getPendingScheduledSellOrdersForPosition(
+  orders: GameScheduledSellOrder[],
+  positionId: number,
+) {
+  return orders.filter((order) => order.positionId === positionId && order.status === 'PENDING');
+}
+
+function applyScheduledSellSummaryToPosition(
+  position: GamePosition,
+  pendingOrders: GameScheduledSellOrder[],
+) {
+  const primaryOrder = pendingOrders[0] ?? null;
+  const scheduledSellQuantity = pendingOrders.reduce(
+    (totalQuantity, order) => totalQuantity + order.quantity,
+    0,
+  );
+
+  return {
+    ...position,
+    reservedForSell: scheduledSellQuantity > 0,
+    scheduledSellOrderId: primaryOrder?.id ?? null,
+    scheduledSellQuantity,
+    scheduledSellTargetRank: primaryOrder?.targetRank ?? null,
+    scheduledSellTriggerDirection: primaryOrder?.triggerDirection ?? null,
+  } satisfies GamePosition;
+}
+
 export async function invalidateGameQueries(
   queryClient: QueryClient,
   { accessToken, includeLeaderboardPositions = false, regionCode = null }: InvalidateGameQueriesOptions,
@@ -972,24 +999,18 @@ export function useCreateScheduledSellOrder(accessToken: string | null) {
         previousPositions.flatMap(([, positions]) => positions ?? []).find((position) => position.id === input.positionId) ??
         null;
       const optimisticOrder = buildOptimisticScheduledSellOrder(input, sourcePosition);
+      const nextOrders = [optimisticOrder, ...(previousOrders ?? [])];
 
-      queryClient.setQueryData<GameScheduledSellOrder[]>(scheduledOrdersKey, (orders) => [
-        optimisticOrder,
-        ...(orders ?? []),
-      ]);
+      queryClient.setQueryData<GameScheduledSellOrder[]>(scheduledOrdersKey, nextOrders);
 
       previousPositions.forEach(([queryKey]) => {
         queryClient.setQueryData<GamePosition[]>(queryKey, (positions) =>
           (positions ?? []).map((position) =>
             position.id === input.positionId
-              ? {
-                  ...position,
-                  reservedForSell: true,
-                  scheduledSellOrderId: optimisticOrder.id,
-                  scheduledSellQuantity: input.quantity,
-                  scheduledSellTargetRank: input.targetRank,
-                  scheduledSellTriggerDirection: input.triggerDirection,
-                }
+              ? applyScheduledSellSummaryToPosition(
+                  position,
+                  getPendingScheduledSellOrdersForPosition(nextOrders, input.positionId),
+                )
               : position,
           ),
         );
@@ -1043,32 +1064,30 @@ export function useCancelScheduledSellOrder(accessToken: string | null, regionCo
       const targetOrder = previousOrders?.find((order) => order.id === orderId) ?? null;
 
       if (targetOrder) {
-        queryClient.setQueryData<GameScheduledSellOrder[]>(scheduledOrdersKey, (orders) =>
-          (orders ?? []).map((order) =>
-            order.id === orderId
-              ? {
-                  ...order,
-                  canceledAt: new Date().toISOString(),
-                  failureReason: null,
-                  status: 'CANCELED',
-                  updatedAt: new Date().toISOString(),
-                }
-              : order,
-          ),
+        const canceledAt = new Date().toISOString();
+        const nextOrders = (previousOrders ?? []).map((order) =>
+          order.id === orderId
+            ? {
+                ...order,
+                canceledAt,
+                failureReason: null,
+                status: 'CANCELED' as const,
+                updatedAt: canceledAt,
+              }
+            : order,
         );
+        const remainingPendingOrders = getPendingScheduledSellOrdersForPosition(
+          nextOrders,
+          targetOrder.positionId,
+        );
+
+        queryClient.setQueryData<GameScheduledSellOrder[]>(scheduledOrdersKey, nextOrders);
 
         previousPositions.forEach(([queryKey]) => {
           queryClient.setQueryData<GamePosition[]>(queryKey, (positions) =>
             (positions ?? []).map((position) =>
-              position.id === targetOrder.positionId && position.scheduledSellOrderId === orderId
-                ? {
-                    ...position,
-                    reservedForSell: false,
-                    scheduledSellOrderId: null,
-                    scheduledSellQuantity: 0,
-                    scheduledSellTargetRank: null,
-                    scheduledSellTriggerDirection: null,
-                  }
+              position.id === targetOrder.positionId
+                ? applyScheduledSellSummaryToPosition(position, remainingPendingOrders)
                 : position,
             ),
           );

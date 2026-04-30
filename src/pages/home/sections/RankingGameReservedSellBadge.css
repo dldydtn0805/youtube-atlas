@@ -1,0 +1,73 @@
+.app-shell__game-reserved-sell {
+  display: inline-flex;
+  max-width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.app-shell__game-reserved-sell[data-open='true'] {
+  z-index: 20;
+}
+
+.app-shell__game-reserved-sell-menu {
+  background: var(--surface-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  display: grid;
+  gap: 4px;
+  max-width: calc(100vw - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  position: fixed;
+  width: 280px;
+  z-index: calc(var(--layer-modal-backdrop, 1400) + 80);
+}
+
+.app-shell__game-reserved-sell-option {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 3px;
+  max-width: 100%;
+  min-width: min(220px, 100%);
+  padding: 8px;
+  text-align: left;
+}
+
+.app-shell__game-reserved-sell-option:hover,
+.app-shell__game-reserved-sell-option:focus-visible {
+  background: var(--surface-chip-muted);
+  outline: none;
+}
+
+.app-shell__game-reserved-sell-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.app-shell__game-reserved-sell-option-title {
+  font-size: 0.75rem;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.app-shell__game-reserved-sell-option-meta {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.app-shell__game-reserved-sell-option-action {
+  color: #0e7490;
+  font-size: 0.68rem;
+  font-weight: 900;
+  line-height: 1.25;
+}

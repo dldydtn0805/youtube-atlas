@@ -1134,11 +1134,12 @@
 }
 
 .app-shell__game-positions {
-  contain: layout paint;
+  contain: layout;
   display: grid;
   gap: 10px;
   list-style: none;
   margin: 0;
+  overflow: visible;
   padding: 0;
 }
 
@@ -1154,6 +1155,11 @@
   grid-template-columns: minmax(0, 1fr) auto;
   position: relative;
   padding: 10px;
+}
+
+.app-shell__game-position:has(.app-shell__game-reserved-sell[data-open='true']) {
+  content-visibility: visible;
+  z-index: 4;
 }
 
 .app-shell__game-position[data-focused='true'],
