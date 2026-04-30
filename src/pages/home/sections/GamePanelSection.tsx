@@ -4,6 +4,7 @@ import type {
   GameCurrentSeason,
   GamePosition,
   GameScheduledSellOrder,
+  GameStrategyType,
   GameTierProgress,
 } from '../../../features/game/types';
 import type { VideoTrendSignal } from '../../../features/trending/types';
@@ -52,6 +53,7 @@ interface GamePanelSectionProps {
   onOpenScheduledSellOrderChart?: (order: GameScheduledSellOrder) => void;
   onOpenPositionBuyTradeModal?: (position: GamePosition) => void;
   onOpenPositionSellTradeModal?: (position: GamePosition) => void;
+  onOpenStrategyScheduledSellTradeModal?: (position: GamePosition, strategyType: GameStrategyType) => void;
   onCancelScheduledSellOrder?: (orderId: number) => void;
   onSelectGameHistoryVideo: (position: GamePosition, playbackQueueId?: string) => void | Promise<void>;
   onSelectGamePositionVideo: (position: GamePosition) => void;
@@ -105,6 +107,7 @@ export default function GamePanelSection({
   onOpenScheduledSellOrderChart,
   onOpenPositionBuyTradeModal,
   onOpenPositionSellTradeModal,
+  onOpenStrategyScheduledSellTradeModal,
   onCancelScheduledSellOrder,
   onSelectGameHistoryVideo,
   onSelectGamePositionVideo,
@@ -166,6 +169,7 @@ export default function GamePanelSection({
       onOpenPositionChart={onOpenPositionChart}
       onOpenBuyTradeModal={onOpenPositionBuyTradeModal}
       onOpenSellTradeModal={onOpenPositionSellTradeModal}
+      onOpenStrategyScheduledSellTradeModal={onOpenStrategyScheduledSellTradeModal}
       onSelectPosition={onSelectGamePositionVideo}
       openDistinctVideoCount={openDistinctVideoCount}
       scheduledSellOrderCancelingId={scheduledSellOrderCancelingId}

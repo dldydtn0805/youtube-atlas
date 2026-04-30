@@ -35,6 +35,10 @@ import {
   SELL_FEE_RATE_LABEL,
   summarizeGamePositions,
 } from './gameHelpers';
+import {
+  getScheduledSellHalfQuantity,
+  getScheduledSellTargetRankForStrategy,
+} from './scheduledSellStrategyPreset';
 import useAppPreferences from './hooks/useAppPreferences';
 import useHomeChartCollections from './hooks/useHomeChartCollections';
 import useHomeChartViewState from './hooks/useHomeChartViewState';
@@ -94,7 +98,7 @@ import {
 } from '../../features/game/queries';
 import { getGameInventorySlotLimit } from '../../features/game/inventory';
 import { useGameRealtimeInvalidation } from '../../features/game/realtime';
-import type { GameHighlight, GamePosition, GameScheduledSellOrder } from '../../features/game/types';
+import type { GameHighlight, GamePosition, GameScheduledSellOrder, GameStrategyType } from '../../features/game/types';
 import {
   useFavoriteStreamerVideos,
   useFavoriteStreamers,
@@ -263,6 +267,11 @@ function HomePage() {
   const [historyPlaybackLoadingVideoId, setHistoryPlaybackLoadingVideoId] = useState<string | null>(null);
   const [tradeTargetVideoId, setTradeTargetVideoId] = useState<string | null>(null);
   const [tradeTargetPositionId, setTradeTargetPositionId] = useState<number | null>(null);
+  const [pendingScheduledSellPreset, setPendingScheduledSellPreset] = useState<{
+    positionId: number;
+    quantity: number;
+    targetRank: number;
+  } | null>(null);
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
   const [tierModalDefaultTab, setTierModalDefaultTab] = useState<TierModalTab>('tier');
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
@@ -1470,6 +1479,29 @@ function HomePage() {
     setSellQuantity,
     totalSelectedVideoBuyPoints: tradeTotalSelectedVideoBuyPoints,
   });
+  useEffect(() => {
+    if (!pendingScheduledSellPreset) {
+      return;
+    }
+
+    if (activeTradeModal !== 'sell' || tradeSelectedSellPositionId !== pendingScheduledSellPreset.positionId) {
+      return;
+    }
+
+    setSellOrderMode('scheduled');
+    setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
+    setScheduledSellTargetRank(pendingScheduledSellPreset.targetRank);
+    setSellQuantity(pendingScheduledSellPreset.quantity);
+    setPendingScheduledSellPreset(null);
+  }, [
+    activeTradeModal,
+    pendingScheduledSellPreset,
+    setScheduledSellTargetRank,
+    setScheduledSellTriggerDirection,
+    setSellOrderMode,
+    setSellQuantity,
+    tradeSelectedSellPositionId,
+  ]);
   const handleCancelScheduledSellOrder = useCallback(
     async (orderId: number) => {
       try {
@@ -1860,6 +1892,24 @@ function HomePage() {
     },
     [setActiveTradeModal],
   );
+  const handleOpenStrategyScheduledSellTradeModal = useCallback(
+    (position: GamePosition, strategyType: GameStrategyType) => {
+      const targetRank = getScheduledSellTargetRankForStrategy(strategyType);
+      const holding = openGameHoldings.find((item) => item.positionId === position.id);
+      const quantity = getScheduledSellHalfQuantity(holding?.sellableQuantity ?? 0);
+
+      if (targetRank === null || quantity <= 0) {
+        setGameActionStatus('지금 예약 매도할 수 있는 수량이 없습니다.');
+        return;
+      }
+
+      setTradeTargetVideoId(position.videoId);
+      setTradeTargetPositionId(position.id);
+      setPendingScheduledSellPreset({ positionId: position.id, quantity, targetRank });
+      setActiveTradeModal('sell');
+    },
+    [openGameHoldings, setActiveTradeModal, setGameActionStatus],
+  );
   const handleSelectGameHistoryVideo = useCallback(
     async (position: GamePosition) => {
       scrollToPlayerStage();
@@ -2127,6 +2177,7 @@ function HomePage() {
       onOpenScheduledSellOrderChart={handleOpenScheduledSellOrderChart}
       onOpenPositionBuyTradeModal={handleOpenPositionBuyTradeModal}
       onOpenPositionSellTradeModal={handleOpenPositionSellTradeModal}
+      onOpenStrategyScheduledSellTradeModal={handleOpenStrategyScheduledSellTradeModal}
       onSelectGameHistoryVideo={handleSelectGameHistoryVideo}
       onSelectGamePositionVideo={handleSelectGamePositionVideo}
       onSelectScheduledSellOrderVideo={handleSelectScheduledSellOrderVideo}

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { buildGameStrategyBadges, buildPositionStrategyBadges, resolveGameStrategyTags } from './gameStrategyTags';
+import {
+  getScheduledSellHalfQuantity,
+  getScheduledSellTargetRankForStrategy,
+} from './scheduledSellStrategyPreset';
 
 describe('gameStrategyTags', () => {
   it('keeps backend strategy order and builds highlight badges', () => {
@@ -36,5 +40,20 @@ describe('gameStrategyTags', () => {
       { label: '빅 캐시아웃 노림', tone: 'cashout', type: 'BIG_CASHOUT', state: 'target' },
       { label: '스나이프 노림', tone: 'snipe', type: 'SNIPE', state: 'target' },
     ]);
+  });
+
+  it('maps strategy target badges to scheduled sell presets', () => {
+    expect(getScheduledSellTargetRankForStrategy('SNIPE')).toBe(100);
+    expect(getScheduledSellTargetRankForStrategy('MOONSHOT')).toBe(50);
+    expect(getScheduledSellTargetRankForStrategy('SOLAR_SHOT')).toBe(20);
+    expect(getScheduledSellTargetRankForStrategy('GALAXY_SHOT')).toBe(5);
+    expect(getScheduledSellTargetRankForStrategy('ATLAS_SHOT')).toBe(1);
+    expect(getScheduledSellTargetRankForStrategy('BIG_CASHOUT')).toBeNull();
+  });
+
+  it('rounds 50% scheduled sell presets to the game quantity step', () => {
+    expect(getScheduledSellHalfQuantity(300)).toBe(200);
+    expect(getScheduledSellHalfQuantity(100)).toBe(100);
+    expect(getScheduledSellHalfQuantity(0)).toBe(0);
   });
 });

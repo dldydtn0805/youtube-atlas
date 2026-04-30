@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
-import type { GamePosition, GameScheduledSellOrder } from '../../../features/game/types';
+import type { GamePosition, GameScheduledSellOrder, GameStrategyType } from '../../../features/game/types';
 import {
   calculateGameUnitPricePoints,
   formatGameQuantity,
@@ -11,6 +11,7 @@ import {
   type OpenGameHolding,
 } from '../gameHelpers';
 import { buildPositionStrategyBadges } from '../gameStrategyTags';
+import { getScheduledSellTargetRankForStrategy } from '../scheduledSellStrategyPreset';
 import { formatSignedProfitRate } from '../utils';
 import RankingGameReservedSellBadge from './RankingGameReservedSellBadge';
 
@@ -22,6 +23,7 @@ interface RankingGamePositionRowProps {
   onOpenPositionChart?: (position: GamePosition) => void;
   onOpenBuyTradeModal?: (position: GamePosition) => void;
   onOpenSellTradeModal?: (position: GamePosition) => void;
+  onOpenStrategyScheduledSellTradeModal?: (position: GamePosition, strategyType: GameStrategyType) => void;
   onSelectPosition: (position: GamePosition) => void;
   scheduledSellOrderCancelingId?: number | null;
   scheduledSellOrders?: GameScheduledSellOrder[];
@@ -92,6 +94,7 @@ function RankingGamePositionRowComponent({
   onOpenPositionChart,
   onOpenBuyTradeModal,
   onOpenSellTradeModal,
+  onOpenStrategyScheduledSellTradeModal,
   onSelectPosition,
   scheduledSellOrderCancelingId,
   scheduledSellOrders,
@@ -117,6 +120,8 @@ function RankingGamePositionRowComponent({
   const position = mapHoldingToGamePosition(holding);
   const canOpenBuyTrade = canShowGameActions && Boolean(onOpenBuyTradeModal);
   const canOpenSellTrade = canShowGameActions && holding.sellableQuantity > 0 && Boolean(onOpenSellTradeModal);
+  const canOpenStrategyScheduledSellTrade =
+    canShowGameActions && holding.sellableQuantity > 0 && Boolean(onOpenStrategyScheduledSellTradeModal);
   const handleOpenPositionChart = () => onOpenPositionChart?.(position);
 
   return (
@@ -190,16 +195,44 @@ function RankingGamePositionRowComponent({
               {hasDetailBadges ? (
                 <div className="app-shell__game-position-detail">
                   <span className="app-shell__game-position-detail-badges">
-                    {strategyBadges.map((badge) => (
-                      <span
-                        key={`${holding.positionId}-${badge.state}-${badge.type}`}
-                        className="app-shell__game-position-trend"
-                        data-state={badge.state}
-                        data-tone={badge.tone}
-                      >
-                        {badge.label}
-                      </span>
-                    ))}
+                    {strategyBadges.map((badge) => {
+                      const canOpenPreset =
+                        badge.state === 'target' &&
+                        canOpenStrategyScheduledSellTrade &&
+                        getScheduledSellTargetRankForStrategy(badge.type) !== null;
+
+                      if (canOpenPreset) {
+                        return (
+                          <button
+                            key={`${holding.positionId}-${badge.state}-${badge.type}`}
+                            aria-label={`${holding.title} ${badge.label} 예약 매도`}
+                            className="app-shell__game-position-trend app-shell__game-position-trend-button"
+                            data-state={badge.state}
+                            data-tone={badge.tone}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onOpenStrategyScheduledSellTradeModal?.(position, badge.type);
+                            }}
+                            onKeyDown={(event) => event.stopPropagation()}
+                            title={`${badge.label} 목표로 50% 예약 매도`}
+                            type="button"
+                          >
+                            {badge.label}
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <span
+                          key={`${holding.positionId}-${badge.state}-${badge.type}`}
+                          className="app-shell__game-position-trend"
+                          data-state={badge.state}
+                          data-tone={badge.tone}
+                        >
+                          {badge.label}
+                        </span>
+                      );
+                    })}
                     {holdingRankTrendBadge ? (
                       <span className="app-shell__game-position-trend" data-tone={holdingRankTrendBadge.tone}>
                         {holdingRankTrendBadge.label}
@@ -288,6 +321,7 @@ function areRankingGamePositionRowPropsEqual(
     prevProps.onOpenPositionChart === nextProps.onOpenPositionChart &&
     prevProps.onOpenBuyTradeModal === nextProps.onOpenBuyTradeModal &&
     prevProps.onOpenSellTradeModal === nextProps.onOpenSellTradeModal &&
+    prevProps.onOpenStrategyScheduledSellTradeModal === nextProps.onOpenStrategyScheduledSellTradeModal &&
     prevProps.onSelectPosition === nextProps.onSelectPosition &&
     prevProps.scheduledSellOrderCancelingId === nextProps.scheduledSellOrderCancelingId &&
     prevProps.scheduledSellOrders === nextProps.scheduledSellOrders

@@ -19,6 +19,7 @@ import type {
   GameLeaderboardEntry,
   GamePosition,
   GameScheduledSellOrder,
+  GameStrategyType,
   GameTierProgress,
 } from '../../../features/game/types';
 import { getGameInventorySlotLimit } from '../../../features/game/inventory';
@@ -131,6 +132,7 @@ interface RankingGamePositionsTabProps {
   onOpenPositionChart?: (position: GamePosition) => void;
   onOpenBuyTradeModal?: (position: GamePosition) => void;
   onOpenSellTradeModal?: (position: GamePosition) => void;
+  onOpenStrategyScheduledSellTradeModal?: (position: GamePosition, strategyType: GameStrategyType) => void;
   onSelectPosition: (position: GamePosition) => void;
   openDistinctVideoCount?: number;
   scheduledSellOrderCancelingId?: number | null;
@@ -190,6 +192,7 @@ function areRankingGamePositionsTabPropsEqual(
     prevProps.onOpenPositionChart === nextProps.onOpenPositionChart &&
     prevProps.onOpenBuyTradeModal === nextProps.onOpenBuyTradeModal &&
     prevProps.onOpenSellTradeModal === nextProps.onOpenSellTradeModal &&
+    prevProps.onOpenStrategyScheduledSellTradeModal === nextProps.onOpenStrategyScheduledSellTradeModal &&
     prevProps.onSelectPosition === nextProps.onSelectPosition &&
     prevProps.openDistinctVideoCount === nextProps.openDistinctVideoCount &&
     prevProps.scheduledSellOrderCancelingId === nextProps.scheduledSellOrderCancelingId &&
@@ -1078,6 +1081,7 @@ function RankingGamePositionsTabComponent({
   onOpenPositionChart,
   onOpenBuyTradeModal,
   onOpenSellTradeModal,
+  onOpenStrategyScheduledSellTradeModal,
   onSelectPosition,
   openDistinctVideoCount,
   scheduledSellOrderCancelingId,
@@ -1133,6 +1137,7 @@ function RankingGamePositionsTabComponent({
             onOpenPositionChart={onOpenPositionChart}
             onOpenBuyTradeModal={onOpenBuyTradeModal}
             onOpenSellTradeModal={onOpenSellTradeModal}
+            onOpenStrategyScheduledSellTradeModal={onOpenStrategyScheduledSellTradeModal}
             onSelectPosition={onSelectPosition}
             scheduledSellOrderCancelingId={scheduledSellOrderCancelingId}
             scheduledSellOrders={scheduledSellOrders}

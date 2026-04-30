@@ -423,6 +423,32 @@ describe('RankingGamePositionsTab', () => {
     expect(onOpenSellTradeModal).toHaveBeenCalledWith(expect.objectContaining({ id: 1, videoId: 'video-1' }));
   });
 
+  it('opens strategy target badges as scheduled sell presets', () => {
+    const onOpenStrategyScheduledSellTradeModal = vi.fn();
+    const onOpenPositionChart = vi.fn();
+
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[createOpenGameHolding({ quantity: 200, sellableQuantity: 200, targetStrategyTags: ['MOONSHOT'] })]}
+        onOpenPositionChart={onOpenPositionChart}
+        onOpenStrategyScheduledSellTradeModal={onOpenStrategyScheduledSellTradeModal}
+        onSelectPosition={vi.fn()}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 문샷 노림 예약 매도' }));
+
+    expect(onOpenStrategyScheduledSellTradeModal).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1, videoId: 'video-1' }),
+      'MOONSHOT',
+    );
+    expect(onOpenPositionChart).not.toHaveBeenCalled();
+  });
+
   it('opens the chart from the holding title without selecting playback', () => {
     const onOpenPositionChart = vi.fn();
     const onSelectPosition = vi.fn();
