@@ -50,7 +50,6 @@ interface UseHomeTradeFlowOptions {
   selectedVideoSellSummary: GameSellSummary;
   selectedVideoUnitPricePoints: number | null;
   sellQuantity: number;
-  setActiveGameTab: Dispatch<SetStateAction<'positions' | 'scheduledOrders' | 'history' | 'guide'>>;
   setActiveTradeModal: Dispatch<SetStateAction<'buy' | 'sell' | null>>;
   setBuyQuantity: Dispatch<SetStateAction<number>>;
   setGameActionStatus: Dispatch<SetStateAction<string | null>>;
@@ -101,7 +100,6 @@ export default function useHomeTradeFlow({
   selectedVideoSellSummary,
   selectedVideoUnitPricePoints,
   sellQuantity,
-  setActiveGameTab,
   setActiveTradeModal,
   setBuyQuantity,
   setGameActionStatus,
@@ -305,7 +303,6 @@ export default function useHomeTradeFlow({
       setSellOrderMode('instant');
       setScheduledSellTargetRank(100);
       setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
-      setActiveGameTab('scheduledOrders');
       void onScheduledSellSuccess?.();
     } catch (error) {
       if (
@@ -332,7 +329,6 @@ export default function useHomeTradeFlow({
     scheduledSellTargetRank,
     scheduledSellTriggerDirection,
     selectedSellPositionId,
-    setActiveGameTab,
     setActiveTradeModal,
     setGameActionStatus,
   ]);

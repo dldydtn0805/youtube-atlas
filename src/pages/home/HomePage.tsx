@@ -1472,7 +1472,6 @@ function HomePage() {
     selectedVideoSellSummary: tradeSelectedVideoSellSummary,
     selectedVideoUnitPricePoints: tradeSelectedVideoUnitPricePoints,
     sellQuantity,
-    setActiveGameTab,
     setActiveTradeModal,
     setBuyQuantity,
     setGameActionStatus,
