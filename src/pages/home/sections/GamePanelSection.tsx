@@ -11,7 +11,7 @@ import type { YouTubeCategorySection } from '../../../features/youtube/types';
 import { findPlaybackQueueIdForVideo } from '../utils';
 import type { OpenGameHolding } from '../gameHelpers';
 import BoldNumberText from './BoldNumberText';
-import GameScheduledSellOrdersTab from './GameScheduledSellOrdersTab';
+import GameScheduledSellOrdersTab, { type ScheduledSellOrderFocusRequest } from './GameScheduledSellOrdersTab';
 import { strategyTagCriteriaCopy } from './gameTierGuideContent';
 import {
   RankingGameTierOverview,
@@ -42,6 +42,7 @@ interface GamePanelSectionProps {
   isGameHistoryLoading: boolean;
   isOpenGamePositionsLoading: boolean;
   isScheduledSellOrdersLoading: boolean;
+  scheduledSellOrderFocusRequest?: ScheduledSellOrderFocusRequest | null;
   isCollapsed: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
   onOpenTierModal: () => void;
@@ -51,6 +52,7 @@ interface GamePanelSectionProps {
   onOpenScheduledSellOrderChart?: (order: GameScheduledSellOrder) => void;
   onOpenPositionBuyTradeModal?: (position: GamePosition) => void;
   onOpenPositionSellTradeModal?: (position: GamePosition) => void;
+  onOpenScheduledSellOrder?: (holding: OpenGameHolding) => void;
   onCancelScheduledSellOrder?: (orderId: number) => void;
   onSelectGameHistoryVideo: (position: GamePosition, playbackQueueId?: string) => void | Promise<void>;
   onSelectGamePositionVideo: (position: GamePosition) => void;
@@ -94,6 +96,7 @@ export default function GamePanelSection({
   isGameHistoryLoading,
   isOpenGamePositionsLoading,
   isScheduledSellOrdersLoading,
+  scheduledSellOrderFocusRequest,
   isCollapsed,
   newChartEntriesSection,
   onOpenTierModal,
@@ -103,6 +106,7 @@ export default function GamePanelSection({
   onOpenScheduledSellOrderChart,
   onOpenPositionBuyTradeModal,
   onOpenPositionSellTradeModal,
+  onOpenScheduledSellOrder,
   onCancelScheduledSellOrder,
   onSelectGameHistoryVideo,
   onSelectGamePositionVideo,
@@ -163,6 +167,7 @@ export default function GamePanelSection({
       onOpenPositionChart={onOpenPositionChart}
       onOpenBuyTradeModal={onOpenPositionBuyTradeModal}
       onOpenSellTradeModal={onOpenPositionSellTradeModal}
+      onOpenScheduledSellOrder={onOpenScheduledSellOrder}
       onSelectPosition={onSelectGamePositionVideo}
       openDistinctVideoCount={openDistinctVideoCount}
       selectedPositionId={selectedPositionId}
@@ -189,6 +194,8 @@ export default function GamePanelSection({
   const scheduledOrdersContent = (
     <GameScheduledSellOrdersTab
       activePlaybackQueueId={activePlaybackQueueId}
+      focusedOrderRequest={scheduledSellOrderFocusRequest}
+      isActive={activeGameTab === 'scheduledOrders'}
       isCancelingOrderId={scheduledSellOrderCancelingId}
       isLoading={isScheduledSellOrdersLoading}
       onCancelOrder={onCancelScheduledSellOrder}

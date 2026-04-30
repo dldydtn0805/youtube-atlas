@@ -128,6 +128,7 @@ interface RankingGamePositionsTabProps {
   onOpenPositionChart?: (position: GamePosition) => void;
   onOpenBuyTradeModal?: (position: GamePosition) => void;
   onOpenSellTradeModal?: (position: GamePosition) => void;
+  onOpenScheduledSellOrder?: (holding: OpenGameHolding) => void;
   onSelectPosition: (position: GamePosition) => void;
   openDistinctVideoCount?: number;
   selectedPositionId?: number | null;
@@ -184,6 +185,7 @@ function areRankingGamePositionsTabPropsEqual(
     prevProps.onOpenPositionChart === nextProps.onOpenPositionChart &&
     prevProps.onOpenBuyTradeModal === nextProps.onOpenBuyTradeModal &&
     prevProps.onOpenSellTradeModal === nextProps.onOpenSellTradeModal &&
+    prevProps.onOpenScheduledSellOrder === nextProps.onOpenScheduledSellOrder &&
     prevProps.onSelectPosition === nextProps.onSelectPosition &&
     prevProps.openDistinctVideoCount === nextProps.openDistinctVideoCount &&
     prevProps.selectedPositionId === nextProps.selectedPositionId
@@ -1069,6 +1071,7 @@ function RankingGamePositionsTabComponent({
   onOpenPositionChart,
   onOpenBuyTradeModal,
   onOpenSellTradeModal,
+  onOpenScheduledSellOrder,
   onSelectPosition,
   openDistinctVideoCount,
   selectedPositionId,
@@ -1121,6 +1124,7 @@ function RankingGamePositionsTabComponent({
             onOpenPositionChart={onOpenPositionChart}
             onOpenBuyTradeModal={onOpenBuyTradeModal}
             onOpenSellTradeModal={onOpenSellTradeModal}
+            onOpenScheduledSellOrder={onOpenScheduledSellOrder}
             onSelectPosition={onSelectPosition}
           />
         ))}

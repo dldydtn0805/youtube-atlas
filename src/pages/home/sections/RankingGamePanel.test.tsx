@@ -476,6 +476,42 @@ describe('RankingGamePositionsTab', () => {
 
     expect(screen.getByText('1개 예약 중')).toBeInTheDocument();
   });
+
+  it('opens the queued scheduled order from the reserved sell badge', () => {
+    const onOpenPositionChart = vi.fn();
+    const onOpenScheduledSellOrder = vi.fn();
+
+    render(
+      <RankingGamePositionsTab
+        canShowGameActions
+        favoriteTrendSignalsByVideoId={{}}
+        gameMarketSignalsByVideoId={{}}
+        holdings={[
+          createOpenGameHolding({
+            quantity: 100,
+            reservedForSell: true,
+            scheduledSellOrderId: 11,
+            scheduledSellQuantity: 100,
+            sellableQuantity: 0,
+          }),
+        ]}
+        onOpenPositionChart={onOpenPositionChart}
+        onOpenScheduledSellOrder={onOpenScheduledSellOrder}
+        onSelectPosition={vi.fn()}
+        trendSignalsByVideoId={{}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 예약 매도 대기열로 이동' }));
+
+    expect(onOpenScheduledSellOrder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        positionId: 1,
+        scheduledSellOrderId: 11,
+      }),
+    );
+    expect(onOpenPositionChart).not.toHaveBeenCalled();
+  });
 });
 
 describe('RankingGamePanelShell', () => {

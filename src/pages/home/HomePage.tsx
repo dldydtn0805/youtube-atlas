@@ -34,6 +34,7 @@ import {
   normalizeGameOrderCapacity,
   SELL_FEE_RATE_LABEL,
   summarizeGamePositions,
+  type OpenGameHolding,
 } from './gameHelpers';
 import useAppPreferences from './hooks/useAppPreferences';
 import useHomeChartCollections from './hooks/useHomeChartCollections';
@@ -255,6 +256,10 @@ function HomePage() {
   const { accessToken, applyCurrentUser, isLoggingOut, logout, refreshCurrentUser, status: authStatus, user } = useAuth();
   const [selectedOpenPositionId, setSelectedOpenPositionId] = useState<number | null>(null);
   const [selectedScheduledSellOrderId, setSelectedScheduledSellOrderId] = useState<number | null>(null);
+  const [scheduledSellOrderFocusRequest, setScheduledSellOrderFocusRequest] = useState<{
+    orderId: number;
+    requestId: number;
+  } | null>(null);
   const [activeGameTab, setActiveGameTab] = useState<'positions' | 'scheduledOrders' | 'history' | 'guide'>('positions');
   const [isBuyableOnlyFilterActive, setIsBuyableOnlyFilterActive] = useState(false);
   const [collapsedHomeSectionIds, setCollapsedHomeSectionIds] = useState(getInitialCollapsedHomeSectionIds);
@@ -920,6 +925,7 @@ function HomePage() {
 
     setSelectedOpenPositionId(null);
     setSelectedScheduledSellOrderId(null);
+    setScheduledSellOrderFocusRequest(null);
     setActiveGameTab('positions');
     setHistoryPlaybackLoadingVideoId(null);
     setHistoryPlaybackVideo(null);
@@ -1904,6 +1910,26 @@ function HomePage() {
     },
     [handleSelectVideoWithPreview, scrollToPlayerStage, setGameActionStatus],
   );
+  const handleOpenScheduledSellOrderFromPosition = useCallback(
+    (holding: OpenGameHolding) => {
+      const orderId = holding.scheduledSellOrderId;
+
+      if (orderId == null) {
+        return;
+      }
+
+      setGameActionStatus(null);
+      setSelectedOpenPositionId(holding.positionId);
+      setScheduledSellOrderFocusRequest((currentRequest) => ({
+        orderId,
+        requestId: (currentRequest?.requestId ?? 0) + 1,
+      }));
+      startTransition(() => {
+        setActiveGameTab('scheduledOrders');
+      });
+    },
+    [setGameActionStatus],
+  );
   const handleSelectGameTab = useCallback((tab: 'positions' | 'scheduledOrders' | 'history' | 'guide') => {
     startTransition(() => {
       setActiveGameTab(tab);
@@ -2116,6 +2142,7 @@ function HomePage() {
       isGameHistoryLoading={isGameHistoryLoading}
       isOpenGamePositionsLoading={isOpenGamePositionsLoading}
       isScheduledSellOrdersLoading={isScheduledSellOrdersLoading}
+      scheduledSellOrderFocusRequest={scheduledSellOrderFocusRequest}
       newChartEntriesSection={sortedNewChartEntriesSection}
       onCancelScheduledSellOrder={(orderId) => {
         void handleCancelScheduledSellOrder(orderId);
@@ -2127,6 +2154,7 @@ function HomePage() {
       onOpenScheduledSellOrderChart={handleOpenScheduledSellOrderChart}
       onOpenPositionBuyTradeModal={handleOpenPositionBuyTradeModal}
       onOpenPositionSellTradeModal={handleOpenPositionSellTradeModal}
+      onOpenScheduledSellOrder={handleOpenScheduledSellOrderFromPosition}
       onSelectGameHistoryVideo={handleSelectGameHistoryVideo}
       onSelectGamePositionVideo={handleSelectGamePositionVideo}
       onSelectScheduledSellOrderVideo={handleSelectScheduledSellOrderVideo}

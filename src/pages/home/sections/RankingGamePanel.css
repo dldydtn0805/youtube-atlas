@@ -1156,6 +1156,7 @@
   padding: 10px;
 }
 
+.app-shell__game-position[data-focused='true'],
 .app-shell__game-position[data-selected='true'] {
   border-color: rgba(var(--game-panel-tier-accent-rgb), 0.72);
   box-shadow:
@@ -1429,12 +1430,30 @@
 .app-shell__game-position-trend {
   align-items: center;
   border-radius: 999px;
+  box-sizing: border-box;
   display: inline-flex;
   font-size: 0.68rem;
   font-weight: 800;
   line-height: 1;
   min-height: 18px;
   padding: 0 6px;
+}
+
+.app-shell__game-position-trend-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.app-shell__game-position-trend-button:focus-visible {
+  outline: 2px solid rgba(var(--game-panel-tier-accent-rgb), 0.45);
+  outline-offset: 2px;
 }
 
 .app-shell__game-position-trend[data-state='target'] {
@@ -2548,6 +2567,7 @@
   border-top-color: rgba(125, 211, 252, 0.92);
 }
 
+:root[data-theme='dark'] .app-shell__game-position[data-focused='true'],
 :root[data-theme='dark'] .app-shell__game-position[data-selected='true'] {
   background:
     linear-gradient(180deg, rgba(30, 30, 30, 0.94), rgba(14, 14, 14, 0.88)),

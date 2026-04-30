@@ -1,8 +1,40 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import type { GameScheduledSellOrder } from '../../../features/game/types';
 import { SCHEDULED_SELL_ORDERS_QUEUE_ID } from '../utils';
 import GameScheduledSellOrdersTab from './GameScheduledSellOrdersTab';
+
+function createScheduledSellOrder(overrides: Partial<GameScheduledSellOrder> = {}): GameScheduledSellOrder {
+  return {
+    id: 1,
+    userId: 1,
+    seasonId: 1,
+    positionId: 10,
+    videoId: 'video-1',
+    videoTitle: '대기 주문',
+    channelTitle: '채널 A',
+    thumbnailUrl: 'https://example.com/a.jpg',
+    regionCode: 'KR',
+    targetRank: 10,
+    triggerDirection: 'RANK_IMPROVES_TO',
+    status: 'PENDING',
+    currentRank: 12,
+    buyRank: 15,
+    quantity: 100,
+    stakePoints: 5000,
+    sellPricePoints: null,
+    settledPoints: null,
+    pnlPoints: null,
+    failureReason: null,
+    triggeredAt: null,
+    executedAt: null,
+    canceledAt: null,
+    createdAt: '2026-04-24T00:00:00.000Z',
+    updatedAt: '2026-04-24T00:00:00.000Z',
+    ...overrides,
+  };
+}
 
 describe('GameScheduledSellOrdersTab', () => {
   it('shows a loading overlay instead of the old loading sentence', () => {
@@ -398,6 +430,91 @@ describe('GameScheduledSellOrdersTab', () => {
 
     expect(screen.getByText('첫 예약').closest('li')).toHaveAttribute('data-selected', 'false');
     expect(screen.getByText('두 번째 예약').closest('li')).toHaveAttribute('data-selected', 'true');
+  });
+
+  it('reveals and focuses a requested scheduled sell order', async () => {
+    const user = userEvent.setup();
+    const pendingOrder = createScheduledSellOrder();
+    const canceledOrder = createScheduledSellOrder({
+      id: 2,
+      positionId: 11,
+      status: 'CANCELED',
+      videoId: 'video-2',
+      videoTitle: '취소 주문',
+    });
+
+    try {
+      const { rerender } = render(
+        <div className="app-shell__game-tab-slide-panel">
+          <GameScheduledSellOrdersTab
+            isLoading={false}
+            orders={[pendingOrder, canceledOrder]}
+          />
+        </div>,
+      );
+
+      const scrollContainer = document.querySelector('.app-shell__game-tab-slide-panel') as HTMLDivElement;
+      Object.defineProperty(scrollContainer, 'clientHeight', { configurable: true, value: 60 });
+      Object.defineProperty(scrollContainer, 'scrollTop', { configurable: true, writable: true, value: 0 });
+
+      await user.click(screen.getByRole('tab', { name: '취소' }));
+      expect(screen.queryByText('대기 주문')).not.toBeInTheDocument();
+
+      rerender(
+        <div className="app-shell__game-tab-slide-panel">
+          <GameScheduledSellOrdersTab
+            focusedOrderRequest={{ orderId: 1, requestId: 1 }}
+            isLoading={false}
+            orders={[pendingOrder, canceledOrder]}
+          />
+        </div>,
+      );
+
+      const focusedRow = (await screen.findByText('대기 주문')).closest('li');
+
+      Object.defineProperty(focusedRow, 'offsetTop', { configurable: true, value: 120 });
+      Object.defineProperty(focusedRow, 'offsetHeight', { configurable: true, value: 40 });
+
+      expect(screen.getByRole('tab', { name: '대기' })).toHaveAttribute('aria-selected', 'true');
+      expect(focusedRow).toHaveAttribute('data-focused', 'true');
+      await waitFor(() => expect(scrollContainer.scrollTop).toBe(108));
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('waits until the scheduled orders tab is active before moving to the focused order', async () => {
+    const pendingOrder = createScheduledSellOrder();
+    const { rerender } = render(
+      <div className="app-shell__game-tab-slide-panel">
+        <GameScheduledSellOrdersTab
+          focusedOrderRequest={{ orderId: 1, requestId: 1 }}
+          isActive={false}
+          isLoading={false}
+          orders={[pendingOrder]}
+        />
+      </div>,
+    );
+    const scrollContainer = document.querySelector('.app-shell__game-tab-slide-panel') as HTMLDivElement;
+    Object.defineProperty(scrollContainer, 'scrollTop', { configurable: true, writable: true, value: 0 });
+    const focusedRow = screen.getByText('대기 주문').closest('li');
+    Object.defineProperty(focusedRow, 'offsetTop', { configurable: true, value: 120 });
+
+    expect(focusedRow).toHaveAttribute('data-focused', 'true');
+    expect(scrollContainer.scrollTop).toBe(0);
+
+    rerender(
+      <div className="app-shell__game-tab-slide-panel">
+        <GameScheduledSellOrdersTab
+          focusedOrderRequest={{ orderId: 1, requestId: 1 }}
+          isActive
+          isLoading={false}
+          orders={[pendingOrder]}
+        />
+      </div>,
+    );
+
+    await waitFor(() => expect(scrollContainer.scrollTop).toBe(108));
   });
 
   it('shows a failed order reason when one is provided', async () => {

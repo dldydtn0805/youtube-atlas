@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import type { GameScheduledSellOrder } from '../../../features/game/types';
 import {
@@ -14,6 +14,8 @@ import { SCHEDULED_SELL_ORDERS_QUEUE_ID } from '../utils';
 interface GameScheduledSellOrdersTabProps {
   activePlaybackQueueId?: string;
   emptyMessage?: string | null;
+  focusedOrderRequest?: ScheduledSellOrderFocusRequest | null;
+  isActive?: boolean;
   isCancelingOrderId?: number | null;
   isLoading: boolean;
   onCancelOrder?: (orderId: number) => void;
@@ -24,6 +26,11 @@ interface GameScheduledSellOrdersTabProps {
   selectedVideoId?: string;
 }
 
+export interface ScheduledSellOrderFocusRequest {
+  orderId: number;
+  requestId: number;
+}
+
 type ScheduledSellOrderFilter = 'ALL' | 'PENDING' | 'EXECUTED' | 'CANCELED';
 
 const SCHEDULED_SELL_ORDER_FILTERS: Array<{ label: string; value: ScheduledSellOrderFilter }> = [
@@ -32,6 +39,7 @@ const SCHEDULED_SELL_ORDER_FILTERS: Array<{ label: string; value: ScheduledSellO
   { label: '완료', value: 'EXECUTED' },
   { label: '취소', value: 'CANCELED' },
 ];
+const SCHEDULED_SELL_FOCUS_SCROLL_OFFSET = 12;
 
 function getScheduledSellStatusLabel(status: GameScheduledSellOrder['status']) {
   if (status === 'PENDING') {
@@ -98,9 +106,25 @@ function getScheduledSellEmptyMessage(filter: ScheduledSellOrderFilter, defaultM
   return '예약 매도 주문이 아직 없습니다.';
 }
 
+function getScheduledSellFocusFilter(status: GameScheduledSellOrder['status']): ScheduledSellOrderFilter {
+  return status === 'FAILED' ? 'ALL' : status;
+}
+
+function scrollScheduledOrderIntoView(orderElement: HTMLElement) {
+  const scrollContainer = orderElement.closest<HTMLElement>('.app-shell__game-tab-slide-panel');
+
+  if (!scrollContainer) {
+    return;
+  }
+
+  scrollContainer.scrollTop = Math.max(0, orderElement.offsetTop - SCHEDULED_SELL_FOCUS_SCROLL_OFFSET);
+}
+
 export default function GameScheduledSellOrdersTab({
   activePlaybackQueueId,
   emptyMessage = '예약 매도 주문이 아직 없습니다.',
+  focusedOrderRequest,
+  isActive = true,
   isCancelingOrderId = null,
   isLoading,
   onCancelOrder,
@@ -111,7 +135,51 @@ export default function GameScheduledSellOrdersTab({
   selectedVideoId,
 }: GameScheduledSellOrdersTabProps) {
   const [activeFilter, setActiveFilter] = useState<ScheduledSellOrderFilter>('PENDING');
+  const activeFilterRef = useRef(activeFilter);
+  const focusedOrderRef = useRef<HTMLLIElement | null>(null);
+  const focusedOrderId = focusedOrderRequest?.orderId ?? null;
   const filteredOrders = getScheduledSellOrdersByFilter(orders, activeFilter);
+
+  useEffect(() => {
+    activeFilterRef.current = activeFilter;
+  }, [activeFilter]);
+
+  useEffect(() => {
+    if (!focusedOrderRequest) {
+      return;
+    }
+
+    const focusedOrder = orders.find((order) => order.id === focusedOrderRequest.orderId);
+    const currentFilter = activeFilterRef.current;
+    const focusFilter = focusedOrder ? getScheduledSellFocusFilter(focusedOrder.status) : null;
+
+    if (focusFilter && currentFilter !== 'ALL' && currentFilter !== focusFilter) {
+      setActiveFilter(focusFilter);
+    }
+  }, [focusedOrderRequest, orders]);
+
+  useEffect(() => {
+    if (!isActive || focusedOrderId == null) {
+      return;
+    }
+
+    const focusedOrder = focusedOrderRef.current;
+
+    if (!focusedOrder) {
+      return;
+    }
+
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+      scrollScheduledOrderIntoView(focusedOrder);
+      return;
+    }
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      scrollScheduledOrderIntoView(focusedOrder);
+    });
+
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [activeFilter, focusedOrderId, focusedOrderRequest?.requestId, isActive, orders]);
 
   return (
     <div className="app-shell__game-scheduled-orders">
@@ -153,14 +221,17 @@ export default function GameScheduledSellOrdersTab({
                 activePlaybackQueueId === SCHEDULED_SELL_ORDERS_QUEUE_ID &&
                 order.id === selectedOrderId &&
                 order.videoId === selectedVideoId;
+              const isFocused = order.id === focusedOrderId;
 
               return (
                 <li
                   key={order.id}
                   aria-busy={isCanceling}
                   className="app-shell__game-position"
+                  data-focused={isFocused || undefined}
                   data-scheduled-status={order.status}
                   data-selected={isSelected}
+                  ref={isFocused ? focusedOrderRef : undefined}
                 >
                   {isCanceling ? (
                     <div className="app-shell__game-position-overlay" role="status" aria-live="polite">

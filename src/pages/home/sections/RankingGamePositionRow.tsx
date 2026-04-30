@@ -12,6 +12,7 @@ import {
 } from '../gameHelpers';
 import { buildPositionStrategyBadges } from '../gameStrategyTags';
 import { formatSignedProfitRate } from '../utils';
+import RankingGameReservedSellBadge from './RankingGameReservedSellBadge';
 
 interface RankingGamePositionRowProps {
   canShowGameActions: boolean;
@@ -20,6 +21,7 @@ interface RankingGamePositionRowProps {
   onOpenPositionChart?: (position: GamePosition) => void;
   onOpenBuyTradeModal?: (position: GamePosition) => void;
   onOpenSellTradeModal?: (position: GamePosition) => void;
+  onOpenScheduledSellOrder?: (holding: OpenGameHolding) => void;
   onSelectPosition: (position: GamePosition) => void;
 }
 
@@ -87,6 +89,7 @@ function RankingGamePositionRowComponent({
   onOpenPositionChart,
   onOpenBuyTradeModal,
   onOpenSellTradeModal,
+  onOpenScheduledSellOrder,
   onSelectPosition,
 }: RankingGamePositionRowProps) {
   const holdingRankTrendBadge = getHoldingRankDiffBadge(holding);
@@ -96,9 +99,6 @@ function RankingGamePositionRowComponent({
       ? calculateGameUnitPricePoints(holding.currentPricePoints, holding.quantity)
       : null;
   const positionStatusBadge = holding.chartOut ? '차트 아웃' : null;
-  const reservedSellBadge = holding.reservedForSell
-    ? `${formatGameQuantity(Math.max(holding.scheduledSellQuantity, 1))} 예약 중`
-    : null;
   const sellableStatusBadge = !canShowGameActions
     ? '전체 카테고리에서 매도 가능'
     : holding.sellableQuantity > 0
@@ -107,7 +107,7 @@ function RankingGamePositionRowComponent({
         ? `매도 대기 · ${formatHoldCountdown(holding.nextSellableInSeconds)}`
         : '매도 가능 수량 없음';
   const hasDetailBadges = Boolean(
-    strategyBadges.length || holdingRankTrendBadge || positionStatusBadge || reservedSellBadge || sellableStatusBadge,
+    strategyBadges.length || holdingRankTrendBadge || positionStatusBadge || holding.reservedForSell || sellableStatusBadge,
   );
   const projectedHighlightScoreValue = formatHighlightScore(holding.projectedHighlightScore);
   const position = mapHoldingToGamePosition(holding);
@@ -206,11 +206,10 @@ function RankingGamePositionRowComponent({
                         {positionStatusBadge}
                       </span>
                     ) : null}
-                    {reservedSellBadge ? (
-                      <span className="app-shell__game-position-trend" data-tone="info">
-                        {reservedSellBadge}
-                      </span>
-                    ) : null}
+                    <RankingGameReservedSellBadge
+                      holding={holding}
+                      onOpenScheduledSellOrder={onOpenScheduledSellOrder}
+                    />
                     {sellableStatusBadge ? (
                       <span className="app-shell__game-position-trend" data-tone="steady">
                         {sellableStatusBadge}
@@ -282,6 +281,7 @@ function areRankingGamePositionRowPropsEqual(
     prevProps.onOpenPositionChart === nextProps.onOpenPositionChart &&
     prevProps.onOpenBuyTradeModal === nextProps.onOpenBuyTradeModal &&
     prevProps.onOpenSellTradeModal === nextProps.onOpenSellTradeModal &&
+    prevProps.onOpenScheduledSellOrder === nextProps.onOpenScheduledSellOrder &&
     prevProps.onSelectPosition === nextProps.onSelectPosition
   );
 }
