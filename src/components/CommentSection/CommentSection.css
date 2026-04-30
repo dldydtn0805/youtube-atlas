@@ -250,6 +250,45 @@
   white-space: nowrap;
 }
 
+.comment-message__title-star {
+  color: #64748b;
+  display: inline-block;
+  font-size: 0.72em;
+  line-height: 1;
+  margin-left: 0.28em;
+  transform: translateY(-0.04em);
+}
+
+.comment-message__title-star[data-grade='RARE'] {
+  color: #2563eb;
+}
+
+.comment-message__title-star[data-grade='SUPER'] {
+  color: #e11d48;
+}
+
+.comment-message__title-star[data-grade='ULTIMATE'] {
+  color: #d97706;
+  text-shadow: 0 0 6px rgba(217, 119, 6, 0.28);
+}
+
+:root[data-theme='dark'] .comment-message__title-star {
+  color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .comment-message__title-star[data-grade='RARE'] {
+  color: #93c5fd;
+}
+
+:root[data-theme='dark'] .comment-message__title-star[data-grade='SUPER'] {
+  color: #fda4af;
+}
+
+:root[data-theme='dark'] .comment-message__title-star[data-grade='ULTIMATE'] {
+  color: #fcd34d;
+  text-shadow: 0 0 7px rgba(252, 211, 77, 0.32);
+}
+
 .comment-message__date {
   color: var(--text-muted);
   font-size: 0.62rem;

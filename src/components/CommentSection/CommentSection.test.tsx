@@ -419,9 +419,11 @@ describe('CommentSection', () => {
     render(<CommentSection regionCode="KR" />);
 
     const identity = screen.getByText('Gold User').closest('.comment-message__identity');
+    const titleStar = identity?.querySelector('.comment-message__title-star');
 
     expect(identity).toHaveAttribute('data-tier-code', 'GOLD');
     expect(identity).toHaveTextContent('Gold User, Atlas Sniper');
+    expect(titleStar).toHaveAttribute('data-grade', 'RARE');
   });
 
   it('falls back to the current user tier for own messages without tier data', () => {

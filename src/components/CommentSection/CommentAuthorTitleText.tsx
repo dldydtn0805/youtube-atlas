@@ -8,6 +8,9 @@ export default function CommentAuthorTitleText({ title }: CommentAuthorTitleText
   return (
     <span className="comment-message__title-name" title={title.description}>
       {`, ${title.displayName}`}
+      <span className="comment-message__title-star" data-grade={title.grade} aria-hidden="true">
+        ★
+      </span>
     </span>
   );
 }
