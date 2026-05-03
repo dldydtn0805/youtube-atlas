@@ -21,12 +21,14 @@ const commentsPresenceQueryKey = ['comments', 'presence'] as const;
 
 interface UseCommentsOptions {
   accessToken?: string | null;
+  loadHistory?: boolean;
   participantId?: string | null;
   regionCode?: string | null;
+  since?: string | null;
 }
 
-function commentsQueryKey(regionCode?: string | null) {
-  return ['comments', 'global', regionCode ?? 'all'] as const;
+function commentsQueryKey(regionCode?: string | null, since?: string | null) {
+  return ['comments', 'global', regionCode ?? 'all', since ?? 'history'] as const;
 }
 
 function isSameCommentEvent(current: ChatMessage, next: ChatMessage) {
@@ -70,16 +72,17 @@ export function mergeComment(existing: ChatMessage[] = [], nextComment: ChatMess
 
 export function useComments(_videoId?: string, enabled = true, options: UseCommentsOptions = {}) {
   const queryClient = useQueryClient();
-  const { accessToken, participantId, regionCode } = options;
+  const { accessToken, loadHistory = true, participantId, regionCode, since } = options;
   const activeRegionCode = regionCode ?? null;
+  const activeSince = since ?? null;
   const activeCommentsQueryKey = useMemo(
-    () => commentsQueryKey(activeRegionCode),
-    [activeRegionCode],
+    () => commentsQueryKey(activeRegionCode, activeSince),
+    [activeRegionCode, activeSince],
   );
   const commentsQuery = useQuery({
-    enabled,
+    enabled: enabled && loadHistory,
     queryKey: activeCommentsQueryKey,
-    queryFn: () => fetchComments(activeRegionCode),
+    queryFn: () => fetchComments(activeRegionCode, activeSince),
   });
   const presenceQuery = useQuery({
     enabled,
@@ -164,3 +167,5 @@ export function useCreateComment() {
     },
   });
 }
+
+export { useCommentHighlights } from './highlightRealtime';

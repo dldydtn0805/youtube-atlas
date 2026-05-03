@@ -10,11 +10,18 @@ import {
 const COMMENTS_TOPIC = '/topic/comments';
 const COMMENTS_PRESENCE_TOPIC = '/topic/comments/presence';
 
-export async function fetchComments(regionCode?: string | null): Promise<ChatMessage[]> {
+export async function fetchComments(
+  regionCode?: string | null,
+  since?: string | null,
+): Promise<ChatMessage[]> {
   const params = new URLSearchParams();
 
   if (regionCode) {
     params.set('regionCode', regionCode);
+  }
+
+  if (since) {
+    params.set('since', since);
   }
 
   const queryString = params.toString();

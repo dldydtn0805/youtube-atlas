@@ -4,6 +4,7 @@ import { CHAT_PARTICIPANT_HEADER, getChatParticipantId } from '../comments/parti
 
 type TopicHandler = (messageBody: string) => void;
 type ConnectionHandler = () => void;
+type AuthenticatedConnectionHandler = (client: Client) => void;
 
 let sharedClient: Client | null = null;
 let isConnected = false;
@@ -143,6 +144,7 @@ export function subscribeToAuthenticatedRealtimeTopic(
   topic: string,
   accessToken: string,
   handler: TopicHandler,
+  onConnect?: AuthenticatedConnectionHandler,
 ) {
   let subscription: StompSubscription | null = null;
   const client = new Client({
@@ -159,6 +161,7 @@ export function subscribeToAuthenticatedRealtimeTopic(
     subscription = client.subscribe(topic, (message) => {
       handler(message.body);
     });
+    onConnect?.(client);
   };
 
   client.onWebSocketClose = () => {

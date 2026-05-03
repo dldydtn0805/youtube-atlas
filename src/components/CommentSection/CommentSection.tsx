@@ -1,7 +1,20 @@
-import { FormEvent, FocusEvent, KeyboardEvent, memo, useEffect, useRef, useState } from 'react';
+import {
+  FormEvent,
+  FocusEvent,
+  KeyboardEvent,
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useAuth } from '../../features/auth/useAuth';
 import { isApiConfigured } from '../../lib/api';
-import { useComments, useCreateComment } from '../../features/comments/queries';
+import {
+  useCommentHighlights,
+  useComments,
+  useCreateComment,
+} from '../../features/comments/queries';
 import {
   COMMENT_COOLDOWN_SECONDS,
   CommentSubmissionError,
@@ -14,8 +27,10 @@ import {
 } from '../../features/comments/spam';
 import { getChatParticipantId } from '../../features/comments/participant';
 import type { ChatMessage } from '../../features/comments/types';
+import type { CommentHighlightMessage as HighlightMessage } from '../../features/comments/highlightTypes';
 import CommentPresenceBadge from './CommentPresenceBadge';
 import CommentAuthorTitleText from './CommentAuthorTitleText';
+import CommentHighlightMessage from './CommentHighlightMessage';
 import { getChatAuthorTitle } from './chatAchievementTitle';
 import { getChatAuthorTierCode } from './chatTier';
 import './CommentSection.css';
@@ -73,6 +88,10 @@ const FALLBACK_MESSAGE_SUFFIXES = [
   '지금 거래량 괜찮네요.',
 ] as const;
 
+type ChatFeedItem =
+  | { key: string; kind: 'message'; message: ChatMessage }
+  | { highlight: HighlightMessage; key: string; kind: 'highlight' };
+
 function formatMessageDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', {
     month: 'numeric',
@@ -100,6 +119,12 @@ function isSystemMessage(message: ChatMessage) {
 
 function isTradeSystemMessage(message: ChatMessage) {
   return message.system_event_type === 'TRADE';
+}
+
+function getFeedItemTime(item: ChatFeedItem) {
+  return new Date(
+    item.kind === 'message' ? item.message.created_at : item.highlight.created_at,
+  ).getTime();
 }
 
 function formatCooldownFeedback(seconds: number) {
@@ -155,7 +180,14 @@ function CommentSection({
   const messageInputRef = useRef<HTMLTextAreaElement | null>(null);
   const cooldownDeadlineByVideoRef = useRef<Record<string, number>>({});
   const recentMessagesByVideoRef = useRef<Record<string, RecentCommentSnapshot[]>>({});
-  const commentsQuery = useComments(videoId, isApiConfigured, { accessToken, participantId, regionCode });
+  const [feedStartedAt, setFeedStartedAt] = useState(() => Date.now());
+  const feedStartedAtIso = useMemo(() => new Date(feedStartedAt).toISOString(), [feedStartedAt]);
+  const commentsQuery = useComments(videoId, isApiConfigured, {
+    accessToken,
+    participantId,
+    regionCode,
+    since: feedStartedAtIso,
+  });
   const chatPresence = commentsQuery.presenceQuery?.data;
   const activeParticipantCount = chatPresence?.active_count;
   const createCommentMutation = useCreateComment();
@@ -172,13 +204,39 @@ function CommentSection({
     : isCooldownActive
       ? `${remainingCooldownSeconds}초 대기`
       : '보내기';
-  const visibleMessages = (commentsQuery.data ?? []).filter((message) => !isTradeSystemMessage(message));
+  const commentHighlights = useCommentHighlights(videoId, accessToken, isApiConfigured && isAuthenticated);
+  const visibleMessages = useMemo(
+    () =>
+      (commentsQuery.data ?? []).filter((message) => {
+        const createdAt = new Date(message.created_at).getTime();
+
+        return !isTradeSystemMessage(message) && createdAt >= feedStartedAt;
+      }),
+    [commentsQuery.data, feedStartedAt],
+  );
+  const visibleFeedItems = useMemo(() => {
+    const messageItems = visibleMessages.map((message) => ({
+      key: `message:${message.id}`,
+      kind: 'message' as const,
+      message,
+    }));
+    const highlightItems = commentHighlights.map((highlight) => ({
+      highlight,
+      key: `highlight:${highlight.id}`,
+      kind: 'highlight' as const,
+    }));
+
+    return [...messageItems, ...highlightItems].sort(
+      (left, right) => getFeedItemTime(left) - getFeedItemTime(right),
+    );
+  }, [commentHighlights, visibleMessages]);
 
   useEffect(() => {
     setContent('');
     setSubmissionError(null);
+    setFeedStartedAt(Date.now());
     setCooldownEndsAt(getCurrentCooldownDeadline(GLOBAL_CHAT_ROOM_ID, cooldownDeadlineByVideoRef.current));
-  }, []);
+  }, [videoId]);
 
   useEffect(() => {
     if (!cooldownEndsAt) {
@@ -205,7 +263,7 @@ function CommentSection({
       top: commentList.scrollHeight,
       behavior: 'smooth',
     });
-  }, [visibleMessages]);
+  }, [visibleFeedItems]);
 
   useEffect(() => {
     return () => {
@@ -480,12 +538,23 @@ function CommentSection({
               : '채팅을 불러오지 못했습니다.'}
           </p>
         ) : null}
-        {!commentsQuery.isLoading && !commentsQuery.isError && commentsQuery.data?.length === 0 ? (
+        {!commentsQuery.isLoading && !commentsQuery.isError && visibleFeedItems.length === 0 ? (
           <p className="comment-section__status">
             {isAuthenticated ? '아직 대화가 없습니다. 첫 메시지를 보내보세요.' : '아직 대화가 없습니다.'}
           </p>
         ) : null}
-        {visibleMessages.map((message) => {
+        {visibleFeedItems.map((item) => {
+          if (item.kind === 'highlight') {
+            return (
+              <CommentHighlightMessage
+                key={item.key}
+                formattedDate={formatMessageDate(item.highlight.created_at)}
+                highlight={item.highlight}
+              />
+            );
+          }
+
+          const { message } = item;
           const ownMessage = isOwnMessage(message, participantId, user?.id);
           const systemMessage = isSystemMessage(message);
           const authorTierCode = getChatAuthorTierCode(

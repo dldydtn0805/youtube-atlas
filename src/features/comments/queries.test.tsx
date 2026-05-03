@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from './types';
 
@@ -12,6 +12,8 @@ class MockClient {
   debug?: () => void;
   reconnectDelay?: number;
   onConnect?: () => void;
+  connected = true;
+  publish = vi.fn();
   subscribe = vi.fn(() => ({
     unsubscribe: vi.fn(),
   }));
@@ -183,7 +185,36 @@ describe('comments queries', () => {
     });
 
     await waitFor(() => {
-      expect(fetchComments).toHaveBeenCalledWith('KR');
+      expect(fetchComments).toHaveBeenCalledWith('KR', null);
+    });
+  });
+
+  it('requests only comments after the provided session start time', async () => {
+    const { useComments } = await import('./queries');
+    const { fetchComments } = await import('./api');
+
+    function HookHarness() {
+      useComments(undefined, true, {
+        regionCode: 'KR',
+        since: '2026-05-03T09:00:00.000Z',
+      });
+      return null;
+    }
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    render(<HookHarness />, {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(fetchComments).toHaveBeenCalledWith('KR', '2026-05-03T09:00:00.000Z');
     });
   });
 
@@ -284,5 +315,72 @@ describe('comments queries', () => {
         clientId: 'participant-1',
       });
     });
+  });
+
+  it('starts the authenticated personal comment highlight stream', async () => {
+    const { useCommentHighlights } = await import('./queries');
+
+    function HookHarness() {
+      const highlights = useCommentHighlights('video-1', 'access-token-1');
+
+      return (
+        <div>
+          {highlights.map((highlight) => (
+            <span key={highlight.id}>{highlight.content}</span>
+          ))}
+        </div>
+      );
+    }
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    render(<HookHarness />, {
+      wrapper: createWrapper(queryClient),
+    });
+    const client = clientInstances.at(-1);
+
+    client?.onConnect?.();
+
+    expect(client?.connectHeaders).toMatchObject({
+      Authorization: 'Bearer access-token-1',
+    });
+    expect(client?.subscribe).toHaveBeenCalledWith(
+      '/user/queue/comments/highlights',
+      expect.any(Function),
+    );
+    expect(client?.publish).toHaveBeenCalledWith({
+      body: JSON.stringify({ videoId: 'video-1' }),
+      destination: '/app/comments/highlights/start',
+    });
+
+    const callback = client?.subscribe.mock.calls.at(0)?.at(1) as
+      | ((message: { body: string }) => void)
+      | undefined;
+
+    act(() => {
+      callback?.({
+        body: JSON.stringify({
+          author: 'YouTube Viewer',
+          client_id: 'yt-comment:comment-1',
+          content: '좋아요 많은 댓글',
+          created_at: '2026-05-03T10:00:00Z',
+          ephemeral: true,
+          id: 'yt-comment:comment-1',
+          label: '인기 댓글',
+          like_count: 10,
+          message_type: 'COMMENT_HIGHLIGHT',
+          source: 'YOUTUBE_COMMENT',
+          video_id: 'video-1',
+        }),
+      });
+    });
+
+    expect(screen.getByText('좋아요 많은 댓글')).toBeInTheDocument();
   });
 });

@@ -5,6 +5,7 @@ import { CommentSubmissionError } from '../../features/comments/spam';
 import CommentSection from './CommentSection';
 
 const useCommentsMock = vi.fn();
+const useCommentHighlightsMock = vi.fn();
 const useCreateCommentMock = vi.fn();
 const useAuthMock = vi.fn();
 const authenticatedUser = {
@@ -28,6 +29,7 @@ vi.mock('../../lib/api', () => ({
 }));
 
 vi.mock('../../features/comments/queries', () => ({
+  useCommentHighlights: (...args: unknown[]) => useCommentHighlightsMock(...args),
   useComments: (...args: unknown[]) => useCommentsMock(...args),
   useCreateComment: () => useCreateCommentMock(),
 }));
@@ -71,6 +73,7 @@ describe('CommentSection', () => {
         data: null,
       },
     });
+    useCommentHighlightsMock.mockReturnValue([]);
     useAuthMock.mockReturnValue({
       accessToken: 'access-token-1',
       logout: vi.fn(),
@@ -315,6 +318,35 @@ describe('CommentSection', () => {
     render(<CommentSection />);
 
     expect(screen.getByText('실시간 7명')).toBeInTheDocument();
+  });
+
+  it('shows personal YouTube comment highlights in the chat feed', () => {
+    useCommentHighlightsMock.mockReturnValue([
+      {
+        author: 'YouTube Viewer',
+        client_id: 'yt-comment:comment-1',
+        content: '이 부분 설명 진짜 좋네요',
+        created_at: '2026-03-22T00:00:02.000Z',
+        ephemeral: true,
+        id: 'yt-comment:comment-1',
+        label: '인기 댓글',
+        like_count: 42,
+        message_type: 'COMMENT_HIGHLIGHT',
+        source: 'YOUTUBE_COMMENT',
+        video_id: 'video-1',
+      },
+    ]);
+    useCreateCommentMock.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+
+    render(<CommentSection videoId="video-1" videoTitle="Test video" />);
+
+    expect(useCommentHighlightsMock).toHaveBeenCalledWith('video-1', 'access-token-1', true);
+    expect(screen.getByText('YouTube Viewer')).toBeInTheDocument();
+    expect(screen.getByText('인기 댓글')).toBeInTheDocument();
+    expect(screen.getByText('이 부분 설명 진짜 좋네요')).toBeInTheDocument();
   });
 
   it('shows participant names in the presence hover panel', () => {
