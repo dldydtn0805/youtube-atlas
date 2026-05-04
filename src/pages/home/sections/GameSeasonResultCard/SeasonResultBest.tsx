@@ -2,6 +2,11 @@ import type { GameSeasonResult } from '../../../../features/game/types';
 import { formatPoints, formatSeasonDateTime } from '../../gameHelpers';
 
 export default function SeasonResultBest({ result }: { result: GameSeasonResult }) {
+  const rankMove =
+    typeof result.bestPositionBuyRank === 'number' && typeof result.bestPositionSellRank === 'number'
+      ? ` · #${result.bestPositionBuyRank} -> #${result.bestPositionSellRank}`
+      : '';
+
   return (
     <div className="game-season-result__best">
       {result.bestPositionThumbnailUrl ? (
@@ -15,6 +20,7 @@ export default function SeasonResultBest({ result }: { result: GameSeasonResult 
           {typeof result.bestPositionProfitPoints === 'number'
             ? ` · ${formatPoints(result.bestPositionProfitPoints)}`
             : ''}
+          {rankMove}
         </p>
       </div>
     </div>

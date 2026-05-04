@@ -125,8 +125,11 @@ export async function fetchCurrentGameSeason(accessToken: string, regionCode: st
   return normalizeGameCurrentSeason(season);
 }
 
-export async function fetchMyGameSeasonResults(accessToken: string, regionCode: string, limit = 1) {
-  const params = new URLSearchParams({ regionCode, limit: String(limit) });
+export async function fetchMyGameSeasonResults(accessToken: string, regionCode: string, limit?: number) {
+  const params = new URLSearchParams({ regionCode });
+  if (typeof limit === 'number') {
+    params.set('limit', String(limit));
+  }
 
   return fetchApi<GameSeasonResult[]>(`/api/game/season-results/me?${params.toString()}`, {
     headers: createAuthorizationHeader(accessToken),

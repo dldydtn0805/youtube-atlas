@@ -766,7 +766,7 @@ export function useMyGameSeasonResults(
   return useQuery<GameSeasonResult[]>({
     enabled: enabled && Boolean(accessToken) && Boolean(regionCode),
     queryKey: gameQueryKeys.seasonResults(accessToken, regionCode),
-    queryFn: () => fetchMyGameSeasonResults(accessToken as string, regionCode, 1),
+    queryFn: () => fetchMyGameSeasonResults(accessToken as string, regionCode),
     staleTime: 1000 * 60,
   });
 }

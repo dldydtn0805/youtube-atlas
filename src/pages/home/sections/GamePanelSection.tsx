@@ -46,10 +46,11 @@ interface GamePanelSectionProps {
   isOpenGamePositionsLoading: boolean;
   isScheduledSellOrdersLoading: boolean;
   scheduledSellOrderFocusRequest?: ScheduledSellOrderFocusRequest | null;
-  lastSeasonResult?: GameSeasonResult | null;
+  seasonResults?: GameSeasonResult[];
   isCollapsed: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
   onOpenTierModal: () => void;
+  onOpenSeasonResults?: () => void;
   onOpenHistoryChart: (position: GamePosition) => void;
   onOpenPositionChart: (position: GamePosition) => void;
   onRefreshTab?: (tab: GameTab) => Promise<void> | void;
@@ -101,10 +102,11 @@ export default function GamePanelSection({
   isOpenGamePositionsLoading,
   isScheduledSellOrdersLoading,
   scheduledSellOrderFocusRequest,
-  lastSeasonResult,
+  seasonResults = [],
   isCollapsed,
   newChartEntriesSection,
   onOpenTierModal,
+  onOpenSeasonResults,
   onOpenHistoryChart,
   onOpenPositionChart,
   onRefreshTab,
@@ -161,7 +163,11 @@ export default function GamePanelSection({
 
   const positionsContent = (
     <>
-      <GameSeasonResultCard result={lastSeasonResult} />
+      <GameSeasonResultCard
+        onOpenRecords={onOpenSeasonResults}
+        recordCount={seasonResults.length}
+        result={seasonResults[0] ?? null}
+      />
       <RankingGamePositionsTab
         activePlaybackQueueId={activePlaybackQueueId}
         canShowGameActions={canShowGameActions}

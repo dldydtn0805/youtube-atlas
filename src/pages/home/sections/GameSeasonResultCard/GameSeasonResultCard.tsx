@@ -1,27 +1,35 @@
 import type { GameSeasonResult } from '../../../../features/game/types';
+import SeasonResultHeader from './SeasonResultHeader';
 import SeasonResultBest from './SeasonResultBest';
 import SeasonResultStats from './SeasonResultStats';
 import './layout.css';
 import './stats.css';
 
 interface GameSeasonResultCardProps {
+  label?: string;
+  onOpenRecords?: () => void;
+  recordCount?: number;
   result?: GameSeasonResult | null;
 }
 
-export default function GameSeasonResultCard({ result }: GameSeasonResultCardProps) {
+export default function GameSeasonResultCard({
+  label = '지난 시즌 결과',
+  onOpenRecords,
+  recordCount,
+  result,
+}: GameSeasonResultCardProps) {
   if (!result) {
     return null;
   }
 
   return (
-    <section className="game-season-result" aria-label="지난 시즌 결과">
-      <div className="game-season-result__head">
-        <div>
-          <p className="game-season-result__eyebrow">지난 시즌 결과</p>
-          <h4 className="game-season-result__title">{result.seasonName}</h4>
-        </div>
-        <strong className="game-season-result__rank">#{result.finalRank}</strong>
-      </div>
+    <section className="game-season-result" aria-label={label}>
+      <SeasonResultHeader
+        label={label}
+        onOpenRecords={onOpenRecords}
+        recordCount={recordCount}
+        result={result}
+      />
       <SeasonResultStats result={result} />
       <SeasonResultBest result={result} />
     </section>

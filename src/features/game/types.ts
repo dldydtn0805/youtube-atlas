@@ -65,6 +65,13 @@ export interface GameSeasonResult {
   finalAssetPoints: number;
   finalBalancePoints: number;
   realizedPnlPoints: number;
+  startingBalancePoints: number;
+  profitRatePercent: number | null;
+  finalHighlightScore: number;
+  finalTierCode: string | null;
+  finalTierName: string | null;
+  finalTierBadgeCode: string | null;
+  finalTierTitleCode: string | null;
   positionCount: number;
   bestPositionId: number | null;
   bestPositionVideoId: string | null;
@@ -72,6 +79,10 @@ export interface GameSeasonResult {
   bestPositionChannelTitle: string | null;
   bestPositionThumbnailUrl: string | null;
   bestPositionProfitPoints: number | null;
+  bestPositionProfitRatePercent: number | null;
+  bestPositionRankDiff: number | null;
+  bestPositionBuyRank: number | null;
+  bestPositionSellRank: number | null;
   titleCode: string | null;
   createdAt: string;
 }

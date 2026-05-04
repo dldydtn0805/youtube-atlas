@@ -19,7 +19,8 @@
 
 .game-season-result__eyebrow,
 .game-season-result__meta,
-.game-season-result__best-label {
+.game-season-result__best-label,
+.game-season-result__tier {
   color: var(--text-muted);
   font-size: 0.72rem;
   margin: 0;
@@ -36,4 +37,23 @@
 .game-season-result__rank {
   color: rgb(var(--game-panel-tier-accent-rgb));
   font-size: 1.2rem;
+}
+
+.game-season-result__head-actions {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.game-season-result__records-button {
+  background: rgba(15, 23, 42, 0.07);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 5px 10px;
 }

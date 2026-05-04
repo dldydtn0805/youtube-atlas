@@ -14,6 +14,7 @@ import { RegionFilterModal } from './sections/FilterPanels';
 import GamePanelSection from './sections/GamePanelSection';
 import GameRankHistoryModal from './sections/GameRankHistoryModal';
 import GameSellPreviewDetail from './sections/GameSellPreviewDetail';
+import GameSeasonResultsModal from './sections/GameSeasonResultsModal/GameSeasonResultsModal';
 import GameTradeModal from './sections/GameTradeModal';
 import GameIntroModal from './sections/GameIntroModal';
 import GameNotificationModal from './sections/GameNotificationModal';
@@ -278,6 +279,7 @@ function HomePage() {
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
   const [tierModalDefaultTab, setTierModalDefaultTab] = useState<TierModalTab>('tier');
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [isSeasonResultsModalOpen, setIsSeasonResultsModalOpen] = useState(false);
   const [isGameIntroModalOpen, setIsGameIntroModalOpen] = useState(getInitialGameIntroModalOpen);
   const [isRegionModalOpen, setIsRegionModalOpen] = useState(false);
   const [isChartViewModalOpen, setIsChartViewModalOpen] = useState(false);
@@ -2190,7 +2192,7 @@ function HomePage() {
       favoriteStreamerVideoSection={favoriteStreamerVideoSection}
       favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
       gameHistoryPositions={gameHistoryPositions}
-      lastSeasonResult={gameSeasonResults[0] ?? null}
+      seasonResults={gameSeasonResults}
       gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
       gamePortfolioSection={gamePortfolioSection}
       hasApiConfigured={isApiConfigured}
@@ -2204,6 +2206,7 @@ function HomePage() {
       onCancelScheduledSellOrder={(orderId) => {
         void handleCancelScheduledSellOrder(orderId);
       }}
+      onOpenSeasonResults={() => setIsSeasonResultsModalOpen(true)}
       onOpenTierModal={openTierModal}
       onOpenHistoryChart={handleOpenGameHistoryChart}
       onOpenPositionChart={handleOpenGamePositionChart}
@@ -2246,6 +2249,7 @@ function HomePage() {
     isChartViewModalOpen ||
     isGameModalOpen ||
     isWalletModalOpen ||
+    isSeasonResultsModalOpen ||
     isTierModalOpen ||
     isBuyTradeModalOpen ||
     isSellTradeModalOpen;
@@ -2569,6 +2573,11 @@ function HomePage() {
         openPositionsProfitPoints={openPositionsProfitPoints}
         season={currentGameSeason}
         walletUpdatedAt={currentGameSeasonUpdatedAt}
+      />
+      <GameSeasonResultsModal
+        isOpen={isSeasonResultsModalOpen}
+        onClose={() => setIsSeasonResultsModalOpen(false)}
+        results={gameSeasonResults}
       />
       <GamePanelModal isOpen={isGameModalOpen} onClose={() => setIsGameModalOpen(false)}>
         {renderPortfolioContent(true)}
