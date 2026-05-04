@@ -1,0 +1,11 @@
+.game-season-result-highlight-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+@media (max-width: 640px) {
+  .game-season-result-highlight-card {
+    grid-template-columns: 84px minmax(0, 1fr);
+  }
+}

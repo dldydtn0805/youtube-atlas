@@ -1,0 +1,39 @@
+.game-season-result {
+  --season-report-accent: #6b7280;
+  --season-report-accent-rgb: 107, 114, 128;
+}
+
+.game-season-result[data-tier-code='BRONZE'] {
+  --season-report-accent: #b7791f;
+  --season-report-accent-rgb: 183, 121, 31;
+}
+
+.game-season-result[data-tier-code='SILVER'] {
+  --season-report-accent: #64748b;
+  --season-report-accent-rgb: 100, 116, 139;
+}
+
+.game-season-result[data-tier-code='GOLD'] {
+  --season-report-accent: #d97706;
+  --season-report-accent-rgb: 217, 119, 6;
+}
+
+.game-season-result[data-tier-code='PLATINUM'] {
+  --season-report-accent: #0f766e;
+  --season-report-accent-rgb: 15, 118, 110;
+}
+
+.game-season-result[data-tier-code='DIAMOND'] {
+  --season-report-accent: #2563eb;
+  --season-report-accent-rgb: 37, 99, 235;
+}
+
+.game-season-result[data-tier-code='MASTER'] {
+  --season-report-accent: #7c3aed;
+  --season-report-accent-rgb: 124, 58, 237;
+}
+
+.game-season-result[data-tier-code='LEGEND'] {
+  --season-report-accent: #e11d48;
+  --season-report-accent-rgb: 225, 29, 72;
+}

@@ -1,0 +1,31 @@
+.game-season-result__stats div {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    var(--season-report-card-shadow);
+  overflow: hidden;
+  position: relative;
+}
+
+.game-season-result__stats div::before {
+  animation: season-result-stat-shimmer 5.5s linear infinite;
+  background: linear-gradient(110deg, transparent 0 34%, rgba(var(--season-report-accent-rgb), 0.55) 48%, transparent 62%);
+  border-radius: inherit;
+  content: '';
+  inset: 0;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.5;
+  padding: 1px;
+  position: absolute;
+  transform: translateX(-130%);
+}
+
+.game-season-result__stats div > * {
+  position: relative;
+}
+
+@keyframes season-result-stat-shimmer {
+  to {
+    transform: translateX(130%);
+  }
+}

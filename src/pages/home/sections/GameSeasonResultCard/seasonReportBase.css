@@ -1,0 +1,27 @@
+.game-season-result {
+  --season-report-bg: #f0f2f5;
+  --season-report-card: #fff;
+  --season-report-text: #1a1a1a;
+  --season-report-subtext: #6b7280;
+  --season-report-border: #d1d5db;
+  --season-report-card-border: #e5e7eb;
+  --season-report-rail: #e5e7eb;
+  --season-report-avatar-ring: #fff;
+  --season-report-loss: #dc2626;
+  --season-report-shadow: 0 18px 38px rgba(15, 23, 42, 0.12);
+  --season-report-card-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+:root[data-theme='dark'] .game-season-result {
+  --season-report-bg: #0b0b0d;
+  --season-report-card: #151517;
+  --season-report-text: #f9fafb;
+  --season-report-subtext: #a1a1aa;
+  --season-report-border: #2a2a2d;
+  --season-report-card-border: #2f2f33;
+  --season-report-rail: #2a2a2d;
+  --season-report-avatar-ring: #0b0b0d;
+  --season-report-loss: #f87171;
+  --season-report-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
+  --season-report-card-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+}

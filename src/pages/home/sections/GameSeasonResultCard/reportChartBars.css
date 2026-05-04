@@ -1,0 +1,27 @@
+.game-season-report-chart__rows {
+  display: grid;
+  gap: 9px;
+}
+
+.game-season-report-chart__row {
+  display: grid;
+  gap: 5px;
+}
+
+.game-season-report-chart__rail {
+  background: var(--season-report-rail);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.game-season-report-chart__rail span {
+  background: linear-gradient(90deg, rgba(var(--season-report-accent-rgb), 0.68), var(--season-report-accent));
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+}
+
+.game-season-report-chart__row[data-tone='loss'] .game-season-report-chart__rail span {
+  background: linear-gradient(90deg, rgba(248, 113, 113, 0.72), #fecaca);
+}

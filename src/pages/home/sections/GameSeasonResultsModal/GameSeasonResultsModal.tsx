@@ -5,14 +5,28 @@ import useHeaderSwipeToClose from '../../hooks/useHeaderSwipeToClose';
 import { getFullscreenElement } from '../../utils';
 import GameSeasonResultsDialog from './GameSeasonResultsDialog';
 import './GameSeasonResultsModal.css';
+import './SeasonResultPickerPanel.css';
+import './SeasonResultSelect.css';
+import './SeasonResultSelectButton.css';
+import './SeasonResultSelectMenu.css';
+import './responsive.css';
+import './mobileModal.css';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  profileImageUrl?: string | null;
+  profileLabel?: string | null;
   results: GameSeasonResult[];
 }
 
-export default function GameSeasonResultsModal({ isOpen, onClose, results }: Props) {
+export default function GameSeasonResultsModal({
+  isOpen,
+  onClose,
+  profileImageUrl,
+  profileLabel,
+  results,
+}: Props) {
   useBodyScrollLock(isOpen);
   const swipe = useHeaderSwipeToClose({ disabled: !isOpen, onClose });
 
@@ -37,6 +51,8 @@ export default function GameSeasonResultsModal({ isOpen, onClose, results }: Pro
           bodySwipeHandlers={swipe.bodySwipeHandlers}
           headerSwipeHandlers={swipe.headerSwipeHandlers}
           onClose={onClose}
+          profileImageUrl={profileImageUrl}
+          profileLabel={profileLabel}
           results={results}
         />
       </section>

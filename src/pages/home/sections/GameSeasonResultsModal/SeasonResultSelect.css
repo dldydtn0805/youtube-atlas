@@ -1,0 +1,15 @@
+.game-season-results-select {
+  display: grid;
+  gap: 7px;
+  justify-self: center;
+  min-width: 0;
+  position: relative;
+  width: 98%;
+  z-index: 20;
+}
+
+.game-season-results-select span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}

@@ -1,0 +1,33 @@
+.game-season-results-select__button {
+  background: var(--surface-control);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text);
+  min-height: 44px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 38px 0 12px;
+  position: relative;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.game-season-results-select__button::after {
+  border: solid var(--text-muted);
+  border-width: 0 2px 2px 0;
+  content: '';
+  height: 7px;
+  pointer-events: none;
+  position: absolute;
+  right: 16px;
+  top: calc(50% - 5px);
+  transform: rotate(45deg);
+  width: 7px;
+}
+
+.game-season-results-select__button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--text-muted) 52%, transparent);
+  outline-offset: 2px;
+}

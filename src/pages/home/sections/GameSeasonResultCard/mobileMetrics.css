@@ -1,0 +1,18 @@
+@media (max-width: 560px) {
+  .game-season-result__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .game-season-report-chart__head,
+  .game-season-report-chart__row-head {
+    align-items: start;
+    display: grid;
+    gap: 3px;
+  }
+}
+
+@media (max-width: 380px) {
+  .game-season-result__stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

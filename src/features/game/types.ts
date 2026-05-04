@@ -85,6 +85,30 @@ export interface GameSeasonResult {
   bestPositionSellRank: number | null;
   titleCode: string | null;
   createdAt: string;
+  highlights?: GameSeasonResultHighlights | null;
+}
+
+export interface GameSeasonResultHighlights {
+  topRankRiser: GameSeasonResultHighlightItem | null;
+  mostTaggedPositions: GameSeasonResultHighlightItem[];
+  longestHeld: GameSeasonResultHighlightItem | null;
+}
+
+export interface GameSeasonResultHighlightItem {
+  positionId: number;
+  videoId: string;
+  title: string;
+  channelTitle: string;
+  thumbnailUrl: string;
+  buyRank: number | null;
+  sellRank: number | null;
+  rankDiff: number | null;
+  profitPoints: number | null;
+  profitRatePercent: number | null;
+  holdDurationSeconds: number | null;
+  tagCount: number | null;
+  highlightScore: number | null;
+  strategyTags: GameStrategyType[];
 }
 
 export interface GameNotification {

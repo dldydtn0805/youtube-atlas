@@ -1,0 +1,27 @@
+.game-season-result-highlight-card__thumb {
+  aspect-ratio: 16 / 9;
+  background: var(--season-report-rail);
+  border-radius: 6px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.game-season-result-highlight-card__copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.game-season-result-highlight-card__copy strong,
+.game-season-result-highlight-card__copy p {
+  color: var(--season-report-text);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.game-season-result-highlight-card__copy p,
+.game-season-result-highlight-card__copy > span,
+.game-season-result-highlight-card__meta {
+  color: var(--season-report-subtext);
+  font-size: 0.7rem;
+}

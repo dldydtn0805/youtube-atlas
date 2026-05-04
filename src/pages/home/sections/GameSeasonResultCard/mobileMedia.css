@@ -1,0 +1,15 @@
+@media (max-width: 560px) {
+  .game-season-result__title {
+    font-size: 0.98rem;
+  }
+
+  .game-season-result__rank {
+    font-size: 1.28rem;
+  }
+
+  .game-season-result-profile {
+    height: 52px;
+    width: 52px;
+  }
+
+}

@@ -4,7 +4,6 @@ import type {
   GameCurrentSeason,
   GamePosition,
   GameScheduledSellOrder,
-  GameSeasonResult,
   GameStrategyType,
   GameTierProgress,
 } from '../../../features/game/types';
@@ -13,7 +12,6 @@ import type { YouTubeCategorySection } from '../../../features/youtube/types';
 import { findPlaybackQueueIdForVideo } from '../utils';
 import type { OpenGameHolding } from '../gameHelpers';
 import BoldNumberText from './BoldNumberText';
-import GameSeasonResultCard from './GameSeasonResultCard/GameSeasonResultCard';
 import GameScheduledSellOrdersTab, { type ScheduledSellOrderFocusRequest } from './GameScheduledSellOrdersTab';
 import { strategyTagCriteriaCopy } from './gameTierGuideContent';
 import {
@@ -46,11 +44,9 @@ interface GamePanelSectionProps {
   isOpenGamePositionsLoading: boolean;
   isScheduledSellOrdersLoading: boolean;
   scheduledSellOrderFocusRequest?: ScheduledSellOrderFocusRequest | null;
-  seasonResults?: GameSeasonResult[];
   isCollapsed: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
   onOpenTierModal: () => void;
-  onOpenSeasonResults?: () => void;
   onOpenHistoryChart: (position: GamePosition) => void;
   onOpenPositionChart: (position: GamePosition) => void;
   onRefreshTab?: (tab: GameTab) => Promise<void> | void;
@@ -102,11 +98,9 @@ export default function GamePanelSection({
   isOpenGamePositionsLoading,
   isScheduledSellOrdersLoading,
   scheduledSellOrderFocusRequest,
-  seasonResults = [],
   isCollapsed,
   newChartEntriesSection,
   onOpenTierModal,
-  onOpenSeasonResults,
   onOpenHistoryChart,
   onOpenPositionChart,
   onRefreshTab,
@@ -162,34 +156,27 @@ export default function GamePanelSection({
   }
 
   const positionsContent = (
-    <>
-      <GameSeasonResultCard
-        onOpenRecords={onOpenSeasonResults}
-        recordCount={seasonResults.length}
-        result={seasonResults[0] ?? null}
-      />
-      <RankingGamePositionsTab
-        activePlaybackQueueId={activePlaybackQueueId}
-        canShowGameActions={canShowGameActions}
-        emptyMessage={positionsEmptyMessage}
-        favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
-        gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
-        holdings={openGameHoldings}
-        currentGameSeason={currentGameSeason}
-        isLoading={isOpenGamePositionsLoading}
-        onCancelScheduledSellOrder={onCancelScheduledSellOrder}
-        onOpenPositionChart={onOpenPositionChart}
-        onOpenBuyTradeModal={onOpenPositionBuyTradeModal}
-        onOpenSellTradeModal={onOpenPositionSellTradeModal}
-        onOpenStrategyScheduledSellTradeModal={onOpenStrategyScheduledSellTradeModal}
-        onSelectPosition={onSelectGamePositionVideo}
-        openDistinctVideoCount={openDistinctVideoCount}
-        scheduledSellOrderCancelingId={scheduledSellOrderCancelingId}
-        scheduledSellOrders={scheduledSellOrders}
-        selectedPositionId={selectedPositionId}
-        trendSignalsByVideoId={trendSignalsByVideoId}
-      />
-    </>
+    <RankingGamePositionsTab
+      activePlaybackQueueId={activePlaybackQueueId}
+      canShowGameActions={canShowGameActions}
+      emptyMessage={positionsEmptyMessage}
+      favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
+      gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
+      holdings={openGameHoldings}
+      currentGameSeason={currentGameSeason}
+      isLoading={isOpenGamePositionsLoading}
+      onCancelScheduledSellOrder={onCancelScheduledSellOrder}
+      onOpenPositionChart={onOpenPositionChart}
+      onOpenBuyTradeModal={onOpenPositionBuyTradeModal}
+      onOpenSellTradeModal={onOpenPositionSellTradeModal}
+      onOpenStrategyScheduledSellTradeModal={onOpenStrategyScheduledSellTradeModal}
+      onSelectPosition={onSelectGamePositionVideo}
+      openDistinctVideoCount={openDistinctVideoCount}
+      scheduledSellOrderCancelingId={scheduledSellOrderCancelingId}
+      scheduledSellOrders={scheduledSellOrders}
+      selectedPositionId={selectedPositionId}
+      trendSignalsByVideoId={trendSignalsByVideoId}
+    />
   );
 
   const historyContent = (

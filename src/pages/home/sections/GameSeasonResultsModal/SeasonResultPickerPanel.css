@@ -1,0 +1,9 @@
+.game-season-results-picker {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.game-season-results-picker .game-season-result {
+  margin-bottom: 0;
+}

@@ -1,0 +1,29 @@
+.game-season-result-profile {
+  border: 2px solid var(--season-report-avatar-ring);
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.12),
+    0 0 0 5px rgba(var(--season-report-accent-rgb), 0.16),
+    0 10px 22px rgba(15, 23, 42, 0.16);
+  flex: 0 0 auto;
+  height: 58px;
+  position: relative;
+  width: 58px;
+}
+
+.game-season-result-profile__image,
+.game-season-result-profile__fallback {
+  border-radius: inherit;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.game-season-result-profile__fallback {
+  align-items: center;
+  background: var(--season-report-accent);
+  display: flex;
+  font-size: 1.1rem;
+  font-weight: 900;
+  justify-content: center;
+}

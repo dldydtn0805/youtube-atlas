@@ -1,4 +1,5 @@
 import type { GameSeasonResult } from '../../../../features/game/types';
+import { formatSeasonDateTime } from '../../gameHelpers';
 
 interface Props {
   label: string;
@@ -10,12 +11,15 @@ interface Props {
 export default function SeasonResultHeader({ label, onOpenRecords, recordCount = 0, result }: Props) {
   return (
     <div className="game-season-result__head">
-      <div>
-        <p className="game-season-result__eyebrow">{label}</p>
+      <div className="game-season-result__headline">
+        <p className="game-season-result__eyebrow">ANALYST REPORT</p>
         <h4 className="game-season-result__title">{result.seasonName}</h4>
-        {result.finalTierName ? <p className="game-season-result__tier">{result.finalTierName}</p> : null}
+        <p className="game-season-result__season-meta">
+          {label} · {result.regionCode} · {formatSeasonDateTime(result.seasonEndAt)} 종료
+        </p>
       </div>
       <div className="game-season-result__head-actions">
+        <span className="game-season-result__rank-label">최종 순위</span>
         <strong className="game-season-result__rank">#{result.finalRank}</strong>
         {onOpenRecords && recordCount > 0 ? (
           <button className="game-season-result__records-button" onClick={onOpenRecords} type="button">

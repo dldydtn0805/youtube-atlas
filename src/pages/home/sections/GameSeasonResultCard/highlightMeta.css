@@ -1,0 +1,12 @@
+.game-season-result-highlight-card__meta span {
+  color: var(--season-report-text);
+  font-weight: 900;
+}
+
+.game-season-result-highlight-card__meta b[data-tone='gain'] {
+  color: #dc2626;
+}
+
+.game-season-result-highlight-card__meta b[data-tone='loss'] {
+  color: #2563eb;
+}

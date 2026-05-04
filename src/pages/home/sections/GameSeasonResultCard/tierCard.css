@@ -1,0 +1,29 @@
+.game-season-result-tier-card {
+  align-items: center;
+  background: var(--season-report-card);
+  border: 1px solid var(--season-report-card-border);
+  border-left: 4px solid var(--season-report-accent);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    var(--season-report-card-shadow);
+  color: var(--season-report-text);
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  min-width: 0;
+  overflow: hidden;
+  padding: 14px 16px;
+}
+
+.game-season-result-tier-card__copy,
+.game-season-result-tier-card__score {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.game-season-result-tier-card__score {
+  justify-items: end;
+  text-align: right;
+}

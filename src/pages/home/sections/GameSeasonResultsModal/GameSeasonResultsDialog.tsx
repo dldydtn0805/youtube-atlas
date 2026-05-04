@@ -1,11 +1,13 @@
 import type { HTMLAttributes } from 'react';
 import type { GameSeasonResult } from '../../../../features/game/types';
-import GameSeasonResultsList from './GameSeasonResultsList';
+import SeasonResultPickerPanel from './SeasonResultPickerPanel';
 
 interface Props {
   bodySwipeHandlers: HTMLAttributes<HTMLElement>;
   headerSwipeHandlers: HTMLAttributes<HTMLElement>;
   onClose: () => void;
+  profileImageUrl?: string | null;
+  profileLabel?: string | null;
   results: GameSeasonResult[];
 }
 
@@ -13,6 +15,8 @@ export default function GameSeasonResultsDialog({
   bodySwipeHandlers,
   headerSwipeHandlers,
   onClose,
+  profileImageUrl,
+  profileLabel,
   results,
 }: Props) {
   return (
@@ -29,7 +33,11 @@ export default function GameSeasonResultsDialog({
         </button>
       </div>
       <div className="app-shell__modal-body game-season-results-modal__body" {...bodySwipeHandlers}>
-        <GameSeasonResultsList results={results} />
+        <SeasonResultPickerPanel
+          profileImageUrl={profileImageUrl}
+          profileLabel={profileLabel}
+          results={results}
+        />
       </div>
     </>
   );

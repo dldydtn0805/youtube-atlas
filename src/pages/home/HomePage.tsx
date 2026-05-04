@@ -2006,9 +2006,6 @@ function HomePage() {
     },
     [refetchGameTradePanels, shouldLoadGame],
   );
-  const handleOpenGameHistoryModal = useCallback(() => {
-    openGameModal('history');
-  }, [openGameModal]);
   const handleOpenGamePositionsModal = useCallback(() => {
     openGameModal('positions');
   }, [openGameModal]);
@@ -2192,7 +2189,6 @@ function HomePage() {
       favoriteStreamerVideoSection={favoriteStreamerVideoSection}
       favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
       gameHistoryPositions={gameHistoryPositions}
-      seasonResults={gameSeasonResults}
       gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
       gamePortfolioSection={gamePortfolioSection}
       hasApiConfigured={isApiConfigured}
@@ -2206,7 +2202,6 @@ function HomePage() {
       onCancelScheduledSellOrder={(orderId) => {
         void handleCancelScheduledSellOrder(orderId);
       }}
-      onOpenSeasonResults={() => setIsSeasonResultsModalOpen(true)}
       onOpenTierModal={openTierModal}
       onOpenHistoryChart={handleOpenGameHistoryChart}
       onOpenPositionChart={handleOpenGamePositionChart}
@@ -2323,11 +2318,11 @@ function HomePage() {
         isLoggingOut={isLoggingOut}
         onLogout={() => void logout()}
         onOpenGameModal={handleOpenGamePositionsModal}
-        onOpenGameHistoryModal={handleOpenGameHistoryModal}
         onOpenGamePositionsModal={handleOpenGamePositionsModal}
         onOpenHighlightsModal={handleOpenTierHighlightsModal}
         onOpenGameNotificationSellTradeModal={handleOpenGameNotificationSellTradeModal}
         onOpenRecentPlayback={handleOpenRecentPlayback}
+        onOpenSeasonResults={() => setIsSeasonResultsModalOpen(true)}
         onClearGameNotifications={clearGameNotifications}
         onDeleteGameNotification={deleteGameNotification}
         onSelectGameNotification={handleSelectGameNotification}
@@ -2342,6 +2337,7 @@ function HomePage() {
         hasUnreadGameNotifications={hasUnreadGameNotifications}
         isGameNotificationsLoading={isGameNotificationsFetching}
         isTitleSaving={updateSelectedAchievementTitleMutation.isPending}
+        seasonResultCount={gameSeasonResults.length}
         walletBalancePoints={currentGameSeason?.wallet.balancePoints}
         onSelectTitle={async (titleCode) => {
           const optimisticSelectedTitle =
@@ -2577,6 +2573,8 @@ function HomePage() {
       <GameSeasonResultsModal
         isOpen={isSeasonResultsModalOpen}
         onClose={() => setIsSeasonResultsModalOpen(false)}
+        profileImageUrl={user?.pictureUrl ?? null}
+        profileLabel={user?.displayName || user?.email || null}
         results={gameSeasonResults}
       />
       <GamePanelModal isOpen={isGameModalOpen} onClose={() => setIsGameModalOpen(false)}>

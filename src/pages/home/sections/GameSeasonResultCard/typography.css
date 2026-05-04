@@ -1,0 +1,23 @@
+.game-season-result__eyebrow,
+.game-season-result__meta,
+.game-season-result__tier,
+.game-season-result__season-meta,
+.game-season-result__rank-label {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.game-season-result .game-season-result__eyebrow,
+.game-season-result .game-season-result__meta,
+.game-season-result .game-season-result__tier,
+.game-season-result .game-season-result__season-meta,
+.game-season-result .game-season-result__rank-label {
+  color: var(--season-report-subtext);
+}
+
+.game-season-result__eyebrow {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

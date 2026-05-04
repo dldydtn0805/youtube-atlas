@@ -1,0 +1,29 @@
+.game-season-report-chart {
+  background: var(--season-report-card);
+  border: 1px solid var(--season-report-card-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.game-season-report-chart__head,
+.game-season-report-chart__row-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.game-season-report-chart__head span,
+.game-season-report-chart__row-head span {
+  color: var(--season-report-subtext);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.game-season-report-chart__head strong,
+.game-season-report-chart__row-head strong {
+  color: var(--season-report-text);
+  font-size: 0.76rem;
+}

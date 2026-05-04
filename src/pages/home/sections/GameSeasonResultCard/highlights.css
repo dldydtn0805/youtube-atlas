@@ -1,0 +1,21 @@
+.game-season-result-highlights {
+  display: grid;
+  gap: 10px;
+}
+
+.game-season-result-highlights__list {
+  display: grid;
+  gap: 8px;
+}
+
+.game-season-result-highlight-card {
+  align-items: start;
+  background: var(--season-report-card);
+  border: 1px solid var(--season-report-card-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 112px minmax(0, 1fr);
+  min-width: 0;
+  padding: 10px;
+}

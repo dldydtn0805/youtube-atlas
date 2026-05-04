@@ -8,6 +8,7 @@ import { isTitleUnlockNotification } from './gameNotificationEventType';
 import AchievementTitleBadge from './AchievementTitleBadge';
 import AchievementTitleModal from './AchievementTitleModal';
 import GameNotificationsPanel from './GameNotificationsPanel';
+import ProfileSeasonResultsButton from './ProfileSeasonResultsButton';
 import './AppHeader.css';
 
 interface AppHeaderProps {
@@ -22,10 +23,10 @@ interface AppHeaderProps {
   isLoggingOut: boolean;
   onLogout: () => void;
   onOpenGameModal?: () => void;
-  onOpenGameHistoryModal?: () => void;
   onOpenGamePositionsModal?: () => void;
   onOpenHighlightsModal?: () => void;
   onOpenRecentPlayback?: (videoId: string) => void;
+  onOpenSeasonResults?: () => void;
   onClearGameNotifications?: () => void;
   onDeleteGameNotification?: (notificationId: string) => void;
   onOpenGameNotificationSellTradeModal?: (notification: GameNotification) => void;
@@ -42,6 +43,7 @@ interface AppHeaderProps {
   isGameNotificationsLoading?: boolean;
   isTitleSaving?: boolean;
   onSelectTitle?: (titleCode: string | null) => Promise<void> | void;
+  seasonResultCount?: number;
   walletBalancePoints?: number | null;
   titleCollection?: AchievementTitleCollection;
 }
@@ -163,10 +165,10 @@ function AppHeader({
   isLoggingOut,
   onLogout,
   onOpenGameModal,
-  onOpenGameHistoryModal,
   onOpenGamePositionsModal,
   onOpenHighlightsModal,
   onOpenRecentPlayback,
+  onOpenSeasonResults,
   onClearGameNotifications,
   onDeleteGameNotification,
   onOpenGameNotificationSellTradeModal,
@@ -183,6 +185,7 @@ function AppHeader({
   isGameNotificationsLoading = false,
   isTitleSaving = false,
   onSelectTitle,
+  seasonResultCount = 0,
   walletBalancePoints,
   titleCollection,
 }: AppHeaderProps) {
@@ -457,17 +460,15 @@ function AppHeader({
                       <span>티어 점수</span>
                       <strong>{tierScoreSummary}</strong>
                     </button>
-                    <button
-                      className="app-shell__profile-card-grid-button"
-                      onClick={() => {
-                        closeProfileCard();
-                        onOpenGameHistoryModal?.();
-                      }}
-                      type="button"
-                    >
-                      <span>거래</span>
-                      <strong>{user.tradeCount}회</strong>
-                    </button>
+                    {onOpenSeasonResults ? (
+                      <ProfileSeasonResultsButton
+                        onOpen={() => {
+                          closeProfileCard();
+                          onOpenSeasonResults();
+                        }}
+                        resultCount={seasonResultCount}
+                      />
+                    ) : null}
                   </div>
                   <div className="app-shell__profile-card-section">
                     <GameNotificationsPanel

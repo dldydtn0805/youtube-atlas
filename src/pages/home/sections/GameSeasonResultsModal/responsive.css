@@ -1,0 +1,25 @@
+@media (max-width: 768px) {
+  .game-season-results-modal {
+    border-radius: 24px;
+    max-height: min(760px, calc(100dvh - 16px));
+    padding: 16px;
+  }
+
+  .game-season-results-modal__body {
+    gap: 12px;
+    padding-top: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-season-results-modal {
+    border-radius: 22px;
+    max-height: calc(100dvh - 12px);
+    padding: 14px;
+  }
+
+  .game-season-results-select__button {
+    min-height: 42px;
+    padding-left: 10px;
+  }
+}

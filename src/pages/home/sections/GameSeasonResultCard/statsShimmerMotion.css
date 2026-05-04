@@ -1,0 +1,5 @@
+@media (prefers-reduced-motion: reduce) {
+  .game-season-result__stats div::before {
+    animation: none;
+  }
+}

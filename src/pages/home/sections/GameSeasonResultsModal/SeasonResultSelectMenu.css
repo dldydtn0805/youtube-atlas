@@ -1,0 +1,36 @@
+.game-season-results-select__menu {
+  background: var(--surface-control);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-sizing: border-box;
+  box-shadow: 0 16px 36px rgb(0 0 0 / 16%);
+  display: grid;
+  gap: 4px;
+  left: 0;
+  max-height: min(240px, calc(100dvh - 220px));
+  overflow: auto;
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  width: 100%;
+  z-index: 30;
+}
+
+.game-season-results-select__option {
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: var(--text);
+  min-height: 38px;
+  overflow: hidden;
+  padding: 0 10px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-season-results-select__option:hover,
+.game-season-results-select__option[aria-selected='true'] {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
