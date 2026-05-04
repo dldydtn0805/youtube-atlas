@@ -1,0 +1,43 @@
+.game-season-result__stats {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.game-season-result__stats div {
+  min-width: 0;
+}
+
+.game-season-result__stats dt {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+
+.game-season-result__stats dd {
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.game-season-result__stats dd[data-tone='gain'] {
+  color: #0f9f6e;
+}
+
+.game-season-result__stats dd[data-tone='loss'] {
+  color: #dc2626;
+}
+
+.game-season-result__best {
+  justify-content: flex-start;
+}
+
+.game-season-result__thumb {
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  flex: 0 0 72px;
+  object-fit: cover;
+  width: 72px;
+}

@@ -4,6 +4,7 @@ import type {
   GameCurrentSeason,
   GamePosition,
   GameScheduledSellOrder,
+  GameSeasonResult,
   GameStrategyType,
   GameTierProgress,
 } from '../../../features/game/types';
@@ -12,6 +13,7 @@ import type { YouTubeCategorySection } from '../../../features/youtube/types';
 import { findPlaybackQueueIdForVideo } from '../utils';
 import type { OpenGameHolding } from '../gameHelpers';
 import BoldNumberText from './BoldNumberText';
+import GameSeasonResultCard from './GameSeasonResultCard/GameSeasonResultCard';
 import GameScheduledSellOrdersTab, { type ScheduledSellOrderFocusRequest } from './GameScheduledSellOrdersTab';
 import { strategyTagCriteriaCopy } from './gameTierGuideContent';
 import {
@@ -44,6 +46,7 @@ interface GamePanelSectionProps {
   isOpenGamePositionsLoading: boolean;
   isScheduledSellOrdersLoading: boolean;
   scheduledSellOrderFocusRequest?: ScheduledSellOrderFocusRequest | null;
+  lastSeasonResult?: GameSeasonResult | null;
   isCollapsed: boolean;
   newChartEntriesSection?: YouTubeCategorySection;
   onOpenTierModal: () => void;
@@ -98,6 +101,7 @@ export default function GamePanelSection({
   isOpenGamePositionsLoading,
   isScheduledSellOrdersLoading,
   scheduledSellOrderFocusRequest,
+  lastSeasonResult,
   isCollapsed,
   newChartEntriesSection,
   onOpenTierModal,
@@ -156,27 +160,30 @@ export default function GamePanelSection({
   }
 
   const positionsContent = (
-    <RankingGamePositionsTab
-      activePlaybackQueueId={activePlaybackQueueId}
-      canShowGameActions={canShowGameActions}
-      emptyMessage={positionsEmptyMessage}
-      favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
-      gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
-      holdings={openGameHoldings}
-      currentGameSeason={currentGameSeason}
-      isLoading={isOpenGamePositionsLoading}
-      onCancelScheduledSellOrder={onCancelScheduledSellOrder}
-      onOpenPositionChart={onOpenPositionChart}
-      onOpenBuyTradeModal={onOpenPositionBuyTradeModal}
-      onOpenSellTradeModal={onOpenPositionSellTradeModal}
-      onOpenStrategyScheduledSellTradeModal={onOpenStrategyScheduledSellTradeModal}
-      onSelectPosition={onSelectGamePositionVideo}
-      openDistinctVideoCount={openDistinctVideoCount}
-      scheduledSellOrderCancelingId={scheduledSellOrderCancelingId}
-      scheduledSellOrders={scheduledSellOrders}
-      selectedPositionId={selectedPositionId}
-      trendSignalsByVideoId={trendSignalsByVideoId}
-    />
+    <>
+      <GameSeasonResultCard result={lastSeasonResult} />
+      <RankingGamePositionsTab
+        activePlaybackQueueId={activePlaybackQueueId}
+        canShowGameActions={canShowGameActions}
+        emptyMessage={positionsEmptyMessage}
+        favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
+        gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
+        holdings={openGameHoldings}
+        currentGameSeason={currentGameSeason}
+        isLoading={isOpenGamePositionsLoading}
+        onCancelScheduledSellOrder={onCancelScheduledSellOrder}
+        onOpenPositionChart={onOpenPositionChart}
+        onOpenBuyTradeModal={onOpenPositionBuyTradeModal}
+        onOpenSellTradeModal={onOpenPositionSellTradeModal}
+        onOpenStrategyScheduledSellTradeModal={onOpenStrategyScheduledSellTradeModal}
+        onSelectPosition={onSelectGamePositionVideo}
+        openDistinctVideoCount={openDistinctVideoCount}
+        scheduledSellOrderCancelingId={scheduledSellOrderCancelingId}
+        scheduledSellOrders={scheduledSellOrders}
+        selectedPositionId={selectedPositionId}
+        trendSignalsByVideoId={trendSignalsByVideoId}
+      />
+    </>
   );
 
   const historyContent = (

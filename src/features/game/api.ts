@@ -11,6 +11,7 @@ import type {
   GamePosition,
   GamePositionRankHistory,
   GameScheduledSellOrder,
+  GameSeasonResult,
   GameTier,
   GameTierProgress,
   SellGamePreviewResponse,
@@ -122,6 +123,14 @@ export async function fetchCurrentGameSeason(accessToken: string, regionCode: st
   });
 
   return normalizeGameCurrentSeason(season);
+}
+
+export async function fetchMyGameSeasonResults(accessToken: string, regionCode: string, limit = 1) {
+  const params = new URLSearchParams({ regionCode, limit: String(limit) });
+
+  return fetchApi<GameSeasonResult[]>(`/api/game/season-results/me?${params.toString()}`, {
+    headers: createAuthorizationHeader(accessToken),
+  });
 }
 
 export async function fetchGameMarket(accessToken: string, regionCode: string) {

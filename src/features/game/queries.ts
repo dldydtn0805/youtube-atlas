@@ -19,6 +19,7 @@ import {
   fetchGameMarket,
   fetchGameNotifications,
   fetchGamePositionRankHistory,
+  fetchMyGameSeasonResults,
   fetchScheduledSellOrders,
   fetchGameTierProgress,
   fetchMyGamePositions,
@@ -35,6 +36,7 @@ import type {
   GameNotification,
   GamePosition,
   GameScheduledSellOrder,
+  GameSeasonResult,
   SellGamePositionsInput,
 } from './types';
 
@@ -43,6 +45,8 @@ export const gameQueryKeys = {
     ['game', 'buyableMarketChart', accessToken, regionCode] as const,
   currentSeason: (accessToken: string | null, regionCode: string | null) =>
     ['game', 'currentSeason', accessToken, regionCode] as const,
+  seasonResults: (accessToken: string | null, regionCode: string | null) =>
+    ['game', 'seasonResults', accessToken, regionCode] as const,
   tierProgress: (accessToken: string | null, regionCode: string | null) =>
     ['game', 'tierProgress', accessToken, regionCode] as const,
   leaderboard: (accessToken: string | null, regionCode: string | null) =>
@@ -751,6 +755,19 @@ export function useGameTierProgress(accessToken: string | null, regionCode: stri
     queryKey: gameQueryKeys.tierProgress(accessToken, regionCode),
     queryFn: () => fetchGameTierProgress(accessToken as string, regionCode),
     staleTime: 1000 * 15,
+  });
+}
+
+export function useMyGameSeasonResults(
+  accessToken: string | null,
+  regionCode: string,
+  enabled = true,
+) {
+  return useQuery<GameSeasonResult[]>({
+    enabled: enabled && Boolean(accessToken) && Boolean(regionCode),
+    queryKey: gameQueryKeys.seasonResults(accessToken, regionCode),
+    queryFn: () => fetchMyGameSeasonResults(accessToken as string, regionCode, 1),
+    staleTime: 1000 * 60,
   });
 }
 

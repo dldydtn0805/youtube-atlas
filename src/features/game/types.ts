@@ -54,6 +54,28 @@ export interface GameCurrentSeason {
   notifications?: GameNotification[];
 }
 
+export interface GameSeasonResult {
+  id: number;
+  seasonId: number;
+  seasonName: string;
+  regionCode: string;
+  seasonStartAt: string;
+  seasonEndAt: string;
+  finalRank: number;
+  finalAssetPoints: number;
+  finalBalancePoints: number;
+  realizedPnlPoints: number;
+  positionCount: number;
+  bestPositionId: number | null;
+  bestPositionVideoId: string | null;
+  bestPositionTitle: string | null;
+  bestPositionChannelTitle: string | null;
+  bestPositionThumbnailUrl: string | null;
+  bestPositionProfitPoints: number | null;
+  titleCode: string | null;
+  createdAt: string;
+}
+
 export interface GameNotification {
   id: string;
   notificationEventType?: GameNotificationEventType;

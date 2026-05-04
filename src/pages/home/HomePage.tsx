@@ -93,6 +93,7 @@ import {
   useGameLeaderboard,
   useGameLeaderboardHighlights,
   useGameMarket,
+  useMyGameSeasonResults,
   useMyGamePositions,
   useScheduledSellOrders,
   useSellGamePositions,
@@ -414,6 +415,10 @@ function HomePage() {
     isLoading: isOpenGamePositionsLoading,
     refetch: refetchOpenGamePositions,
   } = useMyGamePositions(accessToken, selectedRegionCode, 'OPEN', shouldLoadGame);
+  const {
+    data: gameSeasonResults = [],
+    error: gameSeasonResultsError,
+  } = useMyGameSeasonResults(accessToken, selectedRegionCode, shouldLoadGame);
   const {
     data: scheduledSellOrders = [],
     error: scheduledSellOrdersError,
@@ -919,6 +924,7 @@ function HomePage() {
   useLogoutOnUnauthorized(gameMarketError, logout);
   useLogoutOnUnauthorized(buyableMarketChartError, logout);
   useLogoutOnUnauthorized(openGamePositionsError, logout);
+  useLogoutOnUnauthorized(gameSeasonResultsError, logout);
   useLogoutOnUnauthorized(scheduledSellOrdersError, logout);
   useLogoutOnUnauthorized(gameHistoryPositionsError, logout);
   useLogoutOnUnauthorized(gameHighlightsError, logout);
@@ -2184,6 +2190,7 @@ function HomePage() {
       favoriteStreamerVideoSection={favoriteStreamerVideoSection}
       favoriteTrendSignalsByVideoId={favoriteTrendSignalsByVideoId}
       gameHistoryPositions={gameHistoryPositions}
+      lastSeasonResult={gameSeasonResults[0] ?? null}
       gameMarketSignalsByVideoId={gameMarketSignalsByVideoId}
       gamePortfolioSection={gamePortfolioSection}
       hasApiConfigured={isApiConfigured}
