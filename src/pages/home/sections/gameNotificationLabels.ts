@@ -1,16 +1,7 @@
 import type { GameNotification } from '../../../features/game/types';
+import { buildGameStrategyBadges } from '../gameStrategyTags';
 import { isProjectedHighlightNotification, isTitleUnlockNotification } from './gameNotificationEventType';
 import { getTierPromotionMeta } from './gameNotificationTierVisualUtils';
-
-const NOTIFICATION_LABELS = {
-  ATLAS_SHOT: '아틀라스 샷',
-  GALAXY_SHOT: '갤럭시 샷',
-  BIG_CASHOUT: '빅 캐시아웃',
-  SMALL_CASHOUT: '스몰 캐시아웃',
-  MOONSHOT: '문샷',
-  SOLAR_SHOT: '솔라 샷',
-  SNIPE: '스나이프',
-} as const;
 
 export function getGameNotificationLabel(notification: GameNotification) {
   if (isTitleUnlockNotification(notification)) {
@@ -21,7 +12,9 @@ export function getGameNotificationLabel(notification: GameNotification) {
     return '티어 승급 알림';
   }
 
-  const detail = NOTIFICATION_LABELS[notification.notificationType as keyof typeof NOTIFICATION_LABELS];
+  const detail = buildGameStrategyBadges(notification.strategyTags, notification.notificationType)
+    .map((badge) => badge.label)
+    .join(', ');
   const prefix = isProjectedHighlightNotification(notification) ? '하이라이트 포착' : '티어 점수 상승';
 
   if (detail) {

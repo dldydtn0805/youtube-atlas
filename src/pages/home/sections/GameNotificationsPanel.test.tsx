@@ -25,13 +25,15 @@ function createNotification(overrides: Partial<GameNotification> = {}): GameNoti
 }
 
 describe('GameNotificationsPanel', () => {
-  it('opens the sell modal from a projected highlight thumbnail', () => {
+  it('opens the sell modal and deletes a projected highlight notification from its thumbnail', () => {
+    const onDelete = vi.fn();
     const onOpenSell = vi.fn();
     const onMarkClicked = vi.fn();
 
     render(
       <GameNotificationsPanel
         notifications={[createNotification()]}
+        onDelete={onDelete}
         onMarkClicked={onMarkClicked}
         onOpenSell={onOpenSell}
       />,
@@ -41,9 +43,11 @@ describe('GameNotificationsPanel', () => {
 
     expect(onOpenSell).toHaveBeenCalledWith(expect.objectContaining({ id: 'notification-1' }));
     expect(onMarkClicked).toHaveBeenCalledWith('notification-1');
+    expect(onDelete).toHaveBeenCalledWith('notification-1');
   });
 
-  it('opens the highlights tab from a tier score notification thumbnail', () => {
+  it('opens the highlights tab and deletes a tier score notification from its thumbnail', () => {
+    const onDelete = vi.fn();
     const onOpenHighlights = vi.fn();
 
     render(
@@ -55,6 +59,7 @@ describe('GameNotificationsPanel', () => {
             title: '티어 점수 상승',
           }),
         ]}
+        onDelete={onDelete}
         onOpenHighlights={onOpenHighlights}
       />,
     );
@@ -62,6 +67,36 @@ describe('GameNotificationsPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /하이라이트 탭 열기/ }));
 
     expect(onOpenHighlights).toHaveBeenCalledWith(expect.objectContaining({ id: 'notification-1' }));
+    expect(onDelete).toHaveBeenCalledWith('notification-1');
+  });
+
+  it('opens the tier card and deletes a tier promotion notification from its thumbnail', () => {
+    const onDelete = vi.fn();
+    const onMarkClicked = vi.fn();
+    const onOpenTier = vi.fn();
+
+    render(
+      <GameNotificationsPanel
+        notifications={[
+          createNotification({
+            notificationEventType: 'TIER_PROMOTION',
+            notificationType: 'TIER_PROMOTION',
+            title: '골드 티어 승급',
+            message: '골드 티어에 도달했습니다.',
+            strategyTags: [],
+          }),
+        ]}
+        onDelete={onDelete}
+        onMarkClicked={onMarkClicked}
+        onOpenTier={onOpenTier}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /티어 카드 열기/ }));
+
+    expect(onOpenTier).toHaveBeenCalledWith(expect.objectContaining({ id: 'notification-1' }));
+    expect(onMarkClicked).toHaveBeenCalledWith('notification-1');
+    expect(onDelete).toHaveBeenCalledWith('notification-1');
   });
 
   it('hides notifications that have already been opened', () => {
@@ -82,18 +117,18 @@ describe('GameNotificationsPanel', () => {
     expect(screen.queryByText('미확인')).not.toBeInTheDocument();
   });
 
-  it('does not mark a notification when the main content is clicked', () => {
-    const onMarkClicked = vi.fn();
+  it('does not delete a notification when the main content is clicked', () => {
+    const onDelete = vi.fn();
 
     render(
       <GameNotificationsPanel
         notifications={[createNotification()]}
-        onMarkClicked={onMarkClicked}
+        onDelete={onDelete}
       />,
     );
 
     fireEvent.click(screen.getByText('테스트 영상'));
 
-    expect(onMarkClicked).not.toHaveBeenCalled();
+    expect(onDelete).not.toHaveBeenCalled();
   });
 });

@@ -30,8 +30,11 @@ describe('getGameNotificationLabel', () => {
   });
 
   it('labels resolved cashouts as tier score increases', () => {
-    expect(getGameNotificationLabel(notice({ notificationType: 'BIG_CASHOUT', title: '빅 캐시아웃 기록' })))
-      .toBe('티어 점수 상승 : 빅 캐시아웃');
+    expect(getGameNotificationLabel(notice({
+      notificationType: 'BIG_CASHOUT',
+      strategyTags: ['BIG_CASHOUT'],
+      title: '빅 캐시아웃 기록',
+    }))).toBe('티어 점수 상승 : 빅 캐시아웃');
   });
 
   it('labels projected cashouts as captured highlights', () => {
@@ -40,6 +43,7 @@ describe('getGameNotificationLabel', () => {
         notice({
           notificationEventType: 'PROJECTED_HIGHLIGHT',
           notificationType: 'BIG_CASHOUT',
+          strategyTags: ['BIG_CASHOUT'],
           showModal: false,
           title: '빅 캐시아웃 예상',
         }),
@@ -58,7 +62,7 @@ describe('getGameNotificationLabel', () => {
       title: '아틀라스 샷 기록',
     });
 
-    expect(getGameNotificationLabel(notification)).toBe('티어 점수 상승 : 아틀라스 샷');
+    expect(getGameNotificationLabel(notification)).toBe('티어 점수 상승 : 아틀라스 샷, 문샷');
     expect(getGameNotificationTone(notification)).toBe('atlas-shot');
   });
 
@@ -69,7 +73,7 @@ describe('getGameNotificationLabel', () => {
       title: '갤럭시 샷 기록',
     });
 
-    expect(getGameNotificationLabel(notification)).toBe('티어 점수 상승 : 갤럭시 샷');
+    expect(getGameNotificationLabel(notification)).toBe('티어 점수 상승 : 갤럭시 샷, 솔라 샷');
     expect(getGameNotificationTone(notification)).toBe('galaxy-shot');
   });
 
@@ -80,13 +84,19 @@ describe('getGameNotificationLabel', () => {
       title: '솔라 샷 기록',
     });
 
-    expect(getGameNotificationLabel(notification)).toBe('티어 점수 상승 : 솔라 샷');
+    expect(getGameNotificationLabel(notification)).toBe('티어 점수 상승 : 솔라 샷, 문샷');
     expect(getGameNotificationTone(notification)).toBe('solar-shot');
   });
 
   it('labels projected moonshots as captured highlights', () => {
     expect(getGameNotificationLabel(notice({ notificationEventType: 'PROJECTED_HIGHLIGHT', showModal: false }))).toBe(
       '하이라이트 포착 : 문샷',
+    );
+  });
+
+  it('falls back to the representative notification type when strategy tags are empty', () => {
+    expect(getGameNotificationLabel(notice({ notificationType: 'SNIPE', strategyTags: [] }))).toBe(
+      '티어 점수 상승 : 스나이프',
     );
   });
 

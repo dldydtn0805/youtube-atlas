@@ -507,6 +507,14 @@ function AppHeader({
                             }
                           : undefined
                       }
+                      onOpenTier={
+                        onOpenTierModal
+                          ? () => {
+                              closeProfileCard();
+                              onOpenTierModal();
+                            }
+                          : undefined
+                      }
                     />
                   </div>
                   <div className="app-shell__profile-card-section">

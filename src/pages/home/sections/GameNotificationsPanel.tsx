@@ -8,6 +8,7 @@ import {
 } from './gameNotificationContent';
 import {
   isProjectedHighlightNotification,
+  isTierPromotionNotification,
   isTierScoreGainNotification,
   isTitleUnlockNotification,
 } from './gameNotificationEventType';
@@ -24,6 +25,7 @@ interface GameNotificationsPanelProps {
   onMarkClicked?: (notificationId: string) => void;
   onOpenHighlights?: (notification: GameNotification) => void;
   onOpenSell?: (notification: GameNotification) => void;
+  onOpenTier?: (notification: GameNotification) => void;
 }
 
 const notificationDateFormatter = new Intl.DateTimeFormat('ko-KR', {
@@ -50,6 +52,7 @@ function GameNotificationsPanel({
   onMarkClicked,
   onOpenHighlights,
   onOpenSell,
+  onOpenTier,
 }: GameNotificationsPanelProps) {
   const visibleNotifications = getVisibleGameNotifications(notifications, clickedNotificationIds);
 
@@ -75,6 +78,7 @@ function GameNotificationsPanel({
               const hideMedia = isTitleUnlockNotification(notification);
               const isClicked = clickedNotificationIds?.has(notification.id) ?? false;
               const markClicked = () => onMarkClicked?.(notification.id);
+              const deleteNotification = () => onDelete?.(notification.id);
               const canOpenSell =
                 !hideMedia &&
                 isProjectedHighlightNotification(notification) &&
@@ -84,6 +88,10 @@ function GameNotificationsPanel({
                 !hideMedia &&
                 isTierScoreGainNotification(notification) &&
                 Boolean(onOpenHighlights);
+              const canOpenTier =
+                !hideMedia &&
+                isTierPromotionNotification(notification) &&
+                Boolean(onOpenTier);
 
               return (
             <article
@@ -101,6 +109,7 @@ function GameNotificationsPanel({
                     onClick={() => {
                       markClicked();
                       onOpenSell?.(notification);
+                      deleteNotification();
                     }}
                     type="button"
                   >
@@ -113,6 +122,20 @@ function GameNotificationsPanel({
                     onClick={() => {
                       markClicked();
                       onOpenHighlights?.(notification);
+                      deleteNotification();
+                    }}
+                    type="button"
+                  >
+                    <GameNotificationMedia className="game-notifications__thumb" notification={notification} />
+                  </button>
+                ) : canOpenTier ? (
+                  <button
+                    aria-label={`${heading} 티어 카드 열기`}
+                    className="game-notifications__thumb-button"
+                    onClick={() => {
+                      markClicked();
+                      onOpenTier?.(notification);
+                      deleteNotification();
                     }}
                     type="button"
                   >
