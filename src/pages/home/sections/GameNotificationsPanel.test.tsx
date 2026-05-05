@@ -28,14 +28,12 @@ describe('GameNotificationsPanel', () => {
   it('opens the sell modal from a projected highlight thumbnail', () => {
     const onOpenSell = vi.fn();
     const onMarkClicked = vi.fn();
-    const onSelect = vi.fn();
 
     render(
       <GameNotificationsPanel
         notifications={[createNotification()]}
         onMarkClicked={onMarkClicked}
         onOpenSell={onOpenSell}
-        onSelect={onSelect}
       />,
     );
 
@@ -43,12 +41,10 @@ describe('GameNotificationsPanel', () => {
 
     expect(onOpenSell).toHaveBeenCalledWith(expect.objectContaining({ id: 'notification-1' }));
     expect(onMarkClicked).toHaveBeenCalledWith('notification-1');
-    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it('opens the highlights tab from a tier score notification thumbnail', () => {
     const onOpenHighlights = vi.fn();
-    const onSelect = vi.fn();
 
     render(
       <GameNotificationsPanel
@@ -60,17 +56,15 @@ describe('GameNotificationsPanel', () => {
           }),
         ]}
         onOpenHighlights={onOpenHighlights}
-        onSelect={onSelect}
       />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: /하이라이트 탭 열기/ }));
 
-    expect(onOpenHighlights).toHaveBeenCalledTimes(1);
-    expect(onSelect).not.toHaveBeenCalled();
+    expect(onOpenHighlights).toHaveBeenCalledWith(expect.objectContaining({ id: 'notification-1' }));
   });
 
-  it('shows whether a notification has already been opened', () => {
+  it('hides notifications that have already been opened', () => {
     render(
       <GameNotificationsPanel
         clickedNotificationIds={new Set(['notification-1'])}
@@ -78,24 +72,28 @@ describe('GameNotificationsPanel', () => {
       />,
     );
 
-    expect(screen.getByText('열어봄')).toBeInTheDocument();
+    expect(screen.queryByText('테스트 영상')).not.toBeInTheDocument();
+    expect(screen.getByText('아직 도착한 게임 알림이 없습니다.')).toBeInTheDocument();
   });
 
-  it('marks a notification when the main notification button opens it', () => {
+  it('does not show the unread badge', () => {
+    render(<GameNotificationsPanel notifications={[createNotification()]} />);
+
+    expect(screen.queryByText('미확인')).not.toBeInTheDocument();
+  });
+
+  it('does not mark a notification when the main content is clicked', () => {
     const onMarkClicked = vi.fn();
-    const onSelect = vi.fn();
 
     render(
       <GameNotificationsPanel
         notifications={[createNotification()]}
         onMarkClicked={onMarkClicked}
-        onSelect={onSelect}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /알림 보기/ }));
+    fireEvent.click(screen.getByText('테스트 영상'));
 
-    expect(onMarkClicked).toHaveBeenCalledWith('notification-1');
-    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'notification-1' }));
+    expect(onMarkClicked).not.toHaveBeenCalled();
   });
 });

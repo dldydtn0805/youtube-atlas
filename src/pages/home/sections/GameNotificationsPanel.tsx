@@ -1,4 +1,5 @@
 import type { GameNotification } from '../../../features/game/types';
+import { getVisibleGameNotifications } from '../visibleGameNotifications';
 import { getGameNotificationLabel, getGameNotificationTone } from './gameNotificationLabels';
 import {
   getGameNotificationHeading,
@@ -21,9 +22,8 @@ interface GameNotificationsPanelProps {
   onClear?: () => void;
   onDelete?: (notificationId: string) => void;
   onMarkClicked?: (notificationId: string) => void;
-  onOpenHighlights?: () => void;
+  onOpenHighlights?: (notification: GameNotification) => void;
   onOpenSell?: (notification: GameNotification) => void;
-  onSelect?: (notification: GameNotification) => void;
 }
 
 const notificationDateFormatter = new Intl.DateTimeFormat('ko-KR', {
@@ -50,9 +50,8 @@ function GameNotificationsPanel({
   onMarkClicked,
   onOpenHighlights,
   onOpenSell,
-  onSelect,
 }: GameNotificationsPanelProps) {
-  const visibleNotifications = notifications;
+  const visibleNotifications = getVisibleGameNotifications(notifications, clickedNotificationIds);
 
   return (
     <div className="game-notifications">
@@ -113,7 +112,7 @@ function GameNotificationsPanel({
                     className="game-notifications__thumb-button"
                     onClick={() => {
                       markClicked();
-                      onOpenHighlights?.();
+                      onOpenHighlights?.(notification);
                     }}
                     type="button"
                   >
@@ -122,15 +121,7 @@ function GameNotificationsPanel({
                 ) : (
                   <GameNotificationMedia className="game-notifications__thumb" notification={notification} />
                 )}
-                <button
-                  aria-label={`${heading} ${isClicked ? '다시 보기' : '알림 보기'}`}
-                  className="game-notifications__select"
-                  onClick={() => {
-                    markClicked();
-                    onSelect?.(notification);
-                  }}
-                  type="button"
-                >
+                <div className="game-notifications__content">
                   <div className="game-notifications__copy">
                     <span className="game-notifications__type" data-tone={getGameNotificationTone(notification)}>
                       {getGameNotificationLabel(notification)}
@@ -148,13 +139,10 @@ function GameNotificationsPanel({
                         : getGameNotificationStatus(notification)}
                     </span>
                   </div>
-                </button>
+                </div>
               </div>
               <div className="game-notifications__footer">
                 <div className="game-notifications__meta">
-                  <span className="game-notifications__click-state" data-clicked={isClicked ? 'true' : 'false'}>
-                    {isClicked ? '열어봄' : '미확인'}
-                  </span>
                   <time dateTime={notification.createdAt}>{formatNotificationDate(notification.createdAt)}</time>
                 </div>
                 <button

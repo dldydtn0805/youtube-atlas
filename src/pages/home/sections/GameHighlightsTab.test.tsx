@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { GameHighlight } from '../../../features/game/types';
 import GameHighlightsTab from './GameHighlightsTab';
 
@@ -32,6 +32,13 @@ function createHighlight(overrides: Partial<GameHighlight> = {}): GameHighlight 
 }
 
 describe('GameHighlightsTab', () => {
+  const originalScrollIntoView = Element.prototype.scrollIntoView;
+
+  afterEach(() => {
+    Element.prototype.scrollIntoView = originalScrollIntoView;
+    vi.restoreAllMocks();
+  });
+
   it('hides the empty message while highlights are loading', () => {
     render(<GameHighlightsTab highlights={[]} isLoading onSelectHighlight={vi.fn()} />);
 
@@ -116,5 +123,26 @@ describe('GameHighlightsTab', () => {
 
     expect(onSelectHighlightVideo).toHaveBeenCalledWith(highlight);
     expect(onSelectHighlight).not.toHaveBeenCalled();
+  });
+
+  it('scrolls the matching highlight into view', async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+
+    render(
+      <GameHighlightsTab
+        highlights={[
+          createHighlight({ id: 'one', positionId: 1, videoTitle: '첫 번째' }),
+          createHighlight({ id: 'target', positionId: 42, videoTitle: '대상' }),
+        ]}
+        isLoading={false}
+        onSelectHighlight={vi.fn()}
+        scrollTarget={{ positionId: 42, videoId: 'video-target' }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', inline: 'nearest' });
+    });
   });
 });

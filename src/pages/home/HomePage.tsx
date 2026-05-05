@@ -24,6 +24,7 @@ import HomePlaybackSection from './sections/HomePlaybackSection';
 import { RankingGameLeaderboardTab } from './sections/RankingGamePanel';
 import StickySelectedVideoControls from './sections/StickySelectedVideoControls';
 import TrendTicker from './sections/TrendTicker';
+import type { GameHighlightScrollTarget } from './sections/gameHighlightScrollTarget';
 import { isProjectedHighlightNotification } from './sections/gameNotificationEventType';
 import {
   DEFAULT_GAME_QUANTITY,
@@ -291,6 +292,7 @@ function HomePage() {
   } | null>(null);
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
   const [tierModalDefaultTab, setTierModalDefaultTab] = useState<TierModalTab>('tier');
+  const [tierHighlightsScrollTarget, setTierHighlightsScrollTarget] = useState<GameHighlightScrollTarget | null>(null);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isSeasonResultsModalOpen, setIsSeasonResultsModalOpen] = useState(false);
   const [isGameIntroModalOpen, setIsGameIntroModalOpen] = useState(getInitialGameIntroModalOpen);
@@ -2030,11 +2032,20 @@ function HomePage() {
   const handleOpenGamePositionsModal = useCallback(() => {
     openGameModal('positions');
   }, [openGameModal]);
-  const handleOpenTierHighlightsModal = useCallback(() => {
+  const handleOpenTierHighlightsModal = useCallback((notification?: GameNotification) => {
+    setTierHighlightsScrollTarget(
+      notification
+        ? {
+            positionId: notification.positionId,
+            videoId: notification.videoId,
+          }
+        : null,
+    );
     setTierModalDefaultTab('highlights');
     openTierModal();
   }, [openTierModal]);
   const handleOpenTierOverviewModal = useCallback(() => {
+    setTierHighlightsScrollTarget(null);
     setTierModalDefaultTab('tier');
     openTierModal();
   }, [openTierModal]);
@@ -2098,7 +2109,6 @@ function HomePage() {
     handleOpenSelectedVideoRankHistory,
     handleOpenVideoRankHistory,
     handleSelectGameHighlight,
-    handleSelectGameNotification,
     handleSelectLeaderboardHighlight,
     handleSelectSeasonResultHighlight,
     isRankHistoryModalOpen,
@@ -2213,6 +2223,7 @@ function HomePage() {
       isLoading={isGameHighlightsLoading}
       onSelectHighlight={handleSelectGameHighlight}
       onSelectHighlightVideo={handleSelectGameHighlightVideo}
+      scrollTarget={tierHighlightsScrollTarget}
     />
   );
   const renderPortfolioContent = (isModal = false) => (
@@ -2364,7 +2375,6 @@ function HomePage() {
         onOpenSeasonResults={() => setIsSeasonResultsModalOpen(true)}
         onClearGameNotifications={clearGameNotifications}
         onDeleteGameNotification={deleteGameNotification}
-        onSelectGameNotification={handleSelectGameNotification}
         onRefreshGameNotifications={refreshGameNotifications}
         onRefreshProfile={refreshCurrentUser}
         onOpenTierModal={handleOpenTierOverviewModal}

@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import GoogleLoginButton from '../../../components/GoogleLoginButton/GoogleLoginButton';
 import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import type { AuthStatus, AuthUser } from '../../../features/auth/types';
 import type { AchievementTitleCollection, GameNotification } from '../../../features/game/types';
 import { formatHeaderPoints, formatPoints } from '../gameHelpers';
 import useClickedGameNotifications from '../hooks/useClickedGameNotifications';
-import { isTitleUnlockNotification } from './gameNotificationEventType';
+import { getVisibleGameNotifications } from '../visibleGameNotifications';
 import AchievementTitleBadge from './AchievementTitleBadge';
 import AchievementTitleModal from './AchievementTitleModal';
 import GameNotificationsPanel from './GameNotificationsPanel';
@@ -25,13 +25,12 @@ interface AppHeaderProps {
   onLogout: () => void;
   onOpenGameModal?: () => void;
   onOpenGamePositionsModal?: () => void;
-  onOpenHighlightsModal?: () => void;
+  onOpenHighlightsModal?: (notification?: GameNotification) => void;
   onOpenRecentPlayback?: (videoId: string) => void;
   onOpenSeasonResults?: () => void;
   onClearGameNotifications?: () => void;
   onDeleteGameNotification?: (notificationId: string) => void;
   onOpenGameNotificationSellTradeModal?: (notification: GameNotification) => void;
-  onSelectGameNotification?: (notification: GameNotification) => void;
   onRefreshGameNotifications?: () => Promise<void>;
   onRefreshProfile?: () => Promise<void>;
   onOpenTierModal?: () => void;
@@ -154,6 +153,10 @@ function logGameNotificationsDebug(notifications: GameNotification[]) {
   );
 }
 
+function isModalEventTarget(target: Node) {
+  return target instanceof Element && Boolean(target.closest('.app-shell__modal-backdrop, .app-shell__modal'));
+}
+
 function AppHeader({
   authStatus,
   currentTierCode,
@@ -173,7 +176,6 @@ function AppHeader({
   onClearGameNotifications,
   onDeleteGameNotification,
   onOpenGameNotificationSellTradeModal,
-  onSelectGameNotification,
   onRefreshGameNotifications,
   onRefreshProfile,
   onOpenTierModal,
@@ -206,6 +208,13 @@ function AppHeader({
   const profileCardRef = useRef<HTMLDivElement | null>(null);
   const profileRefreshRequestIdRef = useRef(0);
   const { clickedNotificationIds, markGameNotificationClicked } = useClickedGameNotifications(user?.id);
+  const visibleGameNotifications = useMemo(
+    () => getVisibleGameNotifications(gameNotifications, clickedNotificationIds),
+    [clickedNotificationIds, gameNotifications],
+  );
+  const hasVisibleUnreadGameNotifications = visibleGameNotifications.some(
+    (notification) => !notification.readAt,
+  );
   const profileButtonLabel = `${userIdentityLabel} 프로필 정보 열기`;
   const playbackProgress = user?.lastPlaybackProgress ?? null;
   const recentPlaybackProgresses =
@@ -273,6 +282,10 @@ function AppHeader({
 
     const handlePointerDown = (event: MouseEvent) => {
       if (!(event.target instanceof Node)) {
+        return;
+      }
+
+      if (isModalEventTarget(event.target)) {
         return;
       }
 
@@ -361,7 +374,7 @@ function AppHeader({
                 title={profileButtonLabel}
                 type="button"
               >
-                {hasUnreadGameNotifications ? (
+                {hasUnreadGameNotifications && hasVisibleUnreadGameNotifications ? (
                   <span className="app-shell__auth-avatar-notification-dot" aria-hidden="true" />
                 ) : null}
                 {user.pictureUrl ? (
@@ -476,35 +489,24 @@ function AppHeader({
                     <GameNotificationsPanel
                       clickedNotificationIds={clickedNotificationIds}
                       isLoading={isGameNotificationsLoading}
-                      notifications={gameNotifications}
+                      notifications={visibleGameNotifications}
                       onClear={onClearGameNotifications}
                       onDelete={onDeleteGameNotification}
                       onMarkClicked={markGameNotificationClicked}
                       onOpenHighlights={
                         onOpenHighlightsModal
-                          ? () => {
-                              setIsProfileCardOpen(false);
-                              onOpenHighlightsModal();
+                          ? (notification) => {
+                              onOpenHighlightsModal(notification);
                             }
                           : undefined
                       }
                       onOpenSell={
                         onOpenGameNotificationSellTradeModal
                           ? (notification) => {
-                              setIsProfileCardOpen(false);
                               onOpenGameNotificationSellTradeModal(notification);
                             }
                           : undefined
                       }
-                      onSelect={(notification) => {
-                        if (isTitleUnlockNotification(notification)) {
-                          openAchievementTitleModal();
-                          return;
-                        }
-
-                        setIsProfileCardOpen(false);
-                        onSelectGameNotification?.(notification);
-                      }}
                     />
                   </div>
                   <div className="app-shell__profile-card-section">

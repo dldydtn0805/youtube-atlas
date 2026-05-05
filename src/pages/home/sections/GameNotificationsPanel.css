@@ -42,7 +42,7 @@
 .game-notifications__list {
   display: grid;
   gap: 8px;
-  max-height: 268px;
+  max-height: 536px;
   overflow: auto;
   padding-right: 2px;
 }
@@ -74,7 +74,6 @@
   min-width: 0;
 }
 
-.game-notifications__select,
 .game-notifications__thumb-button {
   background: transparent;
   border: 0;
@@ -87,12 +86,6 @@
   width: 100%;
 }
 
-.game-notifications__select:hover .game-notifications__score,
-.game-notifications__select:focus-visible .game-notifications__score {
-  color: var(--text);
-}
-
-.game-notifications__select:focus-visible,
 .game-notifications__thumb-button:focus-visible {
   border-radius: 8px;
   outline: 2px solid color-mix(in srgb, var(--accent-primary) 45%, transparent);
@@ -102,6 +95,10 @@
 .game-notifications__thumb-button:hover .game-notifications__thumb,
 .game-notifications__thumb-button:focus-visible .game-notifications__thumb {
   border-color: color-mix(in srgb, var(--accent-primary) 58%, var(--surface-thumbnail-border));
+}
+
+.game-notifications__content {
+  min-width: 0;
 }
 
 .game-notifications__thumb {
@@ -151,24 +148,6 @@
   display: inline-flex;
   gap: 6px;
   min-width: 0;
-}
-
-.game-notifications__click-state {
-  border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
-  border-radius: 999px;
-  flex: 0 0 auto;
-  font-size: 0.62rem;
-  font-weight: 900;
-  line-height: 1;
-  padding: 3px 6px;
-}
-
-.game-notifications__click-state[data-clicked='true'] {
-  color: var(--text-muted);
-}
-
-.game-notifications__click-state[data-clicked='false'] {
-  color: var(--accent-primary);
 }
 
 .game-notifications__copy strong,

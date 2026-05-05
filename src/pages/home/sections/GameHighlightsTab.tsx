@@ -1,8 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
 import type { GameHighlight } from '../../../features/game/types';
 import { formatPoints, formatRank, getPointTone } from '../gameHelpers';
 import { buildGameStrategyBadges } from '../gameStrategyTags';
+import {
+  matchesGameHighlightScrollTarget,
+  type GameHighlightScrollTarget,
+} from './gameHighlightScrollTarget';
 import GameHighlightScoreBreakdown from './highlightScoreBreakdown/GameHighlightScoreBreakdown';
 import './GameHighlightsTab.css';
 
@@ -11,6 +15,7 @@ interface GameHighlightsTabProps {
   isLoading: boolean;
   onSelectHighlight: (highlight: GameHighlight) => void;
   onSelectHighlightVideo?: (highlight: GameHighlight) => void;
+  scrollTarget?: GameHighlightScrollTarget | null;
 }
 
 function formatSignedPoints(points?: number | null) {
@@ -63,7 +68,9 @@ export default function GameHighlightsTab({
   isLoading,
   onSelectHighlight,
   onSelectHighlightVideo,
+  scrollTarget = null,
 }: GameHighlightsTabProps) {
+  const targetItemRef = useRef<HTMLLIElement | null>(null);
   const sortedHighlights = useMemo(
     () =>
       highlights.slice().sort((left, right) => {
@@ -75,6 +82,18 @@ export default function GameHighlightsTab({
       }),
     [highlights],
   );
+
+  useEffect(() => {
+    if (!scrollTarget || !targetItemRef.current || typeof window === 'undefined') {
+      return;
+    }
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      targetItemRef.current?.scrollIntoView({ block: 'start', inline: 'nearest' });
+    });
+
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [scrollTarget, sortedHighlights]);
 
   if (highlights.length === 0) {
     return (
@@ -99,7 +118,11 @@ export default function GameHighlightsTab({
           const strategyBadges = buildGameStrategyBadges(highlight.strategyTags, highlight.highlightType);
 
           return (
-            <li key={highlight.id} className="app-shell__game-highlight">
+            <li
+              key={highlight.id}
+              className="app-shell__game-highlight"
+              ref={matchesGameHighlightScrollTarget(highlight, scrollTarget) ? targetItemRef : undefined}
+            >
               <article className="app-shell__game-highlight-select">
                 {onSelectHighlightVideo ? (
                   <button
