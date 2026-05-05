@@ -554,6 +554,7 @@
   (max-width: 1024px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
   :root[data-mobile-layout='true'] .video-list {
     gap: 1rem;
+    padding-bottom: 40px;
   }
 
   :root[data-mobile-layout='true'] .video-list__section {
