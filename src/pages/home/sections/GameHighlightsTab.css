@@ -81,6 +81,13 @@
   transform: translateY(-1px);
 }
 
+.app-shell__game-highlight[data-scroll-target='true'] .app-shell__game-highlight-select {
+  border-color: color-mix(in srgb, var(--accent-primary) 72%, white 28%);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent-primary) 22%, transparent),
+    0 14px 30px color-mix(in srgb, var(--accent-primary) 18%, transparent);
+}
+
 .app-shell__game-highlight-thumb-button,
 .app-shell__game-highlight-copy-button {
   background: transparent;
@@ -267,6 +274,16 @@
 :root[data-theme='dark'] .app-shell__game-highlight-select {
   background: rgba(14, 14, 14, 0.72);
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='dark']
+  .app-shell__game-highlight[data-scroll-target='true']
+  .app-shell__game-highlight-select {
+  border-color: #fbbf24;
+  box-shadow:
+    inset 0 0 0 1px rgba(251, 191, 36, 0.72),
+    0 0 0 2px rgba(251, 191, 36, 0.28),
+    0 18px 36px rgba(251, 191, 36, 0.2);
 }
 
 :root[data-theme='dark'] .app-shell__game-highlights-overlay {

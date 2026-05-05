@@ -144,5 +144,9 @@ describe('GameHighlightsTab', () => {
     await waitFor(() => {
       expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', inline: 'nearest' });
     });
+    expect(screen.getByText('대상').closest('.app-shell__game-highlight')).toHaveAttribute(
+      'data-scroll-target',
+      'true',
+    );
   });
 });

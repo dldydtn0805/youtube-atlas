@@ -116,12 +116,14 @@ export default function GameHighlightsTab({
       <ul className="app-shell__game-highlights">
         {sortedHighlights.map((highlight) => {
           const strategyBadges = buildGameStrategyBadges(highlight.strategyTags, highlight.highlightType);
+          const isScrollTarget = matchesGameHighlightScrollTarget(highlight, scrollTarget);
 
           return (
             <li
               key={highlight.id}
               className="app-shell__game-highlight"
-              ref={matchesGameHighlightScrollTarget(highlight, scrollTarget) ? targetItemRef : undefined}
+              data-scroll-target={isScrollTarget ? 'true' : 'false'}
+              ref={isScrollTarget ? targetItemRef : undefined}
             >
               <article className="app-shell__game-highlight-select">
                 {onSelectHighlightVideo ? (
