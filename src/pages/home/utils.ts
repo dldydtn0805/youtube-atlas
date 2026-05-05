@@ -1,6 +1,6 @@
 import countryCodes from '../../constants/countryCodes';
 import { ALL_VIDEO_CATEGORY_ID, TREND_SNAPSHOT_REGION_CODES } from '../../constants/videoCategories';
-import type { GameHighlight, GamePosition, GameScheduledSellOrder } from '../../features/game/types';
+import type { GameHighlight, GamePosition, GameScheduledSellOrder, GameSeasonResultHighlightItem } from '../../features/game/types';
 import type { PlaybackProgress } from '../../features/playback/types';
 import { formatCompactCount } from '../../features/trending/presentation';
 import type {
@@ -452,6 +452,22 @@ export function mapGameHighlightToVideoItem(
       channelTitle: highlight.channelTitle,
       channelId: '',
       categoryId,
+      thumbnails: createFallbackThumbnails(highlight.thumbnailUrl ?? ''),
+    },
+  };
+}
+
+export function mapSeasonResultHighlightToVideoItem(highlight: GameSeasonResultHighlightItem): YouTubeVideoItem {
+  return {
+    id: highlight.videoId,
+    contentDetails: {
+      duration: '',
+    },
+    snippet: {
+      title: highlight.title,
+      channelTitle: highlight.channelTitle,
+      channelId: '',
+      categoryId: HISTORY_PLAYBACK_QUEUE_ID,
       thumbnails: createFallbackThumbnails(highlight.thumbnailUrl ?? ''),
     },
   };

@@ -3,6 +3,8 @@ import type {
   GamePosition,
   GamePositionRankHistory,
   GameScheduledSellOrder,
+  GameSeasonResult,
+  GameSeasonResultHighlightItem,
 } from '../../features/game/types';
 import type { VideoRankHistory } from '../../features/trending/types';
 
@@ -47,6 +49,32 @@ export function createHighlightRankHistoryPosition(highlight: GameHighlight): Ga
     buyCapturedAt: highlight.createdAt,
     createdAt: highlight.createdAt,
     closedAt: highlight.status === 'OPEN' ? null : highlight.createdAt,
+  };
+}
+
+export function createSeasonResultHighlightRankHistoryPosition(
+  result: GameSeasonResult,
+  highlight: GameSeasonResultHighlightItem,
+): GamePosition {
+  return {
+    id: highlight.positionId,
+    videoId: highlight.videoId,
+    title: highlight.title,
+    channelTitle: highlight.channelTitle,
+    thumbnailUrl: highlight.thumbnailUrl,
+    buyRank: highlight.buyRank ?? highlight.sellRank ?? 0,
+    currentRank: highlight.sellRank,
+    rankDiff: highlight.rankDiff,
+    quantity: 1,
+    stakePoints: 0,
+    currentPricePoints: null,
+    profitPoints: highlight.profitPoints,
+    strategyTags: highlight.strategyTags,
+    chartOut: highlight.sellRank == null,
+    status: 'CLOSED',
+    buyCapturedAt: result.seasonStartAt,
+    createdAt: result.seasonEndAt,
+    closedAt: result.seasonEndAt,
   };
 }
 

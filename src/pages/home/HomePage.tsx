@@ -69,6 +69,7 @@ import {
   mapGameHighlightToVideoItem,
   mapGameScheduledSellOrderToVideoItem,
   mapGamePositionToVideoItem,
+  mapSeasonResultHighlightToVideoItem,
   resolvePlaybackCategoryLabel,
   sortedCountryCodes,
   type RegionCode,
@@ -102,7 +103,15 @@ import {
 } from '../../features/game/queries';
 import { getGameInventorySlotLimit } from '../../features/game/inventory';
 import { useGameRealtimeInvalidation } from '../../features/game/realtime';
-import type { GameHighlight, GameNotification, GamePosition, GameScheduledSellOrder, GameStrategyType } from '../../features/game/types';
+import type {
+  GameHighlight,
+  GameNotification,
+  GamePosition,
+  GameScheduledSellOrder,
+  GameSeasonResult,
+  GameSeasonResultHighlightItem,
+  GameStrategyType,
+} from '../../features/game/types';
 import {
   useFavoriteStreamerVideos,
   useFavoriteStreamers,
@@ -2079,6 +2088,7 @@ function HomePage() {
     handleSelectGameHighlight,
     handleSelectGameNotification,
     handleSelectLeaderboardHighlight,
+    handleSelectSeasonResultHighlight,
     isRankHistoryModalOpen,
     isVisibleRankHistoryLoading,
     rankHistoryFocusMode,
@@ -2100,6 +2110,23 @@ function HomePage() {
     userId: user?.id,
   });
   useLogoutOnUnauthorized(visibleRankHistoryError, logout);
+  const handleOpenSeasonResultHighlightChart = useCallback(
+    (result: GameSeasonResult, highlight: GameSeasonResultHighlightItem) => {
+      setIsSeasonResultsModalOpen(false);
+      handleSelectSeasonResultHighlight(result, highlight);
+    },
+    [handleSelectSeasonResultHighlight],
+  );
+  const handlePlaySeasonResultHighlightVideo = useCallback(
+    (highlight: GameSeasonResultHighlightItem) => {
+      setIsSeasonResultsModalOpen(false);
+      setHistoryPlaybackVideo(mapSeasonResultHighlightToVideoItem(highlight));
+      setSelectedOpenPositionId(highlight.positionId);
+      scrollToPlayerStage();
+      handleSelectVideoWithPreview(highlight.videoId, HISTORY_PLAYBACK_QUEUE_ID);
+    },
+    [handleSelectVideoWithPreview, scrollToPlayerStage],
+  );
   const gameActionContent = (
     <SelectedVideoGameActionsBundle
       buyActionTitle={buyActionTitle}
@@ -2573,11 +2600,17 @@ function HomePage() {
       <GameSeasonResultsModal
         isOpen={isSeasonResultsModalOpen}
         onClose={() => setIsSeasonResultsModalOpen(false)}
+        onOpenHighlightChart={handleOpenSeasonResultHighlightChart}
+        onPlayHighlightVideo={handlePlaySeasonResultHighlightVideo}
         profileImageUrl={user?.pictureUrl ?? null}
         profileLabel={user?.displayName || user?.email || null}
         results={gameSeasonResults}
       />
-      <GamePanelModal isOpen={isGameModalOpen} onClose={() => setIsGameModalOpen(false)}>
+      <GamePanelModal
+        isOpen={isGameModalOpen}
+        onClose={() => setIsGameModalOpen(false)}
+        seasonEndAt={currentGameSeason?.endAt}
+      >
         {renderPortfolioContent(true)}
       </GamePanelModal>
       <ChartViewModal

@@ -1,4 +1,4 @@
-import type { GameSeasonResult } from '../../../../features/game/types';
+import type { GameSeasonResult, GameSeasonResultHighlightItem } from '../../../../features/game/types';
 import SeasonResultHeader from './SeasonResultHeader';
 import SeasonResultStats from './SeasonResultStats';
 import SeasonResultTierCard from './SeasonResultTierCard';
@@ -20,6 +20,7 @@ import './reportChart.css';
 import './reportChartBars.css';
 import './highlights.css';
 import './highlightCard.css';
+import './highlightActions.css';
 import './highlightMeta.css';
 import './highlightTags.css';
 import './responsive.css';
@@ -29,7 +30,9 @@ import './mobileMedia.css';
 
 interface GameSeasonResultCardProps {
   label?: string;
+  onOpenHighlightChart?: (result: GameSeasonResult, item: GameSeasonResultHighlightItem) => void;
   onOpenRecords?: () => void;
+  onPlayHighlightVideo?: (item: GameSeasonResultHighlightItem) => void;
   profileImageUrl?: string | null;
   profileLabel?: string | null;
   recordCount?: number;
@@ -38,7 +41,9 @@ interface GameSeasonResultCardProps {
 
 export default function GameSeasonResultCard({
   label = '지난 시즌 결과',
+  onOpenHighlightChart,
   onOpenRecords,
+  onPlayHighlightVideo,
   profileImageUrl,
   profileLabel,
   recordCount,
@@ -67,7 +72,13 @@ export default function GameSeasonResultCard({
       />
       <SeasonResultStats result={result} />
       <SeasonResultReportChart result={result} />
-      <SeasonResultHighlights result={result} />
+      <SeasonResultHighlights
+        onOpenHighlightChart={
+          onOpenHighlightChart ? (item) => onOpenHighlightChart(result, item) : undefined
+        }
+        onPlayHighlightVideo={onPlayHighlightVideo}
+        result={result}
+      />
     </section>
   );
 }

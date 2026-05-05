@@ -1,0 +1,16 @@
+.app-shell__game-season-countdown {
+  background: color-mix(in srgb, rgb(var(--game-panel-tier-accent-rgb, 20, 184, 166)) 12%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--game-panel-tier-accent-rgb, 20, 184, 166)) 28%, transparent);
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--text) 82%, rgb(var(--game-panel-tier-accent-rgb, 20, 184, 166)) 18%);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+  padding: 3px 8px;
+}
+
+:root[data-theme='dark'] .app-shell__game-season-countdown {
+  background: color-mix(in srgb, rgb(var(--game-panel-tier-accent-rgb, 20, 184, 166)) 18%, transparent);
+  border-color: color-mix(in srgb, rgb(var(--game-panel-tier-accent-rgb, 20, 184, 166)) 34%, transparent);
+}

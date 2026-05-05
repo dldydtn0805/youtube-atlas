@@ -1,8 +1,10 @@
 .game-season-result-highlight-card__thumb {
-  aspect-ratio: 16 / 9;
   background: var(--season-report-rail);
   border-radius: 6px;
-  object-fit: cover;
+  display: block;
+  height: 100%;
+  min-height: 96px;
+  object-fit: fill;
   width: 100%;
 }
 

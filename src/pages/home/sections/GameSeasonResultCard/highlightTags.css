@@ -6,6 +6,14 @@
 
 @media (max-width: 640px) {
   .game-season-result-highlight-card {
-    grid-template-columns: 84px minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .game-season-result-highlight-card__thumb {
+    aspect-ratio: 16 / 9;
+    height: auto;
+    min-height: 0;
   }
 }

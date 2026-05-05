@@ -9,13 +9,13 @@
 }
 
 .game-season-result-highlight-card {
-  align-items: start;
+  align-items: stretch;
   background: var(--season-report-card);
   border: 1px solid var(--season-report-card-border);
   border-radius: 8px;
   display: grid;
   gap: 10px;
-  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-columns: clamp(220px, 21%, 276px) minmax(0, 1fr);
   min-width: 0;
   padding: 10px;
 }

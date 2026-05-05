@@ -1,0 +1,21 @@
+.game-season-result-highlight-card__thumb-button,
+.game-season-result-highlight-card__copy-button {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.game-season-result-highlight-card__thumb-button {
+  border-radius: 6px;
+  height: 100%;
+}
+
+.game-season-result-highlight-card__copy-button {
+  width: 100%;
+}

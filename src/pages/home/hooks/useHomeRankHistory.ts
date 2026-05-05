@@ -8,12 +8,15 @@ import type {
   GamePosition,
   GamePositionRankHistory,
   GameScheduledSellOrder,
+  GameSeasonResult,
+  GameSeasonResultHighlightItem,
 } from '../../../features/game/types';
 import { useVideoRankHistory } from '../../../features/trending/queries';
 import { VIDEO_GAME_REGION_CODE } from '../../../constants/videoCategories';
 import {
   createHighlightRankHistoryPosition,
   createScheduledSellOrderRankHistoryPosition,
+  createSeasonResultHighlightRankHistoryPosition,
   mergeMultiplePositionHistories,
 } from '../homeRankHistory';
 import { createRankHistoryPositionFromNotification } from '../homeGameNotifications';
@@ -218,6 +221,16 @@ export default function useHomeRankHistory({
     [openTradeRankHistory],
   );
 
+  const handleSelectSeasonResultHighlight = useCallback(
+    (result: GameSeasonResult, highlight: GameSeasonResultHighlightItem) => {
+      openTradeRankHistory(
+        highlight.videoId,
+        createSeasonResultHighlightRankHistoryPosition(result, highlight),
+      );
+    },
+    [openTradeRankHistory],
+  );
+
   const handleSelectGameNotification = useCallback(
     (notification: GameNotification) => {
       const matchedPosition =
@@ -275,6 +288,7 @@ export default function useHomeRankHistory({
     handleSelectGameHighlight,
     handleSelectGameNotification,
     handleSelectLeaderboardHighlight,
+    handleSelectSeasonResultHighlight,
     isRankHistoryModalOpen,
     isVisibleRankHistoryLoading,
     rankHistoryFocusMode,

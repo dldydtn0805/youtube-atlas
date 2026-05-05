@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import type { GameSeasonResult } from '../../../../features/game/types';
+import type { GameSeasonResult, GameSeasonResultHighlightItem } from '../../../../features/game/types';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import useHeaderSwipeToClose from '../../hooks/useHeaderSwipeToClose';
 import { getFullscreenElement } from '../../utils';
@@ -15,6 +15,8 @@ import './mobileModal.css';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  onOpenHighlightChart?: (result: GameSeasonResult, item: GameSeasonResultHighlightItem) => void;
+  onPlayHighlightVideo?: (item: GameSeasonResultHighlightItem) => void;
   profileImageUrl?: string | null;
   profileLabel?: string | null;
   results: GameSeasonResult[];
@@ -23,6 +25,8 @@ interface Props {
 export default function GameSeasonResultsModal({
   isOpen,
   onClose,
+  onOpenHighlightChart,
+  onPlayHighlightVideo,
   profileImageUrl,
   profileLabel,
   results,
@@ -51,6 +55,8 @@ export default function GameSeasonResultsModal({
           bodySwipeHandlers={swipe.bodySwipeHandlers}
           headerSwipeHandlers={swipe.headerSwipeHandlers}
           onClose={onClose}
+          onOpenHighlightChart={onOpenHighlightChart}
+          onPlayHighlightVideo={onPlayHighlightVideo}
           profileImageUrl={profileImageUrl}
           profileLabel={profileLabel}
           results={results}

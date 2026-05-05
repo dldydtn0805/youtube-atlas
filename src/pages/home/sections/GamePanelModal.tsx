@@ -3,15 +3,17 @@ import type { ReactNode } from 'react';
 import useBodyScrollLock from '../hooks/useBodyScrollLock';
 import useHeaderSwipeToClose from '../hooks/useHeaderSwipeToClose';
 import { getFullscreenElement } from '../utils';
+import GameSeasonCountdown from './GameSeasonCountdown';
 import './GamePanelModal.css';
 
 interface GamePanelModalProps {
   children: ReactNode;
   isOpen: boolean;
   onClose: () => void;
+  seasonEndAt?: string | null;
 }
 
-export default function GamePanelModal({ children, isOpen, onClose }: GamePanelModalProps) {
+export default function GamePanelModal({ children, isOpen, onClose, seasonEndAt }: GamePanelModalProps) {
   useBodyScrollLock(isOpen);
   const { backdropStyle, bodySwipeHandlers, headerSwipeHandlers, modalStyle } = useHeaderSwipeToClose({
     disabled: !isOpen,
@@ -43,9 +45,12 @@ export default function GamePanelModal({ children, isOpen, onClose }: GamePanelM
         <div className="app-shell__modal-header app-shell__modal-header--swipe-close" {...headerSwipeHandlers}>
           <div className="app-shell__section-heading">
             <p className="app-shell__section-eyebrow">My Game</p>
-            <h2 className="app-shell__section-title" id="game-panel-modal-title">
-              내 게임
-            </h2>
+            <div className="app-shell__modal-title-row">
+              <h2 className="app-shell__section-title" id="game-panel-modal-title">
+                내 게임
+              </h2>
+              {seasonEndAt ? <GameSeasonCountdown endAt={seasonEndAt} /> : null}
+            </div>
           </div>
           <button aria-label="게임 모달 닫기" className="app-shell__modal-close" onClick={onClose} type="button">
             닫기
