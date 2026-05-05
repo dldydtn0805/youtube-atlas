@@ -320,10 +320,10 @@ describe('CommentSection', () => {
     expect(screen.getByText('실시간 7명')).toBeInTheDocument();
   });
 
-  it('shows personal YouTube comment highlights in the chat feed', () => {
+  it('renders personal YouTube comment highlights as regular chat messages', () => {
     useCommentHighlightsMock.mockReturnValue([
       {
-        author: 'YouTube Viewer',
+        author: '@YouTube Viewer',
         client_id: 'yt-comment:comment-1',
         content: '이 부분 설명 진짜 좋네요',
         created_at: '2026-03-22T00:00:02.000Z',
@@ -341,12 +341,26 @@ describe('CommentSection', () => {
       mutateAsync: vi.fn(),
     });
 
-    render(<CommentSection videoId="video-1" videoTitle="Test video" />);
+    render(
+      <CommentSection
+        availableTitles={[selectedTitle]}
+        videoId="video-1"
+        videoTitle="Test video"
+      />,
+    );
 
     expect(useCommentHighlightsMock).toHaveBeenCalledWith('video-1', 'access-token-1', true);
     expect(screen.getByText('YouTube Viewer')).toBeInTheDocument();
-    expect(screen.getByText('인기 댓글')).toBeInTheDocument();
+    expect(screen.queryByText('@YouTube Viewer')).not.toBeInTheDocument();
+    expect(screen.queryByText('인기 댓글')).not.toBeInTheDocument();
     expect(screen.getByText('이 부분 설명 진짜 좋네요')).toBeInTheDocument();
+    expect(screen.getByText('Atlas Sniper')).toHaveAttribute('data-grade', 'RARE');
+    expect(screen.getByText('Atlas Sniper').previousElementSibling).toHaveClass(
+      'comment-message__title-comma',
+    );
+    expect(screen.getByText('YouTube Viewer').closest('.comment-message__identity')).toHaveAttribute(
+      'data-tier-code',
+    );
   });
 
   it('shows participant names in the presence hover panel', () => {
@@ -454,7 +468,7 @@ describe('CommentSection', () => {
     const titleStar = identity?.querySelector('.comment-message__title-star');
 
     expect(identity).toHaveAttribute('data-tier-code', 'GOLD');
-    expect(identity).toHaveTextContent('Gold User, Atlas Sniper');
+    expect(identity).toHaveTextContent(/Gold User,\s*Atlas Sniper/);
     expect(titleStar).toHaveAttribute('data-grade', 'RARE');
   });
 
@@ -496,7 +510,7 @@ describe('CommentSection', () => {
     const identity = screen.getByText('나').closest('.comment-message__identity');
 
     expect(identity).toHaveAttribute('data-tier-code', 'DIAMOND');
-    expect(identity).toHaveTextContent('나, Atlas Sniper');
+    expect(identity).toHaveTextContent(/나,\s*Atlas Sniper/);
   });
 
   it('hides trade system messages from the chat list', () => {

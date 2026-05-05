@@ -241,6 +241,13 @@
   white-space: nowrap;
 }
 
+.comment-message__title-comma {
+  flex: 0 0 auto;
+  font-weight: 700;
+  margin-right: 0.28em;
+  opacity: 0.76;
+}
+
 .comment-message__title-name {
   flex: 0 1 auto;
   font-weight: 700;
@@ -248,6 +255,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.comment-message__title-name[data-grade='NORMAL'] {
+  color: #64748b;
+}
+
+.comment-message__title-name[data-grade='RARE'] {
+  color: #2563eb;
+}
+
+.comment-message__title-name[data-grade='SUPER'] {
+  color: #be123c;
+}
+
+.comment-message__title-name[data-grade='ULTIMATE'] {
+  color: #92400e;
 }
 
 .comment-message__title-star {

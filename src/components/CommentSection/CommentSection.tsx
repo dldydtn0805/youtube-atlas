@@ -28,6 +28,7 @@ import {
 import { getChatParticipantId } from '../../features/comments/participant';
 import type { ChatMessage } from '../../features/comments/types';
 import type { CommentHighlightMessage as HighlightMessage } from '../../features/comments/highlightTypes';
+import type { SelectedAchievementTitle } from '../../features/game/types';
 import CommentPresenceBadge from './CommentPresenceBadge';
 import CommentAuthorTitleText from './CommentAuthorTitleText';
 import CommentHighlightMessage from './CommentHighlightMessage';
@@ -36,6 +37,7 @@ import { getChatAuthorTierCode } from './chatTier';
 import './CommentSection.css';
 
 interface CommentSectionProps {
+  availableTitles?: readonly SelectedAchievementTitle[];
   currentTierCode?: string | null;
   hideHeader?: boolean;
   regionCode?: string | null;
@@ -164,6 +166,7 @@ function getFallbackMessageContent(videoTitle?: string) {
 }
 
 function CommentSection({
+  availableTitles,
   currentTierCode,
   hideHeader = false,
   regionCode,
@@ -548,6 +551,7 @@ function CommentSection({
             return (
               <CommentHighlightMessage
                 key={item.key}
+                availableTitles={availableTitles}
                 formattedDate={formatMessageDate(item.highlight.created_at)}
                 highlight={item.highlight}
               />

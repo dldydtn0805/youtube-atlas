@@ -1,22 +1,27 @@
 import type { CommentHighlightMessage as CommentHighlight } from '../../features/comments/highlightTypes';
-import './CommentHighlightMessage.css';
+import type { SelectedAchievementTitle } from '../../features/game/types';
+import CommentHighlightAuthor from './CommentHighlightAuthor';
 
 interface CommentHighlightMessageProps {
+  availableTitles?: readonly SelectedAchievementTitle[];
   highlight: CommentHighlight;
   formattedDate: string;
 }
 
-function CommentHighlightMessage({ formattedDate, highlight }: CommentHighlightMessageProps) {
+function CommentHighlightMessage({
+  availableTitles,
+  formattedDate,
+  highlight,
+}: CommentHighlightMessageProps) {
   return (
-    <article className="comment-highlight-message">
-      <div className="comment-highlight-message__meta">
-        <span className="comment-highlight-message__author">{highlight.author}</span>
-        <span className="comment-highlight-message__badge">{highlight.label || '인기 댓글'}</span>
-        <time className="comment-highlight-message__date" dateTime={highlight.created_at}>
+    <article className="comment-message">
+      <div className="comment-message__meta">
+        <CommentHighlightAuthor availableTitles={availableTitles} highlight={highlight} />
+        <time className="comment-message__date" dateTime={highlight.created_at}>
           {formattedDate}
         </time>
       </div>
-      <p className="comment-highlight-message__bubble">{highlight.content}</p>
+      <p className="comment-message__bubble">{highlight.content}</p>
     </article>
   );
 }
