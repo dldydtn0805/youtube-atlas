@@ -438,7 +438,7 @@ describe('VideoList', () => {
 
       fireEvent.click(screen.getByRole('button', { name: '다음' }));
 
-      expect(screen.getByText('21-40 / 50+')).toBeInTheDocument();
+      expect(screen.getByText('21-40 / 200')).toBeInTheDocument();
       expect(screen.getByText('테스트 영상 21')).toBeInTheDocument();
       expect(onLoadMore).toHaveBeenCalledTimes(1);
       expect(scrollIntoView).toHaveBeenCalledWith({
@@ -468,7 +468,7 @@ describe('VideoList', () => {
     fireEvent.click(screen.getByRole('button', { name: '다음' }));
     fireEvent.click(screen.getByRole('button', { name: '다음' }));
 
-    expect(screen.getByText('41-50 / 50+')).toBeInTheDocument();
+    expect(screen.getByText('41-50 / 200')).toBeInTheDocument();
     expect(onLoadMore).toHaveBeenCalledTimes(1);
   });
 
@@ -537,7 +537,7 @@ describe('VideoList', () => {
 
       fireEvent.click(screen.getByRole('button', { name: '다음' }));
 
-      expect(screen.getByText('41-50 / 50+')).toBeInTheDocument();
+      expect(screen.getByText('41-50 / 200')).toBeInTheDocument();
       expect(onLoadMore).toHaveBeenCalledTimes(1);
       expect(scrollIntoView).toHaveBeenCalledWith({
         behavior: 'auto',
