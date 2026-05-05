@@ -262,10 +262,7 @@
 }
 
 .comment-message--own .comment-message__bubble {
-  background: #0071e3;
-  border-color: #0071e3;
   border-radius: 20px 20px 8px 20px;
-  color: #fff;
 }
 
 .comment-composer {
