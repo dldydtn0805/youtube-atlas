@@ -1,0 +1,9 @@
+.comment-message__identity {
+  --ctsp: color-mix(in srgb, var(--comment-title-shimmer-base) 52%, #0f172a 48%);
+  --ctbsp: rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme='dark'] .comment-message__identity {
+  --ctsp: #fff;
+  --ctbsp: rgba(255, 255, 255, 0.5);
+}

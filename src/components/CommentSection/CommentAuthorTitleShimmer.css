@@ -4,7 +4,7 @@
 .comment-message__title-name[data-grade='ULTIMATE'],
 .comment-message__identity[data-title-grade='ULTIMATE'] .comment-message__author {
   animation: comment-title-text-shimmer 2.7s ease-in-out infinite;
-  background: linear-gradient(110deg, var(--comment-title-shimmer-base), #fff, var(--comment-title-shimmer-base));
+  background: linear-gradient(110deg, var(--comment-title-shimmer-base), var(--ctsp, #fff), var(--comment-title-shimmer-base));
   background-clip: text;
   background-size: 220% 100%;
   color: transparent;

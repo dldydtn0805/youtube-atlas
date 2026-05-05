@@ -2,6 +2,7 @@ import type { SelectedAchievementTitle } from '../../features/game/types';
 import { getCommentTitleStars } from './commentTitleStars';
 import './CommentAuthorTitleBadgeShimmer.css';
 import './CommentAuthorTitleText.css';
+import './CommentAuthorTitleTheme.css';
 import './CommentAuthorTitleShimmer.css';
 
 interface CommentAuthorTitleTextProps {
