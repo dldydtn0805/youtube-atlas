@@ -416,7 +416,7 @@ describe('VideoList', () => {
     expect(screen.queryByText('테스트 영상 21')).not.toBeInTheDocument();
   });
 
-  it('moves through loaded client pages without fetching more data', () => {
+  it('prefetches the next backend page on the penultimate loaded client page', () => {
     const onLoadMore = vi.fn();
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     const scrollIntoView = vi.fn();
@@ -440,7 +440,7 @@ describe('VideoList', () => {
 
       expect(screen.getByText('21-40 / 50+')).toBeInTheDocument();
       expect(screen.getByText('테스트 영상 21')).toBeInTheDocument();
-      expect(onLoadMore).not.toHaveBeenCalled();
+      expect(onLoadMore).toHaveBeenCalledTimes(1);
       expect(scrollIntoView).toHaveBeenCalledWith({
         behavior: 'auto',
         block: 'start',
@@ -450,7 +450,7 @@ describe('VideoList', () => {
     }
   });
 
-  it('fetches the next backend page when the next client page is incomplete', () => {
+  it('does not repeat prefetch when moving to the final loaded client page', () => {
     const onLoadMore = vi.fn();
 
     render(
@@ -470,6 +470,31 @@ describe('VideoList', () => {
 
     expect(screen.getByText('41-50 / 50+')).toBeInTheDocument();
     expect(onLoadMore).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns directly to the first client page', () => {
+    render(
+      <VideoList
+        hasNextPage={false}
+        isError={false}
+        isFetchingNextPage={false}
+        isLoading={false}
+        onLoadMore={vi.fn()}
+        onSelectVideo={vi.fn()}
+        section={buildSection(45)}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+
+    expect(screen.getByText('41-45 / 45')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '처음' }));
+
+    expect(screen.getByText('1-20 / 45')).toBeInTheDocument();
+    expect(screen.getByText('테스트 영상 1')).toBeInTheDocument();
+    expect(screen.queryByText('테스트 영상 41')).not.toBeInTheDocument();
   });
 
   it('scrolls to the section top while the next backend page is loading', () => {
@@ -510,7 +535,7 @@ describe('VideoList', () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole('button', { name: '불러오는 중' }));
+      fireEvent.click(screen.getByRole('button', { name: '다음' }));
 
       expect(screen.getByText('41-50 / 50+')).toBeInTheDocument();
       expect(onLoadMore).toHaveBeenCalledTimes(1);

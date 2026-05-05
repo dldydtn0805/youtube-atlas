@@ -136,6 +136,10 @@ function formatPaginationTotal(itemCount: number, hasNextPage: boolean) {
   return hasNextPage ? `${itemCount}+` : itemCount.toLocaleString('ko-KR');
 }
 
+function shouldPrefetchNextBackendPage(nextPageIndex: number, loadedPageCount: number) {
+  return nextPageIndex >= Math.max(loadedPageCount - 2, 0);
+}
+
 function VideoList({
   activePlaybackQueueId,
   currentTierCode,
@@ -166,6 +170,7 @@ function VideoList({
 }: VideoListProps) {
   const [pageIndexBySectionKey, setPageIndexBySectionKey] = useState<Record<string, number>>({});
   const paginatedSectionRef = useRef<HTMLElement | null>(null);
+  const prefetchedItemCountBySectionKey = useRef<Record<string, number>>({});
   const listResetKey = [
     ...featuredSections.map(({ section: featuredSection }) =>
       getSectionPaginationKey(featuredSection, featuredSection.categoryId),
@@ -175,6 +180,7 @@ function VideoList({
 
   useEffect(() => {
     setPageIndexBySectionKey({});
+    prefetchedItemCountBySectionKey.current = {};
   }, [listResetKey]);
 
   const scrollPaginatedSectionToTop = () => {
@@ -266,6 +272,13 @@ function VideoList({
       }));
       scrollPaginatedSectionToTop();
     };
+    const handleFirstPage = () => {
+      setPageIndexBySectionKey((currentValue) => ({
+        ...currentValue,
+        [paginationKey]: 0,
+      }));
+      scrollPaginatedSectionToTop();
+    };
     const handleNextPage = () => {
       if (isFetchingNextPage && !canGoNextLoadedPage) {
         scrollPaginatedSectionToTop();
@@ -279,7 +292,16 @@ function VideoList({
         [paginationKey]: nextPageIndex,
       }));
 
-      if (!isFetchingNextPage && (nextPageIndex + 1) * VIDEO_LIST_PAGE_SIZE > currentSection.items.length) {
+      const hasPrefetchedCurrentItems =
+        prefetchedItemCountBySectionKey.current[paginationKey] === currentSection.items.length;
+
+      if (
+        !isFetchingNextPage &&
+        hasNextPage &&
+        !hasPrefetchedCurrentItems &&
+        shouldPrefetchNextBackendPage(nextPageIndex, loadedPageCount)
+      ) {
+        prefetchedItemCountBySectionKey.current[paginationKey] = currentSection.items.length;
         onLoadMore();
       }
 
@@ -422,23 +444,43 @@ function VideoList({
         {!isCollapsed && shouldPaginate && (currentSection.items.length > VIDEO_LIST_PAGE_SIZE || hasNextPage) ? (
           <div className="video-list__pagination" aria-label={`${currentSection.label} 페이지 이동`}>
             <button
+              aria-label="처음"
+              className="video-list__page-button"
+              disabled={!canGoPreviousPage}
+              onClick={handleFirstPage}
+              title="처음"
+              type="button"
+            >
+              <span className="video-list__page-icon" aria-hidden="true">
+                |&lt;
+              </span>
+            </button>
+            <button
+              aria-label="이전"
               className="video-list__page-button"
               disabled={!canGoPreviousPage}
               onClick={handlePreviousPage}
+              title="이전"
               type="button"
             >
-              이전
+              <span className="video-list__page-icon" aria-hidden="true">
+                &lt;
+              </span>
             </button>
             <span className="video-list__page-status">
               {displayedStartIndex}-{displayedEndIndex} / {formatPaginationTotal(currentSection.items.length, hasNextPage)}
             </span>
             <button
+              aria-label="다음"
               className="video-list__page-button"
               disabled={!canGoNextPage}
               onClick={handleNextPage}
+              title="다음"
               type="button"
             >
-              {isFetchingNextPage ? '불러오는 중' : '다음'}
+              <span className="video-list__page-icon" aria-hidden="true">
+                &gt;
+              </span>
             </button>
           </div>
         ) : null}
