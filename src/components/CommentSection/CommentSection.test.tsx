@@ -355,9 +355,10 @@ describe('CommentSection', () => {
     expect(screen.queryByText('인기 댓글')).not.toBeInTheDocument();
     expect(screen.getByText('이 부분 설명 진짜 좋네요')).toBeInTheDocument();
     expect(screen.getByText('Atlas Sniper')).toHaveAttribute('data-grade', 'RARE');
-    expect(screen.getByText('Atlas Sniper').previousElementSibling).toHaveClass(
-      'comment-message__title-comma',
-    );
+    const titleBadge = screen.getByText('Atlas Sniper').closest('.comment-message__title-badge');
+
+    expect(titleBadge).toHaveAttribute('data-grade', 'RARE');
+    expect(titleBadge?.previousElementSibling).toHaveClass('comment-message__author');
     expect(screen.getByText('YouTube Viewer').closest('.comment-message__identity')).toHaveAttribute(
       'data-tier-code',
     );
@@ -435,7 +436,8 @@ describe('CommentSection', () => {
 
     expect(screen.getByText('나')).toBeInTheDocument();
     expect(screen.getByText('다른 기기에서 보낸 메시지')).toBeInTheDocument();
-    expect(screen.getByText(/3\. 22\. .*9:00/)).toBeInTheDocument();
+    expect(screen.getByText(/9:00/)).toBeInTheDocument();
+    expect(screen.queryByText(/3\. 22\./)).not.toBeInTheDocument();
   });
 
   it('marks author nicknames with the message tier code', () => {
@@ -465,11 +467,14 @@ describe('CommentSection', () => {
     render(<CommentSection regionCode="KR" />);
 
     const identity = screen.getByText('Gold User').closest('.comment-message__identity');
+    const titleBadge = identity?.querySelector('.comment-message__title-badge');
     const titleStar = identity?.querySelector('.comment-message__title-star');
 
     expect(identity).toHaveAttribute('data-tier-code', 'GOLD');
-    expect(identity).toHaveTextContent(/Gold User,\s*Atlas Sniper/);
+    expect(identity).toHaveTextContent(/Gold User\s*Atlas Sniper/);
+    expect(titleBadge).toHaveAttribute('data-grade', 'RARE');
     expect(titleStar).toHaveAttribute('data-grade', 'RARE');
+    expect(titleStar).toHaveTextContent('★★');
   });
 
   it('falls back to the current user tier for own messages without tier data', () => {
@@ -510,7 +515,7 @@ describe('CommentSection', () => {
     const identity = screen.getByText('나').closest('.comment-message__identity');
 
     expect(identity).toHaveAttribute('data-tier-code', 'DIAMOND');
-    expect(identity).toHaveTextContent(/나,\s*Atlas Sniper/);
+    expect(identity).toHaveTextContent(/나\s*Atlas Sniper/);
   });
 
   it('hides trade system messages from the chat list', () => {

@@ -94,10 +94,8 @@ type ChatFeedItem =
   | { key: string; kind: 'message'; message: ChatMessage }
   | { highlight: HighlightMessage; key: string; kind: 'highlight' };
 
-function formatMessageDate(value: string) {
+function formatMessageTime(value: string) {
   return new Intl.DateTimeFormat('ko-KR', {
-    month: 'numeric',
-    day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
   }).format(new Date(value));
@@ -552,7 +550,7 @@ function CommentSection({
               <CommentHighlightMessage
                 key={item.key}
                 availableTitles={availableTitles}
-                formattedDate={formatMessageDate(item.highlight.created_at)}
+                formattedTime={formatMessageTime(item.highlight.created_at)}
                 highlight={item.highlight}
               />
             );
@@ -591,12 +589,16 @@ function CommentSection({
               className={`comment-message ${ownMessage ? 'comment-message--own' : ''}`}
             >
               <div className="comment-message__meta">
-                <span className="comment-message__identity" data-tier-code={authorTierCode}>
+                <span
+                  className="comment-message__identity"
+                  data-tier-code={authorTierCode}
+                  data-title-grade={authorTitle?.grade}
+                >
                   <strong className="comment-message__author">{ownMessage ? '나' : message.author}</strong>
                   {authorTitle ? <CommentAuthorTitleText title={authorTitle} /> : null}
                 </span>
                 <time className="comment-message__date" dateTime={message.created_at}>
-                  {formatMessageDate(message.created_at)}
+                  {formatMessageTime(message.created_at)}
                 </time>
               </div>
               <p className="comment-message__bubble">{message.content}</p>

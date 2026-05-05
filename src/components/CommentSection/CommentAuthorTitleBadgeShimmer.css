@@ -1,0 +1,24 @@
+.comment-message__title-badge[data-grade='SUPER']::after,
+.comment-message__title-badge[data-grade='ULTIMATE']::after {
+  animation: comment-title-badge-shimmer 2.7s ease-in-out infinite;
+  background: linear-gradient(110deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  content: '';
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  transform: translateX(-120%);
+}
+
+@keyframes comment-title-badge-shimmer {
+  55%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comment-message__title-badge::after {
+    animation: none;
+    content: none;
+  }
+}

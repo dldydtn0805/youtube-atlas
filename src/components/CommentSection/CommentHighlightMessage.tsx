@@ -5,12 +5,12 @@ import CommentHighlightAuthor from './CommentHighlightAuthor';
 interface CommentHighlightMessageProps {
   availableTitles?: readonly SelectedAchievementTitle[];
   highlight: CommentHighlight;
-  formattedDate: string;
+  formattedTime: string;
 }
 
 function CommentHighlightMessage({
   availableTitles,
-  formattedDate,
+  formattedTime,
   highlight,
 }: CommentHighlightMessageProps) {
   return (
@@ -18,7 +18,7 @@ function CommentHighlightMessage({
       <div className="comment-message__meta">
         <CommentHighlightAuthor availableTitles={availableTitles} highlight={highlight} />
         <time className="comment-message__date" dateTime={highlight.created_at}>
-          {formattedDate}
+          {formattedTime}
         </time>
       </div>
       <p className="comment-message__bubble">{highlight.content}</p>

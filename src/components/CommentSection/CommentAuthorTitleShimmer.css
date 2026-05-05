@@ -1,0 +1,31 @@
+.comment-message__title-star,
+.comment-message__title-name[data-grade='RARE'],
+.comment-message__title-name[data-grade='SUPER'],
+.comment-message__title-name[data-grade='ULTIMATE'],
+.comment-message__identity[data-title-grade='ULTIMATE'] .comment-message__author {
+  animation: comment-title-text-shimmer 2.7s ease-in-out infinite;
+  background: linear-gradient(110deg, var(--comment-title-shimmer-base), #fff, var(--comment-title-shimmer-base));
+  background-clip: text;
+  background-size: 220% 100%;
+  color: transparent;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes comment-title-text-shimmer {
+  0% {
+    background-position: 220% center;
+  }
+
+  100% {
+    background-position: -220% center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comment-message__title-star,
+  .comment-message__title-name[data-grade],
+  .comment-message__identity[data-title-grade='ULTIMATE'] .comment-message__author {
+    animation: none;
+  }
+}
