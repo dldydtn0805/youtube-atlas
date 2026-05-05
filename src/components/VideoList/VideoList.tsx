@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { YouTubeCategorySection, YouTubeVideoItem } from '../../features/youtube/types';
 import { formatCompactCount, getFallbackNewBadge, getVideoTrendBadges } from '../../features/trending/presentation';
 import type { VideoTrendSignal } from '../../features/trending/types';
@@ -7,6 +7,8 @@ import VideoCardTradeActions, { type VideoCardTradeActionState } from './VideoCa
 import './VideoList.css';
 
 export type { VideoCardTradeActionState };
+
+const VIDEO_LIST_PAGE_SIZE = 20;
 
 export interface FeaturedVideoSection {
   section: YouTubeCategorySection;
@@ -126,6 +128,14 @@ function getSectionRenderKey(
   return `${baseKey}:${itemOrderKey}`;
 }
 
+function getSectionPaginationKey(currentSection: YouTubeCategorySection, sectionKey?: string) {
+  return sectionKey ?? currentSection.categoryId;
+}
+
+function formatPaginationTotal(itemCount: number, hasNextPage: boolean) {
+  return hasNextPage ? `${itemCount}+` : itemCount.toLocaleString('ko-KR');
+}
+
 function VideoList({
   activePlaybackQueueId,
   currentTierCode,
@@ -154,6 +164,32 @@ function VideoList({
   onToggleSectionCollapse,
   primarySectionCollapseKey,
 }: VideoListProps) {
+  const [pageIndexBySectionKey, setPageIndexBySectionKey] = useState<Record<string, number>>({});
+  const paginatedSectionRef = useRef<HTMLElement | null>(null);
+  const listResetKey = [
+    ...featuredSections.map(({ section: featuredSection }) =>
+      getSectionPaginationKey(featuredSection, featuredSection.categoryId),
+    ),
+    section ? getSectionPaginationKey(section, primarySectionCollapseKey) : 'no-section',
+  ].join('|');
+
+  useEffect(() => {
+    setPageIndexBySectionKey({});
+  }, [listResetKey]);
+
+  const scrollPaginatedSectionToTop = () => {
+    const sectionElement = paginatedSectionRef.current;
+
+    if (!sectionElement?.scrollIntoView) {
+      return;
+    }
+
+    sectionElement.scrollIntoView({
+      behavior: 'auto',
+      block: 'start',
+    });
+  };
+
   if (isLoading) {
     return <p className="video-list__status">영상을 불러오는 중입니다.</p>;
   }
@@ -204,9 +240,59 @@ function VideoList({
     }
 
     const renderKey = getSectionRenderKey(currentSection, sectionKey);
+    const paginationKey = getSectionPaginationKey(currentSection, sectionKey);
+    const shouldPaginate = showLoadMore;
+    const storedPageIndex = pageIndexBySectionKey[paginationKey] ?? 0;
+    const loadedPageCount = Math.max(1, Math.ceil(currentSection.items.length / VIDEO_LIST_PAGE_SIZE));
+    const currentPageIndex = shouldPaginate
+      ? Math.min(storedPageIndex, loadedPageCount - 1)
+      : 0;
+    const pageStartIndex = currentPageIndex * VIDEO_LIST_PAGE_SIZE;
+    const pageEndIndex = pageStartIndex + VIDEO_LIST_PAGE_SIZE;
+    const visibleItems = shouldPaginate
+      ? currentSection.items.slice(pageStartIndex, pageEndIndex)
+      : currentSection.items;
+    const canGoPreviousPage = shouldPaginate && currentPageIndex > 0;
+    const canGoNextLoadedPage = shouldPaginate && pageEndIndex < currentSection.items.length;
+    const canGoNextPage =
+      shouldPaginate &&
+      (canGoNextLoadedPage || hasNextPage);
+    const displayedStartIndex = currentSection.items.length > 0 ? pageStartIndex + 1 : 0;
+    const displayedEndIndex = Math.min(pageEndIndex, currentSection.items.length);
+    const handlePreviousPage = () => {
+      setPageIndexBySectionKey((currentValue) => ({
+        ...currentValue,
+        [paginationKey]: Math.max((currentValue[paginationKey] ?? currentPageIndex) - 1, 0),
+      }));
+      scrollPaginatedSectionToTop();
+    };
+    const handleNextPage = () => {
+      if (isFetchingNextPage && !canGoNextLoadedPage) {
+        scrollPaginatedSectionToTop();
+        return;
+      }
+
+      const nextPageIndex = currentPageIndex + 1;
+
+      setPageIndexBySectionKey((currentValue) => ({
+        ...currentValue,
+        [paginationKey]: nextPageIndex,
+      }));
+
+      if (!isFetchingNextPage && (nextPageIndex + 1) * VIDEO_LIST_PAGE_SIZE > currentSection.items.length) {
+        onLoadMore();
+      }
+
+      scrollPaginatedSectionToTop();
+    };
 
     return (
-      <section key={renderKey} className="video-list__section" aria-label={`${currentSection.label} 영상`}>
+      <section
+        key={renderKey}
+        ref={shouldPaginate ? paginatedSectionRef : undefined}
+        className="video-list__section"
+        aria-label={`${currentSection.label} 영상`}
+      >
         <header className="video-list__section-header">
           <div className="video-list__section-header-main">
             <div>
@@ -236,7 +322,8 @@ function VideoList({
         </header>
         {!isCollapsed && currentSection.items.length > 0 ? (
           <div className="video-list__grid">
-            {currentSection.items.map((item, index) => {
+            {visibleItems.map((item, visibleIndex) => {
+              const index = shouldPaginate ? pageStartIndex + visibleIndex : visibleIndex;
               const isSelected =
                 selectedVideoId === item.id && activePlaybackQueueId === currentSection.categoryId;
               const trendSignal = resolveVideoTrendBadgeSignal(item, trendSignalsByVideoId);
@@ -332,15 +419,26 @@ function VideoList({
         ) : !isCollapsed ? (
           <p className="video-list__section-status">{emptyMessage}</p>
         ) : null}
-        {!isCollapsed && showLoadMore && hasNextPage ? (
-          <div className="video-list__actions">
+        {!isCollapsed && shouldPaginate && (currentSection.items.length > VIDEO_LIST_PAGE_SIZE || hasNextPage) ? (
+          <div className="video-list__pagination" aria-label={`${currentSection.label} 페이지 이동`}>
             <button
-              className="video-list__load-more"
-              disabled={isFetchingNextPage}
-              onClick={onLoadMore}
+              className="video-list__page-button"
+              disabled={!canGoPreviousPage}
+              onClick={handlePreviousPage}
               type="button"
             >
-              {isFetchingNextPage ? '더 불러오는 중...' : '50개 더 보기'}
+              이전
+            </button>
+            <span className="video-list__page-status">
+              {displayedStartIndex}-{displayedEndIndex} / {formatPaginationTotal(currentSection.items.length, hasNextPage)}
+            </span>
+            <button
+              className="video-list__page-button"
+              disabled={!canGoNextPage}
+              onClick={handleNextPage}
+              type="button"
+            >
+              {isFetchingNextPage ? '불러오는 중' : '다음'}
             </button>
           </div>
         ) : null}

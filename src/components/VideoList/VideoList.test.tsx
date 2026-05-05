@@ -30,6 +30,20 @@ const baseSection = {
   label: '즐겨찾기 채널',
 };
 
+function buildSection(itemCount: number) {
+  return {
+    ...baseSection,
+    items: Array.from({ length: itemCount }, (_, index) => ({
+      ...baseSection.items[0],
+      id: `video-${index + 1}`,
+      snippet: {
+        ...baseSection.items[0].snippet,
+        title: `테스트 영상 ${index + 1}`,
+      },
+    })),
+  };
+}
+
 describe('VideoList', () => {
   it('uses a custom rank label for the main section when provided', () => {
     const onSelectVideo = vi.fn();
@@ -382,5 +396,130 @@ describe('VideoList', () => {
       expect.stringContaining('첫 번째 영상'),
       expect.stringContaining('두 번째 영상'),
     ]);
+  });
+
+  it('renders only the current 20-item page for long sections', () => {
+    const { container } = render(
+      <VideoList
+        hasNextPage={false}
+        isError={false}
+        isFetchingNextPage={false}
+        isLoading={false}
+        onLoadMore={vi.fn()}
+        onSelectVideo={vi.fn()}
+        section={buildSection(45)}
+      />,
+    );
+
+    expect(container.querySelectorAll('.video-card')).toHaveLength(20);
+    expect(screen.getByText('1-20 / 45')).toBeInTheDocument();
+    expect(screen.queryByText('테스트 영상 21')).not.toBeInTheDocument();
+  });
+
+  it('moves through loaded client pages without fetching more data', () => {
+    const onLoadMore = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const scrollIntoView = vi.fn();
+
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      render(
+        <VideoList
+          hasNextPage
+          isError={false}
+          isFetchingNextPage={false}
+          isLoading={false}
+          onLoadMore={onLoadMore}
+          onSelectVideo={vi.fn()}
+          section={buildSection(50)}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: '다음' }));
+
+      expect(screen.getByText('21-40 / 50+')).toBeInTheDocument();
+      expect(screen.getByText('테스트 영상 21')).toBeInTheDocument();
+      expect(onLoadMore).not.toHaveBeenCalled();
+      expect(scrollIntoView).toHaveBeenCalledWith({
+        behavior: 'auto',
+        block: 'start',
+      });
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
+  it('fetches the next backend page when the next client page is incomplete', () => {
+    const onLoadMore = vi.fn();
+
+    render(
+      <VideoList
+        hasNextPage
+        isError={false}
+        isFetchingNextPage={false}
+        isLoading={false}
+        onLoadMore={onLoadMore}
+        onSelectVideo={vi.fn()}
+        section={buildSection(50)}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+
+    expect(screen.getByText('41-50 / 50+')).toBeInTheDocument();
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+  });
+
+  it('scrolls to the section top while the next backend page is loading', () => {
+    const onLoadMore = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const scrollIntoView = vi.fn();
+
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      const { rerender } = render(
+        <VideoList
+          hasNextPage
+          isError={false}
+          isFetchingNextPage={false}
+          isLoading={false}
+          onLoadMore={onLoadMore}
+          onSelectVideo={vi.fn()}
+          section={buildSection(50)}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: '다음' }));
+      fireEvent.click(screen.getByRole('button', { name: '다음' }));
+
+      expect(onLoadMore).toHaveBeenCalledTimes(1);
+      scrollIntoView.mockClear();
+
+      rerender(
+        <VideoList
+          hasNextPage
+          isError={false}
+          isFetchingNextPage
+          isLoading={false}
+          onLoadMore={onLoadMore}
+          onSelectVideo={vi.fn()}
+          section={buildSection(50)}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: '불러오는 중' }));
+
+      expect(screen.getByText('41-50 / 50+')).toBeInTheDocument();
+      expect(onLoadMore).toHaveBeenCalledTimes(1);
+      expect(scrollIntoView).toHaveBeenCalledWith({
+        behavior: 'auto',
+        block: 'start',
+      });
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
   });
 });
