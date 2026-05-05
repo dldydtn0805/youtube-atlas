@@ -27,11 +27,13 @@ function createNotification(overrides: Partial<GameNotification> = {}): GameNoti
 describe('GameNotificationsPanel', () => {
   it('opens the sell modal from a projected highlight thumbnail', () => {
     const onOpenSell = vi.fn();
+    const onMarkClicked = vi.fn();
     const onSelect = vi.fn();
 
     render(
       <GameNotificationsPanel
         notifications={[createNotification()]}
+        onMarkClicked={onMarkClicked}
         onOpenSell={onOpenSell}
         onSelect={onSelect}
       />,
@@ -40,6 +42,7 @@ describe('GameNotificationsPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /즉시 매도 열기/ }));
 
     expect(onOpenSell).toHaveBeenCalledWith(expect.objectContaining({ id: 'notification-1' }));
+    expect(onMarkClicked).toHaveBeenCalledWith('notification-1');
     expect(onSelect).not.toHaveBeenCalled();
   });
 
@@ -65,5 +68,34 @@ describe('GameNotificationsPanel', () => {
 
     expect(onOpenHighlights).toHaveBeenCalledTimes(1);
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('shows whether a notification has already been opened', () => {
+    render(
+      <GameNotificationsPanel
+        clickedNotificationIds={new Set(['notification-1'])}
+        notifications={[createNotification()]}
+      />,
+    );
+
+    expect(screen.getByText('열어봄')).toBeInTheDocument();
+  });
+
+  it('marks a notification when the main notification button opens it', () => {
+    const onMarkClicked = vi.fn();
+    const onSelect = vi.fn();
+
+    render(
+      <GameNotificationsPanel
+        notifications={[createNotification()]}
+        onMarkClicked={onMarkClicked}
+        onSelect={onSelect}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /알림 보기/ }));
+
+    expect(onMarkClicked).toHaveBeenCalledWith('notification-1');
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'notification-1' }));
   });
 });

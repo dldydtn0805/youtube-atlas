@@ -159,7 +159,9 @@ function createOpenGameHolding(overrides: Partial<OpenGameHolding> = {}): OpenGa
     createdAt: '2026-01-01T00:00:00.000Z',
     reservedForSell: false,
     scheduledSellOrderId: null,
+    scheduledSellTriggerType: null,
     scheduledSellTargetRank: null,
+    scheduledSellTargetProfitRatePercent: null,
     scheduledSellTriggerDirection: null,
     scheduledSellQuantity: 0,
     ...overrides,
@@ -185,7 +187,9 @@ function createScheduledSellOrder(overrides: Partial<GameScheduledSellOrder> = {
     settledPoints: null,
     stakePoints: 5000,
     status: 'PENDING',
+    triggerType: 'RANK',
     targetRank: 10,
+    targetProfitRatePercent: null,
     thumbnailUrl: 'https://example.com/a.jpg',
     triggeredAt: null,
     triggerDirection: 'RANK_IMPROVES_TO',
@@ -432,7 +436,15 @@ describe('RankingGamePositionsTab', () => {
         canShowGameActions
         favoriteTrendSignalsByVideoId={{}}
         gameMarketSignalsByVideoId={{}}
-        holdings={[createOpenGameHolding({ quantity: 200, sellableQuantity: 200, targetStrategyTags: ['MOONSHOT'] })]}
+        holdings={[
+          createOpenGameHolding({
+            currentRank: 100,
+            quantity: 100,
+            sellableQuantity: 100,
+            stakePoints: 58_000,
+            targetStrategyTags: ['MOONSHOT', 'SMALL_CASHOUT', 'BIG_CASHOUT'],
+          }),
+        ]}
         onOpenPositionChart={onOpenPositionChart}
         onOpenStrategyScheduledSellTradeModal={onOpenStrategyScheduledSellTradeModal}
         onSelectPosition={vi.fn()}
@@ -441,10 +453,20 @@ describe('RankingGamePositionsTab', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Holding Video 문샷 노림 예약 매도' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 스몰 캐시아웃 노림 예약 매도' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Holding Video 빅 캐시아웃 노림 예약 매도' }));
 
     expect(onOpenStrategyScheduledSellTradeModal).toHaveBeenCalledWith(
       expect.objectContaining({ id: 1, videoId: 'video-1' }),
       'MOONSHOT',
+    );
+    expect(onOpenStrategyScheduledSellTradeModal).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1, videoId: 'video-1' }),
+      'SMALL_CASHOUT',
+    );
+    expect(onOpenStrategyScheduledSellTradeModal).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1, videoId: 'video-1' }),
+      'BIG_CASHOUT',
     );
     expect(onOpenPositionChart).not.toHaveBeenCalled();
   });

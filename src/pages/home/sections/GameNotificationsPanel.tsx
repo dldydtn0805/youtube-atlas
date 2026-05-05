@@ -15,10 +15,12 @@ import { hasProjectedGameNotificationScore, hasResolvedGameNotificationScore } f
 import './GameNotificationsPanel.css';
 
 interface GameNotificationsPanelProps {
+  clickedNotificationIds?: ReadonlySet<string>;
   isLoading?: boolean;
   notifications: GameNotification[];
   onClear?: () => void;
   onDelete?: (notificationId: string) => void;
+  onMarkClicked?: (notificationId: string) => void;
   onOpenHighlights?: () => void;
   onOpenSell?: (notification: GameNotification) => void;
   onSelect?: (notification: GameNotification) => void;
@@ -40,10 +42,12 @@ function formatNotificationDate(value: string) {
 }
 
 function GameNotificationsPanel({
+  clickedNotificationIds,
   isLoading = false,
   notifications,
   onClear,
   onDelete,
+  onMarkClicked,
   onOpenHighlights,
   onOpenSell,
   onSelect,
@@ -70,6 +74,8 @@ function GameNotificationsPanel({
               const heading = getGameNotificationHeading(notification);
               const message = getGameNotificationMessage(notification);
               const hideMedia = isTitleUnlockNotification(notification);
+              const isClicked = clickedNotificationIds?.has(notification.id) ?? false;
+              const markClicked = () => onMarkClicked?.(notification.id);
               const canOpenSell =
                 !hideMedia &&
                 isProjectedHighlightNotification(notification) &&
@@ -83,6 +89,7 @@ function GameNotificationsPanel({
               return (
             <article
               className="game-notifications__item"
+              data-clicked={isClicked ? 'true' : 'false'}
               data-projected={hasResolvedGameNotificationScore(notification) ? 'false' : 'true'}
               data-title-unlock={hideMedia ? 'true' : 'false'}
               key={notification.id}
@@ -92,7 +99,10 @@ function GameNotificationsPanel({
                   <button
                     aria-label={`${heading} 즉시 매도 열기`}
                     className="game-notifications__thumb-button"
-                    onClick={() => onOpenSell?.(notification)}
+                    onClick={() => {
+                      markClicked();
+                      onOpenSell?.(notification);
+                    }}
                     type="button"
                   >
                     <GameNotificationMedia className="game-notifications__thumb" notification={notification} />
@@ -101,7 +111,10 @@ function GameNotificationsPanel({
                   <button
                     aria-label={`${heading} 하이라이트 탭 열기`}
                     className="game-notifications__thumb-button"
-                    onClick={onOpenHighlights}
+                    onClick={() => {
+                      markClicked();
+                      onOpenHighlights?.();
+                    }}
                     type="button"
                   >
                     <GameNotificationMedia className="game-notifications__thumb" notification={notification} />
@@ -110,9 +123,12 @@ function GameNotificationsPanel({
                   <GameNotificationMedia className="game-notifications__thumb" notification={notification} />
                 )}
                 <button
-                  aria-label={`${heading} 알림 보기`}
+                  aria-label={`${heading} ${isClicked ? '다시 보기' : '알림 보기'}`}
                   className="game-notifications__select"
-                  onClick={() => onSelect?.(notification)}
+                  onClick={() => {
+                    markClicked();
+                    onSelect?.(notification);
+                  }}
                   type="button"
                 >
                   <div className="game-notifications__copy">
@@ -135,7 +151,12 @@ function GameNotificationsPanel({
                 </button>
               </div>
               <div className="game-notifications__footer">
-                <time dateTime={notification.createdAt}>{formatNotificationDate(notification.createdAt)}</time>
+                <div className="game-notifications__meta">
+                  <span className="game-notifications__click-state" data-clicked={isClicked ? 'true' : 'false'}>
+                    {isClicked ? '열어봄' : '미확인'}
+                  </span>
+                  <time dateTime={notification.createdAt}>{formatNotificationDate(notification.createdAt)}</time>
+                </div>
                 <button
                   aria-label="알림 지우기"
                   className="game-notifications__delete"

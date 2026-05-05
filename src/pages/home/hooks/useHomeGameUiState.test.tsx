@@ -29,7 +29,9 @@ function createOpenPosition(overrides: Partial<GamePosition> = {}): GamePosition
     reservedForSell: false,
     scheduledSellOrderId: null,
     scheduledSellQuantity: 0,
+    scheduledSellTriggerType: null,
     scheduledSellTargetRank: null,
+    scheduledSellTargetProfitRatePercent: null,
     scheduledSellTriggerDirection: null,
     ...overrides,
   };

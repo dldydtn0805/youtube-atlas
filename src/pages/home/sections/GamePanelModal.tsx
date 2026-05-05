@@ -11,9 +11,16 @@ interface GamePanelModalProps {
   isOpen: boolean;
   onClose: () => void;
   seasonEndAt?: string | null;
+  seasonStartAt?: string | null;
 }
 
-export default function GamePanelModal({ children, isOpen, onClose, seasonEndAt }: GamePanelModalProps) {
+export default function GamePanelModal({
+  children,
+  isOpen,
+  onClose,
+  seasonEndAt,
+  seasonStartAt,
+}: GamePanelModalProps) {
   useBodyScrollLock(isOpen);
   const { backdropStyle, bodySwipeHandlers, headerSwipeHandlers, modalStyle } = useHeaderSwipeToClose({
     disabled: !isOpen,
@@ -49,7 +56,7 @@ export default function GamePanelModal({ children, isOpen, onClose, seasonEndAt 
               <h2 className="app-shell__section-title" id="game-panel-modal-title">
                 내 게임
               </h2>
-              {seasonEndAt ? <GameSeasonCountdown endAt={seasonEndAt} /> : null}
+              {seasonEndAt ? <GameSeasonCountdown endAt={seasonEndAt} startAt={seasonStartAt} /> : null}
             </div>
           </div>
           <button aria-label="게임 모달 닫기" className="app-shell__modal-close" onClick={onClose} type="button">

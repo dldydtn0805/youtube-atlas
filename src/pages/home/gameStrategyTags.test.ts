@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildGameStrategyBadges, buildPositionStrategyBadges, resolveGameStrategyTags } from './gameStrategyTags';
 import {
   getScheduledSellHalfQuantity,
+  getScheduledSellPresetForStrategy,
   getScheduledSellTargetRankForStrategy,
 } from './scheduledSellStrategyPreset';
 
@@ -49,6 +50,19 @@ describe('gameStrategyTags', () => {
     expect(getScheduledSellTargetRankForStrategy('GALAXY_SHOT')).toBe(5);
     expect(getScheduledSellTargetRankForStrategy('ATLAS_SHOT')).toBe(1);
     expect(getScheduledSellTargetRankForStrategy('BIG_CASHOUT')).toBeNull();
+  });
+
+  it('maps cashout target badges to profit rate scheduled sell presets', () => {
+    expect(getScheduledSellPresetForStrategy('SMALL_CASHOUT')).toEqual({
+      targetProfitRatePercent: 300,
+      targetRank: null,
+      triggerType: 'PROFIT_RATE',
+    });
+    expect(getScheduledSellPresetForStrategy('BIG_CASHOUT')).toEqual({
+      targetProfitRatePercent: 1000,
+      targetRank: null,
+      triggerType: 'PROFIT_RATE',
+    });
   });
 
   it('rounds 50% scheduled sell presets to the game quantity step', () => {

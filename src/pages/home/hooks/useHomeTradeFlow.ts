@@ -6,6 +6,7 @@ import type {
   GameCurrentSeason,
   GameMarketVideo,
   ScheduledSellTriggerDirection,
+  ScheduledSellTriggerType,
 } from '../../../features/game/types';
 import { useGameSellPreview } from '../../../features/game/queries';
 import { ApiRequestError } from '../../../lib/api';
@@ -109,7 +110,11 @@ export default function useHomeTradeFlow({
   const [isScheduledSellSubmitting, setIsScheduledSellSubmitting] = useState(false);
   const lastInstantSellDefaultKeyRef = useRef<string | null>(null);
   const [sellOrderMode, setSellOrderMode] = useState<'instant' | 'scheduled'>('instant');
+  const [scheduledSellTriggerType, setScheduledSellTriggerType] =
+    useState<ScheduledSellTriggerType>('RANK');
   const [scheduledSellTargetRank, setScheduledSellTargetRank] = useState<number | null>(100);
+  const [scheduledSellTargetProfitRatePercent, setScheduledSellTargetProfitRatePercent] =
+    useState<number | null>(300);
   const [scheduledSellTriggerDirection, setScheduledSellTriggerDirection] =
     useState<ScheduledSellTriggerDirection>('RANK_IMPROVES_TO');
 
@@ -119,13 +124,17 @@ export default function useHomeTradeFlow({
     }
 
     setSellOrderMode('instant');
+    setScheduledSellTriggerType('RANK');
     setScheduledSellTargetRank(100);
+    setScheduledSellTargetProfitRatePercent(300);
     setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
   }, [authStatus]);
 
   useEffect(() => {
     setSellOrderMode('instant');
+    setScheduledSellTriggerType('RANK');
     setScheduledSellTargetRank(100);
+    setScheduledSellTargetProfitRatePercent(300);
     setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
   }, [selectedOpenPositionId, selectedVideoId]);
 
@@ -270,6 +279,14 @@ export default function useHomeTradeFlow({
       return null;
     }
 
+    if (scheduledSellTriggerType === 'PROFIT_RATE') {
+      return typeof scheduledSellTargetProfitRatePercent !== 'number' ||
+        !Number.isFinite(scheduledSellTargetProfitRatePercent) ||
+        scheduledSellTargetProfitRatePercent < 0
+        ? '목표 수익률을 입력해 주세요.'
+        : null;
+    }
+
     if (typeof scheduledSellTargetRank !== 'number' || !Number.isFinite(scheduledSellTargetRank)) {
       return '목표 순위를 입력해 주세요.';
     }
@@ -288,8 +305,10 @@ export default function useHomeTradeFlow({
       ? `현재 ${formatRank(selectedVideoCurrentChartRank)}입니다. 상승 목표는 ${selectedVideoCurrentChartRank - 1}위 이내부터 설정할 수 있어요.`
       : null;
   }, [
+    scheduledSellTargetProfitRatePercent,
     scheduledSellTargetRank,
     scheduledSellTriggerDirection,
+    scheduledSellTriggerType,
     selectedVideoCurrentChartRank,
     sellOrderMode,
   ]);
@@ -310,26 +329,40 @@ export default function useHomeTradeFlow({
       return;
     }
 
-    if (typeof scheduledSellTargetRank !== 'number' || !Number.isFinite(scheduledSellTargetRank)) {
-      setGameActionStatus('목표 순위를 입력해 주세요.');
-      return;
-    }
-
-    const normalizedTargetRank = Math.max(1, Math.floor(scheduledSellTargetRank));
+    const inputBase = {
+      positionId: selectedSellPositionId,
+      quantity: normalizedSellQuantity,
+      regionCode: currentGameSeason.regionCode,
+    };
+    const scheduledSellOrderInput: CreateScheduledSellOrderInput =
+      scheduledSellTriggerType === 'PROFIT_RATE'
+        ? {
+            ...inputBase,
+            triggerType: 'PROFIT_RATE',
+            targetProfitRatePercent:
+              typeof scheduledSellTargetProfitRatePercent === 'number'
+                ? Math.max(0, scheduledSellTargetProfitRatePercent)
+                : null,
+          }
+        : {
+            ...inputBase,
+            triggerType: 'RANK',
+            targetRank:
+              typeof scheduledSellTargetRank === 'number' && Number.isFinite(scheduledSellTargetRank)
+                ? Math.max(1, Math.floor(scheduledSellTargetRank))
+                : null,
+            triggerDirection: scheduledSellTriggerDirection,
+          };
 
     try {
       setIsScheduledSellSubmitting(true);
-      await createScheduledSellOrder({
-        positionId: selectedSellPositionId,
-        quantity: normalizedSellQuantity,
-        regionCode: currentGameSeason.regionCode,
-        targetRank: normalizedTargetRank,
-        triggerDirection: scheduledSellTriggerDirection,
-      });
+      await createScheduledSellOrder(scheduledSellOrderInput);
 
       setActiveTradeModal(null);
       setSellOrderMode('instant');
+      setScheduledSellTriggerType('RANK');
       setScheduledSellTargetRank(100);
+      setScheduledSellTargetProfitRatePercent(300);
       setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
       void onScheduledSellSuccess?.();
     } catch (error) {
@@ -354,8 +387,10 @@ export default function useHomeTradeFlow({
     normalizedSellQuantity,
     onScheduledSellSuccess,
     scheduledSellConditionError,
+    scheduledSellTargetProfitRatePercent,
     scheduledSellTargetRank,
     scheduledSellTriggerDirection,
+    scheduledSellTriggerType,
     selectedSellPositionId,
     setActiveTradeModal,
     setGameActionStatus,
@@ -417,12 +452,16 @@ export default function useHomeTradeFlow({
     projectedWalletBalanceAfterSell,
     resolvedSellSummary,
     scheduledSellConditionError,
+    scheduledSellTargetProfitRatePercent,
     scheduledSellTargetRank,
     scheduledSellTriggerDirection,
+    scheduledSellTriggerType,
     sellOrderMode,
     sellTradeUnitPointsLabel: formatPoints(selectedVideoUnitPricePoints ?? resolvedSellSummary.settledPoints ?? 0),
+    setScheduledSellTargetProfitRatePercent,
     setScheduledSellTargetRank,
     setScheduledSellTriggerDirection,
+    setScheduledSellTriggerType,
     setSellOrderMode,
   };
 }

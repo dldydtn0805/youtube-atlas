@@ -18,6 +18,7 @@ export type GameNotificationEventType = 'PROJECTED_HIGHLIGHT' | 'TIER_SCORE_GAIN
 export type AchievementTitleGrade = 'NORMAL' | 'RARE' | 'SUPER' | 'ULTIMATE';
 export type ScheduledSellOrderStatus = 'PENDING' | 'EXECUTED' | 'CANCELED' | 'FAILED';
 export type ScheduledSellTriggerDirection = 'RANK_IMPROVES_TO' | 'RANK_DROPS_TO';
+export type ScheduledSellTriggerType = 'RANK' | 'PROFIT_RATE';
 
 export interface SelectedAchievementTitle {
   code: string;
@@ -278,7 +279,9 @@ export interface GamePosition {
   closedAt: string | null;
   reservedForSell?: boolean;
   scheduledSellOrderId?: number | null;
+  scheduledSellTriggerType?: ScheduledSellTriggerType | null;
   scheduledSellTargetRank?: number | null;
+  scheduledSellTargetProfitRatePercent?: number | null;
   scheduledSellTriggerDirection?: ScheduledSellTriggerDirection | null;
   scheduledSellQuantity?: number | null;
 }
@@ -293,7 +296,9 @@ export interface GameScheduledSellOrder {
   channelTitle: string;
   thumbnailUrl: string;
   regionCode: string;
-  targetRank: number;
+  triggerType?: ScheduledSellTriggerType | null;
+  targetRank: number | null;
+  targetProfitRatePercent?: number | null;
   triggerDirection: ScheduledSellTriggerDirection;
   status: ScheduledSellOrderStatus;
   currentRank: number | null;
@@ -356,9 +361,11 @@ export interface SellGamePositionsInput {
 export interface CreateScheduledSellOrderInput {
   positionId: number;
   regionCode: string;
-  targetRank: number;
+  triggerType: ScheduledSellTriggerType;
+  targetRank?: number | null;
+  targetProfitRatePercent?: number | null;
   quantity: number;
-  triggerDirection: ScheduledSellTriggerDirection;
+  triggerDirection?: ScheduledSellTriggerDirection;
 }
 
 export interface SellGamePreviewItem {

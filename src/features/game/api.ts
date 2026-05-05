@@ -47,9 +47,10 @@ type ApiGameCurrentSeason = Omit<GameCurrentSeason, 'wallet' | 'inventorySlots'>
   wallet: GameCurrentSeason['wallet'];
 };
 
-type ApiGameScheduledSellOrder = Omit<GameScheduledSellOrder, 'failureReason'> & {
+type ApiGameScheduledSellOrder = Omit<GameScheduledSellOrder, 'failureReason' | 'triggerType'> & {
   failedReason?: string | null;
   failureReason?: string | null;
+  triggerType?: GameScheduledSellOrder['triggerType'] | null;
 };
 
 function createAuthorizationHeader(accessToken: string) {
@@ -112,6 +113,9 @@ function normalizeGameScheduledSellOrder(order: ApiGameScheduledSellOrder): Game
   return {
     ...order,
     failureReason: order.failureReason ?? order.failedReason ?? null,
+    targetProfitRatePercent: order.targetProfitRatePercent ?? null,
+    targetRank: order.targetRank ?? null,
+    triggerType: order.triggerType ?? 'RANK',
   };
 }
 

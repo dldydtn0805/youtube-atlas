@@ -4,6 +4,7 @@ import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/Thumb
 import type { AuthStatus, AuthUser } from '../../../features/auth/types';
 import type { AchievementTitleCollection, GameNotification } from '../../../features/game/types';
 import { formatHeaderPoints, formatPoints } from '../gameHelpers';
+import useClickedGameNotifications from '../hooks/useClickedGameNotifications';
 import { isTitleUnlockNotification } from './gameNotificationEventType';
 import AchievementTitleBadge from './AchievementTitleBadge';
 import AchievementTitleModal from './AchievementTitleModal';
@@ -204,6 +205,7 @@ function AppHeader({
   const [isProfileRefreshing, setIsProfileRefreshing] = useState(false);
   const profileCardRef = useRef<HTMLDivElement | null>(null);
   const profileRefreshRequestIdRef = useRef(0);
+  const { clickedNotificationIds, markGameNotificationClicked } = useClickedGameNotifications(user?.id);
   const profileButtonLabel = `${userIdentityLabel} 프로필 정보 열기`;
   const playbackProgress = user?.lastPlaybackProgress ?? null;
   const recentPlaybackProgresses =
@@ -472,10 +474,12 @@ function AppHeader({
                   </div>
                   <div className="app-shell__profile-card-section">
                     <GameNotificationsPanel
+                      clickedNotificationIds={clickedNotificationIds}
                       isLoading={isGameNotificationsLoading}
                       notifications={gameNotifications}
                       onClear={onClearGameNotifications}
                       onDelete={onDeleteGameNotification}
+                      onMarkClicked={markGameNotificationClicked}
                       onOpenHighlights={
                         onOpenHighlightsModal
                           ? () => {

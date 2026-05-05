@@ -5,6 +5,7 @@ import {
   formatGameOrderQuantity,
   formatGameTimestamp,
   formatMaybePoints,
+  formatPercent,
   formatPoints,
   formatRank,
   getPointTone,
@@ -75,6 +76,12 @@ function getScheduledSellStatusTone(status: GameScheduledSellOrder['status']) {
 }
 
 function getScheduledSellConditionLabel(order: GameScheduledSellOrder) {
+  if (order.triggerType === 'PROFIT_RATE') {
+    return typeof order.targetProfitRatePercent === 'number'
+      ? `수익률 +${formatPercent(order.targetProfitRatePercent)} 도달`
+      : '수익률 조건 도달';
+  }
+
   return order.triggerDirection === 'RANK_DROPS_TO'
     ? `${formatRank(order.targetRank)} 이하 이탈`
     : `${formatRank(order.targetRank)} 이내 진입`;

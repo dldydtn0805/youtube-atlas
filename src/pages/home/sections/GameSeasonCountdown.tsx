@@ -2,18 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { formatSeasonTimeLeft } from './gameSeasonCountdownFormat';
 import './GameSeasonCountdown.css';
 
-const MINUTE_MS = 60_000;
+const SECOND_MS = 1_000;
 
 interface GameSeasonCountdownProps {
   endAt: string;
+  startAt?: string | null;
 }
 
-export default function GameSeasonCountdown({ endAt }: GameSeasonCountdownProps) {
+export default function GameSeasonCountdown({ endAt, startAt }: GameSeasonCountdownProps) {
   const [nowMs, setNowMs] = useState(Date.now);
-  const label = useMemo(() => formatSeasonTimeLeft(endAt, nowMs), [endAt, nowMs]);
+  const label = useMemo(() => formatSeasonTimeLeft(endAt, nowMs, startAt ?? endAt), [endAt, nowMs, startAt]);
 
   useEffect(() => {
-    const timerId = window.setInterval(() => setNowMs(Date.now()), MINUTE_MS);
+    const timerId = window.setInterval(() => setNowMs(Date.now()), SECOND_MS);
 
     return () => window.clearInterval(timerId);
   }, []);

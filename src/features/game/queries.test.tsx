@@ -113,7 +113,9 @@ function createOpenPosition(overrides: Partial<GamePosition> = {}): GamePosition
     reservedForSell: false,
     scheduledSellOrderId: null,
     scheduledSellQuantity: 0,
+    scheduledSellTriggerType: null,
     scheduledSellTargetRank: null,
+    scheduledSellTargetProfitRatePercent: null,
     scheduledSellTriggerDirection: null,
     ...overrides,
   };
@@ -145,7 +147,9 @@ function createScheduledOrder(overrides: Partial<GameScheduledSellOrder> = {}): 
     channelTitle: '테스트 채널',
     thumbnailUrl: 'https://example.com/thumb.jpg',
     regionCode: 'KR',
+    triggerType: 'RANK',
     targetRank: 3,
+    targetProfitRatePercent: null,
     triggerDirection: 'RANK_IMPROVES_TO',
     status: 'PENDING',
     currentRank: 5,
@@ -259,6 +263,7 @@ describe('game queries optimistic mutations', () => {
       positionId: 1,
       quantity: 4,
       regionCode: 'KR',
+      triggerType: 'RANK',
       targetRank: 3,
       triggerDirection: 'RANK_IMPROVES_TO',
     };
@@ -281,6 +286,7 @@ describe('game queries optimistic mutations', () => {
           positionId: 1,
           quantity: 4,
           status: 'PENDING',
+          triggerType: 'RANK',
           targetRank: 3,
         }),
       ]);
@@ -351,7 +357,9 @@ describe('game queries optimistic mutations', () => {
           reservedForSell: false,
           scheduledSellOrderId: null,
           scheduledSellQuantity: 0,
+          scheduledSellTriggerType: null,
           scheduledSellTargetRank: null,
+          scheduledSellTargetProfitRatePercent: null,
           scheduledSellTriggerDirection: null,
         }),
       ]);

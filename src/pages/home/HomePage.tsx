@@ -29,6 +29,7 @@ import {
   DEFAULT_GAME_QUANTITY,
   buildOpenGameHoldings,
   formatGameOrderQuantity,
+  formatPercent,
   formatPoints,
   formatRank,
   getGamePositionQuantity,
@@ -39,7 +40,7 @@ import {
 } from './gameHelpers';
 import {
   getScheduledSellHalfQuantity,
-  getScheduledSellTargetRankForStrategy,
+  getScheduledSellPresetForStrategy,
 } from './scheduledSellStrategyPreset';
 import useAppPreferences from './hooks/useAppPreferences';
 import useHomeChartCollections from './hooks/useHomeChartCollections';
@@ -111,6 +112,7 @@ import type {
   GameSeasonResult,
   GameSeasonResultHighlightItem,
   GameStrategyType,
+  ScheduledSellTriggerType,
 } from '../../features/game/types';
 import {
   useFavoriteStreamerVideos,
@@ -283,7 +285,9 @@ function HomePage() {
   const [pendingScheduledSellPreset, setPendingScheduledSellPreset] = useState<{
     positionId: number;
     quantity: number;
-    targetRank: number;
+    targetProfitRatePercent: number | null;
+    targetRank: number | null;
+    triggerType: ScheduledSellTriggerType;
   } | null>(null);
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
   const [tierModalDefaultTab, setTierModalDefaultTab] = useState<TierModalTab>('tier');
@@ -1455,12 +1459,16 @@ function HomePage() {
     projectedWalletBalanceAfterSell,
     resolvedSellSummary,
     scheduledSellConditionError,
+    scheduledSellTargetProfitRatePercent,
     scheduledSellTargetRank,
     scheduledSellTriggerDirection,
+    scheduledSellTriggerType,
     sellOrderMode,
     sellTradeUnitPointsLabel,
+    setScheduledSellTargetProfitRatePercent,
     setScheduledSellTargetRank,
     setScheduledSellTriggerDirection,
+    setScheduledSellTriggerType,
     setSellOrderMode,
   } = useHomeTradeFlow({
     accessToken,
@@ -1533,15 +1541,19 @@ function HomePage() {
     }
 
     setSellOrderMode('scheduled');
+    setScheduledSellTriggerType(pendingScheduledSellPreset.triggerType);
     setScheduledSellTriggerDirection('RANK_IMPROVES_TO');
     setScheduledSellTargetRank(pendingScheduledSellPreset.targetRank);
+    setScheduledSellTargetProfitRatePercent(pendingScheduledSellPreset.targetProfitRatePercent);
     setSellQuantity(pendingScheduledSellPreset.quantity);
     setPendingScheduledSellPreset(null);
   }, [
     activeTradeModal,
     pendingScheduledSellPreset,
+    setScheduledSellTargetProfitRatePercent,
     setScheduledSellTargetRank,
     setScheduledSellTriggerDirection,
+    setScheduledSellTriggerType,
     setSellOrderMode,
     setSellQuantity,
     tradeSelectedSellPositionId,
@@ -1938,18 +1950,18 @@ function HomePage() {
   );
   const handleOpenStrategyScheduledSellTradeModal = useCallback(
     (position: GamePosition, strategyType: GameStrategyType) => {
-      const targetRank = getScheduledSellTargetRankForStrategy(strategyType);
       const holding = openGameHoldings.find((item) => item.positionId === position.id);
+      const preset = getScheduledSellPresetForStrategy(strategyType);
       const quantity = getScheduledSellHalfQuantity(holding?.sellableQuantity ?? 0);
 
-      if (targetRank === null || quantity <= 0) {
+      if (!holding || !preset || quantity <= 0) {
         setGameActionStatus('지금 예약 매도할 수 있는 수량이 없습니다.');
         return;
       }
 
       setTradeTargetVideoId(position.videoId);
       setTradeTargetPositionId(position.id);
-      setPendingScheduledSellPreset({ positionId: position.id, quantity, targetRank });
+      setPendingScheduledSellPreset({ positionId: position.id, quantity, ...preset });
       setActiveTradeModal('sell');
     },
     [openGameHoldings, setActiveTradeModal, setGameActionStatus],
@@ -2610,6 +2622,7 @@ function HomePage() {
         isOpen={isGameModalOpen}
         onClose={() => setIsGameModalOpen(false)}
         seasonEndAt={currentGameSeason?.endAt}
+        seasonStartAt={currentGameSeason?.startAt}
       >
         {renderPortfolioContent(true)}
       </GamePanelModal>
@@ -2675,14 +2688,18 @@ function HomePage() {
         onChangeQuantity={handleSellQuantityChange}
         onClose={closeTradeModalFromFlow}
         onChangeSellOrderMode={canScheduleSellCurrentSelection ? setSellOrderMode : undefined}
+        onChangeScheduledSellTriggerType={setScheduledSellTriggerType}
         onChangeScheduledSellTriggerDirection={setScheduledSellTriggerDirection}
         onChangeScheduledSellTargetRank={setScheduledSellTargetRank}
+        onChangeScheduledSellTargetProfitRatePercent={setScheduledSellTargetProfitRatePercent}
         onConfirm={() => {
           void (sellOrderMode === 'scheduled' ? handleCreateScheduledSellOrder() : handleSellCurrentVideo());
         }}
         quantity={tradeNormalizedSellQuantity}
         scheduledSellConditionError={scheduledSellConditionError}
+        scheduledSellTriggerType={scheduledSellTriggerType}
         scheduledSellTargetRank={scheduledSellTargetRank}
+        scheduledSellTargetProfitRatePercent={scheduledSellTargetProfitRatePercent}
         scheduledSellTriggerDirection={scheduledSellTriggerDirection}
         sellOrderMode={sellOrderMode}
         summaryItems={
@@ -2691,7 +2708,11 @@ function HomePage() {
                 {
                   label: '예약 조건',
                   value:
-                    scheduledSellTargetRank == null
+                    scheduledSellTriggerType === 'PROFIT_RATE'
+                      ? typeof scheduledSellTargetProfitRatePercent === 'number'
+                        ? `수익률 +${formatPercent(scheduledSellTargetProfitRatePercent)} 도달`
+                        : '수익률을 입력해 주세요.'
+                      : scheduledSellTargetRank == null
                       ? '순위를 입력해 주세요.'
                       : scheduledSellTriggerDirection === 'RANK_DROPS_TO'
                         ? `${formatRank(scheduledSellTargetRank)} 이하 이탈`

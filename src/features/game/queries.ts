@@ -241,8 +241,12 @@ function applyOptimisticSellToOpenPositions(positions: GamePosition[], input: Se
       reservedForSell: remainingScheduledSellQuantity > 0,
       scheduledSellQuantity: remainingScheduledSellQuantity,
       scheduledSellOrderId: remainingScheduledSellQuantity > 0 ? position.scheduledSellOrderId ?? null : null,
+      scheduledSellTriggerType:
+        remainingScheduledSellQuantity > 0 ? position.scheduledSellTriggerType ?? null : null,
       scheduledSellTargetRank:
         remainingScheduledSellQuantity > 0 ? position.scheduledSellTargetRank ?? null : null,
+      scheduledSellTargetProfitRatePercent:
+        remainingScheduledSellQuantity > 0 ? position.scheduledSellTargetProfitRatePercent ?? null : null,
       scheduledSellTriggerDirection:
         remainingScheduledSellQuantity > 0 ? position.scheduledSellTriggerDirection ?? null : null,
     });
@@ -271,8 +275,10 @@ function buildOptimisticScheduledSellOrder(
     channelTitle: sourcePosition?.channelTitle ?? '',
     thumbnailUrl: sourcePosition?.thumbnailUrl ?? '',
     regionCode: input.regionCode,
-    targetRank: input.targetRank,
-    triggerDirection: input.triggerDirection,
+    triggerType: input.triggerType,
+    targetRank: input.targetRank ?? null,
+    targetProfitRatePercent: input.targetProfitRatePercent ?? null,
+    triggerDirection: input.triggerDirection ?? 'RANK_IMPROVES_TO',
     status: 'PENDING',
     currentRank: sourcePosition?.currentRank ?? null,
     buyRank: sourcePosition?.buyRank ?? 0,
@@ -312,7 +318,9 @@ function applyScheduledSellSummaryToPosition(
     reservedForSell: scheduledSellQuantity > 0,
     scheduledSellOrderId: primaryOrder?.id ?? null,
     scheduledSellQuantity,
+    scheduledSellTriggerType: primaryOrder?.triggerType ?? null,
     scheduledSellTargetRank: primaryOrder?.targetRank ?? null,
+    scheduledSellTargetProfitRatePercent: primaryOrder?.targetProfitRatePercent ?? null,
     scheduledSellTriggerDirection: primaryOrder?.triggerDirection ?? null,
   } satisfies GamePosition;
 }

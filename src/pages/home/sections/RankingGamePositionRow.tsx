@@ -11,7 +11,7 @@ import {
   type OpenGameHolding,
 } from '../gameHelpers';
 import { buildPositionStrategyBadges } from '../gameStrategyTags';
-import { getScheduledSellTargetRankForStrategy } from '../scheduledSellStrategyPreset';
+import { getScheduledSellPresetForStrategy } from '../scheduledSellStrategyPreset';
 import { formatSignedProfitRate } from '../utils';
 import RankingGameReservedSellBadge from './RankingGameReservedSellBadge';
 
@@ -80,7 +80,9 @@ function mapHoldingToGamePosition(holding: OpenGameHolding): GamePosition {
     closedAt: null,
     reservedForSell: holding.reservedForSell,
     scheduledSellOrderId: holding.scheduledSellOrderId,
+    scheduledSellTriggerType: holding.scheduledSellTriggerType,
     scheduledSellTargetRank: holding.scheduledSellTargetRank,
+    scheduledSellTargetProfitRatePercent: holding.scheduledSellTargetProfitRatePercent,
     scheduledSellTriggerDirection: holding.scheduledSellTriggerDirection,
     scheduledSellQuantity: holding.scheduledSellQuantity,
   };
@@ -199,7 +201,7 @@ function RankingGamePositionRowComponent({
                       const canOpenPreset =
                         badge.state === 'target' &&
                         canOpenStrategyScheduledSellTrade &&
-                        getScheduledSellTargetRankForStrategy(badge.type) !== null;
+                        getScheduledSellPresetForStrategy(badge.type) !== null;
 
                       if (canOpenPreset) {
                         return (

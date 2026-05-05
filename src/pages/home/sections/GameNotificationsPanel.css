@@ -61,6 +61,11 @@
   background: color-mix(in srgb, var(--surface-stat) 44%, transparent);
 }
 
+.game-notifications__item[data-clicked='true'] {
+  border-color: color-mix(in srgb, var(--surface-stat-border) 58%, transparent);
+  opacity: 0.78;
+}
+
 .game-notifications__body {
   align-items: stretch;
   display: grid;
@@ -139,6 +144,31 @@
   font-weight: 800;
   gap: 6px;
   justify-content: space-between;
+}
+
+.game-notifications__meta {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.game-notifications__click-state {
+  border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+  border-radius: 999px;
+  flex: 0 0 auto;
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 3px 6px;
+}
+
+.game-notifications__click-state[data-clicked='true'] {
+  color: var(--text-muted);
+}
+
+.game-notifications__click-state[data-clicked='false'] {
+  color: var(--accent-primary);
 }
 
 .game-notifications__copy strong,

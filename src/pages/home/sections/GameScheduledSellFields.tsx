@@ -1,28 +1,59 @@
-import type { ScheduledSellTriggerDirection } from '../../../features/game/types';
+import type { ScheduledSellTriggerDirection, ScheduledSellTriggerType } from '../../../features/game/types';
 
 interface GameScheduledSellFieldsProps {
   conditionError?: string | null;
   disabled?: boolean;
+  onChangeTriggerType: (triggerType: ScheduledSellTriggerType) => void;
   onChangeTriggerDirection: (direction: ScheduledSellTriggerDirection) => void;
   onChangeTargetRank: (rank: number | null) => void;
+  onChangeTargetProfitRatePercent: (profitRatePercent: number | null) => void;
   targetRank: number | null;
+  targetProfitRatePercent: number | null;
   triggerDirection: ScheduledSellTriggerDirection;
+  triggerType: ScheduledSellTriggerType;
 }
 
 export default function GameScheduledSellFields({
   conditionError = null,
   disabled = false,
+  onChangeTriggerType,
   onChangeTriggerDirection,
   onChangeTargetRank,
+  onChangeTargetProfitRatePercent,
   targetRank,
+  targetProfitRatePercent,
   triggerDirection,
+  triggerType,
 }: GameScheduledSellFieldsProps) {
   const isDropTrigger = triggerDirection === 'RANK_DROPS_TO';
   const quickRanks = [1, 5, 20, 50, 100];
+  const quickProfitRates = [300, 500, 1000];
 
   return (
     <div className="app-shell__game-scheduled-sell-fields">
       <div className="app-shell__game-trade-mode-switch" aria-label="예약 매도 조건">
+        <button
+          className="app-shell__game-trade-mode-option"
+          data-active={triggerType === 'RANK'}
+          disabled={disabled}
+          onClick={() => onChangeTriggerType('RANK')}
+          type="button"
+        >
+          순위
+        </button>
+        <button
+          className="app-shell__game-trade-mode-option"
+          data-active={triggerType === 'PROFIT_RATE'}
+          disabled={disabled}
+          onClick={() => onChangeTriggerType('PROFIT_RATE')}
+          type="button"
+        >
+          수익률
+        </button>
+      </div>
+      {triggerType === 'RANK' ? (
+        <>
+          <div className="app-shell__game-trade-mode-switch" aria-label="순위 조건 방향">
         <button
           className="app-shell__game-trade-mode-option"
           data-active={!isDropTrigger}
@@ -91,6 +122,59 @@ export default function GameScheduledSellFields({
           ? '차트 동기화 때 현재 순위가 방어 순위 밖으로 밀리면 이 포지션을 자동 매도합니다.'
           : '차트 동기화 때 현재 순위가 목표 순위 안으로 들어오면 이 포지션을 자동 매도합니다.'}
       </p>
+        </>
+      ) : (
+        <>
+          <div className="app-shell__game-scheduled-sell-header">
+            <label className="app-shell__game-scheduled-sell-label" htmlFor="game-scheduled-sell-target-profit-rate">
+              목표 수익률
+            </label>
+            <div className="app-shell__game-scheduled-sell-quick-actions" aria-label="목표 수익률 빠른 선택">
+              {quickProfitRates.map((profitRatePercent) => (
+                <button
+                  key={profitRatePercent}
+                  className="app-shell__game-scheduled-sell-quick-action"
+                  data-active={targetProfitRatePercent === profitRatePercent}
+                  disabled={disabled}
+                  onClick={() => onChangeTargetProfitRatePercent(profitRatePercent)}
+                  type="button"
+                >
+                  +{profitRatePercent}%
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="app-shell__game-scheduled-sell-input-wrap">
+            <div className="app-shell__game-scheduled-sell-input-group">
+              <input
+                className="app-shell__game-scheduled-sell-input"
+                disabled={disabled}
+                id="game-scheduled-sell-target-profit-rate"
+                inputMode="decimal"
+                min={0}
+                onChange={(event) => {
+                  if (event.target.value === '') {
+                    onChangeTargetProfitRatePercent(null);
+                    return;
+                  }
+
+                  const nextProfitRatePercent = Number.parseFloat(event.target.value);
+                  onChangeTargetProfitRatePercent(
+                    Number.isFinite(nextProfitRatePercent) ? Math.max(0, nextProfitRatePercent) : null,
+                  );
+                }}
+                step="1"
+                type="number"
+                value={targetProfitRatePercent ?? ''}
+              />
+              <span className="app-shell__game-scheduled-sell-suffix">% 이상 수익 시</span>
+            </div>
+          </div>
+          <p className="app-shell__modal-field-copy">
+            차트 동기화 때 현재 평가 금액이 매수 금액 대비 목표 수익률에 도달하면 자동 매도합니다.
+          </p>
+        </>
+      )}
       <p className="app-shell__game-scheduled-sell-note">
         차트아웃 상태에서는 예약 매도가 체결되지 않습니다.
       </p>

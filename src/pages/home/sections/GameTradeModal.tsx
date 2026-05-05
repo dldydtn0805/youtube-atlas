@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import ThumbnailPlayOverlay from '../../../components/ThumbnailPlayOverlay/ThumbnailPlayOverlay';
-import type { ScheduledSellTriggerDirection } from '../../../features/game/types';
+import type { ScheduledSellTriggerDirection, ScheduledSellTriggerType } from '../../../features/game/types';
 import useBodyScrollLock from '../hooks/useBodyScrollLock';
 import useHeaderSwipeToClose from '../hooks/useHeaderSwipeToClose';
 import {
@@ -39,13 +39,17 @@ interface GameTradeModalProps {
   mode: 'buy' | 'sell';
   onChangeQuantity: (quantity: number) => void;
   onChangeSellOrderMode?: (mode: 'instant' | 'scheduled') => void;
+  onChangeScheduledSellTriggerType?: (triggerType: ScheduledSellTriggerType) => void;
   onChangeScheduledSellTriggerDirection?: (direction: ScheduledSellTriggerDirection) => void;
   onChangeScheduledSellTargetRank?: (rank: number | null) => void;
+  onChangeScheduledSellTargetProfitRatePercent?: (profitRatePercent: number | null) => void;
   onClose: () => void;
   onConfirm: () => void;
   quantity: number;
   scheduledSellConditionError?: string | null;
+  scheduledSellTriggerType?: ScheduledSellTriggerType;
   scheduledSellTargetRank?: number | null;
+  scheduledSellTargetProfitRatePercent?: number | null;
   scheduledSellTriggerDirection?: ScheduledSellTriggerDirection;
   sellOrderMode?: 'instant' | 'scheduled';
   summaryItems: GameTradeModalSummaryItem[];
@@ -105,13 +109,17 @@ export default function GameTradeModal({
   mode,
   onChangeQuantity,
   onChangeSellOrderMode,
+  onChangeScheduledSellTriggerType,
   onChangeScheduledSellTriggerDirection,
   onChangeScheduledSellTargetRank,
+  onChangeScheduledSellTargetProfitRatePercent,
   onClose,
   onConfirm,
   quantity,
   scheduledSellConditionError = null,
+  scheduledSellTriggerType = 'RANK',
   scheduledSellTargetRank = 100,
+  scheduledSellTargetProfitRatePercent = 300,
   scheduledSellTriggerDirection = 'RANK_IMPROVES_TO',
   sellOrderMode = 'instant',
   summaryItems,
@@ -279,7 +287,11 @@ export default function GameTradeModal({
               </div>
             </div>
 
-            {isScheduledSellMode && onChangeScheduledSellTargetRank && onChangeScheduledSellTriggerDirection ? (
+            {isScheduledSellMode &&
+            onChangeScheduledSellTriggerType &&
+            onChangeScheduledSellTargetRank &&
+            onChangeScheduledSellTargetProfitRatePercent &&
+            onChangeScheduledSellTriggerDirection ? (
               <div className="app-shell__modal-field">
                 <div className="app-shell__section-heading">
                   <p className="app-shell__section-eyebrow">Trigger</p>
@@ -288,10 +300,14 @@ export default function GameTradeModal({
                 <GameScheduledSellFields
                   conditionError={scheduledSellConditionError}
                   disabled={isSubmitting}
+                  onChangeTriggerType={onChangeScheduledSellTriggerType}
                   onChangeTriggerDirection={onChangeScheduledSellTriggerDirection}
                   onChangeTargetRank={onChangeScheduledSellTargetRank}
+                  onChangeTargetProfitRatePercent={onChangeScheduledSellTargetProfitRatePercent}
                   targetRank={scheduledSellTargetRank}
+                  targetProfitRatePercent={scheduledSellTargetProfitRatePercent}
                   triggerDirection={scheduledSellTriggerDirection}
+                  triggerType={scheduledSellTriggerType}
                 />
               </div>
             ) : null}
