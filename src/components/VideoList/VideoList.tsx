@@ -9,6 +9,7 @@ import './VideoList.css';
 export type { VideoCardTradeActionState };
 
 const VIDEO_LIST_PAGE_SIZE = 20;
+const VIDEO_LIST_MAX_ITEM_COUNT = 200;
 
 export interface FeaturedVideoSection {
   section: YouTubeCategorySection;
@@ -133,7 +134,7 @@ function getSectionPaginationKey(currentSection: YouTubeCategorySection, section
 }
 
 function formatPaginationTotal(itemCount: number, hasNextPage: boolean) {
-  return hasNextPage ? `${itemCount}+` : itemCount.toLocaleString('ko-KR');
+  return (hasNextPage ? VIDEO_LIST_MAX_ITEM_COUNT : itemCount).toLocaleString('ko-KR');
 }
 
 function shouldPrefetchNextBackendPage(nextPageIndex: number, loadedPageCount: number) {
