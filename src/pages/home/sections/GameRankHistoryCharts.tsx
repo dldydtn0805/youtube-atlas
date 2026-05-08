@@ -58,7 +58,14 @@ function getEventLabel(point: RankHistoryPoint) {
 
 function getFadedFlags(points: RankHistoryPoint[]) {
   const buyPointIndex = points.findIndex((point) => 'buyPoint' in point && point.buyPoint);
+  const hasTradeMarker = points.some((point) => {
+    return ('buyPoint' in point && point.buyPoint) || ('sellPoint' in point && point.sellPoint);
+  });
   let isHolding = false;
+
+  if (!hasTradeMarker) {
+    return points.map(() => false);
+  }
 
   return points.map((point, index) => {
     const isBuyPoint = 'buyPoint' in point && point.buyPoint;
@@ -228,7 +235,7 @@ function createRankLineData(points: ChartPoint[], outRank: number, rankLineType:
         color: point.chartOut ? '#f59e0b' : point.isFaded ? 'rgba(217, 119, 6, 0.38)' : '#f2b47b',
       },
       rankLineType,
-      symbol: point.chartOut ? 'emptyCircle' : 'circle',
+      symbol: point.chartOut ? 'emptyCircle' : 'none',
       value,
     };
   });
@@ -244,7 +251,7 @@ function createChartOption(points: ChartPoint[], isMobile: boolean): EChartsOpti
   const chartGridLeft = isMobile ? 72 : 58;
   const chartGridRight = isMobile ? 10 : 12;
   const rankGridHeight = isMobile ? 205 : 220;
-  const viewGridTop = rankGridHeight + (isMobile ? 52 : 56);
+  const viewGridTop = rankGridHeight + (isMobile ? 66 : 56);
 
   return {
     animationDuration: 380,
