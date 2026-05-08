@@ -33,7 +33,7 @@ export default function useEChart(option: EChartsOption) {
       return;
     }
 
-    const chart = echarts.init(elementRef.current, null, { renderer: 'canvas', useDirtyRect: true });
+    const chart = echarts.init(elementRef.current, null, { renderer: 'svg' });
     chartRef.current = chart;
     const resizeObserver = new ResizeObserver(() => requestResize());
 
