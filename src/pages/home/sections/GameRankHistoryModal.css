@@ -8,74 +8,22 @@
   margin: 0;
 }
 
-.app-shell__game-rank-history-chart {
+.app-shell__modal--history .app-shell__modal-field-copy {
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.app-shell__game-rank-history-chart,
+.app-shell__game-rank-history-charts {
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 
-.app-shell__game-rank-history-chart-svg {
-  display: block;
-  height: auto;
-  max-width: 100%;
-  overflow: visible;
+.app-shell__game-rank-history-echart {
+  height: 380px;
+  min-width: 0;
   width: 100%;
-}
-
-.app-shell__game-rank-history-axis {
-  stroke: rgba(100, 116, 139, 0.32);
-  stroke-width: 1;
-}
-
-.app-shell__game-rank-history-buy-guide {
-  stroke: rgba(217, 119, 6, 0.28);
-  stroke-dasharray: 4 6;
-  stroke-width: 1.5;
-}
-
-.app-shell__game-rank-history-line {
-  stroke: #b45309;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 3;
-}
-
-.app-shell__game-rank-history-line--prebuy {
-  stroke: rgba(180, 83, 9, 0.34);
-  stroke-dasharray: 5 6;
-}
-
-.app-shell__game-rank-history-point {
-  fill: #d97706;
-}
-
-.app-shell__game-rank-history-point--prebuy {
-  fill: rgba(217, 119, 6, 0.42);
-}
-
-.app-shell__game-rank-history-chartout {
-  fill: #fff;
-  stroke: #b45309;
-  stroke-width: 2;
-}
-
-.app-shell__game-rank-history-chartout--prebuy {
-  fill: rgba(255, 255, 255, 0.85);
-  stroke: rgba(180, 83, 9, 0.55);
-}
-
-.app-shell__game-rank-history-event {
-  fill: rgba(15, 23, 42, 0.9);
-}
-
-.app-shell__game-rank-history-event-label {
-  fill: #fff;
-  font-size: 9px;
-  font-weight: 800;
-}
-
-.app-shell__game-rank-history-axis-label {
-  fill: var(--text-muted);
-  font-size: 11px;
 }
 
 .app-shell__game-rank-history-stats {
@@ -84,130 +32,9 @@
   gap: 8px;
 }
 
-.app-shell__game-rank-history-samples {
-  display: grid;
-  gap: 10px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.app-shell__game-rank-history-sample {
-  align-items: center;
-  background:
-    radial-gradient(circle at top left, rgba(250, 204, 21, 0.12), transparent 42%),
-    rgba(255, 255, 255, 0.66);
-  border: 1px solid rgba(217, 119, 6, 0.14);
-  border-radius: 18px;
-  display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(0, 1fr) auto;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -1px 0 rgba(250, 204, 21, 0.06);
-  padding: 12px 14px;
-}
-
-.app-shell__game-rank-history-sample[data-pre-buy='true'] {
-  background:
-    radial-gradient(circle at top left, rgba(250, 204, 21, 0.08), transparent 42%),
-    rgba(255, 255, 255, 0.5);
-  border-style: dashed;
-}
-
-.app-shell__game-rank-history-sample-rank,
-.app-shell__game-rank-history-sample-meta {
-  margin: 0;
-}
-
-.app-shell__game-rank-history-sample-rank {
-  color: var(--text);
-  font-size: 0.88rem;
-  font-weight: 800;
-}
-
-.app-shell__game-rank-history-sample-meta {
-  color: var(--text-muted);
-  font-size: 0.78rem;
-}
-
-.app-shell__game-rank-history-sample-side {
-  align-items: flex-end;
-  display: grid;
-  gap: 6px;
-  justify-items: end;
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-axis {
-  stroke: rgba(148, 163, 184, 0.26);
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-buy-guide {
-  stroke: rgba(250, 204, 21, 0.34);
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-line,
-:root[data-theme='dark'] .app-shell__game-rank-history-point {
-  stroke: #facc15;
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-line--prebuy {
-  stroke: rgba(250, 204, 21, 0.42);
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-line {
-  fill: none;
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-point {
-  fill: #facc15;
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-point--prebuy {
-  fill: rgba(250, 204, 21, 0.5);
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-chartout {
-  fill: rgba(8, 17, 31, 0.96);
-  stroke: #fbbf24;
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-chartout--prebuy {
-  fill: rgba(8, 17, 31, 0.88);
-  stroke: rgba(251, 191, 36, 0.58);
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-event {
-  fill: rgba(237, 244, 255, 0.92);
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-event-label {
-  fill: #08111f;
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-sample {
-  background:
-    radial-gradient(circle at top left, rgba(250, 204, 21, 0.1), transparent 42%),
-    linear-gradient(180deg, rgba(36, 24, 6, 0.96), rgba(24, 18, 8, 0.9)),
-    rgba(24, 18, 8, 0.84);
-  border-color: rgba(250, 204, 21, 0.16);
-}
-
-:root[data-theme='dark'] .app-shell__game-rank-history-sample[data-pre-buy='true'] {
-  background:
-    radial-gradient(circle at top left, rgba(250, 204, 21, 0.08), transparent 42%),
-    linear-gradient(180deg, rgba(34, 28, 12, 0.88), rgba(22, 18, 8, 0.84)),
-    rgba(22, 18, 8, 0.74);
-  border-style: dashed;
-}
-
 @media (max-width: 768px),
   (max-width: 1024px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
-  :root[data-mobile-layout='true'] .app-shell__game-rank-history-sample {
-    grid-template-columns: 1fr;
-  }
-
-  :root[data-mobile-layout='true'] .app-shell__game-rank-history-sample-side {
-    justify-items: start;
+  :root[data-mobile-layout='true'] .app-shell__game-rank-history-echart {
+    height: 360px;
   }
 }
