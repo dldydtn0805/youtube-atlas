@@ -1,10 +1,10 @@
 import type { AchievementTitleGrade } from '../../features/game/types';
 
 const titleStarCountByGrade: Record<AchievementTitleGrade, number> = {
-  NORMAL: 1,
-  RARE: 2,
-  SUPER: 3,
-  ULTIMATE: 4,
+  NORMAL: 0,
+  RARE: 1,
+  SUPER: 2,
+  ULTIMATE: 3,
 };
 
 export function getCommentTitleStars(grade: AchievementTitleGrade) {

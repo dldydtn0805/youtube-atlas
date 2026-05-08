@@ -1,4 +1,3 @@
-.comment-message__title-badge[data-grade='SUPER']::after,
 .comment-message__title-badge[data-grade='ULTIMATE']::after {
   animation: comment-title-badge-shimmer 2.7s ease-in-out infinite;
   background: linear-gradient(110deg, transparent, var(--ctbsp, rgba(255, 255, 255, 0.5)), transparent);

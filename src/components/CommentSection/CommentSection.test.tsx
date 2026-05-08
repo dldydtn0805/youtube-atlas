@@ -474,7 +474,7 @@ describe('CommentSection', () => {
     expect(identity).toHaveTextContent(/Gold User\s*Atlas Sniper/);
     expect(titleBadge).toHaveAttribute('data-grade', 'RARE');
     expect(titleStar).toHaveAttribute('data-grade', 'RARE');
-    expect(titleStar).toHaveTextContent('★★');
+    expect(titleStar).toHaveTextContent('★');
   });
 
   it('falls back to the current user tier for own messages without tier data', () => {

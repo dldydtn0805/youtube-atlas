@@ -33,3 +33,7 @@
   line-height: 1;
   -webkit-text-stroke: 0.25px currentColor;
 }
+
+.comment-message__title-star:empty {
+  display: none;
+}
