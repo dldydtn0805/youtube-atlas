@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { lazy, startTransition, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
@@ -6,7 +6,7 @@ import AchievementTitleToast from './sections/AchievementTitleToast';
 import GameActionToast from './sections/GameActionToast';
 import AppHeader from './sections/AppHeader';
 import { GameSelectedVideoPriceSummary, SelectedVideoGameActionsBundle } from './sections/GameActionContent';
-import GameTierModal, { type TierModalTab } from './sections/GameTierModal';
+import type { TierModalTab } from './sections/GameTierModal';
 import GameHighlightsTab from './sections/GameHighlightsTab';
 import GamePanelModal from './sections/GamePanelModal';
 import ChartViewModal from './sections/ChartViewModal';
@@ -14,13 +14,12 @@ import { RegionFilterModal } from './sections/FilterPanels';
 import GamePanelSection from './sections/GamePanelSection';
 import GameRankHistoryModal from './sections/GameRankHistoryModal';
 import GameSellPreviewDetail from './sections/GameSellPreviewDetail';
-import GameSeasonResultsModal from './sections/GameSeasonResultsModal/GameSeasonResultsModal';
 import GameTradeModal from './sections/GameTradeModal';
 import GameIntroModal from './sections/GameIntroModal';
 import GameNotificationModal from './sections/GameNotificationModal';
 import GameNotificationToast from './sections/GameNotificationToast';
-import GameWalletModal from './sections/GameWalletModal';
 import HomePlaybackSection from './sections/HomePlaybackSection';
+import LazyModalFallback from './sections/LazyModalFallback';
 import { RankingGameLeaderboardTab } from './sections/RankingGamePanel';
 import StickySelectedVideoControls from './sections/StickySelectedVideoControls';
 import TrendTicker from './sections/TrendTicker';
@@ -125,6 +124,10 @@ import { useMusicTopVideos, usePopularVideosByCategory, useVideoCategories } fro
 import type { YouTubeVideoItem } from '../../features/youtube/types';
 import { ApiRequestError, isApiConfigured } from '../../lib/api';
 import '../../styles/app.css';
+
+const GameSeasonResultsModal = lazy(() => import('./sections/GameSeasonResultsModal/GameSeasonResultsModal'));
+const GameTierModal = lazy(() => import('./sections/GameTierModal'));
+const GameWalletModal = lazy(() => import('./sections/GameWalletModal'));
 
 const COLLAPSED_HOME_SECTIONS_STORAGE_KEY = 'youtube-atlas-collapsed-home-sections';
 const GAME_INTRO_MODAL_DISMISSED_STORAGE_KEY = 'youtube-atlas-game-intro-dismissed';
@@ -2609,26 +2612,34 @@ function HomePage() {
         regionOptions={regionOptions}
         selectedRegionCode={selectedRegionCode}
       />
-      <GameWalletModal
-        computedWalletTotalAssetPoints={computedWalletTotalAssetPoints}
-        currentTierCode={gameTierProgress?.currentTier.tierCode}
-        isOpen={isWalletModalOpen}
-        onClose={() => setIsWalletModalOpen(false)}
-        openPositionsBuyPoints={openPositionsBuyPoints}
-        openPositionsEvaluationPoints={openPositionsEvaluationPoints}
-        openPositionsProfitPoints={openPositionsProfitPoints}
-        season={currentGameSeason}
-        walletUpdatedAt={currentGameSeasonUpdatedAt}
-      />
-      <GameSeasonResultsModal
-        isOpen={isSeasonResultsModalOpen}
-        onClose={() => setIsSeasonResultsModalOpen(false)}
-        onOpenHighlightChart={handleOpenSeasonResultHighlightChart}
-        onPlayHighlightVideo={handlePlaySeasonResultHighlightVideo}
-        profileImageUrl={user?.pictureUrl ?? null}
-        profileLabel={user?.displayName || user?.email || null}
-        results={gameSeasonResults}
-      />
+      {isWalletModalOpen ? (
+        <Suspense fallback={<LazyModalFallback title="지갑 현황 준비 중" />}>
+          <GameWalletModal
+            computedWalletTotalAssetPoints={computedWalletTotalAssetPoints}
+            currentTierCode={gameTierProgress?.currentTier.tierCode}
+            isOpen={isWalletModalOpen}
+            onClose={() => setIsWalletModalOpen(false)}
+            openPositionsBuyPoints={openPositionsBuyPoints}
+            openPositionsEvaluationPoints={openPositionsEvaluationPoints}
+            openPositionsProfitPoints={openPositionsProfitPoints}
+            season={currentGameSeason}
+            walletUpdatedAt={currentGameSeasonUpdatedAt}
+          />
+        </Suspense>
+      ) : null}
+      {isSeasonResultsModalOpen ? (
+        <Suspense fallback={<LazyModalFallback title="시즌 결과 준비 중" />}>
+          <GameSeasonResultsModal
+            isOpen={isSeasonResultsModalOpen}
+            onClose={() => setIsSeasonResultsModalOpen(false)}
+            onOpenHighlightChart={handleOpenSeasonResultHighlightChart}
+            onPlayHighlightVideo={handlePlaySeasonResultHighlightVideo}
+            profileImageUrl={user?.pictureUrl ?? null}
+            profileLabel={user?.displayName || user?.email || null}
+            results={gameSeasonResults}
+          />
+        </Suspense>
+      ) : null}
       <GamePanelModal
         isOpen={isGameModalOpen}
         onClose={() => setIsGameModalOpen(false)}
@@ -2644,15 +2655,19 @@ function HomePage() {
         selectedViewId={effectiveChartView}
         viewOptions={chartViewOptions}
       />
-      <GameTierModal
-        defaultTab={tierModalDefaultTab}
-        highlightsContent={tierModalHighlightsContent}
-        isOpen={isTierModalOpen}
-        isTierProgressLoading={isGameTierProgressLoading}
-        onClose={closeTierModal}
-        rankingContent={tierModalRankingContent}
-        tierProgress={gameTierProgress}
-      />
+      {isTierModalOpen ? (
+        <Suspense fallback={<LazyModalFallback title="티어 상세 준비 중" />}>
+          <GameTierModal
+            defaultTab={tierModalDefaultTab}
+            highlightsContent={tierModalHighlightsContent}
+            isOpen={isTierModalOpen}
+            isTierProgressLoading={isGameTierProgressLoading}
+            onClose={closeTierModal}
+            rankingContent={tierModalRankingContent}
+            tierProgress={gameTierProgress}
+          />
+        </Suspense>
+      ) : null}
       <GameTradeModal
         confirmLabel={`${formatGameOrderQuantity(tradeNormalizedBuyQuantity)} 매수`}
         currentRankLabel={formatRank(tradeSelectedVideoCurrentChartRank, { chartOut: tradeSelectedVideoIsChartOut })}

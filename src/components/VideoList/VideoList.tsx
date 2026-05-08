@@ -411,7 +411,7 @@ function VideoList({
                     <img
                       loading="lazy"
                       className="video-card__thumbnail"
-                      src={item.snippet.thumbnails.high.url}
+                      src={item.snippet.thumbnails.medium.url || item.snippet.thumbnails.high.url}
                       alt=""
                     />
                     <ThumbnailPlayOverlay />
