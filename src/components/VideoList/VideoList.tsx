@@ -3,6 +3,8 @@ import { YouTubeCategorySection, YouTubeVideoItem } from '../../features/youtube
 import { formatCompactCount, getFallbackNewBadge, getVideoTrendBadges } from '../../features/trending/presentation';
 import type { VideoTrendSignal } from '../../features/trending/types';
 import ThumbnailPlayOverlay from '../ThumbnailPlayOverlay/ThumbnailPlayOverlay';
+import VideoListPagination from './Pagination/VideoListPagination';
+import VideoListPaginationOverlay from './Pagination/VideoListPaginationOverlay';
 import VideoCardTradeActions, { type VideoCardTradeActionState } from './VideoCardTradeActions';
 import './VideoList.css';
 
@@ -133,8 +135,10 @@ function getSectionPaginationKey(currentSection: YouTubeCategorySection, section
   return sectionKey ?? currentSection.categoryId;
 }
 
-function formatPaginationTotal(itemCount: number, hasNextPage: boolean) {
-  return (hasNextPage ? VIDEO_LIST_MAX_ITEM_COUNT : itemCount).toLocaleString('ko-KR');
+function getPageCount(itemCount: number, hasNextPage: boolean) {
+  const totalItemCount = hasNextPage ? VIDEO_LIST_MAX_ITEM_COUNT : itemCount;
+
+  return Math.max(1, Math.ceil(totalItemCount / VIDEO_LIST_PAGE_SIZE));
 }
 
 function shouldPrefetchNextBackendPage(nextPageIndex: number, loadedPageCount: number) {
@@ -170,6 +174,7 @@ function VideoList({
   primarySectionCollapseKey,
 }: VideoListProps) {
   const [pageIndexBySectionKey, setPageIndexBySectionKey] = useState<Record<string, number>>({});
+  const [prefetchAllSectionKey, setPrefetchAllSectionKey] = useState<string | null>(null);
   const paginatedSectionRef = useRef<HTMLElement | null>(null);
   const prefetchedItemCountBySectionKey = useRef<Record<string, number>>({});
   const listResetKey = [
@@ -181,8 +186,37 @@ function VideoList({
 
   useEffect(() => {
     setPageIndexBySectionKey({});
+    setPrefetchAllSectionKey(null);
     prefetchedItemCountBySectionKey.current = {};
   }, [listResetKey]);
+
+  useEffect(() => {
+    if (!prefetchAllSectionKey || !section) {
+      return;
+    }
+
+    const mainPaginationKey = getSectionPaginationKey(section, primarySectionCollapseKey);
+
+    if (prefetchAllSectionKey !== mainPaginationKey) {
+      return;
+    }
+
+    if (!hasNextPage) {
+      setPrefetchAllSectionKey(null);
+      return;
+    }
+
+    if (!isFetchingNextPage) {
+      onLoadMore();
+    }
+  }, [
+    hasNextPage,
+    isFetchingNextPage,
+    onLoadMore,
+    prefetchAllSectionKey,
+    primarySectionCollapseKey,
+    section,
+  ]);
 
   const scrollPaginatedSectionToTop = () => {
     const sectionElement = paginatedSectionRef.current;
@@ -251,6 +285,7 @@ function VideoList({
     const shouldPaginate = showLoadMore;
     const storedPageIndex = pageIndexBySectionKey[paginationKey] ?? 0;
     const loadedPageCount = Math.max(1, Math.ceil(currentSection.items.length / VIDEO_LIST_PAGE_SIZE));
+    const pageCount = getPageCount(currentSection.items.length, hasNextPage);
     const currentPageIndex = shouldPaginate
       ? Math.min(storedPageIndex, loadedPageCount - 1)
       : 0;
@@ -264,21 +299,34 @@ function VideoList({
     const canGoNextPage =
       shouldPaginate &&
       (canGoNextLoadedPage || hasNextPage);
-    const displayedStartIndex = currentSection.items.length > 0 ? pageStartIndex + 1 : 0;
-    const displayedEndIndex = Math.min(pageEndIndex, currentSection.items.length);
-    const handlePreviousPage = () => {
+    const isPrefetchingAllPages = prefetchAllSectionKey === paginationKey && hasNextPage;
+    const prefetchNextBackendPage = (nextPageIndex: number) => {
+      const hasPrefetchedCurrentItems =
+        prefetchedItemCountBySectionKey.current[paginationKey] === currentSection.items.length;
+
+      if (
+        !isFetchingNextPage &&
+        hasNextPage &&
+        !hasPrefetchedCurrentItems &&
+        shouldPrefetchNextBackendPage(nextPageIndex, loadedPageCount)
+      ) {
+        prefetchedItemCountBySectionKey.current[paginationKey] = currentSection.items.length;
+        onLoadMore();
+      }
+    };
+    const handlePageChange = (nextPageIndex: number) => {
+      const safePageIndex = Math.min(Math.max(nextPageIndex, 0), pageCount - 1);
+      const loadedSafePageIndex = Math.min(safePageIndex, loadedPageCount - 1);
+
       setPageIndexBySectionKey((currentValue) => ({
         ...currentValue,
-        [paginationKey]: Math.max((currentValue[paginationKey] ?? currentPageIndex) - 1, 0),
+        [paginationKey]: loadedSafePageIndex,
       }));
+      prefetchNextBackendPage(safePageIndex);
       scrollPaginatedSectionToTop();
     };
-    const handleFirstPage = () => {
-      setPageIndexBySectionKey((currentValue) => ({
-        ...currentValue,
-        [paginationKey]: 0,
-      }));
-      scrollPaginatedSectionToTop();
+    const handlePreviousPage = () => {
+      handlePageChange((pageIndexBySectionKey[paginationKey] ?? currentPageIndex) - 1);
     };
     const handleNextPage = () => {
       if (isFetchingNextPage && !canGoNextLoadedPage) {
@@ -292,21 +340,13 @@ function VideoList({
         ...currentValue,
         [paginationKey]: nextPageIndex,
       }));
-
-      const hasPrefetchedCurrentItems =
-        prefetchedItemCountBySectionKey.current[paginationKey] === currentSection.items.length;
-
-      if (
-        !isFetchingNextPage &&
-        hasNextPage &&
-        !hasPrefetchedCurrentItems &&
-        shouldPrefetchNextBackendPage(nextPageIndex, loadedPageCount)
-      ) {
-        prefetchedItemCountBySectionKey.current[paginationKey] = currentSection.items.length;
-        onLoadMore();
-      }
-
+      prefetchNextBackendPage(nextPageIndex);
       scrollPaginatedSectionToTop();
+    };
+    const handleOpenPageSelect = () => {
+      if (hasNextPage) {
+        setPrefetchAllSectionKey(paginationKey);
+      }
     };
 
     return (
@@ -442,48 +482,19 @@ function VideoList({
         ) : !isCollapsed ? (
           <p className="video-list__section-status">{emptyMessage}</p>
         ) : null}
+        {isPrefetchingAllPages ? <VideoListPaginationOverlay /> : null}
         {!isCollapsed && shouldPaginate && (currentSection.items.length > VIDEO_LIST_PAGE_SIZE || hasNextPage) ? (
-          <div className="video-list__pagination" aria-label={`${currentSection.label} 페이지 이동`}>
-            <button
-              aria-label="처음"
-              className="video-list__page-button"
-              disabled={!canGoPreviousPage}
-              onClick={handleFirstPage}
-              title="처음"
-              type="button"
-            >
-              <span className="video-list__page-icon" aria-hidden="true">
-                |&lt;
-              </span>
-            </button>
-            <button
-              aria-label="이전"
-              className="video-list__page-button"
-              disabled={!canGoPreviousPage}
-              onClick={handlePreviousPage}
-              title="이전"
-              type="button"
-            >
-              <span className="video-list__page-icon" aria-hidden="true">
-                &lt;
-              </span>
-            </button>
-            <span className="video-list__page-status">
-              {displayedStartIndex}-{displayedEndIndex} / {formatPaginationTotal(currentSection.items.length, hasNextPage)}
-            </span>
-            <button
-              aria-label="다음"
-              className="video-list__page-button"
-              disabled={!canGoNextPage}
-              onClick={handleNextPage}
-              title="다음"
-              type="button"
-            >
-              <span className="video-list__page-icon" aria-hidden="true">
-                &gt;
-              </span>
-            </button>
-          </div>
+          <VideoListPagination
+            canGoNext={canGoNextPage}
+            canGoPrevious={canGoPreviousPage}
+            currentPage={currentPageIndex + 1}
+            label={`${currentSection.label} 페이지 이동`}
+            onNext={handleNextPage}
+            onOpenPageSelect={handleOpenPageSelect}
+            onPageChange={handlePageChange}
+            onPrevious={handlePreviousPage}
+            totalPages={pageCount}
+          />
         ) : null}
       </section>
     );

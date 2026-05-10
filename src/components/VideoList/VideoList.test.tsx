@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import VideoList from './VideoList';
 
@@ -412,7 +412,10 @@ describe('VideoList', () => {
     );
 
     expect(container.querySelectorAll('.video-card')).toHaveLength(20);
-    expect(screen.getByText('1-20 / 45')).toBeInTheDocument();
+    const pagination = screen.getByRole('navigation', { name: '즐겨찾기 채널 페이지 이동' });
+
+    expect(within(pagination).getByRole('combobox', { name: '현재 페이지' })).toHaveValue('1');
+    expect(pagination).toHaveTextContent('/3');
     expect(screen.queryByText('테스트 영상 21')).not.toBeInTheDocument();
   });
 
@@ -436,9 +439,13 @@ describe('VideoList', () => {
         />,
       );
 
+      expect(
+        screen.getByRole('navigation', { name: '즐겨찾기 채널 페이지 이동' }),
+      ).toHaveTextContent('/10');
+
       fireEvent.click(screen.getByRole('button', { name: '다음' }));
 
-      expect(screen.getByText('21-40 / 200')).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: '현재 페이지' })).toHaveValue('2');
       expect(screen.getByText('테스트 영상 21')).toBeInTheDocument();
       expect(onLoadMore).toHaveBeenCalledTimes(1);
       expect(scrollIntoView).toHaveBeenCalledWith({
@@ -448,6 +455,27 @@ describe('VideoList', () => {
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }
+  });
+
+  it('starts preparing every chart page when the page dropdown opens', async () => {
+    const onLoadMore = vi.fn();
+
+    render(
+      <VideoList
+        hasNextPage
+        isError={false}
+        isFetchingNextPage={false}
+        isLoading={false}
+        onLoadMore={onLoadMore}
+        onSelectVideo={vi.fn()}
+        section={buildSection(50)}
+      />,
+    );
+
+    fireEvent.focus(screen.getByRole('combobox', { name: '현재 페이지' }));
+
+    expect(screen.getByRole('status')).toHaveTextContent('페이지를 준비하는 중입니다.');
+    await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
   });
 
   it('does not repeat prefetch when moving to the final loaded client page', () => {
@@ -468,11 +496,11 @@ describe('VideoList', () => {
     fireEvent.click(screen.getByRole('button', { name: '다음' }));
     fireEvent.click(screen.getByRole('button', { name: '다음' }));
 
-    expect(screen.getByText('41-50 / 200')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: '현재 페이지' })).toHaveValue('3');
     expect(onLoadMore).toHaveBeenCalledTimes(1);
   });
 
-  it('returns directly to the first client page', () => {
+  it('jumps directly between loaded client pages from the page dropdown', () => {
     render(
       <VideoList
         hasNextPage={false}
@@ -485,14 +513,18 @@ describe('VideoList', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '다음' }));
-    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+    fireEvent.change(screen.getByRole('combobox', { name: '현재 페이지' }), {
+      target: { value: '3' },
+    });
 
-    expect(screen.getByText('41-45 / 45')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: '현재 페이지' })).toHaveValue('3');
+    expect(screen.getByText('테스트 영상 41')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '처음' }));
+    fireEvent.change(screen.getByRole('combobox', { name: '현재 페이지' }), {
+      target: { value: '1' },
+    });
 
-    expect(screen.getByText('1-20 / 45')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: '현재 페이지' })).toHaveValue('1');
     expect(screen.getByText('테스트 영상 1')).toBeInTheDocument();
     expect(screen.queryByText('테스트 영상 41')).not.toBeInTheDocument();
   });
@@ -537,7 +569,7 @@ describe('VideoList', () => {
 
       fireEvent.click(screen.getByRole('button', { name: '다음' }));
 
-      expect(screen.getByText('41-50 / 200')).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: '현재 페이지' })).toHaveValue('3');
       expect(onLoadMore).toHaveBeenCalledTimes(1);
       expect(scrollIntoView).toHaveBeenCalledWith({
         behavior: 'auto',

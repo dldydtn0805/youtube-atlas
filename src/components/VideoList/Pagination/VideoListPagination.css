@@ -1,0 +1,40 @@
+.video-list__pagination {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+
+.video-list__page-status {
+  align-items: center;
+  color: var(--text-muted);
+  display: inline-flex;
+  font-size: 0.88rem;
+  font-weight: 800;
+  gap: 0.4rem;
+}
+
+.video-list__page-select {
+  appearance: none;
+  background: var(--surface-control);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  min-width: 58px;
+  padding: 0.45rem 1.45rem 0.45rem 0.8rem;
+  text-align: center;
+}
+
+.video-list__page-select:hover,
+.video-list__page-select:focus-visible {
+  background: var(--surface-control-hover);
+  outline: none;
+}
+
+.video-list__page-total {
+  color: var(--text);
+  min-width: 1.25rem;
+}

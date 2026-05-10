@@ -162,14 +162,6 @@
   padding-top: 0.5rem;
 }
 
-.video-list__pagination {
-  align-items: center;
-  display: flex;
-  gap: 0.75rem;
-  justify-content: center;
-  padding-top: 0.5rem;
-}
-
 .video-list__page-button {
   align-items: center;
   background: var(--surface-control);
@@ -201,14 +193,6 @@
 .video-list__page-icon {
   font-size: 1rem;
   line-height: 1;
-}
-
-.video-list__page-status {
-  color: var(--text-muted);
-  font-size: 0.88rem;
-  font-weight: 800;
-  min-width: 116px;
-  text-align: center;
 }
 
 .video-list__load-more {

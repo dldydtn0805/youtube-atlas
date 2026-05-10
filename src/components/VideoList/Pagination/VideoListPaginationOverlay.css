@@ -1,0 +1,44 @@
+.video-list-pagination-overlay {
+  align-items: center;
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  backdrop-filter: blur(14px) saturate(120%);
+  background: rgba(15, 23, 42, 0.22);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 1000;
+}
+
+.video-list-pagination-overlay__panel {
+  align-items: center;
+  background: color-mix(in srgb, var(--surface-panel) 94%, white 6%);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow:
+    0 22px 54px rgba(15, 23, 42, 0.24),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+  color: var(--text);
+  display: inline-flex;
+  font-size: 0.94rem;
+  font-weight: 800;
+  gap: 0.7rem;
+  min-height: 64px;
+  padding: 0 22px;
+}
+
+.video-list-pagination-overlay__spinner {
+  animation: video-list-pagination-overlay-spin 0.9s linear infinite;
+  border: 2px solid rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  border-top-color: var(--accent-primary, #d97706);
+  height: 22px;
+  width: 22px;
+}
+
+@keyframes video-list-pagination-overlay-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
