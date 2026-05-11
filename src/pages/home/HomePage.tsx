@@ -2547,7 +2547,8 @@ function HomePage() {
               isMobileLayout ? onToggleCollapse : onToggleCollapse,
               handleOpenSelectedVideoRankHistory,
               {
-                desktopPlayerDockSlotRef: isDesktopPlayerDockEnabled ? desktopPlayerDockSlotRef : undefined,
+                desktopPlayerDockSlotRef:
+                  isCinematicModeActive && isDesktopPlayerDockEnabled ? desktopPlayerDockSlotRef : undefined,
                 isDesktopMiniPlayerEnabled: false,
               },
             )
