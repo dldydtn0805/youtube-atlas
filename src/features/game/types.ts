@@ -93,6 +93,7 @@ export interface GameSeasonResultHighlights {
   topRankRiser: GameSeasonResultHighlightItem | null;
   mostTaggedPositions: GameSeasonResultHighlightItem[];
   longestHeld: GameSeasonResultHighlightItem | null;
+  highestTierScore: GameSeasonResultHighlightItem | null;
 }
 
 export interface GameSeasonResultHighlightItem {

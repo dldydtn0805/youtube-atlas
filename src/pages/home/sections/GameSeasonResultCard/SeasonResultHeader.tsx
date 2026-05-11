@@ -20,7 +20,7 @@ export default function SeasonResultHeader({ label, onOpenRecords, recordCount =
       </div>
       <div className="game-season-result__head-actions">
         <span className="game-season-result__rank-label">최종 순위</span>
-        <strong className="game-season-result__rank">#{result.finalRank}</strong>
+        <strong className="game-season-result__rank">{result.finalRank}위</strong>
         {onOpenRecords && recordCount > 0 ? (
           <button className="game-season-result__records-button" onClick={onOpenRecords} type="button">
             전체 기록
