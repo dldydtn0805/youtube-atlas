@@ -1,0 +1,99 @@
+.chart-ranking-board__channel {
+  color: var(--chart-board-faint);
+  display: block;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chart-ranking-board__price-cell {
+  color: var(--chart-board-text);
+  font-weight: 600;
+}
+
+.chart-ranking-board__change-cell,
+.chart-ranking-board__views-cell {
+  color: var(--chart-board-muted);
+  font-weight: 500;
+}
+
+.chart-ranking-board__change-cell[data-tone='up'] {
+  color: var(--chart-board-up);
+}
+
+.chart-ranking-board__change-cell[data-tone='down'] {
+  color: var(--chart-board-down);
+}
+
+.chart-ranking-board__change-cell[data-tone='new'] {
+  color: var(--accent);
+}
+
+.chart-ranking-board__tag {
+  background: var(--chart-board-row-bg);
+  border: 1px solid var(--chart-board-border);
+  border-radius: 3px;
+  color: var(--chart-board-faint);
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 4px;
+  padding: 1px 5px;
+}
+
+.chart-ranking-board__tag[data-tone='new'] {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.chart-ranking-board__trade-actions {
+  display: inline-flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.chart-ranking-board__trade-button {
+  background: transparent;
+  border: 1px solid var(--chart-board-border);
+  border-radius: 4px;
+  color: var(--chart-board-muted);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  min-height: 24px;
+  padding: 3px 7px;
+}
+
+.chart-ranking-board__trade-button[data-variant='buy'] {
+  color: var(--chart-board-up);
+}
+
+.chart-ranking-board__trade-button[data-variant='sell'] {
+  color: var(--chart-board-down);
+}
+
+.chart-ranking-board__trade-button:hover:not(:disabled),
+.chart-ranking-board__trade-button:focus-visible {
+  background: var(--chart-board-row-bg);
+  outline: 2px solid color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.chart-ranking-board__trade-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+@media (max-width: 640px) {
+  .chart-ranking-board__section {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    padding: 14px;
+  }
+
+  .chart-ranking-board__table {
+    min-width: 660px;
+  }
+}
+

@@ -7,6 +7,7 @@ import type { GameMarketVideo, SelectedAchievementTitle } from '../../../feature
 import type { VideoTrendSignal } from '../../../features/trending/types';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features/youtube/types';
 import type { ChartSortMode } from '../types';
+import ChartRankingBoard from './ChartRankingBoard';
 import QuickViewButtons from './QuickViewButtons';
 import type { ViewOption } from './filterPanelTypes';
 import './ContentPanels.css';
@@ -195,7 +196,7 @@ export const ChartPanel = memo(function ChartPanel({
           </div>
         </div>
       </div>
-      <VideoList
+      <ChartRankingBoard
         activePlaybackQueueId={activePlaybackQueueId}
         collapsedSectionIds={collapsedFeaturedSectionIds}
         currentTierCode={currentTierCode}

@@ -1,0 +1,2 @@
+export const CHART_RANKING_PAGE_SIZE = 20;
+export const CHART_RANKING_MAX_ITEM_COUNT = 200;

@@ -1,0 +1,139 @@
+.chart-ranking-board__table-shell {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.chart-ranking-board__table {
+  border-collapse: collapse;
+  color: var(--chart-board-text);
+  font-size: 13px;
+  min-width: 720px;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.chart-ranking-board__table th {
+  border-bottom: 1px solid var(--chart-board-border);
+  color: var(--chart-board-faint);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 7px 8px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.chart-ranking-board__table th:nth-child(1) { text-align: center; width: 58px; }
+.chart-ranking-board__table th:nth-child(2) { width: 42%; }
+.chart-ranking-board__table th:nth-child(3) { width: 14%; }
+.chart-ranking-board__table th:nth-child(4) { width: 12%; }
+.chart-ranking-board__table th:nth-child(5) { width: 12%; }
+.chart-ranking-board__table th:nth-child(6) { width: 14%; }
+
+.chart-ranking-board__table th.chart-ranking-board__left {
+  text-align: left;
+}
+
+.chart-ranking-board__row {
+  border-bottom: 1px solid var(--chart-board-border);
+  transition: background 0.12s ease;
+}
+
+.chart-ranking-board__row:hover,
+.chart-ranking-board__row[data-active='true'] {
+  background: var(--chart-board-row-bg);
+}
+
+.chart-ranking-board__row:last-child {
+  border-bottom: 0;
+}
+
+.chart-ranking-board__table td {
+  padding: 9px 8px;
+  text-align: right;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.chart-ranking-board__rank-cell {
+  color: var(--chart-board-faint);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center !important;
+}
+
+.chart-ranking-board__rank-cell [data-tone='top'] {
+  color: var(--chart-board-up);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.chart-ranking-board__video-cell {
+  text-align: left !important;
+}
+
+.chart-ranking-board__video {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chart-ranking-board__thumb-button {
+  background: var(--chart-board-row-bg);
+  border: 1px solid var(--chart-board-border);
+  border-radius: 4px;
+  cursor: pointer;
+  display: block;
+  flex: 0 0 auto;
+  height: 30px;
+  line-height: 0;
+  padding: 0;
+  width: 46px;
+}
+
+.chart-ranking-board__thumb {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.chart-ranking-board__play-overlay .thumbnail-play-overlay__icon {
+  height: 18px;
+  width: 18px;
+}
+
+.chart-ranking-board__play-overlay .thumbnail-play-overlay__icon::before {
+  border-bottom-width: 4px;
+  border-left-width: 6px;
+  border-top-width: 4px;
+  margin-left: 2px;
+}
+
+.chart-ranking-board__video-copy {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-width: 0;
+}
+
+.chart-ranking-board__title-button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.chart-ranking-board__title {
+  color: var(--chart-board-text);
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

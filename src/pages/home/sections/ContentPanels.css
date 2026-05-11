@@ -88,10 +88,14 @@
   :root[data-mobile-layout='true'] .app-shell__panel--favorites > .video-list,
   :root[data-mobile-layout='true'] .app-shell__panel--chart > .video-list,
   :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .video-list,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart > .chart-ranking-board,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .chart-ranking-board,
   :root[data-mobile-layout='true'] .app-shell__panel--favorites > .app-shell__favorites-status,
   :root[data-mobile-layout='true'] .app-shell__panel--community > .comment-section,
   :root[data-mobile-layout='true'] .app-shell__panel--chart > .video-list__status,
-  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .video-list__status {
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .video-list__status,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart > .chart-ranking-board__status,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .chart-ranking-board__status {
     padding-left: 16px;
     padding-right: 16px;
   }
@@ -121,10 +125,14 @@
   :root[data-mobile-layout='true'] .app-shell__panel--favorites > .video-list,
   :root[data-mobile-layout='true'] .app-shell__panel--chart > .video-list,
   :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .video-list,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart > .chart-ranking-board,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .chart-ranking-board,
   :root[data-mobile-layout='true'] .app-shell__panel--favorites > .app-shell__favorites-status,
   :root[data-mobile-layout='true'] .app-shell__panel--community > .comment-section,
   :root[data-mobile-layout='true'] .app-shell__panel--chart > .video-list__status,
-  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .video-list__status {
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .video-list__status,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart > .chart-ranking-board__status,
+  :root[data-mobile-layout='true'] .app-shell__panel--chart-cinematic > .chart-ranking-board__status {
     padding-left: 14px;
     padding-right: 14px;
   }
