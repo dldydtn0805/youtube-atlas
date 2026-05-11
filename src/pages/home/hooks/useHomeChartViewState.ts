@@ -5,12 +5,9 @@ import type { VideoTrendSignal } from '../../../features/trending/types';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../features/youtube/types';
 import { NEW_CHART_ENTRIES_QUEUE_ID, REALTIME_SURGING_QUEUE_ID, formatTrendRankLabel } from '../utils';
 import type { ChartViewMode } from '../types';
+import type { ViewOption } from '../sections/filterPanelTypes';
 
-interface ChartViewOption {
-  disabled?: boolean;
-  id: ChartViewMode;
-  label: string;
-}
+type ChartViewOption = ViewOption & { id: ChartViewMode };
 
 interface UseHomeChartViewStateOptions {
   authStatus: AuthStatus;
@@ -128,37 +125,73 @@ export default function useHomeChartViewState({
   setCollapsedHomeSectionIds,
   setSelectedChartView,
 }: UseHomeChartViewStateOptions): HomeChartViewState {
+  const realtimeSurgingFeaturedSection = useMemo(
+    () =>
+      featuredChartSections.find(
+        (featuredSection) => featuredSection.section.categoryId === REALTIME_SURGING_QUEUE_ID,
+      ),
+    [featuredChartSections],
+  );
+  const newChartEntriesFeaturedSection = useMemo(
+    () =>
+      featuredChartSections.find(
+        (featuredSection) => featuredSection.section.categoryId === NEW_CHART_ENTRIES_QUEUE_ID,
+      ),
+    [featuredChartSections],
+  );
   const chartViewOptions = useMemo(
     () =>
       [
-        { id: 'popular', label: 'TOP 200' },
+        { id: 'popular', label: 'TOP 200', tone: 'top200' },
         {
           id: 'buyable',
+          badge: authStatus === 'authenticated' ? String(buyableChartSection?.items.length ?? 0) : undefined,
+          badgeTone: 'danger',
           label: '매수 가능',
+          tone: 'buy',
           disabled: authStatus !== 'authenticated',
         },
         {
           id: 'favorites',
-          label: '즐겨찾기',
+          badge: authStatus === 'authenticated' ? String(favoriteStreamersCount) : undefined,
+          badgeTone: 'danger',
           disabled: authStatus !== 'authenticated',
+          label: '즐겨찾기',
+          tone: 'fav',
         },
         {
           id: 'realtime-surging',
-          label: '실시간 급상승',
+          badge: String(realtimeSurgingFeaturedSection?.section.items.length ?? 0),
+          badgeTone: 'danger',
           disabled: !isTrendRegionSelected,
+          label: '급상승',
+          live: true,
+          startsGroup: true,
+          tone: 'surge',
         },
         {
           id: 'new-chart-entries',
+          badge: 'NEW',
+          badgeTone: 'info',
           label: '신규 진입',
+          tone: 'new',
           disabled: !isTrendRegionSelected,
         },
         {
           id: 'music',
           label: '음악',
+          tone: 'music',
           disabled: !musicChartSection,
         },
       ] satisfies ChartViewOption[],
-    [authStatus, isTrendRegionSelected, musicChartSection],
+    [
+      authStatus,
+      buyableChartSection?.items.length,
+      favoriteStreamersCount,
+      isTrendRegionSelected,
+      musicChartSection,
+      realtimeSurgingFeaturedSection?.section.items.length,
+    ],
   );
 
   useEffect(() => {
@@ -213,20 +246,6 @@ export default function useHomeChartViewState({
     [],
   );
 
-  const realtimeSurgingFeaturedSection = useMemo(
-    () =>
-      featuredChartSections.find(
-        (featuredSection) => featuredSection.section.categoryId === REALTIME_SURGING_QUEUE_ID,
-      ),
-    [featuredChartSections],
-  );
-  const newChartEntriesFeaturedSection = useMemo(
-    () =>
-      featuredChartSections.find(
-        (featuredSection) => featuredSection.section.categoryId === NEW_CHART_ENTRIES_QUEUE_ID,
-      ),
-    [featuredChartSections],
-  );
   const favoriteFeaturedSection = useMemo(
     () =>
       authStatus === 'authenticated' && buyableFavoriteChartSection
