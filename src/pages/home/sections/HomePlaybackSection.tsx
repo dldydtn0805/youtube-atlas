@@ -111,7 +111,9 @@ export default function HomePlaybackSection({
     [playerStageProps.playerStageRef],
   );
   const shouldUseStickySelectedVideo =
-    !playerStageProps.isCinematicModeActive && Boolean(stickySelectedVideoContent);
+    !playerStageProps.isMobileLayout &&
+    !playerStageProps.isCinematicModeActive &&
+    Boolean(stickySelectedVideoContent);
   const isStickySelectedVideoScrollHidden = useStickyAutoHide(
     shouldUseStickySelectedVideo,
     stickySelectedVideoScrollRefs,

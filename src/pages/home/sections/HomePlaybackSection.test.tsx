@@ -778,7 +778,7 @@ describe('HomePlaybackSection', () => {
     });
   });
 
-  it('starts with the mobile player stage sticky shell disabled and does not persist the preference', async () => {
+  it('does not render the mobile selected video panel and keeps the player sticky shell disabled', () => {
     const playerStageProps = {
       isCinematicModeActive: false,
       isMobileLayout: true,
@@ -812,16 +812,10 @@ describe('HomePlaybackSection', () => {
 
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(screen.getByText('상단 스티키 켜기')).toBeInTheDocument();
-    });
+    expect(screen.queryByText('상단 스티키 켜기')).not.toBeInTheDocument();
+    expect(screen.queryByText('Selected video actions')).not.toBeInTheDocument();
+    expect(document.querySelector('.app-shell__sticky-selected-video-slot')).toBeNull();
     expect(document.querySelector('.app-shell__mobile-player-stage-sticky-shell')?.getAttribute('data-sticky-enabled')).toBe('false');
-
-    fireEvent.click(screen.getByRole('button', { name: '상단 스티키 켜기' }));
-
-    await waitFor(() => {
-      expect(document.querySelector('.app-shell__mobile-player-stage-sticky-shell')?.getAttribute('data-sticky-enabled')).toBe('true');
-    });
     expect(window.localStorage.getItem('youtube-atlas-mobile-player-stage-sticky-enabled')).toBeNull();
 
     unmount();
@@ -843,13 +837,12 @@ describe('HomePlaybackSection', () => {
 
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(screen.getByText('상단 스티키 꺼짐')).toBeInTheDocument();
-    });
+    expect(screen.queryByText('상단 스티키 꺼짐')).not.toBeInTheDocument();
+    expect(screen.queryByText('Selected video actions')).not.toBeInTheDocument();
     expect(document.querySelector('.app-shell__mobile-player-stage-sticky-shell')?.getAttribute('data-sticky-enabled')).toBe('false');
   });
 
-  it('hides the mobile selected video panel while scrolling down and restores it when scrolling up', async () => {
+  it('does not show the mobile selected video panel while scrolling', () => {
     render(
       <HomePlaybackSection
         chartPanelProps={{} as never}
@@ -868,29 +861,20 @@ describe('HomePlaybackSection', () => {
       />,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('Selected video actions')).toBeInTheDocument();
-    });
-
-    const stickySlot = document.querySelector('.app-shell__sticky-selected-video-slot');
-
-    expect(stickySlot).toHaveAttribute('data-scroll-hidden', 'false');
+    expect(screen.queryByText('Selected video actions')).not.toBeInTheDocument();
+    expect(document.querySelector('.app-shell__sticky-selected-video-slot')).toBeNull();
 
     setWindowScrollY(96);
     window.dispatchEvent(new Event('scroll'));
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(stickySlot).toHaveAttribute('data-scroll-hidden', 'true');
-    });
+    expect(document.querySelector('.app-shell__sticky-selected-video-slot')).toBeNull();
 
     setWindowScrollY(32);
     window.dispatchEvent(new Event('scroll'));
     flushAnimationFrames();
 
-    await waitFor(() => {
-      expect(stickySlot).toHaveAttribute('data-scroll-hidden', 'false');
-    });
+    expect(document.querySelector('.app-shell__sticky-selected-video-slot')).toBeNull();
   });
 
   it('hides the desktop selected video panel while scrolling down and restores it when scrolling up', async () => {

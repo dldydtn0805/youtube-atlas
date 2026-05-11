@@ -26,6 +26,7 @@ interface ChartPanelProps {
   className?: string;
   collapsedFeaturedSectionIds?: string[];
   currentTierCode?: string;
+  enableMobileTradeSheet?: boolean;
   featuredSections?: FeaturedVideoSection[];
   getRankLabel?: (item: YouTubeVideoItem, index: number) => string;
   getTradeActionState?: (item: YouTubeVideoItem) => VideoCardTradeActionState | undefined;
@@ -117,6 +118,7 @@ export const ChartPanel = memo(function ChartPanel({
   className,
   collapsedFeaturedSectionIds,
   currentTierCode,
+  enableMobileTradeSheet,
   featuredSections,
   getRankLabel,
   getTradeActionState,
@@ -200,6 +202,7 @@ export const ChartPanel = memo(function ChartPanel({
         activePlaybackQueueId={activePlaybackQueueId}
         collapsedSectionIds={collapsedFeaturedSectionIds}
         currentTierCode={currentTierCode}
+        enableMobileTradeSheet={enableMobileTradeSheet}
         errorMessage={chartErrorMessage}
         featuredSections={featuredSections}
         getRankLabel={getRankLabel}

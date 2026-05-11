@@ -2429,6 +2429,7 @@ function HomePage() {
             chartSortOptions,
             collapsedFeaturedSectionIds,
             currentTierCode: gameTierProgress?.currentTier.tierCode,
+            enableMobileTradeSheet: isMobileLayout,
             featuredSections: activeChartFeaturedSections,
             getRankLabel: activeChartRankLabel,
             getTradeActionState: getVideoCardTradeActionState,

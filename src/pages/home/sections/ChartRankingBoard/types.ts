@@ -13,6 +13,7 @@ export interface ChartRankingBoardProps {
   collapsedSectionIds?: string[];
   currentTierCode?: string;
   errorMessage?: string;
+  enableMobileTradeSheet?: boolean;
   featuredSections?: FeaturedVideoSection[];
   getRankLabel?: (item: YouTubeVideoItem, index: number) => string;
   getTradeActionState?: (item: YouTubeVideoItem) => VideoCardTradeActionState | undefined;
@@ -36,4 +37,3 @@ export interface ChartRankingBoardProps {
   selectedVideoId?: string;
   trendSignalsByVideoId?: Record<string, VideoTrendSignal>;
 }
-

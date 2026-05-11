@@ -1,4 +1,8 @@
-import { formatCompactCount, getFallbackNewBadge, getPrimaryVideoTrendBadge } from '../../../../features/trending/presentation';
+import {
+  formatCompactCount,
+  getFallbackNewBadge,
+  getPrimaryVideoTrendBadge,
+} from '../../../../features/trending/presentation';
 import type { VideoTrendSignal } from '../../../../features/trending/types';
 import type { YouTubeVideoItem } from '../../../../features/youtube/types';
 
@@ -69,4 +73,3 @@ export function getRankNumber(item: YouTubeVideoItem, rankLabel: string, index: 
 
   return match ? Number(match[0]) : index + 1;
 }
-

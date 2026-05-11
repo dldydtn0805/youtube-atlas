@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import VideoListPagination from '../../../../components/VideoList/Pagination/VideoListPagination';
 import VideoListPaginationOverlay from '../../../../components/VideoList/Pagination/VideoListPaginationOverlay';
 import type { YouTubeCategorySection, YouTubeVideoItem } from '../../../../features/youtube/types';
@@ -8,6 +9,7 @@ import {
   getRankNumber,
 } from './format';
 import ChartRankingRow from './ChartRankingRow';
+import ChartRankingTradeSheet from './ChartRankingTradeSheet';
 import type { ChartRankingAction, ChartRankingBoardProps } from './types';
 
 interface ChartRankingSectionProps {
@@ -15,6 +17,7 @@ interface ChartRankingSectionProps {
   canGoNext: boolean;
   canGoPrevious: boolean;
   currentPage: number;
+  enableMobileTradeSheet?: boolean;
   emptyMessage?: string;
   eyebrow: string;
   getRankLabel?: (item: YouTubeVideoItem, index: number) => string;
@@ -46,6 +49,7 @@ export default function ChartRankingSection({
   canGoNext,
   canGoPrevious,
   currentPage,
+  enableMobileTradeSheet = false,
   emptyMessage,
   eyebrow,
   getRankLabel,
@@ -71,6 +75,18 @@ export default function ChartRankingSection({
   trendSignalsByVideoId,
   visibleItems,
 }: ChartRankingSectionProps) {
+  const [tradeSheetVideoId, setTradeSheetVideoId] = useState<string | null>(null);
+  const tradeSheetVisibleIndex = visibleItems.findIndex((item) => item.id === tradeSheetVideoId);
+  const tradeSheetItem = tradeSheetVisibleIndex >= 0 ? visibleItems[tradeSheetVisibleIndex] : null;
+  const tradeSheetIndex = tradeSheetVisibleIndex >= 0 ? pageStartIndex + tradeSheetVisibleIndex : -1;
+  const tradeSheetRankLabel = tradeSheetItem
+    ? getRankLabel?.(tradeSheetItem, tradeSheetIndex) ?? `${tradeSheetIndex + 1}위`
+    : '';
+  const tradeSheetBadge = tradeSheetItem
+    ? getRankingTrendBadge(tradeSheetItem, trendSignalsByVideoId, hasResolvedTrendSignals)
+    : null;
+  const tradeSheetActionState = tradeSheetItem ? getTradeActionState?.(tradeSheetItem) : undefined;
+
   return (
     <section className="chart-ranking-board__section" aria-label={`${section.label} 영상`}>
       <header className="chart-ranking-board__header">
@@ -102,8 +118,7 @@ export default function ChartRankingSection({
                 <th>순위</th>
                 <th className="chart-ranking-board__left">영상</th>
                 <th>현재가</th>
-                <th>전일비</th>
-                <th>조회수</th>
+                <th>등락</th>
                 <th>거래</th>
               </tr>
             </thead>
@@ -114,10 +129,11 @@ export default function ChartRankingSection({
                 const rankNumber = getRankNumber(item, rankLabel, index);
                 const badge = getRankingTrendBadge(item, trendSignalsByVideoId, hasResolvedTrendSignals);
                 const playbackQueueId = section.categoryId;
+                const actionState = getTradeActionState?.(item);
 
                 return (
                   <ChartRankingRow
-                    actionState={getTradeActionState?.(item)}
+                    actionState={actionState}
                     badge={badge}
                     isSelected={selectedVideoId === item.id && activePlaybackQueueId === playbackQueueId}
                     item={item}
@@ -136,16 +152,35 @@ export default function ChartRankingSection({
                     onOpenSellTradeModal={(triggerElement) =>
                       onOpenSellTradeModal?.(item.id, playbackQueueId, triggerElement)
                     }
+                    onOpenTradeSheet={
+                      enableMobileTradeSheet && actionState
+                        ? () => setTradeSheetVideoId(item.id)
+                        : undefined
+                    }
                     onSelectVideo={(triggerElement) => onSelectVideo(item.id, playbackQueueId, triggerElement)}
                     priceLabel={formatRankingPrice(marketPriceByVideoId?.[item.id])}
                     rankLabel={rankLabel}
                     rankNumber={rankNumber}
-                    viewsLabel={formatRankingViews(item)}
                   />
                 );
               })}
             </tbody>
           </table>
+          {enableMobileTradeSheet && tradeSheetItem && tradeSheetActionState ? (
+            <ChartRankingTradeSheet
+              actionState={tradeSheetActionState}
+              badge={tradeSheetBadge}
+              isOpen
+              item={tradeSheetItem}
+              onClose={() => setTradeSheetVideoId(null)}
+              onOpenBuyTradeModal={onOpenBuyTradeModal}
+              onOpenSellTradeModal={onOpenSellTradeModal}
+              playbackQueueId={section.categoryId}
+              priceLabel={formatRankingPrice(marketPriceByVideoId?.[tradeSheetItem.id])}
+              rankLabel={tradeSheetRankLabel}
+              viewsLabel={formatRankingViews(tradeSheetItem)}
+            />
+          ) : null}
         </div>
       ) : !isCollapsed ? (
         <p className="chart-ranking-board__section-status">{emptyMessage}</p>

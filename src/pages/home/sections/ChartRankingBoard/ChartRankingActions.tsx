@@ -26,7 +26,10 @@ export default function ChartRankingActions({
         className="chart-ranking-board__trade-button"
         data-variant="buy"
         disabled={!state.canBuy}
-        onClick={(event) => onBuy(event.currentTarget)}
+        onClick={(event) => {
+          event.stopPropagation();
+          onBuy(event.currentTarget);
+        }}
         title={state.buyTitle}
         type="button"
       >
@@ -37,7 +40,10 @@ export default function ChartRankingActions({
         className="chart-ranking-board__trade-button"
         data-variant="sell"
         disabled={!state.canSell}
-        onClick={(event) => onSell(event.currentTarget)}
+        onClick={(event) => {
+          event.stopPropagation();
+          onSell(event.currentTarget);
+        }}
         title={state.sellTitle}
         type="button"
       >
@@ -46,4 +52,3 @@ export default function ChartRankingActions({
     </span>
   );
 }
-

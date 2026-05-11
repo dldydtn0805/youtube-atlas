@@ -1,6 +1,8 @@
 .chart-ranking-board__table-shell {
+  max-width: 100%;
   min-width: 0;
   overflow-x: auto;
+  width: 100%;
 }
 
 .chart-ranking-board__table {
@@ -22,12 +24,11 @@
   white-space: nowrap;
 }
 
-.chart-ranking-board__table th:nth-child(1) { text-align: center; width: 58px; }
-.chart-ranking-board__table th:nth-child(2) { width: 42%; }
-.chart-ranking-board__table th:nth-child(3) { width: 14%; }
-.chart-ranking-board__table th:nth-child(4) { width: 12%; }
-.chart-ranking-board__table th:nth-child(5) { width: 12%; }
-.chart-ranking-board__table th:nth-child(6) { width: 14%; }
+.chart-ranking-board__table th:nth-child(1) { text-align: center; width: 8%; }
+.chart-ranking-board__table th:nth-child(2) { width: 47%; }
+.chart-ranking-board__table th:nth-child(3) { width: 16%; }
+.chart-ranking-board__table th:nth-child(4) { width: 13%; }
+.chart-ranking-board__table th:nth-child(5) { width: 16%; }
 
 .chart-ranking-board__table th.chart-ranking-board__left {
   text-align: left;
@@ -41,6 +42,16 @@
 .chart-ranking-board__row:hover,
 .chart-ranking-board__row[data-active='true'] {
   background: var(--chart-board-row-bg);
+}
+
+.chart-ranking-board__row[data-clickable='true'] {
+  cursor: pointer;
+}
+
+.chart-ranking-board__row[data-clickable='true']:focus-visible {
+  background: var(--chart-board-row-bg);
+  outline: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  outline-offset: -2px;
 }
 
 .chart-ranking-board__row:last-child {

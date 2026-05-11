@@ -11,6 +11,7 @@ function ChartRankingBoard({
   activePlaybackQueueId,
   collapsedSectionIds = [],
   currentTierCode,
+  enableMobileTradeSheet = false,
   errorMessage,
   featuredSections = [],
   getRankLabel,
@@ -39,10 +40,8 @@ function ChartRankingBoard({
   const [prefetchAllSectionKey, setPrefetchAllSectionKey] = useState<string | null>(null);
   const prefetchedItemCountBySectionKey = useRef<Record<string, number>>({});
   const resetKey = [
-    ...featuredSections.map(({ section: featuredSection }) =>
-      getSectionRenderKey(featuredSection.items.map((item) => item.id), featuredSection.categoryId),
-    ),
-    section ? getSectionRenderKey(section.items.map((item) => item.id), section.categoryId) : 'none',
+    ...featuredSections.map(({ section: featuredSection }) => featuredSection.categoryId),
+    section ? `${primarySectionCollapseKey ?? section.categoryId}:${section.categoryId}` : 'none',
   ].join('|');
 
   useEffect(() => {
@@ -122,11 +121,10 @@ function ChartRankingBoard({
 
     const handlePageChange = (nextPageIndex: number) => {
       const safePageIndex = Math.min(Math.max(nextPageIndex, 0), totalPages - 1);
-      const loadedSafePageIndex = Math.min(safePageIndex, loadedPageCount - 1);
       const hasPrefetchedCurrentItems =
         prefetchedItemCountBySectionKey.current[sectionKey] === currentSection.items.length;
 
-      setPageIndexBySectionKey((currentValue) => ({ ...currentValue, [sectionKey]: loadedSafePageIndex }));
+      setPageIndexBySectionKey((currentValue) => ({ ...currentValue, [sectionKey]: safePageIndex }));
 
       if (
         !isFetchingNextPage &&
@@ -145,6 +143,7 @@ function ChartRankingBoard({
         canGoNext={canGoNext}
         canGoPrevious={canGoPrevious}
         currentPage={currentPageIndex + 1}
+        enableMobileTradeSheet={enableMobileTradeSheet}
         emptyMessage={options.emptyMessage}
         eyebrow={options.eyebrow}
         getRankLabel={options.getRankLabel}
@@ -175,7 +174,11 @@ function ChartRankingBoard({
   };
 
   return (
-    <div className="chart-ranking-board" data-current-tier={currentTierCode}>
+    <div
+      className="chart-ranking-board"
+      data-current-tier={currentTierCode}
+      data-mobile-trade-sheet={enableMobileTradeSheet ? 'true' : undefined}
+    >
       {featuredSections.map(({ section: featuredSection, eyebrow, emptyMessage, getRankLabel }) =>
         renderSection(featuredSection, {
           emptyMessage,
