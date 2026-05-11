@@ -30,28 +30,10 @@ interface GameRankHistoryModalProps {
   } | null;
 }
 
-const chartDateFormatter = new Intl.DateTimeFormat('ko-KR', {
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  month: 'short',
-});
 const TRADE_FOCUS_PADDING_POINTS = 3;
-
-function formatTimestamp(timestamp?: string | null) {
-  if (!timestamp) {
-    return '집계 중';
-  }
-
-  return chartDateFormatter.format(new Date(timestamp));
-}
 
 function getBuyPointIndex(points: Array<GamePositionRankHistoryPoint | VideoRankHistory['points'][number]>) {
   return points.findIndex((point) => 'buyPoint' in point && point.buyPoint);
-}
-
-function getBuyPoint(points: Array<GamePositionRankHistoryPoint | VideoRankHistory['points'][number]>) {
-  return points.find((point) => 'buyPoint' in point && point.buyPoint) ?? null;
 }
 
 function getTradeFocusPoints(points: Array<GamePositionRankHistoryPoint | VideoRankHistory['points'][number]>) {
@@ -77,7 +59,6 @@ export default function GameRankHistoryModal({
   isLoading,
   isOpen,
   onClose,
-  position,
 }: GameRankHistoryModalProps) {
   useBodyScrollLock(isOpen);
   const { backdropStyle, bodySwipeHandlers, headerSwipeHandlers, modalStyle } = useHeaderSwipeToClose({
@@ -111,16 +92,8 @@ export default function GameRankHistoryModal({
 
   const originalPoints = history?.points ?? [];
   const points = focusMode === 'trade' ? getTradeFocusPoints(originalPoints) : originalPoints;
-  const rankedPoints = points.filter((point) => typeof point.rank === 'number');
   const gameHistory = history && 'buyRank' in history ? history : null;
   const hasBuyRank = Boolean(gameHistory);
-  const buyPointIndex = getBuyPointIndex(points);
-  const buyPoint = getBuyPoint(points);
-  const preBuyPointCount = buyPointIndex > 0 ? buyPointIndex : 0;
-  const chartOutCount = points.filter((point) => point.chartOut).length;
-  const buyCapturedAtLabel = hasBuyRank
-    ? formatTimestamp(buyPoint?.capturedAt ?? gameHistory?.buyCapturedAt ?? position?.buyCapturedAt ?? position?.createdAt)
-    : null;
 
   return createPortal(
     <div
@@ -178,19 +151,6 @@ export default function GameRankHistoryModal({
                 <Suspense fallback={<p className="app-shell__game-rank-history-empty">차트를 준비하는 중입니다.</p>}>
                   <GameRankHistoryCharts focusMode={focusMode} points={points} />
                 </Suspense>
-                <div className="app-shell__game-rank-history-stats">
-                  {buyCapturedAtLabel ? (
-                    <span className="app-shell__game-history-status">매수 시점 {buyCapturedAtLabel}</span>
-                  ) : null}
-                  {preBuyPointCount > 0 ? (
-                    <span className="app-shell__game-history-status">{preBuyPointCount}회 매수 전</span>
-                  ) : null}
-                  <span className="app-shell__game-history-status">{rankedPoints.length}회 포착</span>
-                  <span className="app-shell__game-history-status">{chartOutCount}회 차트 아웃</span>
-                  <span className="app-shell__game-history-status">
-                    최근 집계 {formatTimestamp(history?.latestCapturedAt ?? position?.closedAt ?? position?.createdAt)}
-                  </span>
-                </div>
               </div>
             )}
           </div>
