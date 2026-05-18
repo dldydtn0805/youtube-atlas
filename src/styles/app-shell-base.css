@@ -20,7 +20,7 @@
 }
 
 .app-shell__panel {
-  backdrop-filter: blur(24px);
+  backdrop-filter: none;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
@@ -31,7 +31,7 @@
 }
 
 .app-shell__panel--player {
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(6px);
 }
 
 .app-shell__panel--filters,

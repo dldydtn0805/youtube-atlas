@@ -58,7 +58,7 @@
 
 .app-shell__sticky-selected-video-frame .app-shell__game-panel-actions {
   background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(8px);
   border-color: rgba(148, 163, 184, 0.28);
   box-shadow:
     0 10px 24px rgba(15, 23, 42, 0.1),
@@ -91,7 +91,7 @@
   background:
     linear-gradient(180deg, rgba(20, 20, 20, 0.9), rgba(8, 8, 8, 0.82)),
     rgba(10, 10, 10, 0.72);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(8px);
   border-color: rgba(255, 255, 255, 0.14);
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.34),
