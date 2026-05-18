@@ -5,7 +5,7 @@ import type { FilterBarProps } from './FilterPanels';
 interface HomeExploreSectionProps {
   chartPanelProps: Omit<
     ComponentProps<typeof ChartPanel>,
-    'onOpenRegionModal' | 'onSelectView' | 'selectedViewId' | 'viewOptions'
+    'onChangeRegion' | 'onSelectView' | 'regionOptions' | 'selectedRegionCode' | 'selectedViewId' | 'viewOptions'
   >;
   filterBarProps: FilterBarProps;
 }
@@ -17,8 +17,10 @@ export default function HomeExploreSection({
   return (
     <ChartPanel
       {...chartPanelProps}
-      onOpenRegionModal={filterBarProps.onOpenRegionModal}
+      onChangeRegion={filterBarProps.onChangeRegion}
       onSelectView={filterBarProps.onSelectView}
+      regionOptions={filterBarProps.regionOptions}
+      selectedRegionCode={filterBarProps.selectedRegionCode}
       selectedViewId={filterBarProps.selectedViewId}
       viewOptions={filterBarProps.viewOptions}
     />
