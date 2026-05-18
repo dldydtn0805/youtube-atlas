@@ -1,30 +1,37 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
+import { getHomeRouteMode } from '../pages/home/homeRoutes';
+import { getCurrentAppPath, navigateToAppPath, subscribeToAppNavigation } from './navigation';
 
 const HomePage = lazy(() => import('../pages/home/HomePage'));
 const AdminPage = lazy(() => import('../pages/admin/AdminPage'));
 
-function getCurrentPathname() {
+function getCurrentPath() {
   if (typeof window === 'undefined') {
     return '/';
   }
 
-  return window.location.pathname;
+  return getCurrentAppPath();
 }
 
 function App() {
-  const [pathname, setPathname] = useState(getCurrentPathname);
+  const [currentPath, setCurrentPath] = useState(getCurrentPath);
+  const queryStartIndex = currentPath.indexOf('?');
+  const pathname = queryStartIndex >= 0 ? currentPath.slice(0, queryStartIndex) : currentPath;
+  const search = queryStartIndex >= 0 ? currentPath.slice(queryStartIndex) : '';
 
   useEffect(() => {
     const handleNavigation = () => {
-      setPathname(getCurrentPathname());
+      setCurrentPath(getCurrentPath());
     };
 
-    window.addEventListener('popstate', handleNavigation);
-
-    return () => {
-      window.removeEventListener('popstate', handleNavigation);
-    };
+    return subscribeToAppNavigation(handleNavigation);
   }, []);
+
+  useEffect(() => {
+    if (pathname === '/') {
+      navigateToAppPath('/explore', { replace: true });
+    }
+  }, [pathname]);
 
   if (pathname.startsWith('/admin')) {
     return (
@@ -36,7 +43,10 @@ function App() {
 
   return (
     <Suspense fallback={null}>
-      <HomePage />
+      <HomePage
+        locationSearch={search}
+        routeMode={getHomeRouteMode(pathname)}
+      />
     </Suspense>
   );
 }

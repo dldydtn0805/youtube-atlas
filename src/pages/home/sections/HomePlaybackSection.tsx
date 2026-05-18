@@ -48,6 +48,7 @@ interface HomePlaybackSectionProps {
   onPlayPreviousStickySelectedVideo?: () => void;
   onResumeStickySelectedVideo?: () => void;
   playerStageProps: Omit<ComponentProps<typeof PlayerStage>, 'chartContent' | 'filterContent'>;
+  showChartPanel?: boolean;
   stickySelectedVideoContent?: ReactNode | ((controls: StickySelectedVideoControls) => ReactNode);
   stickySelectedVideoLabel?: string;
 }
@@ -80,6 +81,7 @@ export default function HomePlaybackSection({
   onPlayPreviousStickySelectedVideo,
   onResumeStickySelectedVideo,
   playerStageProps,
+  showChartPanel = true,
   stickySelectedVideoContent,
   stickySelectedVideoLabel = 'Now Playing',
 }: HomePlaybackSectionProps) {
@@ -656,7 +658,7 @@ export default function HomePlaybackSection({
         renderViewportInline={!shouldRenderDetachedMobileViewport}
         videoPlayerDockStyle={videoPlayerDockStyle}
       />
-      {!playerStageProps.isCinematicModeActive ? renderChartPanel() : null}
+      {showChartPanel && !playerStageProps.isCinematicModeActive ? renderChartPanel() : null}
       {supplementalContent}
     </>
   );

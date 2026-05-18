@@ -1,6 +1,19 @@
-import { lazy, startTransition, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import {
+  lazy,
+  startTransition,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+  type SetStateAction,
+} from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
+import { navigateToAppPath } from '../../app/navigation';
 import type { VideoPlayerHandle } from '../../components/VideoPlayer/VideoPlayer';
 import AchievementTitleToast from './sections/AchievementTitleToast';
 import GameActionToast from './sections/GameActionToast';
@@ -18,7 +31,7 @@ import GameTradeModal from './sections/GameTradeModal';
 import GameIntroModal from './sections/GameIntroModal';
 import GameNotificationModal from './sections/GameNotificationModal';
 import GameNotificationToast from './sections/GameNotificationToast';
-import HomePlaybackSection from './sections/HomePlaybackSection';
+import HomeExploreSection from './sections/HomeExploreSection';
 import LazyModalFallback from './sections/LazyModalFallback';
 import { RankingGameLeaderboardTab } from './sections/RankingGamePanel';
 import StickySelectedVideoControls from './sections/StickySelectedVideoControls';
@@ -56,6 +69,15 @@ import useSelectedVideoGameState from './hooks/useSelectedVideoGameState';
 import { getGameNotificationSellTargetHolding } from './homeGameNotificationSell';
 import { openGameModal as openGameModalAction } from './homeGameModalActions';
 import {
+  createExploreRoutePath,
+  createPlayRoutePath,
+  readHomeRouteFilters,
+  readPlayRouteSelection,
+  type HomeRouteFilters,
+  type HomeRouteMode,
+  type PlayRouteSelection,
+} from './homeRoutes';
+import {
   DEFAULT_CATEGORY_ID,
   GAME_HIGHLIGHTS_QUEUE_ID,
   GAME_LEADERBOARD_HIGHLIGHTS_QUEUE_ID,
@@ -67,6 +89,7 @@ import {
   getFullscreenElement,
   getAdjacentGameScheduledSellOrder,
   getAdjacentGamePosition,
+  getPlaybackQueueItems,
   getVideoThumbnailUrl,
   mapGameHighlightToVideoItem,
   mapGameScheduledSellOrderToVideoItem,
@@ -129,6 +152,7 @@ import '../../styles/app.css';
 const GameSeasonResultsModal = lazy(() => import('./sections/GameSeasonResultsModal/GameSeasonResultsModal'));
 const GameTierModal = lazy(() => import('./sections/GameTierModal'));
 const GameWalletModal = lazy(() => import('./sections/GameWalletModal'));
+const HomePlaybackSection = lazy(() => import('./sections/HomePlaybackSection'));
 
 const COLLAPSED_HOME_SECTIONS_STORAGE_KEY = 'youtube-atlas-collapsed-home-sections';
 const GAME_INTRO_MODAL_DISMISSED_STORAGE_KEY = 'youtube-atlas-game-intro-dismissed';
@@ -274,7 +298,16 @@ function persistCollapsedHomeSectionIds(sectionIds: string[]) {
   window.localStorage.setItem(COLLAPSED_HOME_SECTIONS_STORAGE_KEY, JSON.stringify(sectionIds));
 }
 
-function HomePage() {
+interface HomePageProps {
+  locationSearch?: string;
+  routeMode?: HomeRouteMode;
+}
+
+function HomePage({
+  locationSearch = '',
+  routeMode = 'explore',
+}: HomePageProps) {
+  const isPlayRoute = routeMode === 'play';
   const queryClient = useQueryClient();
   const { accessToken, applyCurrentUser, isLoggingOut, logout, refreshCurrentUser, status: authStatus, user } = useAuth();
   const [selectedOpenPositionId, setSelectedOpenPositionId] = useState<number | null>(null);
@@ -304,7 +337,7 @@ function HomePage() {
   const [isChartViewModalOpen, setIsChartViewModalOpen] = useState(false);
   const [pendingRegionTopVideoSelection, setPendingRegionTopVideoSelection] = useState<string | null>(null);
   const [isPlaybackPaused, setIsPlaybackPaused] = useState(false);
-  const [selectedChartView, setSelectedChartView] = useState<ChartViewMode>('popular');
+  const [selectedChartView, setSelectedChartViewState] = useState<ChartViewMode>('popular');
   const [chartSortMode, setChartSortMode] = useState<ChartSortMode>('popular-desc');
   const [sortPrefetchStatus, setSortPrefetchStatus] = useState<string | null>(null);
   const openChartViewModal = useCallback(() => setIsChartViewModalOpen(true), []);
@@ -314,6 +347,7 @@ function HomePage() {
   const videoPlayerRef = useRef<VideoPlayerHandle | null>(null);
   const playerSectionRef = useRef<HTMLElement | null>(null);
   const playerViewportRef = useRef<HTMLDivElement | null>(null);
+  const pendingPlayRouteSelectionRef = useRef<PlayRouteSelection | null>(null);
   const {
     cinematicToggleLabel,
     handleToggleCinematicMode,
@@ -383,10 +417,73 @@ function HomePage() {
     isError: isVideoCategoriesError,
     error: videoCategoriesError,
   } = useVideoCategories(selectedRegionCode);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(DEFAULT_CATEGORY_ID);
+  const [selectedCategoryId, setSelectedCategoryIdState] = useState(DEFAULT_CATEGORY_ID);
   const sortedVideoCategories = sortVideoCategories(videoCategories);
   const selectedCategory =
     sortedVideoCategories.find((category) => category.id === selectedCategoryId) ?? sortedVideoCategories[0];
+  const routeFilters = useMemo(() => readHomeRouteFilters(locationSearch), [locationSearch]);
+  const playRouteSelection = useMemo(
+    () => (isPlayRoute ? readPlayRouteSelection(locationSearch) : null),
+    [isPlayRoute, locationSearch],
+  );
+  const isPlayRouteCategoryReady =
+    !playRouteSelection?.categoryId || playRouteSelection.categoryId === selectedCategoryId;
+  const isPlayRouteViewReady =
+    !playRouteSelection?.chartView || playRouteSelection.chartView === selectedChartView;
+  const isApplyingRouteFiltersRef = useRef(false);
+  const buildHomeRouteFilters = useCallback(
+    (overrides?: Partial<HomeRouteFilters>): HomeRouteFilters => ({
+      categoryId: overrides?.categoryId ?? selectedCategoryId,
+      chartView: overrides?.chartView ?? selectedChartView,
+      regionCode: overrides?.regionCode ?? selectedRegionCode,
+    }),
+    [selectedCategoryId, selectedChartView, selectedRegionCode],
+  );
+  const syncCurrentRouteFilters = useCallback(
+    (overrides?: Partial<HomeRouteFilters>, options?: { replace?: boolean }) => {
+      const filters = buildHomeRouteFilters(overrides);
+
+      if (isPlayRoute && playRouteSelection?.playbackQueueId && playRouteSelection.videoId) {
+        const nextSelection: PlayRouteSelection = {
+          ...filters,
+          playbackQueueId: playRouteSelection.playbackQueueId,
+          videoId: playRouteSelection.videoId,
+        };
+
+        pendingPlayRouteSelectionRef.current = nextSelection;
+        navigateToAppPath(createPlayRoutePath(nextSelection), { replace: options?.replace ?? true });
+        return;
+      }
+
+      navigateToAppPath(createExploreRoutePath(filters), { replace: options?.replace ?? true });
+    },
+    [buildHomeRouteFilters, isPlayRoute, playRouteSelection],
+  );
+  const setSelectedChartView = useCallback(
+    (nextValue: SetStateAction<ChartViewMode>) => {
+      const resolvedValue =
+        typeof nextValue === 'function' ? nextValue(selectedChartView) : nextValue;
+
+      if (isApplyingRouteFiltersRef.current) {
+        setSelectedChartViewState(resolvedValue);
+        return;
+      }
+
+      syncCurrentRouteFilters({ chartView: resolvedValue });
+    },
+    [selectedChartView, syncCurrentRouteFilters],
+  );
+  const setSelectedCategoryId = useCallback(
+    (nextCategoryId: string) => {
+      if (isApplyingRouteFiltersRef.current) {
+        setSelectedCategoryIdState(nextCategoryId);
+        return;
+      }
+
+      syncCurrentRouteFilters({ categoryId: nextCategoryId });
+    },
+    [syncCurrentRouteFilters],
+  );
   const regionOptions = sortedCountryCodes.map((country) => ({
     value: country.code,
     label: `${country.code} · ${country.name}`,
@@ -847,6 +944,7 @@ function HomePage() {
     historyPlaybackSection,
     newChartEntriesSection: sortedNewChartEntriesSection,
     isMobileLayout,
+    isPlaybackRoute: isPlayRoute,
     logout,
     realtimeSurgingSection: sortedRealtimeSurgingSection,
     preferredInitialPlaybackSection: sortedFilteredMusicChartSection,
@@ -859,7 +957,116 @@ function HomePage() {
     user,
     videoPlayerRef,
   });
-  useNowPlayingDocumentTitle(resolvedSelectedVideo?.snippet.title);
+  const buildPlayRouteSelection = useCallback(
+    (videoId: string, playbackQueueId: string): PlayRouteSelection => ({
+      categoryId: selectedCategoryId,
+      chartView: selectedChartView,
+      regionCode: selectedRegionCode,
+      playbackQueueId,
+      videoId,
+    }),
+    [selectedCategoryId, selectedChartView, selectedRegionCode],
+  );
+  const syncPlayRoute = useCallback(
+    (selection: PlayRouteSelection, options?: { replace?: boolean }) => {
+      pendingPlayRouteSelectionRef.current = selection;
+      navigateToAppPath(createPlayRoutePath(selection), { replace: options?.replace ?? true });
+    },
+    [],
+  );
+  useEffect(() => {
+    const nextRegionCode = routeFilters.regionCode as RegionCode | undefined;
+    const shouldUpdateRegion = Boolean(nextRegionCode && nextRegionCode !== selectedRegionCode);
+    const shouldUpdateCategory = Boolean(routeFilters.categoryId && routeFilters.categoryId !== selectedCategoryId);
+    const shouldUpdateView = Boolean(routeFilters.chartView && routeFilters.chartView !== selectedChartView);
+
+    if (!shouldUpdateRegion && !shouldUpdateCategory && !shouldUpdateView) {
+      return;
+    }
+
+    isApplyingRouteFiltersRef.current = true;
+
+    if (shouldUpdateRegion && nextRegionCode) {
+      resetForRegionChange();
+      setPendingRegionTopVideoSelection(nextRegionCode);
+      updateRegionCode(nextRegionCode);
+    }
+
+    if (shouldUpdateCategory && routeFilters.categoryId) {
+      setSelectedCategoryIdState(routeFilters.categoryId);
+    }
+
+    if (shouldUpdateView && routeFilters.chartView) {
+      setSelectedChartViewState(routeFilters.chartView);
+    }
+
+    isApplyingRouteFiltersRef.current = false;
+  }, [
+    resetForRegionChange,
+    routeFilters,
+    selectedCategoryId,
+    selectedChartView,
+    selectedRegionCode,
+    updateRegionCode,
+  ]);
+
+  useEffect(() => {
+    if (isPlayRoute || isApplyingRouteFiltersRef.current) {
+      return;
+    }
+
+    const expectedPath = createExploreRoutePath(buildHomeRouteFilters());
+    navigateToAppPath(expectedPath, { replace: true });
+  }, [buildHomeRouteFilters, isPlayRoute]);
+
+  useEffect(() => {
+    if (!isPlayRoute || !playRouteSelection || !isPlayRouteCategoryReady || !isPlayRouteViewReady) {
+      pendingPlayRouteSelectionRef.current = null;
+      return;
+    }
+
+    if (
+      playRouteSelection.videoId === selectedVideoId &&
+      playRouteSelection.playbackQueueId === activePlaybackQueueId
+    ) {
+      pendingPlayRouteSelectionRef.current = null;
+      return;
+    }
+
+    pendingPlayRouteSelectionRef.current = playRouteSelection;
+    syncPlaybackSelection(playRouteSelection.videoId, playRouteSelection.playbackQueueId);
+  }, [
+    activePlaybackQueueId,
+    isPlayRoute,
+    isPlayRouteCategoryReady,
+    isPlayRouteViewReady,
+    playRouteSelection,
+    selectedVideoId,
+    syncPlaybackSelection,
+  ]);
+
+  useEffect(() => {
+    if (!isPlayRoute || !selectedVideoId || !activePlaybackQueueId) {
+      return;
+    }
+
+    const pendingSelection = pendingPlayRouteSelectionRef.current;
+
+    if (pendingSelection) {
+      if (
+        pendingSelection.videoId !== selectedVideoId ||
+        pendingSelection.playbackQueueId !== activePlaybackQueueId
+      ) {
+        return;
+      }
+
+      pendingPlayRouteSelectionRef.current = null;
+    }
+
+    syncPlayRoute(buildPlayRouteSelection(selectedVideoId, activePlaybackQueueId), { replace: true });
+  }, [activePlaybackQueueId, buildPlayRouteSelection, isPlayRoute, selectedVideoId, syncPlayRoute]);
+
+  useNowPlayingDocumentTitle(isPlayRoute ? resolvedSelectedVideo?.snippet.title : undefined);
   const selectedPlaybackCategoryLabel = useMemo(
     () =>
       resolvePlaybackCategoryLabel({
@@ -1098,10 +1305,13 @@ function HomePage() {
   }, [fetchNextMusicChartPage, shouldAutoPrefetchBuyableMusicVideos]);
 
   function handleSelectRegion(regionCode: RegionCode) {
-    resetForRegionChange();
-    setSelectedCategoryId(DEFAULT_CATEGORY_ID);
-    setPendingRegionTopVideoSelection(regionCode);
-    updateRegionCode(regionCode);
+    syncCurrentRouteFilters(
+      {
+        categoryId: DEFAULT_CATEGORY_ID,
+        regionCode,
+      },
+      { replace: false },
+    );
     setIsRegionModalOpen(false);
   }
 
@@ -1610,19 +1820,17 @@ function HomePage() {
     }
   }
 
-  useEffect(() => {
-  }, [selectedVideoId]);
-
   const handleSelectVideoWithPreview = useCallback(
-    (videoId: string, playbackQueueId: string) => {
+    (videoId: string, playbackQueueId: string, triggerElement?: HTMLButtonElement) => {
       if (!videoId) {
         return;
       }
 
       const nextPreviewVideoId = videoId;
-      handleSelectVideo(nextPreviewVideoId, playbackQueueId);
+      handleSelectVideo(nextPreviewVideoId, playbackQueueId, triggerElement);
+      syncPlayRoute(buildPlayRouteSelection(nextPreviewVideoId, playbackQueueId), { replace: false });
     },
-    [handleSelectVideo],
+    [buildPlayRouteSelection, handleSelectVideo, syncPlayRoute],
   );
   const handleOpenVideoCardBuyTradeModal = useCallback(
     (videoId: string) => {
@@ -1750,6 +1958,45 @@ function HomePage() {
     },
     [handleSelectChartView, handleSelectTopVideoForChartView],
   );
+  const getAdjacentPlaybackVideoId = useCallback(
+    (step: 1 | -1) => {
+      const queueItems = getPlaybackQueueItems(activePlaybackQueueId, {
+        extraSections: playbackExtraSections,
+        favoriteStreamerVideoSection,
+        gamePortfolioSection,
+        historyPlaybackSection,
+        newChartEntriesSection: sortedNewChartEntriesSection,
+        realtimeSurgingSection: sortedRealtimeSurgingSection,
+        selectedSection: selectedPlaybackSection,
+      });
+
+      if (queueItems.length === 0) {
+        return null;
+      }
+
+      const currentIndex = queueItems.findIndex((item) => item.id === selectedVideoId);
+      const nextIndex =
+        currentIndex >= 0
+          ? (currentIndex + step + queueItems.length) % queueItems.length
+          : step > 0
+            ? 0
+            : queueItems.length - 1;
+      const nextVideoId = queueItems[nextIndex]?.id;
+
+      return nextVideoId ? { playbackQueueId: activePlaybackQueueId, videoId: nextVideoId } : null;
+    },
+    [
+      activePlaybackQueueId,
+      favoriteStreamerVideoSection,
+      gamePortfolioSection,
+      historyPlaybackSection,
+      playbackExtraSections,
+      selectedPlaybackSection,
+      selectedVideoId,
+      sortedNewChartEntriesSection,
+      sortedRealtimeSurgingSection,
+    ],
+  );
 
   const handlePlayNextVideoWithPreview = useCallback(() => {
     if (isRestoredPlaybackActive) {
@@ -1759,6 +2006,7 @@ function HomePage() {
       if (topChartVideoId && topChartQueueId) {
         setSelectedOpenPositionId(null);
         setSelectedScheduledSellOrderId(null);
+        syncPlayRoute(buildPlayRouteSelection(topChartVideoId, topChartQueueId), { replace: true });
         handleSelectVideo(topChartVideoId, topChartQueueId);
         return;
       }
@@ -1774,6 +2022,7 @@ function HomePage() {
       if (nextScheduledOrder) {
         setSelectedScheduledSellOrderId(nextScheduledOrder.id);
         setSelectedOpenPositionId(nextScheduledOrder.positionId);
+        syncPlayRoute(buildPlayRouteSelection(nextScheduledOrder.videoId, SCHEDULED_SELL_ORDERS_QUEUE_ID), { replace: true });
         syncPlaybackSelection(nextScheduledOrder.videoId, SCHEDULED_SELL_ORDERS_QUEUE_ID);
         return;
       }
@@ -1789,6 +2038,7 @@ function HomePage() {
 
       if (nextOpenPosition) {
         setSelectedOpenPositionId(nextOpenPosition.id);
+        syncPlayRoute(buildPlayRouteSelection(nextOpenPosition.videoId, GAME_PORTFOLIO_QUEUE_ID), { replace: true });
         syncPlaybackSelection(nextOpenPosition.videoId, GAME_PORTFOLIO_QUEUE_ID);
         return;
       }
@@ -1804,25 +2054,37 @@ function HomePage() {
 
       if (nextHistoryPosition) {
         setSelectedOpenPositionId(nextHistoryPosition.id);
+        syncPlayRoute(buildPlayRouteSelection(nextHistoryPosition.videoId, HISTORY_PLAYBACK_QUEUE_ID), { replace: true });
         syncPlaybackSelection(nextHistoryPosition.videoId, HISTORY_PLAYBACK_QUEUE_ID);
         return;
       }
     }
 
-    handlePlayNextVideo();
+    const nextPlayback = getAdjacentPlaybackVideoId(1);
+
+    if (!nextPlayback) {
+      handlePlayNextVideo();
+      return;
+    }
+
+    syncPlayRoute(buildPlayRouteSelection(nextPlayback.videoId, nextPlayback.playbackQueueId), { replace: true });
+    syncPlaybackSelection(nextPlayback.videoId, nextPlayback.playbackQueueId);
   }, [
     activePlaybackQueueId,
+    buildPlayRouteSelection,
     gameHistoryPositions,
-    scheduledSellOrders,
-    handlePlayNextVideo,
+    getAdjacentPlaybackVideoId,
     handleSelectVideo,
-    syncPlaybackSelection,
+    handlePlayNextVideo,
     isRestoredPlaybackActive,
     openGamePositions,
+    scheduledSellOrders,
     selectedOpenPositionId,
     selectedPlaybackSection,
     selectedScheduledSellOrderId,
     selectedVideoId,
+    syncPlaybackSelection,
+    syncPlayRoute,
   ]);
 
   const handlePlayPreviousVideoWithPreview = useCallback(() => {
@@ -1836,6 +2098,7 @@ function HomePage() {
       if (previousScheduledOrder) {
         setSelectedScheduledSellOrderId(previousScheduledOrder.id);
         setSelectedOpenPositionId(previousScheduledOrder.positionId);
+        syncPlayRoute(buildPlayRouteSelection(previousScheduledOrder.videoId, SCHEDULED_SELL_ORDERS_QUEUE_ID), { replace: true });
         syncPlaybackSelection(previousScheduledOrder.videoId, SCHEDULED_SELL_ORDERS_QUEUE_ID);
         return;
       }
@@ -1851,6 +2114,7 @@ function HomePage() {
 
       if (previousOpenPosition) {
         setSelectedOpenPositionId(previousOpenPosition.id);
+        syncPlayRoute(buildPlayRouteSelection(previousOpenPosition.videoId, GAME_PORTFOLIO_QUEUE_ID), { replace: true });
         syncPlaybackSelection(previousOpenPosition.videoId, GAME_PORTFOLIO_QUEUE_ID);
         return;
       }
@@ -1866,22 +2130,34 @@ function HomePage() {
 
       if (previousHistoryPosition) {
         setSelectedOpenPositionId(previousHistoryPosition.id);
+        syncPlayRoute(buildPlayRouteSelection(previousHistoryPosition.videoId, HISTORY_PLAYBACK_QUEUE_ID), { replace: true });
         syncPlaybackSelection(previousHistoryPosition.videoId, HISTORY_PLAYBACK_QUEUE_ID);
         return;
       }
     }
 
-    handlePlayPreviousVideo();
+    const previousPlayback = getAdjacentPlaybackVideoId(-1);
+
+    if (!previousPlayback) {
+      handlePlayPreviousVideo();
+      return;
+    }
+
+    syncPlayRoute(buildPlayRouteSelection(previousPlayback.videoId, previousPlayback.playbackQueueId), { replace: true });
+    syncPlaybackSelection(previousPlayback.videoId, previousPlayback.playbackQueueId);
   }, [
     activePlaybackQueueId,
+    buildPlayRouteSelection,
     gameHistoryPositions,
+    getAdjacentPlaybackVideoId,
     handlePlayPreviousVideo,
-    syncPlaybackSelection,
     openGamePositions,
     scheduledSellOrders,
     selectedOpenPositionId,
     selectedScheduledSellOrderId,
     selectedVideoId,
+    syncPlaybackSelection,
+    syncPlayRoute,
   ]);
 
   const handlePauseCurrentVideo = useCallback(() => {
@@ -2359,6 +2635,46 @@ function HomePage() {
 
           return fullscreenElement instanceof HTMLElement ? fullscreenElement : document.body;
         })();
+  const chartPanelProps = {
+    chartErrorMessage: activeChartErrorMessage,
+    marketPriceByVideoId,
+    chartSortMode,
+    chartSortOptions,
+    collapsedFeaturedSectionIds,
+    currentTierCode: gameTierProgress?.currentTier.tierCode,
+    enableMobileTradeSheet: isMobileLayout,
+    featuredSections: activeChartFeaturedSections,
+    getRankLabel: activeChartRankLabel,
+    getTradeActionState: getVideoCardTradeActionState,
+    hasNextPage: activeChartHasNextPage,
+    hasResolvedTrendSignals: activeChartHasResolvedTrendSignals,
+    isChartError: activeChartIsError,
+    isChartLoading: activeChartIsLoading,
+    isFetchingNextPage: activeChartIsFetchingNextPage,
+    mainSectionCollapseKey: activeChartMainSectionCollapseKey,
+    onChangeChartSortMode: handleChangeChartSortMode,
+    onLoadMore: activeChartOnLoadMore,
+    onOpenBuyTradeModal: handleOpenVideoCardBuyTradeModal,
+    onOpenChart: handleOpenVideoRankHistory,
+    onOpenSellTradeModal: handleOpenVideoCardSellTradeModal,
+    onSelectVideo: handleSelectVideoWithPreview,
+    onToggleFeaturedSectionCollapse: toggleCollapsedSection,
+    primarySectionEyebrow: activeChartSectionEyebrow,
+    section: activeChartSection,
+    sectionEmptyMessage: activeChartEmptyMessage,
+    selectedCategoryLabel: selectedChartViewOption.label,
+    selectedCountryName,
+    activePlaybackQueueId,
+    selectedVideoId,
+    trendSignalsByVideoId: activeChartTrendSignalsByVideoId,
+  };
+  const filterBarProps = {
+    onOpenRegionModal: () => setIsRegionModalOpen(true),
+    onSelectView: handleSelectChartView,
+    selectedCountryName,
+    selectedViewId: effectiveChartView,
+    viewOptions: chartViewOptions,
+  };
 
   return (
     <div className="app-shell">
@@ -2419,144 +2735,116 @@ function HomePage() {
         titleCollection={achievementTitleCollection}
       />
       <main className="app-shell__main">
-        <HomePlaybackSection
-          isStickySelectedVideoPlaybackPaused={isPlaybackPaused}
-          onPauseStickySelectedVideo={handlePauseCurrentVideo}
-          onPlayNextStickySelectedVideo={handlePlayNextVideoWithPreview}
-          onPlayPreviousStickySelectedVideo={handlePlayPreviousVideoWithPreview}
-          onResumeStickySelectedVideo={handleResumeCurrentVideo}
-          chartPanelProps={{
-            chartErrorMessage: activeChartErrorMessage,
-            marketPriceByVideoId,
-            chartSortMode,
-            chartSortOptions,
-            collapsedFeaturedSectionIds,
-            currentTierCode: gameTierProgress?.currentTier.tierCode,
-            enableMobileTradeSheet: isMobileLayout,
-            featuredSections: activeChartFeaturedSections,
-            getRankLabel: activeChartRankLabel,
-            getTradeActionState: getVideoCardTradeActionState,
-            hasNextPage: activeChartHasNextPage,
-            hasResolvedTrendSignals: activeChartHasResolvedTrendSignals,
-            isChartError: activeChartIsError,
-            isChartLoading: activeChartIsLoading,
-            isFetchingNextPage: activeChartIsFetchingNextPage,
-            mainSectionCollapseKey: activeChartMainSectionCollapseKey,
-            onChangeChartSortMode: handleChangeChartSortMode,
-            onLoadMore: activeChartOnLoadMore,
-            onOpenBuyTradeModal: handleOpenVideoCardBuyTradeModal,
-            onOpenChart: handleOpenVideoRankHistory,
-            onOpenSellTradeModal: handleOpenVideoCardSellTradeModal,
-            onSelectVideo: handleSelectVideoWithPreview,
-            onToggleFeaturedSectionCollapse: toggleCollapsedSection,
-            primarySectionEyebrow: activeChartSectionEyebrow,
-            section: activeChartSection,
-            sectionEmptyMessage: activeChartEmptyMessage,
-            selectedCategoryLabel: selectedChartViewOption.label,
-            selectedCountryName,
-            activePlaybackQueueId,
-            selectedVideoId,
-            trendSignalsByVideoId: activeChartTrendSignalsByVideoId,
-          }}
-          communityPanelProps={{
-            currentTierCode: gameTierProgress?.currentTier.tierCode,
-            regionCode: selectedRegionCode,
-            videoId: selectedVideoId,
-            videoTitle: resolvedSelectedVideo?.snippet.title,
-          }}
-          filterBarProps={{
-            onOpenRegionModal: () => setIsRegionModalOpen(true),
-            onSelectView: handleSelectChartView,
-            selectedCountryName,
-            selectedViewId: effectiveChartView,
-            viewOptions: chartViewOptions,
-          }}
-          playerStageProps={{
-            authStatus,
-            canNavigateVideos: canPlayNextVideo,
-            cinematicToggleLabel,
-            favoriteToggleLabel,
-            headerSupplementalContent: headerTrendTicker,
-            isChartLoading,
-            isCinematicModeActive,
-            isFavoriteToggleDisabled: !selectedChannelId || toggleFavoriteStreamerMutation.isPending,
-            isManualPlaybackSaveDisabled:
-              authStatus !== 'authenticated' || !selectedVideoId || isManualPlaybackSavePending,
-            isMobileLayout,
-            isOpenPositionLimitReached,
-            isSelectedChannelFavorited,
-            currentTierCode: gameTierProgress?.currentTier.tierCode,
-            currentTierName: gameTierProgress?.currentTier.displayName,
-            manualPlaybackSaveButtonLabel: isManualPlaybackSavePending ? '저장 중...' : '저장',
-            manualPlaybackSaveStatus: manualPlaybackSaveStatus ?? undefined,
-            onManualPlaybackSave: () => void handleManualPlaybackSave(),
-            openPositionCount: openDistinctVideoCount,
-            onNextVideo: handlePlayNextVideoWithPreview,
-            onOpenGameModal: handleOpenGamePositionsModal,
-            onOpenRegionModal: () => setIsRegionModalOpen(true),
-            onOpenTierModal: isMobileLayout ? openTierModal : undefined,
-            onOpenWalletModal: isMobileLayout ? () => setIsWalletModalOpen(true) : undefined,
-            onOpenViewModal: openChartViewModal,
-            onPlaybackRestoreApplied: handlePlaybackRestoreApplied,
-            onPlaybackStateChange: handlePlaybackStateChange,
-            onPreviousVideo: handlePlayPreviousVideoWithPreview,
-            onToggleCinematicMode: () => void handleToggleCinematicMode(),
-            onToggleFavoriteStreamer: () => void handleToggleFavoriteStreamer(),
-            playbackRestore: pendingPlaybackRestore,
-            playerRef: videoPlayerRef,
-            playerSectionRef,
-            playerStageRef,
-            playerViewportRef,
-            selectedCategoryLabel: selectedChartViewOption.label,
-            selectedCountryName,
-            walletBalancePoints: currentGameSeason?.wallet.balancePoints,
-            selectedVideoChannelTitle: resolvedSelectedVideo?.snippet.channelTitle,
-            selectedVideoId,
-            selectedVideoRankLabel,
-            selectedVideoStatLabel,
-            selectedVideoTitle: resolvedSelectedVideo?.snippet.title,
-            showManualPlaybackSave: false,
-            stageActionContent: gameActionContent,
-            stageMetadataContent,
-            supplementalContent: undefined,
-            toggleFavoriteStreamerPending: toggleFavoriteStreamerMutation.isPending,
-          }}
-          stickySelectedVideoLabel="Now Playing"
-          stickySelectedVideoContent={({
-            isMobilePlayerStageStickyEnabled,
-            desktopPlayerDockSlotRef,
-            isDesktopPlayerDockEnabled,
-            onJumpToTop,
-            onScrollToTop,
-            onToggleMobilePlayerStageStickyEnabled,
-            onToggleCollapse,
-          }) =>
-            renderSelectedVideoActionsContent(
-              <StickySelectedVideoControls
-                isMobileLayout={isMobileLayout}
-                isMobilePlayerStageStickyEnabled={isMobileLayout ? isMobilePlayerStageStickyEnabled : undefined}
-                isPlaybackPaused={isPlaybackPaused}
-                onCollapsePanel={!isMobileLayout ? onToggleCollapse : undefined}
-                onJumpToTop={isMobileLayout ? onJumpToTop : undefined}
-                onNextVideo={handlePlayNextVideoWithPreview}
-                onPauseVideo={handlePauseCurrentVideo}
-                onPreviousVideo={handlePlayPreviousVideoWithPreview}
-                onResumeVideo={handleResumeCurrentVideo}
-                onScrollToTop={!isMobileLayout ? onScrollToTop : undefined}
-                onToggleMobilePlayerStageStickyEnabled={
-                  isMobileLayout ? onToggleMobilePlayerStageStickyEnabled : undefined
-                }
-              />,
-              isMobileLayout ? onToggleCollapse : onToggleCollapse,
-              handleOpenSelectedVideoRankHistory,
-              {
-                desktopPlayerDockSlotRef:
-                  isCinematicModeActive && isDesktopPlayerDockEnabled ? desktopPlayerDockSlotRef : undefined,
-                isDesktopMiniPlayerEnabled: false,
-              },
-            )
-          }
-        />
+        {isPlayRoute ? (
+          <Suspense fallback={null}>
+            <HomePlaybackSection
+              isStickySelectedVideoPlaybackPaused={isPlaybackPaused}
+              onPauseStickySelectedVideo={handlePauseCurrentVideo}
+              onPlayNextStickySelectedVideo={handlePlayNextVideoWithPreview}
+              onPlayPreviousStickySelectedVideo={handlePlayPreviousVideoWithPreview}
+              onResumeStickySelectedVideo={handleResumeCurrentVideo}
+              chartPanelProps={chartPanelProps}
+              communityPanelProps={{
+                currentTierCode: gameTierProgress?.currentTier.tierCode,
+                regionCode: selectedRegionCode,
+                videoId: selectedVideoId,
+                videoTitle: resolvedSelectedVideo?.snippet.title,
+              }}
+              filterBarProps={filterBarProps}
+              playerStageProps={{
+                authStatus,
+                canNavigateVideos: canPlayNextVideo,
+                cinematicToggleLabel,
+                favoriteToggleLabel,
+                headerSupplementalContent: headerTrendTicker,
+                isChartLoading,
+                isCinematicModeActive,
+                isFavoriteToggleDisabled: !selectedChannelId || toggleFavoriteStreamerMutation.isPending,
+                isManualPlaybackSaveDisabled:
+                  authStatus !== 'authenticated' || !selectedVideoId || isManualPlaybackSavePending,
+                isMobileLayout,
+                isOpenPositionLimitReached,
+                isSelectedChannelFavorited,
+                currentTierCode: gameTierProgress?.currentTier.tierCode,
+                currentTierName: gameTierProgress?.currentTier.displayName,
+                manualPlaybackSaveButtonLabel: isManualPlaybackSavePending ? '저장 중...' : '저장',
+                manualPlaybackSaveStatus: manualPlaybackSaveStatus ?? undefined,
+                onManualPlaybackSave: () => void handleManualPlaybackSave(),
+                openPositionCount: openDistinctVideoCount,
+                onNextVideo: handlePlayNextVideoWithPreview,
+                onOpenGameModal: handleOpenGamePositionsModal,
+                onOpenRegionModal: () => setIsRegionModalOpen(true),
+                onOpenTierModal: isMobileLayout ? openTierModal : undefined,
+                onOpenWalletModal: isMobileLayout ? () => setIsWalletModalOpen(true) : undefined,
+                onOpenViewModal: openChartViewModal,
+                onPlaybackRestoreApplied: handlePlaybackRestoreApplied,
+                onPlaybackStateChange: handlePlaybackStateChange,
+                onPreviousVideo: handlePlayPreviousVideoWithPreview,
+                onToggleCinematicMode: () => void handleToggleCinematicMode(),
+                onToggleFavoriteStreamer: () => void handleToggleFavoriteStreamer(),
+                playbackRestore: pendingPlaybackRestore,
+                playerRef: videoPlayerRef,
+                playerSectionRef,
+                playerStageRef,
+                playerViewportRef,
+                selectedCategoryLabel: selectedChartViewOption.label,
+                selectedCountryName,
+                walletBalancePoints: currentGameSeason?.wallet.balancePoints,
+                selectedVideoChannelTitle: resolvedSelectedVideo?.snippet.channelTitle,
+                selectedVideoId,
+                selectedVideoRankLabel,
+                selectedVideoStatLabel,
+                selectedVideoTitle: resolvedSelectedVideo?.snippet.title,
+                showManualPlaybackSave: false,
+                stageActionContent: gameActionContent,
+                stageMetadataContent,
+                supplementalContent: undefined,
+                toggleFavoriteStreamerPending: toggleFavoriteStreamerMutation.isPending,
+              }}
+              showChartPanel={false}
+              stickySelectedVideoLabel="Now Playing"
+              stickySelectedVideoContent={({
+                isMobilePlayerStageStickyEnabled,
+                desktopPlayerDockSlotRef,
+                isDesktopPlayerDockEnabled,
+                onJumpToTop,
+                onScrollToTop,
+                onToggleMobilePlayerStageStickyEnabled,
+                onToggleCollapse,
+              }) =>
+                renderSelectedVideoActionsContent(
+                  <StickySelectedVideoControls
+                    isMobileLayout={isMobileLayout}
+                    isMobilePlayerStageStickyEnabled={isMobileLayout ? isMobilePlayerStageStickyEnabled : undefined}
+                    isPlaybackPaused={isPlaybackPaused}
+                    onCollapsePanel={!isMobileLayout ? onToggleCollapse : undefined}
+                    onJumpToTop={isMobileLayout ? onJumpToTop : undefined}
+                    onNextVideo={handlePlayNextVideoWithPreview}
+                    onPauseVideo={handlePauseCurrentVideo}
+                    onPreviousVideo={handlePlayPreviousVideoWithPreview}
+                    onResumeVideo={handleResumeCurrentVideo}
+                    onScrollToTop={!isMobileLayout ? onScrollToTop : undefined}
+                    onToggleMobilePlayerStageStickyEnabled={
+                      isMobileLayout ? onToggleMobilePlayerStageStickyEnabled : undefined
+                    }
+                  />,
+                  isMobileLayout ? onToggleCollapse : onToggleCollapse,
+                  handleOpenSelectedVideoRankHistory,
+                  {
+                    desktopPlayerDockSlotRef:
+                      isCinematicModeActive && isDesktopPlayerDockEnabled ? desktopPlayerDockSlotRef : undefined,
+                    isDesktopMiniPlayerEnabled: false,
+                  },
+                )
+              }
+            />
+          </Suspense>
+        ) : (
+          <HomeExploreSection
+            chartPanelProps={chartPanelProps}
+            filterBarProps={filterBarProps}
+          />
+        )}
       </main>
       <GameNotificationToast
         notification={visibleGameNotification}
