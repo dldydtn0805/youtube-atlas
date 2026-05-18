@@ -148,10 +148,8 @@ export function PlayerStageHeader({
   isOpenPositionLimitReached = false,
   openPositionCount = 0,
   onOpenGameModal,
-  onOpenRegionModal,
   onOpenTierModal,
   onOpenWalletModal,
-  onOpenViewModal,
   onToggleCinematicMode,
   selectedCategoryLabel,
   selectedCountryName,
@@ -172,15 +170,11 @@ export function PlayerStageHeader({
             <div className="app-shell__player-mobile-header-row">
               <div className="app-shell__player-title-row app-shell__player-title-row--mobile">
                 <h2 className="app-shell__section-title app-shell__section-title--mobile-player">
-                  <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
-                    {selectedCountryName}
-                  </button>
+                  <span>{selectedCountryName}</span>
                   {selectedCategoryLabel ? (
                     <>
                       {' '}
-                      <button className="app-shell__section-title-button" onClick={onOpenViewModal} type="button">
-                        {selectedCategoryLabel}
-                      </button>
+                      <span>{selectedCategoryLabel}</span>
                     </>
                   ) : null}
                 </h2>
@@ -230,15 +224,10 @@ export function PlayerStageHeader({
           <div className="app-shell__player-title-row app-shell__player-title-row--desktop">
             <p className="app-shell__section-eyebrow">Now Playing</p>
             <h2 className="app-shell__section-title">
-              <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
-                {selectedCountryName}
-              </button>
+              <span>{selectedCountryName}</span>
               {selectedCategoryLabel ? (
                 <>
-                  {' · '}
-                  <button className="app-shell__section-title-button" onClick={onOpenViewModal} type="button">
-                    {selectedCategoryLabel}
-                  </button>
+                  {' · '}<span>{selectedCategoryLabel}</span>
                 </>
               ) : null}
             </h2>

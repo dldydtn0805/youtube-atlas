@@ -51,6 +51,21 @@ describe('PlayerStage', () => {
     expect(screen.queryByRole('button', { name: '시네마틱 모드' })).not.toBeInTheDocument();
   });
 
+  it('renders the country and selected view labels as static text', () => {
+    render(
+      <PlayerStage
+        {...createProps({
+          selectedCategoryLabel: '인기 급상승',
+        })}
+      />,
+    );
+
+    expect(screen.getByText('대한민국')).toBeInTheDocument();
+    expect(screen.getByText('인기 급상승')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '대한민국' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '인기 급상승' })).not.toBeInTheDocument();
+  });
+
   it('hides mobile game summary buttons for anonymous users', () => {
     render(
       <PlayerStage
