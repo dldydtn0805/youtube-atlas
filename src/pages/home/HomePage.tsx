@@ -335,6 +335,7 @@ function HomePage({
   const [isGameIntroModalOpen, setIsGameIntroModalOpen] = useState(getInitialGameIntroModalOpen);
   const [isRegionModalOpen, setIsRegionModalOpen] = useState(false);
   const [isChartViewModalOpen, setIsChartViewModalOpen] = useState(false);
+  const [pendingRegionTopVideoSelection, setPendingRegionTopVideoSelection] = useState<string | null>(null);
   const [isPlaybackPaused, setIsPlaybackPaused] = useState(false);
   const [selectedChartView, setSelectedChartViewState] = useState<ChartViewMode>('popular');
   const [chartSortMode, setChartSortMode] = useState<ChartSortMode>('popular-desc');
@@ -991,6 +992,7 @@ function HomePage({
 
     if (shouldUpdateRegion && nextRegionCode) {
       resetForRegionChange();
+      setPendingRegionTopVideoSelection(nextRegionCode);
       updateRegionCode(nextRegionCode);
     }
 
@@ -2177,6 +2179,38 @@ function HomePage({
   useEffect(() => {
     setIsPlaybackPaused(false);
   }, [selectedVideoId]);
+
+  useEffect(() => {
+    if (!pendingRegionTopVideoSelection || pendingRegionTopVideoSelection !== selectedRegionCode) {
+      return;
+    }
+
+    if (activeChartIsLoading) {
+      return;
+    }
+
+    if (activeChartIsError) {
+      setPendingRegionTopVideoSelection(null);
+      return;
+    }
+
+    const topVideoId = activeChartSection?.items[0]?.id;
+
+    if (!topVideoId || !activeChartSection?.categoryId) {
+      setPendingRegionTopVideoSelection(null);
+      return;
+    }
+
+    handleSelectVideoWithPreview(topVideoId, activeChartSection.categoryId);
+    setPendingRegionTopVideoSelection(null);
+  }, [
+    activeChartIsError,
+    activeChartIsLoading,
+    activeChartSection,
+    handleSelectVideoWithPreview,
+    pendingRegionTopVideoSelection,
+    selectedRegionCode,
+  ]);
 
   const handleSelectGamePositionVideo = useCallback(
     (position: GamePosition) => {
