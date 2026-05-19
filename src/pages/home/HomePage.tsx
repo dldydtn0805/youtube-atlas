@@ -484,11 +484,7 @@ function HomePage({
     },
     [syncCurrentRouteFilters],
   );
-  const regionDropdownOptions = sortedCountryCodes.map((country) => ({
-    code: country.code,
-    name: country.name,
-  }));
-  const regionSearchOptions = sortedCountryCodes.map((country) => ({
+  const regionOptions = sortedCountryCodes.map((country) => ({
     value: country.code,
     label: `${country.code} · ${country.name}`,
   }));
@@ -2664,22 +2660,18 @@ function HomePage({
     onSelectVideo: handleSelectVideoWithPreview,
     onToggleFeaturedSectionCollapse: toggleCollapsedSection,
     primarySectionEyebrow: activeChartSectionEyebrow,
-    regionOptions: regionDropdownOptions,
     section: activeChartSection,
     sectionEmptyMessage: activeChartEmptyMessage,
     selectedCategoryLabel: selectedChartViewOption.label,
     selectedCountryName,
-    selectedRegionCode,
     activePlaybackQueueId,
     selectedVideoId,
     trendSignalsByVideoId: activeChartTrendSignalsByVideoId,
   };
   const filterBarProps = {
-    onChangeRegion: (regionCode: string) => handleSelectRegion(regionCode as RegionCode),
+    onOpenRegionModal: () => setIsRegionModalOpen(true),
     onSelectView: handleSelectChartView,
-    regionOptions: regionDropdownOptions,
     selectedCountryName,
-    selectedRegionCode,
     selectedViewId: effectiveChartView,
     viewOptions: chartViewOptions,
   };
@@ -2909,7 +2901,7 @@ function HomePage({
         isOpen={isRegionModalOpen}
         onChangeRegion={(regionCode) => handleSelectRegion(regionCode as RegionCode)}
         onClose={() => setIsRegionModalOpen(false)}
-        regionOptions={regionSearchOptions}
+        regionOptions={regionOptions}
         selectedRegionCode={selectedRegionCode}
       />
       {isWalletModalOpen ? (

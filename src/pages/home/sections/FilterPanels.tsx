@@ -2,18 +2,14 @@ import { createPortal } from 'react-dom';
 import SearchBar, { type SearchBarOption } from '../../../components/SearchBar/SearchBar';
 import useBodyScrollLock from '../hooks/useBodyScrollLock';
 import { getFullscreenElement } from '../utils';
-import ExploreCountryDropdown, { type ExploreCountryOption } from './ExploreCountryDropdown';
 import QuickViewButtons from './QuickViewButtons';
 import type { ViewOption } from './filterPanelTypes';
-import './ExploreCountryDropdown.css';
 import './FilterPanels.css';
 
 export interface FilterBarProps {
-  onChangeRegion: (regionCode: string) => void;
+  onOpenRegionModal: () => void;
   onSelectView: (viewId: string, triggerElement?: HTMLButtonElement) => void;
-  regionOptions: ExploreCountryOption[];
   selectedCountryName: string;
-  selectedRegionCode: string;
   selectedViewId: string;
   viewOptions: ViewOption[];
 }
@@ -85,35 +81,28 @@ export function RegionFilterModal({
 }
 
 export function FilterBar({
-  onChangeRegion,
+  onOpenRegionModal,
   onSelectView,
-  regionOptions,
   selectedCountryName,
-  selectedRegionCode,
   selectedViewId,
   viewOptions,
 }: FilterBarProps) {
   return (
     <section className="app-shell__panel app-shell__panel--filters" aria-label="탐색 필터">
       <div className="app-shell__section-heading app-shell__section-heading--filters">
-        <div className="app-shell__filter-header-row">
-          <div className="app-shell__section-heading-copy">
-            <div className="app-shell__section-heading">
-              <p className="app-shell__section-eyebrow">Explore</p>
-              <h2 className="app-shell__section-title">탐색 필터</h2>
-              <p className="app-shell__filter-helper-text">
-                국가 드롭다운에서 다른 국가 차트로 바로 바꿀 수 있어요.
-              </p>
-            </div>
+        <div className="app-shell__section-heading-copy">
+          <div className="app-shell__section-heading">
+            <p className="app-shell__section-eyebrow">Explore</p>
+            <h2 className="app-shell__section-title">
+              <button className="app-shell__section-title-button" onClick={onOpenRegionModal} type="button">
+                {selectedCountryName}
+              </button>{' '}
+              탐색 필터
+            </h2>
           </div>
-          <div className="app-shell__filter-country">
-            <ExploreCountryDropdown
-              onSelectRegion={onChangeRegion}
-              options={regionOptions}
-              selectedCountryName={selectedCountryName}
-              selectedRegionCode={selectedRegionCode}
-            />
-          </div>
+          <p className="app-shell__filter-helper-text">
+            국가명을 클릭하면 다른 국가 차트로 바꿀 수 있어요.
+          </p>
         </div>
       </div>
       <div className="app-shell__filter-fields">

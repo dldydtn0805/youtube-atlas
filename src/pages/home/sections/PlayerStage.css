@@ -1,13 +1,7 @@
 .app-shell__panel--player {
-  backdrop-filter: blur(14px);
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
   overflow: visible;
   padding: 28px 28px 22px;
   scroll-margin-top: 16px;
-}
-
-:root[data-theme='dark'] .app-shell__panel--player {
-  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.34);
 }
 
 .app-shell__panel--player[data-player-docked='true']:not([data-cinematic='true']) {

@@ -38,7 +38,7 @@ interface StickySelectedVideoControls {
 interface HomePlaybackSectionProps {
   chartPanelProps: Omit<
     ComponentProps<typeof ChartPanel>,
-    'onChangeRegion' | 'onSelectView' | 'regionOptions' | 'selectedRegionCode' | 'selectedViewId' | 'viewOptions'
+    'onOpenRegionModal' | 'onSelectView' | 'selectedViewId' | 'viewOptions'
   >;
   communityPanelProps: ComponentProps<typeof CommentSection>;
   filterBarProps: FilterBarProps;
@@ -568,10 +568,8 @@ export default function HomePlaybackSection({
     <ChartPanel
       {...chartPanelProps}
       className={chartPanelProps.className}
-      onChangeRegion={filterBarProps.onChangeRegion}
+      onOpenRegionModal={filterBarProps.onOpenRegionModal}
       onSelectView={filterBarProps.onSelectView}
-      regionOptions={filterBarProps.regionOptions}
-      selectedRegionCode={filterBarProps.selectedRegionCode}
       selectedViewId={filterBarProps.selectedViewId}
       viewOptions={filterBarProps.viewOptions}
     />

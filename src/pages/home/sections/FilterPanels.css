@@ -12,26 +12,12 @@
 }
 
 .app-shell__panel--filters {
-  overflow: visible;
   padding: 22px 24px 20px;
 }
 
 .app-shell__section-heading.app-shell__section-heading--filters .app-shell__section-heading {
   gap: 4px;
   margin-bottom: 0;
-}
-
-.app-shell__filter-header-row {
-  align-items: flex-start;
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-  position: relative;
-  z-index: 3;
-}
-
-.app-shell__filter-country {
-  flex-shrink: 0;
 }
 
 .app-shell__filter-helper-text {
@@ -106,12 +92,6 @@
   :root[data-mobile-layout='true'] .app-shell__section-heading.app-shell__section-heading--filters {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  :root[data-mobile-layout='true'] .app-shell__filter-header-row {
-    align-items: stretch;
-    flex-direction: column;
-    width: 100%;
   }
 
 }
