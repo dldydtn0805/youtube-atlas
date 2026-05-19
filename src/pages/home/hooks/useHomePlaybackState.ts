@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { VideoPlayerHandle } from '../../../components/VideoPlayer/VideoPlayer';
 import type { VideoCategory } from '../../../constants/videoCategories';
 import type { AuthStatus, AuthUser } from '../../../features/auth/types';
@@ -26,7 +26,6 @@ interface UseHomePlaybackStateOptions {
   gamePortfolioSection: YouTubeCategorySection;
   historyPlaybackSection?: YouTubeCategorySection;
   isMobileLayout: boolean;
-  isPlaybackRoute?: boolean;
   logout: () => Promise<void>;
   newChartEntriesSection?: YouTubeCategorySection;
   preferredInitialPlaybackFallbackSection?: YouTubeCategorySection;
@@ -78,7 +77,6 @@ export default function useHomePlaybackState({
   gamePortfolioSection,
   historyPlaybackSection,
   isMobileLayout,
-  isPlaybackRoute = true,
   logout,
   newChartEntriesSection,
   preferredInitialPlaybackFallbackSection,
@@ -137,7 +135,7 @@ export default function useHomePlaybackState({
     syncPlaybackSelection,
     selectedVideoId,
   } = usePlaybackQueue({
-    autoSelectFirstVideoWhenEmpty: isPlaybackRoute && authStatus !== 'loading',
+    autoSelectFirstVideoWhenEmpty: authStatus !== 'loading',
     extraPlaybackSections,
     favoriteStreamerVideoSection,
     gamePortfolioSection,
@@ -281,21 +279,6 @@ export default function useHomePlaybackState({
     },
     [persistPlaybackProgress, videoPlayerRef],
   );
-  const persistCurrentPlaybackSnapshotRef = useRef(persistCurrentPlaybackSnapshot);
-
-  useEffect(() => {
-    persistCurrentPlaybackSnapshotRef.current = persistCurrentPlaybackSnapshot;
-  }, [persistCurrentPlaybackSnapshot]);
-
-  useLayoutEffect(() => {
-    if (!ENABLE_PLAYBACK_PROGRESS || !isPlaybackRoute || authStatus !== 'authenticated' || !selectedVideoId) {
-      return undefined;
-    }
-
-    return () => {
-      void persistCurrentPlaybackSnapshotRef.current({ force: true, keepalive: true });
-    };
-  }, [authStatus, isPlaybackRoute, selectedVideoId]);
 
   const persistPlaybackEntry = useCallback(
     (videoId: string) => {
@@ -357,7 +340,7 @@ export default function useHomePlaybackState({
   );
 
   useEffect(() => {
-    if (!selectedVideoId || !isPlaybackRoute) {
+    if (!selectedVideoId) {
       lastPlaybackEntryVideoIdRef.current = undefined;
       return;
     }
@@ -372,10 +355,10 @@ export default function useHomePlaybackState({
 
     lastPlaybackEntryVideoIdRef.current = selectedVideoId;
     persistPlaybackEntry(selectedVideoId);
-  }, [authStatus, isPlaybackRoute, persistPlaybackEntry, selectedVideoId]);
+  }, [authStatus, persistPlaybackEntry, selectedVideoId]);
 
   useEffect(() => {
-    if (!ENABLE_PLAYBACK_PROGRESS || !isPlaybackRoute || authStatus !== 'authenticated' || !selectedVideoId) {
+    if (!ENABLE_PLAYBACK_PROGRESS || authStatus !== 'authenticated' || !selectedVideoId) {
       return undefined;
     }
 
@@ -386,10 +369,10 @@ export default function useHomePlaybackState({
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [authStatus, isPlaybackRoute, persistCurrentPlaybackSnapshot, selectedVideoId]);
+  }, [authStatus, persistCurrentPlaybackSnapshot, selectedVideoId]);
 
   useEffect(() => {
-    if (!ENABLE_PLAYBACK_PROGRESS || !isPlaybackRoute || authStatus !== 'authenticated') {
+    if (!ENABLE_PLAYBACK_PROGRESS || authStatus !== 'authenticated') {
       return undefined;
     }
 
@@ -410,7 +393,7 @@ export default function useHomePlaybackState({
       window.removeEventListener('pagehide', handlePageHide);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [authStatus, isPlaybackRoute, persistCurrentPlaybackSnapshot]);
+  }, [authStatus, persistCurrentPlaybackSnapshot]);
 
   const handleManualPlaybackSave = useCallback(async () => {
     if (!ENABLE_PLAYBACK_PROGRESS) {
