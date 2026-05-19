@@ -4,7 +4,7 @@
 }
 
 .app-shell__panel--chart-cinematic {
-  backdrop-filter: blur(22px);
+  backdrop-filter: none;
   background: var(--surface-panel-highlight);
   border-color: var(--border);
   box-shadow: var(--shadow-soft);
